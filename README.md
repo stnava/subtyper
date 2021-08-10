@@ -4,35 +4,34 @@
 
 ## Subtype and staging analyses in disease modeling
 
-Now ... 
+Common tasks for subtyping include making measurements of data consistency,
+*filtering* for good subjects, training the subtyping algorithm, predicting
+the subtypes in new data and visualizing results, often over time.
 
-### 1. Visualization
+This package expects population-level data frames with longitudinal data.
 
-Go to https://github.com/stnava and create a new repository. Then, in the directory where this package is, create your git repository from the command line, add the files, and push it to GitHub:
+### 1. Data quality control
 
-    git init
-    git add --all
-    git commit -m "Initial commit of package skeleton"
-    git remote add origin git@github.com:stnava/subtyper.git
-    git push -u origin master
+Example here
 
-### 2. Travis
+### 2. Data filtering and covariate adjustment
 
-Now you can go to [Travis](https://travis-ci.org/profile/stnava) and turn on continuous integration for your new package. You may need to click the "Sync account" button to get your new package to show up in the list.
+Example here
 
-If you have a codecov.io account, running your tests on Travis will trigger the code coverage job. No additional configuration is necessary
+### 3. Training subtypes
 
-### 3. Appveyor
+Example here
 
-Go to [Appveyor's new project page](https://ci.appveyor.com/projects/new) and select your new repository from the list. Then you can go to the [badges](https://ci.appveyor.com/project/stnava/subtyper/settings/badges) page, copy the markdown code it provides, and paste it up with the other badges above. (Their badge API has a random token in it, so `skeletor` can't include it in the template for you.)
+### 4. Predicting subtypes
 
-### 4. Delete this "How to finish setting up your new package" section from your README.md
+Example here
+
+### 5. Visualization
+
+Example here
+
 
 ## Installing
-
-<!-- If you're putting `subtyper` on CRAN, it can be installed with
-
-    install.packages("subtyper") -->
 
 The pre-release version of the package can be pulled from GitHub using the [devtools](https://github.com/r-lib/devtools) package:
 
