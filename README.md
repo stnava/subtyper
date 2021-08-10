@@ -41,7 +41,7 @@ are stage-specific or not.
 The brief code block below shows us the core steps in `subtyper`.  We will
 comment on each step within its own section.
 
-```r
+```{r}
 library(subtyper)
 mydf = generateSubtyperData( 100 )
 rbfnames = names(mydf)[grep("Random",names(mydf))]
