@@ -7,7 +7,9 @@
 trainSubtypeUni(
   mxdfin,
   measureColumn,
+  subtypes,
   quantiles = c(0.25, 0.75),
+  subtypename = "subtype",
   groupVariable,
   group
 )
@@ -18,7 +20,11 @@ trainSubtypeUni(
 \item{measureColumn}{string defining a valid column to use for subtyping.  E.g.
 the output of the covariate adjustment done by \code{adjustByCovariates}.}
 
+\item{subtypes}{string vector naming the subtypes}
+
 \item{quantiles}{numeric vector defining the quantiles that will yield subgroups}
+
+\item{subtypename}{string naming the subtype variable}
 
 \item{groupVariable}{names of the column that defines the group to use for training.}
 
@@ -35,6 +41,7 @@ One may want to use a specific sub-group for this, e.g. patients.
 }
 \examples{
 mydf = generateSubtyperData( 100 )
+qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
 }
 \author{
 Avants BB

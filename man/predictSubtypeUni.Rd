@@ -4,12 +4,18 @@
 \alias{predictSubtypeUni}
 \title{Predict subtype for univariate data}
 \usage{
-predictSubtypeUni(mxdfin, subtypeDataFrame)
+predictSubtypeUni(mxdfin, subtypeDataFrame, idvar, visitName, baselineVisit)
 }
 \arguments{
 \item{mxdfin}{Input data frame}
 
 \item{subtypeDataFrame}{data frame defining the subtypes and cutpoints}
+
+\item{idvar}{variable name for unique subject identifier column}
+
+\item{visitName}{the column name defining the visit variables}
+
+\item{baselineVisit}{the string naming the baseline visit}
 }
 \value{
 data frame with attached subtypess
@@ -17,10 +23,14 @@ data frame with attached subtypess
 \description{
 This is the inference module for subtype definition based on a vector.
 After training, we can predict subtype very easily in new data based on
-the data frame produced by training \code{trainSubtypeUni}.
+the data frame produced by training \code{trainSubtypeUni}.  If one passes
+the visitName to the function then we will define subtype from the baseline
+value alone.
 }
 \examples{
 mydf = generateSubtyperData( 100 )
+qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
+pdf = predictSubtypeUni( mydf, qdf,  )
 }
 \author{
 Avants BB

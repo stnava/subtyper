@@ -345,22 +345,29 @@ adjustByCovariates  <- function(
 #' @param mxdfin Input data frame
 #' @param measureColumn string defining a valid column to use for subtyping.  E.g.
 #' the output of the covariate adjustment done by \code{adjustByCovariates}.
+#' @param subtypes string vector naming the subtypes
 #' @param quantiles numeric vector defining the quantiles that will yield subgroups
+#' @param subtypename string naming the subtype variable
 #' @param groupVariable names of the column that defines the group to use for training.
 #' @param group string defining a subgroup on which to train
 #' @return data frame defining the subtypes and cutpoints
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
+#' qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
 #' @export
 trainSubtypeUni  <- function(
   mxdfin,
   measureColumn,
+  subtypes,
   quantiles = c(0.25,0.75),
+  subtypename = "subtype",
   groupVariable,
   group
 ) {
 
+  if ( length( subtypes ) != ( length( quantiles ) + 1 ) )
+    stop( "length( subtypes ) != ( length( quantiles ) + 1 )" )
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
     gsel = mxdfin[,groupVariable] == group
@@ -371,8 +378,16 @@ trainSubtypeUni  <- function(
     group=NA
   }
 
-  stdf = data.frame( )
-  stdf
+  nrow = length( quantiles ) + 1
+  stdf = data.frame(
+    subtypes = subtypes,
+    measurement = rep( measureColumn, nrow ),
+    quantiles = c( 0, quantiles ),
+    quantileValues = rep( NA, nrow ),
+    group = rep( group, nrow ) )
+  names( stdf )[1] = subtypename
+  stdf$quantileValues = c( -Inf, quantile( subdf[,measureColumn],quantiles ) )
+  return( stdf )
 }
 
 
@@ -380,15 +395,62 @@ trainSubtypeUni  <- function(
 #'
 #' This is the inference module for subtype definition based on a vector.
 #' After training, we can predict subtype very easily in new data based on
-#' the data frame produced by training \code{trainSubtypeUni}.
+#' the data frame produced by training \code{trainSubtypeUni}.  If one passes
+#' the visitName to the function then we will define subtype from the baseline
+#' value alone.
 #'
 #' @param mxdfin Input data frame
 #' @param subtypeDataFrame data frame defining the subtypes and cutpoints
+#' @param idvar variable name for unique subject identifier column
+#' @param visitName the column name defining the visit variables
+#' @param baselineVisit the string naming the baseline visit
 #' @return data frame with attached subtypess
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
+#' qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
+#' pdf = predictSubtypeUni( mydf, qdf,  )
 #' @export
-predictSubtypeUni  <- function( mxdfin, subtypeDataFrame ) {
+predictSubtypeUni  <- function(
+  mxdfin,
+  subtypeDataFrame,
+  idvar,
+  visitName,
+  baselineVisit ) {
+
+  msr = as.character( subtypeDataFrame[, "measurement"][1] )
+  thesubtypes = subtypeDataFrame[,1]
+  defaultST = tail( thesubtypes, 1 )
+  mxdfin[,names(subtypeDataFrame)[1]] = defaultST
+  quants = subtypeDataFrame[,"quantileValues"][-1]
+  # by default, just run across each row
+  for ( losel in 1:nrow( mxdfin) ) {
+    tarval = mxdfin[losel,msr]
+    if ( !is.na(tarval) ) {
+      if ( tarval < quants[1] ) mysubtype = thesubtypes[1]
+      else if ( tarval >= quants[2] ) mysubtype = thesubtypes[3]
+      else if ( tarval >= quants[1] & tarval < quants[2] ) mysubtype = thesubtypes[2]
+      mxdfin[losel,names(subtypeDataFrame)[1]] = mysubtype
+    } else mxdfin[losel,names(subtypeDataFrame)[1]] = NA
+  }
+
+  mxdfin[,names(subtypeDataFrame)[1]] = factor(
+    mxdfin[,names(subtypeDataFrame)[1]], levels=thesubtypes)
+  return( mxdfin )
+
+  uids = unique( mxdfin[,idvar] )
+  for ( u in uids ) {
+    losel0 = mxdfin[,idvar] == u
+    losel0[ is.na( losel0 ) ] = FALSE
+    losel = losel0 & mxdfin$Years_bl == min(mxdfin$Years_bl[losel0])
+      tarval = mean( mxdfin$hvbrainadj[losel], na.rm = TRUE )
+      if ( !is.na(tarval) ) {
+        mysubtype = "tAD"
+        if ( tarval < quants[1] ) mysubtype = "LP"
+        if ( tarval >= quants[2] ) mysubtype = "HpSp"
+        mxdfin$subType[ losel0 ] = mysubtype
+      } else mxdfin$subType[ losel0 ] = NA
+    }
+    mxdfin$subType = factor( mxdfin$subType, levels=c("HpSp","tAD","LP"))
 
 }
