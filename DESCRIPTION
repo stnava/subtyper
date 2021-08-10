@@ -23,7 +23,8 @@ Suggests:
     covr,
     knitr,
     testthat,
-    spelling
+    spelling,
+    rmarkdown
 RoxygenNote: 7.1.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr

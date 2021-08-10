@@ -111,7 +111,7 @@ plotSubtypeChange <-function( mxdfin,
                           )
     {
 
-      if ( ! ( whiskervar %in% c("ci","si") ) )
+      if ( ! ( whiskervar %in% c("ci","se") ) )
         stop("Must choose ci or se as a string for whiskervar")
 
       mysd <- function( x,na.rm ) sqrt(var(x,na.rm=na.rm))
