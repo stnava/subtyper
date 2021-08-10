@@ -221,8 +221,8 @@ return( mxdfin[ mxdfin[,visitvar] %in% visitselect, ] )
 #' @return data frame
 #' @author Avants BB
 #' @examples
-#'
-#'
+#' mydf = generateSubtyperData( 100 )
+#' mydfhq = highestQualityRepeat( mydf, "Id", "visit", "quality")
 #' @export
 highestQualityRepeat  <-function(
   mxdfin,
@@ -230,12 +230,15 @@ highestQualityRepeat  <-function(
   visitvar,
   qualityvar ) {
 
+  if ( ! ( visitvar %in% names( mxdfin ) ) ) stop("visitvar not in dataframe")
+  if ( ! ( idvar %in% names( mxdfin ) ) ) stop("idvar not in dataframe")
+  if ( ! ( qualityvar %in% names( mxdfin ) ) ) stop("qualityvar not in dataframe")
   vizzes = unique( mxdfin[,visitvar] )
   uids = unique( mxdfin[,idvar] )
   useit = rep( FALSE, nrow( mxdfin ) )
   for ( u in uids ) {
     for ( v in vizzes ) {
-      losel = mxdfin[,idvar] == u & mxdfin$VISCODE == v
+      losel = mxdfin[,idvar] == u & mxdfin[,visitvar] == v
       mysnr = mxdfin[losel,qualityvar]
       myw = which( losel )
       if ( any( !is.na(mysnr) )  )

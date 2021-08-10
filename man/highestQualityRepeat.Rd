@@ -25,8 +25,8 @@ and (optionally) longitudinal data.  The quality measure should be a "higher"
 is better" measurement.
 }
 \examples{
-
-
+mydf = generateSubtyperData( 100 )
+mydfhq = highestQualityRepeat( mydf, "Id", "visit", "quality")
 }
 \author{
 Avants BB
