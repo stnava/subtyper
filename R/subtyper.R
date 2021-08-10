@@ -386,7 +386,7 @@ trainSubtypeUni  <- function(
     quantileValues = rep( NA, nrow ),
     group = rep( group, nrow ) )
   names( stdf )[1] = subtypename
-  stdf$quantileValues = c( -Inf, quantile( subdf[,measureColumn],quantiles ) )
+  stdf$quantileValues = c( -Inf, quantile( subdf[,measureColumn],quantiles, na.rm=TRUE ) )
   return( stdf )
 }
 
@@ -414,6 +414,7 @@ trainSubtypeUni  <- function(
 #' qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
 #' pdf = predictSubtypeUni( mydf, qdf, "Id" )
 #' @export
+#' @importFrom Hmisc cut2
 predictSubtypeUni  <- function(
   mxdfin,
   subtypeDataFrame,
@@ -425,22 +426,19 @@ predictSubtypeUni  <- function(
   thesubtypes = subtypeDataFrame[,1]
   defaultST = tail( thesubtypes, 1 )
   mxdfin[,names(subtypeDataFrame)[1]] = defaultST
-  quants = subtypeDataFrame[,"quantileValues"][-1]
+  quantsV = as.numeric( subtypeDataFrame[,"quantileValues"][-1] )
+  quantsP = as.numeric( subtypeDataFrame[,"quantiles"][-1] )
   # by default, just run across each row
-  for ( losel in 1:nrow( mxdfin) ) {
-    tarval = mxdfin[losel,msr]
-    if ( !is.na(tarval) ) {
-      if ( tarval < quants[1] ) mysubtype = thesubtypes[1]
-      else if ( tarval >= quants[2] ) mysubtype = thesubtypes[3]
-      else if ( tarval >= quants[1] & tarval < quants[2] ) mysubtype = thesubtypes[2]
-      mxdfin[losel,names(subtypeDataFrame)[1]] = mysubtype
-    } else mxdfin[losel,names(subtypeDataFrame)[1]] = NA
+  mxdfin[,names(subtypeDataFrame)[1]] = Hmisc::cut2( mxdfin[,msr], cuts = quantsV )
+  mxdfin[,names(subtypeDataFrame)[1]] = as.character( mxdfin[,names(subtypeDataFrame)[1]] )
+  theselevs = unique(  mxdfin[,names(subtypeDataFrame)[1]] )
+  for ( k in 1:length( theselevs ) ) {
+    losel = mxdfin[,names(subtypeDataFrame)[1]] == theselevs[k]
+    mxdfin[,names(subtypeDataFrame)[1]][ losel ] = thesubtypes[k]
   }
-
-  mxdfin[,names(subtypeDataFrame)[1]] = factor(
-    mxdfin[,names(subtypeDataFrame)[1]], levels=thesubtypes)
+  mxdfin[,names(subtypeDataFrame)[1]] <- factor(mxdfin[,names(subtypeDataFrame)[1]], levels=thesubtypes )
   return( mxdfin )
-
+  # FIXME - rename by baseline value
   uids = unique( mxdfin[,idvar] )
   for ( u in uids ) {
     losel0 = mxdfin[,idvar] == u
@@ -454,6 +452,5 @@ predictSubtypeUni  <- function(
         mxdfin$subType[ losel0 ] = mysubtype
       } else mxdfin$subType[ losel0 ] = NA
     }
-    mxdfin$subType = factor( mxdfin$subType, levels=c("HpSp","tAD","LP"))
 
 }
