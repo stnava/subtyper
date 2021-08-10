@@ -55,7 +55,7 @@ pdf = predictSubtypeUni( mydf, qdf, "Id" )
 
 The function:
 
-```r
+```{r}
 mydf = generateSubtyperData( 100 )
 ```
 
@@ -73,7 +73,7 @@ While our simulated data is complete, in reality,
 many subjects may be missing data.   We can further simulate this  (at random) by
 performing:
 
-```r
+```{r}
 nrows = nrow( mydf )
 mixna = sample(1:nrows,10)
 mydf[ mixna, "cognition" ] = NA
@@ -87,7 +87,7 @@ is to related data.  If such a datapoint is "far away" from its nearest neighbor
 then it is likely to be an outlier.  The `outlierness` function implements
 several methods for making such estimations which can guide data inspection.
 
-```r
+```{r}
 rbfnames = names(mydf)[grep("Random",names(mydf))]
 mydf = outlierness( mydf, rbfnames )
 ```
@@ -111,7 +111,7 @@ Given the above comments, we might want to find the "best" repeat for each
 time point in the case when there are multiple repeats.  Here, we use the
 `OL_KNN_SUM` score as an outlierness measurement.
 
-```r
+```{r}
 mydf = highestQualityRepeat( mydf, "Id", "visit", "OL_KNN_SUM")
 ```
 
@@ -123,7 +123,7 @@ covariate adjusted scores.  Here, we train the adjustment based on group `G0`
 and adjust with respect to `RandomBasisProjection01`.  In practice, these
 variables may include age, sex and other nuisance variables.
 
-```r
+```{r}
 myform = "cognition ~ RandomBasisProjection01 "
 mydf = adjustByCovariates(mydf,myform,"DX","G0")
 ```
@@ -133,7 +133,7 @@ mydf = adjustByCovariates(mydf,myform,"DX","G0")
 We use a four group model here in order to demonstrate the
 difference from the known three group diagnosis.
 
-```r
+```{r}
 qdf = trainSubtypeUni( mydf, "cognition_adjusted", c("C0","C1","C2","C3"), c(0.25,0.5, 0.75) )
 ```
 
@@ -143,7 +143,7 @@ We define the subtype from the baseline data.  This means that we assume that th
 data at baseline is sufficient to confidently identify which grouping to which
 the subject should belong.
 
-```r
+```{r}
 pdf = predictSubtypeUni( mydf, qdf, "Id", "visit", "V0" )
 ```
 
@@ -151,7 +151,7 @@ pdf = predictSubtypeUni( mydf, qdf, "Id", "visit", "V0" )
 
 Data-driven subtypes should overlap --- in our simulated data example --- with diagnosis.
 
-```r
+```{r}
 knitr::kable( table( pdf$subtype, mydf$DX ), caption='Subtypes vs diagnosis: By design, these categories are very similar.', table.attr = "style='width:60%;'")
 ```
 
@@ -159,12 +159,12 @@ knitr::kable( table( pdf$subtype, mydf$DX ), caption='Subtypes vs diagnosis: By 
 
 See the difference with diagnosis.
 
-```r
+```{r}
 summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit", whiskervar='se'  )
 ```
 See the difference with subtype.
 
-```r
+```{r}
 summ = plotSubtypeChange( pdf, "Id", "cognition", "subtype", "visit", whiskervar='se' )
 ```
 
