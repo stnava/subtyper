@@ -7,7 +7,7 @@
 plotSubtypeChange(
   mxdfin,
   idvar,
-  msr1,
+  measurement,
   subtype,
   vizname = "timer",
   whiskervar = "ci",
@@ -20,6 +20,8 @@ plotSubtypeChange(
 \item{mxdfin}{Input data frame with repeated measurements and a grouped time variable}
 
 \item{idvar}{variable name for unique subject identifier column}
+
+\item{measurement}{the numeric variable to plot over time stratified by subtype}
 
 \item{subtype}{the categorical (possibly ordinal) subtype variable}
 

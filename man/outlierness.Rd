@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{outlierness}
 \alias{outlierness}
-\title{Get subjects and timepoints with the best quality}
+\title{Outlierness scoring}
 \usage{
 outlierness(mxdfin, measureColumns, calck, report = FALSE)
 }
@@ -19,9 +19,7 @@ outlierness(mxdfin, measureColumns, calck, report = FALSE)
 data frame
 }
 \description{
-This filters data that has both repeats (e.g. multiple images on the same day)
-and (optionally) longitudinal data.  The quality measure should be a "higher"
-is better" measurement.
+Produce several complementary measurements of outlierness
 }
 \examples{
 mydf = generateSubtyperData( 100 )

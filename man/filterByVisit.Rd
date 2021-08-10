@@ -20,8 +20,8 @@ data frame
 Get subjects within a given set of visits
 }
 \examples{
-
-
+mydf = generateSubtyperData( 100 )
+mydf = filterByVisit( mydf,  "visit", c("V0","V1"))
 }
 \author{
 Avants BB
