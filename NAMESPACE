@@ -3,4 +3,5 @@
 export(filterByVisit)
 export(generateSubtyperData)
 export(highestQualityRepeat)
+export(outlierness)
 export(plotSubtypeChange)

@@ -250,8 +250,45 @@ highestQualityRepeat  <-function(
 
 
 
-outlierness <- function( ) {} # RandomBasisProjection outputs
-
+#' Get subjects and timepoints with the best quality
+#'
+#' This filters data that has both repeats (e.g. multiple images on the same day)
+#' and (optionally) longitudinal data.  The quality measure should be a "higher"
+#' is better" measurement.
+#'
+#' @param mxdfin Input data frame with repeated measurements and a grouped time variable
+#' @param measureColumns vector string of column names to use in outlier detection
+#' @param calck optional integer for knn
+#' @param report boolean return vector string of column names for outlier detection results
+#' @return data frame
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' mydfol = outlierness( mydf, rbfnames )
+#' @export
+outlierness <- function( mxdfin, measureColumns, calck, report=FALSE ) {
+  olnames = c("OL_LOOP", "OL_LOF", "OL_NOF", "OL_INFLO", "OL_RDOS", "OL_KDEOS",
+    "OL_LDF", "OL_KNN_AGG", "OL_KNN_IN", "OL_KNN_SUM", "OL_RKOF" )
+  olnames = c("OL_LOOP", "OL_LOF",  "OL_INFLO", "OL_RDOS", "OL_KDEOS",
+    "OL_LDF", "OL_KNN_AGG", "OL_KNN_IN", "OL_KNN_SUM", "OL_RKOF" )
+  if ( report ) return( olnames )
+  oldata = scale( mxdfin[,measureColumns], TRUE, TRUE )
+  if ( missing( calck ) )
+    calck = DDoutlier::NAN( oldata )$r # this + LOOP is good
+  mxdfin$OL_LOOP = DDoutlier::LOOP(  oldata, k=calck )
+  mxdfin$OL_LOF = DDoutlier::LOF(  oldata, k=calck )
+  mxdfin$OL_INFLO = ( DDoutlier::INFLO( oldata, k=calck ) )
+#  mxdfin$OL_NOF = capture.output( DDoutlier::NOF( oldata )$NOF)
+  mxdfin$OL_KDEOS = DDoutlier::KDEOS( oldata, k_min = round( calck * 0.5 ), k_max = round( calck * 2 ) )
+  mxdfin$OL_LDF = DDoutlier::LDF( oldata, k = calck  )$LDF
+  mxdfin$OL_KNN_AGG = DDoutlier::KNN_AGG( oldata, k_min = round( calck * 0.5 ), k_max = round( calck * 2 ) )
+  mxdfin$OL_KNN_IN = -1.0 * DDoutlier::KNN_IN( oldata, k = calck )
+  mxdfin$OL_KNN_SUM = DDoutlier::KNN_SUM( oldata, k = calck  )
+  mxdfin$OL_RDOS = DDoutlier::RDOS( oldata, k = calck  )
+  mxdfin$OL_RKOF = DDoutlier::RKOF( oldata, k = calck  )
+  return( mxdfin )
+}
 
 filterByQuality  <- function( ) {}  # strategies to identify a high quality subset of data
 
