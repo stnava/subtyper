@@ -437,20 +437,21 @@ predictSubtypeUni  <- function(
     mxdfin[,names(subtypeDataFrame)[1]][ losel ] = thesubtypes[k]
   }
   mxdfin[,names(subtypeDataFrame)[1]] <- factor(mxdfin[,names(subtypeDataFrame)[1]], levels=thesubtypes )
-  return( mxdfin )
-  # FIXME - rename by baseline value
+  if ( missing( visitName ) | missing( baselineVisit ) )
+    return( mxdfin )
+  if ( ! ( baselineVisit %in% unique( mxdfin[,visitName] ) ) )
+    stop( "! ( baselineVisit %in% unique( mxdfin[,visitName] ) )" )
   uids = unique( mxdfin[,idvar] )
   for ( u in uids ) {
-    losel0 = mxdfin[,idvar] == u
+    usel = mxdfin[,idvar] == u
+    losel0 = mxdfin[,idvar] == u & mxdfin[,visitName] == baselineVisit & !is.na(mxdfin[,msr])
     losel0[ is.na( losel0 ) ] = FALSE
-    losel = losel0 & mxdfin$Years_bl == min(mxdfin$Years_bl[losel0])
-      tarval = mean( mxdfin$hvbrainadj[losel], na.rm = TRUE )
-      if ( !is.na(tarval) ) {
-        mysubtype = "tAD"
-        if ( tarval < quants[1] ) mysubtype = "LP"
-        if ( tarval >= quants[2] ) mysubtype = "HpSp"
-        mxdfin$subType[ losel0 ] = mysubtype
-      } else mxdfin$subType[ losel0 ] = NA
+    if ( sum( losel0 ) > 0 ) {
+      mytbl = table( mxdfin[losel0,names(subtypeDataFrame)[1]] )
+      mostcommon = names( mytbl )[which.max(mytbl)]
+      mxdfin[usel,names(subtypeDataFrame)[1]] = mostcommon
     }
+  }
+  return( mxdfin )
 
 }
