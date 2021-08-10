@@ -29,8 +29,11 @@ value alone.
 }
 \examples{
 mydf = generateSubtyperData( 100 )
+rbfnames = names(mydf)[grep("Random",names(mydf))]
+mydf = outlierness( mydf, rbfnames )
+mydf = highestQualityRepeat( mydf, "Id", "visit", "OL_KNN_SUM")
 qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
-pdf = predictSubtypeUni( mydf, qdf,  )
+pdf = predictSubtypeUni( mydf, qdf, "Id" )
 }
 \author{
 Avants BB

@@ -10,26 +10,15 @@ the subtypes in new data and visualizing results, often over time.
 
 This package expects population-level data frames with longitudinal data.
 
-### 1. Data quality control
 
-Example here
-
-### 2. Data filtering and covariate adjustment
-
-Example here
-
-### 3. Training subtypes
-
-Example here
-
-### 4. Predicting subtypes
-
-Example here
-
-### 5. Visualization
-
-Example here
-
+```r
+mydf = generateSubtyperData( 100 )
+rbfnames = names(mydf)[grep("Random",names(mydf))]
+mydf = outlierness( mydf, rbfnames )
+mydf = highestQualityRepeat( mydf, "Id", "visit", "OL_KNN_SUM")
+qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
+pdf = predictSubtypeUni( mydf, qdf, "Id" )
+```
 
 ## Installing
 
