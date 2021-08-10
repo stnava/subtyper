@@ -41,7 +41,7 @@ are stage-specific or not.
 The brief code block below shows us the core steps in `subtyper`.  We will
 comment on each step within its own section.
 
-```{r setup}
+```r
 library(subtyper)
 mydf = generateSubtyperData( 100 )
 rbfnames = names(mydf)[grep("Random",names(mydf))]
@@ -123,7 +123,7 @@ covariate adjusted scores.  Here, we train the adjustment based on group `G0`
 and adjust with respect to `RandomBasisProjection01`.  In practice, these
 variables may include age, sex and other nuisance variables.
 
-```{r covars}
+```r
 myform = "cognition ~ RandomBasisProjection01 "
 mydf = adjustByCovariates(mydf,myform,"DX","G0")
 ```
@@ -133,7 +133,7 @@ mydf = adjustByCovariates(mydf,myform,"DX","G0")
 We use a four group model here in order to demonstrate the
 difference from the known three group diagnosis.
 
-```{r train}
+```r
 qdf = trainSubtypeUni( mydf, "cognition_adjusted", c("C0","C1","C2","C3"), c(0.25,0.5, 0.75) )
 ```
 
@@ -143,7 +143,7 @@ We define the subtype from the baseline data.  This means that we assume that th
 data at baseline is sufficient to confidently identify which grouping to which
 the subject should belong.
 
-```{r test}
+```r
 pdf = predictSubtypeUni( mydf, qdf, "Id", "visit", "V0" )
 ```
 
@@ -151,7 +151,7 @@ pdf = predictSubtypeUni( mydf, qdf, "Id", "visit", "V0" )
 
 Data-driven subtypes should overlap --- in our simulated data example --- with diagnosis.
 
-```{r,echo=FALSE}
+```r
 knitr::kable( table( pdf$subtype, mydf$DX ), caption='Subtypes vs diagnosis: By design, these categories are very similar.', table.attr = "style='width:60%;'")
 ```
 
@@ -159,12 +159,12 @@ knitr::kable( table( pdf$subtype, mydf$DX ), caption='Subtypes vs diagnosis: By 
 
 See the difference with diagnosis.
 
-```{r plotit,fig.width=8,fig.height=4}
+```r
 summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit", whiskervar='se'  )
 ```
 See the difference with subtype.
 
-```{r plotit2,fig.width=8,fig.height=4}
+```r
 summ = plotSubtypeChange( pdf, "Id", "cognition", "subtype", "visit", whiskervar='se' )
 ```
 
