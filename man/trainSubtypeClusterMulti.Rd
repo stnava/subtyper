@@ -8,6 +8,7 @@ trainSubtypeClusterMulti(
   mxdfin,
   measureColumns,
   method = "GMM",
+  desiredk,
   maxk,
   groupVariable,
   group
@@ -21,6 +22,8 @@ Note that these methods may be sensitive to scaling so the user may want to
 scale columns accordingly.}
 
 \item{method}{string only GMM for now}
+
+\item{desiredk}{number of subtypes}
 
 \item{maxk}{maximum number of subtypes}
 
@@ -39,6 +42,8 @@ One may want to use a specific sub-group for this, e.g. patients.
 }
 \examples{
 mydf = generateSubtyperData( 100 )
+rbfnames = names(mydf)[grep("Random",names(mydf))]
+gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
 }
 \author{
 Avants BB

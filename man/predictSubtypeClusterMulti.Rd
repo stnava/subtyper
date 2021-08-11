@@ -30,6 +30,9 @@ via the ClusterR package.
 }
 \examples{
 mydf = generateSubtyperData( 100 )
+rbfnames = names(mydf)[grep("Random",names(mydf))]
+gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
+gmmclp = predictSubtypeClusterMulti( mydf, rbfnames, gmmcl )
 }
 \author{
 Avants BB
