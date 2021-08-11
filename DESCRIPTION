@@ -1,17 +1,19 @@
 Package: subtyper
 Type: Package
-Title: Informative Title for Your Package
-Description: A longer statement about what this does. It must have at least one
-    complete sentence, and it may not begin with the name of the package or
-    "This package". Any URL must be enclosed in angle brackets. Any R packages
-    or other software you reference must be in single quotes. 'R CMD check'
-    may not report on these, but see  <https://cran.r-project.org/doc/manuals/r-release/R-exts.html#The-DESCRIPTION-file>.
-    Failure to obey may result in CRAN rejecting your package submission.
+Title: Subtyping, filtering and visualization for longitudinal population data
+Description: We ingest dataframes describing populations that are followed
+    longitudinally, potentially with repeat measurements at each visit/timepoint.
+    Subtypes are identified after filtering the data frame for good quality.
+    Training the subtyping method can be performed after covariate adjustment.
+    Training is made explicit and its results are captured in an intuitive data
+    frame detailing results.  Inference or prediction of subtypes in new data
+    is facilitated by a single function call. The package provides intuitive
+    visualization that show how subtyped data varies by group over time.
 Version: 0.1.0
 Authors@R: person(c("Brian", "B."), "Avants", role=c("aut", "cre"), email="stnava@gmail.com")
 URL: https://github.com/stnava/subtyper
 BugReports: https://github.com/stnava/subtyper/issues
-License: MIT + file LICENSE
+License: Apache 3.0
 Depends:
     R (>= 3.0.0)
 Imports:

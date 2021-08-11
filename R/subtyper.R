@@ -329,8 +329,6 @@ outlierness <- function( mxdfin, measureColumns, calck,
   return( mxdfin )
 }
 
-# filterByQuality  <- function( ) {}  # strategies to identify a high quality subset of data
-
 
 
 #' Covariate adjustment
@@ -496,4 +494,118 @@ predictSubtypeUni  <- function(
   }
   return( mxdfin )
 
+}
+
+
+
+
+
+#' Train subtype for multivariate data
+#'
+#' This is the training module for subtype definition based on a matrix.
+#' Currently only supports clustering based on gaussian mixtures
+#' via the ClusterR package.
+#' One may want to use a specific sub-group for this, e.g. patients.
+#'
+#' @param mxdfin Input data frame
+#' @param measureColumns vector defining the data columns to be used for clustering.
+#' Note that these methods may be sensitive to scaling so the user may want to
+#' scale columns accordingly.
+#' @param method string only GMM for now
+#' @param desiredk number of subtypes
+#' @param maxk maximum number of subtypes
+#' @param groupVariable names of the column that defines the group to use for training.
+#' @param group string defining a subgroup on which to train
+#' @return the clustering object
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
+#' @export
+#' @importFrom ClusterR predict_GMM GMM Optimal_Clusters_GMM
+trainSubtypeClusterMulti  <- function(
+  mxdfin,
+  measureColumns,
+  method = 'GMM',
+  desiredk,
+  maxk,
+  groupVariable,
+  group
+) {
+
+  if ( ! missing( group ) & ! missing( groupVariable ) ) {
+    if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
+    gsel = mxdfin[,groupVariable] == group
+    if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
+    subdf = mxdfin[ gsel, measureColumns ]
+  } else {
+    subdf = mxdfin[ , measureColumns ]
+    group=NA
+  }
+  subdf = data.matrix( subdf )
+  if ( method == "GMM" ) {
+    if ( missing( desiredk ) & ! missing( maxk ) ) {
+      if ( missing( maxk ) ) maxk = 10
+      opt_gmm = ClusterR::Optimal_Clusters_GMM(subdf, max_clusters = maxk, criterion = "BIC",
+        dist_mode = "maha_dist", seed_mode = "random_subset",
+        km_iter = 10, em_iter = 10, var_floor = 1e-10,
+        plot_data = FALSE )
+      desiredk = which.min( opt_gmm )
+    }
+    gmm = ClusterR::GMM( subdf,
+      gaussian_comps = desiredk,
+      dist_mode = "maha_dist",
+      seed_mode = "random_subset",
+      km_iter = 100,
+      em_iter = 100, verbose = FALSE )
+#    pr = ClusterR::predict_GMM( subdf, gmm$centroids, gmm$covariance_matrices, gmm$weights)
+    return( gmm )
+  }
+  if ( method == "kmeans" ) {
+    opt = Optimal_Clusters_KMeans( subdf, max_clusters = maxk, plot_clusters = FALSE,
+                                  criterion = 'distortion_fK', fK_threshold = 0.85,
+                                  initializer = 'optimal_init', tol_optimal_init = 0.2)
+    km_rc = KMeans_rcpp(subdf, clusters = which.min(opt), num_init = 5, max_iters = 100,
+      initializer = 'optimal_init', verbose = F)
+    return( km_rc )
+  }
+
+}
+
+
+
+
+#' Predict subtype from multivariate data
+#'
+#' This is the inference module for subtype definition based on a matrix.
+#' Currently only supports clustering based on gaussian mixtures
+#' via the ClusterR package.
+#'
+#' @param mxdfin Input data frame
+#' @param measureColumns vector defining the data columns to be used for clustering.
+#' @param clusteringObject a GMM object to predict clusters
+#' @param clustername column name for the identified clusters
+#' @return the clusters attached to the data frame
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
+#' gmmclp = predictSubtypeClusterMulti( mydf, rbfnames, gmmcl )
+#' @export
+predictSubtypeClusterMulti  <- function(
+  mxdfin,
+  measureColumns,
+  clusteringObject,
+  clustername = 'GMMClusters'
+) {
+
+  subdf = mxdfin[ , measureColumns ]
+  subdf = data.matrix( subdf )
+  pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
+    clusteringObject$covariance_matrices, clusteringObject$weights )
+  mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
+  colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+  return( data.frame( mxdfin ) )
 }

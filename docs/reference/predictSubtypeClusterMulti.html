@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • subtyper</title>
+<title>Predict subtype from multivariate data — predictSubtypeClusterMulti • subtyper</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,10 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Predict subtype from multivariate data — predictSubtypeClusterMulti" />
+<meta property="og:description" content="This is the inference module for subtype definition based on a matrix.
+Currently only supports clustering based on gaussian mixtures
+via the ClusterR package." />
 
 
 
@@ -58,7 +61,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -111,96 +114,58 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Predict subtype from multivariate data</h1>
+    <small class="dont-index">Source: <a href='https://github.com/stnava/subtyper/blob/master/R/subtyper.R'><code>R/subtyper.R</code></a></small>
+    <div class="hidden name"><code>predictSubtypeClusterMulti.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>This is the inference module for subtype definition based on a matrix.
+Currently only supports clustering based on gaussian mixtures
+via the ClusterR package.</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='fu'>predictSubtypeClusterMulti</span><span class='op'>(</span>
+  <span class='va'>mxdfin</span>,
+  <span class='va'>measureColumns</span>,
+  <span class='va'>clusteringObject</span>,
+  clustername <span class='op'>=</span> <span class='st'>"GMMClusters"</span>
+<span class='op'>)</span></pre>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="adjustByCovariates.html">adjustByCovariates()</a></code> </p>
-        </td>
-        <td><p>Covariate adjustment</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="filterByVisit.html">filterByVisit()</a></code> </p>
-        </td>
-        <td><p>Get subjects within a given set of visits</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="generateSubtyperData.html">generateSubtyperData()</a></code> </p>
-        </td>
-        <td><p>Generate example data for illustrating <code>subtyper</code></p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="highestQualityRepeat.html">highestQualityRepeat()</a></code> </p>
-        </td>
-        <td><p>Get subjects and timepoints with the best quality</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="outlierness.html">outlierness()</a></code> </p>
-        </td>
-        <td><p>Outlierness scoring</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="plotSubtypeChange.html">plotSubtypeChange()</a></code> </p>
-        </td>
-        <td><p>Plot longitudinal trajectories across subtypes</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="predictSubtypeClusterMulti.html">predictSubtypeClusterMulti()</a></code> </p>
-        </td>
-        <td><p>Predict subtype from multivariate data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="predictSubtypeUni.html">predictSubtypeUni()</a></code> </p>
-        </td>
-        <td><p>Predict subtype for univariate data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="trainSubtypeClusterMulti.html">trainSubtypeClusterMulti()</a></code> </p>
-        </td>
-        <td><p>Train subtype for multivariate data</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="trainSubtypeUni.html">trainSubtypeUni()</a></code> </p>
-        </td>
-        <td><p>Train subtype for univariate data</p></td>
-      </tr>
-    </tbody>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>mxdfin</th>
+      <td><p>Input data frame</p></td>
+    </tr>
+    <tr>
+      <th>measureColumns</th>
+      <td><p>vector defining the data columns to be used for clustering.</p></td>
+    </tr>
+    <tr>
+      <th>clusteringObject</th>
+      <td><p>a GMM object to predict clusters</p></td>
+    </tr>
+    <tr>
+      <th>clustername</th>
+      <td><p>column name for the identified clusters</p></td>
+    </tr>
     </table>
-  </div>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>the clusters attached to the data frame</p>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
+
+    <p>Avants BB</p>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='va'>mydf</span> <span class='op'>=</span> <span class='fu'><a href='generateSubtyperData.html'>generateSubtyperData</a></span><span class='op'>(</span> <span class='fl'>100</span> <span class='op'>)</span>
+</div></pre>
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>
