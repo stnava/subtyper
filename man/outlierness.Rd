@@ -4,7 +4,14 @@
 \alias{outlierness}
 \title{Outlierness scoring}
 \usage{
-outlierness(mxdfin, measureColumns, calck, report = FALSE)
+outlierness(
+  mxdfin,
+  measureColumns,
+  calck,
+  outlierfunctions = c("LOOP", "LOF", "INFLO", "RDOS", "KDEOS", "LDF", "KNN_AGG",
+    "KNN_IN", "KNN_SUM", "RKOF"),
+  verbose = FALSE
+)
 }
 \arguments{
 \item{mxdfin}{Input data frame with repeated measurements and a grouped time variable}
@@ -13,7 +20,9 @@ outlierness(mxdfin, measureColumns, calck, report = FALSE)
 
 \item{calck}{optional integer for knn}
 
-\item{report}{boolean return vector string of column names for outlier detection results}
+\item{outlierfunctions}{vector of strings naming outlier functions to report}
+
+\item{verbose}{boolean}
 }
 \value{
 data frame

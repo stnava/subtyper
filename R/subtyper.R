@@ -260,7 +260,8 @@ highestQualityRepeat  <-function(
 #' @param mxdfin Input data frame with repeated measurements and a grouped time variable
 #' @param measureColumns vector string of column names to use in outlier detection
 #' @param calck optional integer for knn
-#' @param report boolean return vector string of column names for outlier detection results
+#' @param outlierfunctions vector of strings naming outlier functions to report
+#' @param verbose boolean
 #' @return data frame
 #' @author Avants BB
 #' @examples
@@ -274,26 +275,48 @@ highestQualityRepeat  <-function(
 #' @export
 #' @importFrom stats quantile
 #' @importFrom utils tail
-outlierness <- function( mxdfin, measureColumns, calck, report=FALSE ) {
+outlierness <- function( mxdfin, measureColumns, calck,
+  outlierfunctions = c("LOOP", "LOF",  "INFLO", "RDOS", "KDEOS",
+    "LDF", "KNN_AGG", "KNN_IN", "KNN_SUM", "RKOF" ),
+  verbose=FALSE ) {
   olnames = c("OL_LOOP", "OL_LOF", "OL_NOF", "OL_INFLO", "OL_RDOS", "OL_KDEOS",
     "OL_LDF", "OL_KNN_AGG", "OL_KNN_IN", "OL_KNN_SUM", "OL_RKOF" )
-  olnames = c("OL_LOOP", "OL_LOF",  "OL_INFLO", "OL_RDOS", "OL_KDEOS",
-    "OL_LDF", "OL_KNN_AGG", "OL_KNN_IN", "OL_KNN_SUM", "OL_RKOF" )
-  if ( report ) return( olnames )
   oldata = scale( mxdfin[,measureColumns], TRUE, TRUE )
   if ( missing( calck ) )
     calck = DDoutlier::NAN( oldata )$r # this + LOOP is good
-  mxdfin$OL_LOOP = DDoutlier::LOOP(  oldata, k=calck )
-  mxdfin$OL_LOF = DDoutlier::LOF(  oldata, k=calck )
-  mxdfin$OL_INFLO = ( DDoutlier::INFLO( oldata, k=calck ) )
-#  mxdfin$OL_NOF = capture.output( DDoutlier::NOF( oldata )$NOF)
-  mxdfin$OL_KDEOS = DDoutlier::KDEOS( oldata, k_min = round( calck * 0.5 ), k_max = round( calck * 2 ) )
-  mxdfin$OL_LDF = DDoutlier::LDF( oldata, k = calck  )$LDF
-  mxdfin$OL_KNN_AGG = DDoutlier::KNN_AGG( oldata, k_min = round( calck * 0.5 ), k_max = round( calck * 2 ) )
-  mxdfin$OL_KNN_IN = -1.0 * DDoutlier::KNN_IN( oldata, k = calck )
-  mxdfin$OL_KNN_SUM = DDoutlier::KNN_SUM( oldata, k = calck  )
-  mxdfin$OL_RDOS = DDoutlier::RDOS( oldata, k = calck  )
-  mxdfin$OL_RKOF = DDoutlier::RKOF( oldata, k = calck  )
+  for ( myolf in outlierfunctions ) {
+    if ( myolf == "LOOP" ) {
+      if ( verbose ) cat( "calc: LOOP ... ")
+      mxdfin$OL_LOOP = DDoutlier::LOOP(  oldata, k=calck )
+    } else if ( myolf == "LOF"  ) {
+      if ( verbose ) cat( "calc: LOF ... ")
+      mxdfin$OL_LOF = DDoutlier::LOF(  oldata, k=calck )
+    } else if ( myolf == "INFLO"  ) {
+      if ( verbose ) cat( "calc: INFLO ... ")
+      mxdfin$OL_INFLO = ( DDoutlier::INFLO( oldata, k=calck ) )
+    } else if ( myolf == "NOF" ) {
+      if ( verbose ) cat( "calc: NOF ... ")
+      mxdfin$OL_NOF = DDoutlier::NOF( oldata )$NOF
+    } else if ( myolf == "KDEOS" ) {
+      if ( verbose ) cat( "calc: KDEOS ... ")
+      mxdfin$OL_KDEOS = DDoutlier::KDEOS( oldata, k_min = round( calck * 0.5 ), k_max = calck + 1 )
+    } else if ( myolf == "LDF" ) {
+      if ( verbose ) cat( "calc: LDF ... ")
+      mxdfin$OL_LDF = DDoutlier::LDF( oldata, k = calck  )$LDF
+    } else if ( myolf == "KNN_AGG" ) {
+      if ( verbose ) cat( "calc: KNN_AGG ... ")
+      mxdfin$OL_KNN_AGG = DDoutlier::KNN_AGG( oldata, k_min = round( calck * 0.5 ), k_max = calck + 1  )
+    } else if ( myolf == "KNN_IN" ) {
+      if ( verbose ) cat( "calc: KNN_IN ... ")
+      mxdfin$OL_KNN_IN = -1.0 * DDoutlier::KNN_IN( oldata, k = calck )
+    } else if ( myolf == "KNN_SUM" ) {
+      if ( verbose ) cat( "calc: KNN_SUM ... ")
+      mxdfin$OL_KNN_SUM = DDoutlier::KNN_SUM( oldata, k = calck  )
+    } else if ( myolf == "RKOF" ) {
+      if ( verbose ) cat( "calc: RKOF ... ")
+      mxdfin$OL_RKOF = DDoutlier::RKOF( oldata, k = calck  )
+    }
+  }
   return( mxdfin )
 }
 
