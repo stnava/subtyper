@@ -4,7 +4,14 @@
 \alias{predictSubtypeUni}
 \title{Predict subtype for univariate data}
 \usage{
-predictSubtypeUni(mxdfin, subtypeDataFrame, idvar, visitName, baselineVisit)
+predictSubtypeUni(
+  mxdfin,
+  subtypeDataFrame,
+  idvar,
+  visitName,
+  baselineVisit,
+  rename = TRUE
+)
 }
 \arguments{
 \item{mxdfin}{Input data frame}
@@ -16,6 +23,8 @@ predictSubtypeUni(mxdfin, subtypeDataFrame, idvar, visitName, baselineVisit)
 \item{visitName}{the column name defining the visit variables}
 
 \item{baselineVisit}{the string naming the baseline visit}
+
+\item{rename}{boolean will rename levels to user-provided names}
 }
 \value{
 data frame with attached subtypess

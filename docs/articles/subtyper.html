@@ -104,8 +104,6 @@
 <span class="co">#&gt; [1] "r update: 4"</span>
 <span class="co">#&gt; [1] "r update: 5"</span>
 <span class="co">#&gt; [1] "r update: 6"</span>
-<span class="co">#&gt; [1] "r update: 7"</span>
-<span class="co">#&gt; [1] "r update: 8"</span>
 <span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/highestQualityRepeat.html">highestQualityRepeat</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="st">"Id"</span>, <span class="st">"visit"</span>, <span class="st">"OL_KNN_SUM"</span><span class="op">)</span>
 <span class="va">qdf</span> <span class="op">=</span> <span class="fu"><a href="../reference/trainSubtypeUni.html">trainSubtypeUni</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="st">"cognition"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"C0"</span>,<span class="st">"C1"</span>,<span class="st">"C2"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.33</span>,<span class="fl">0.66</span><span class="op">)</span> <span class="op">)</span>
 <span class="va">pdf</span> <span class="op">=</span> <span class="fu"><a href="../reference/predictSubtypeUni.html">predictSubtypeUni</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">qdf</span>, <span class="st">"Id"</span> <span class="op">)</span></code></pre></div>
@@ -115,7 +113,8 @@
 <a href="#example-data" class="anchor"></a>Example data</h2>
 <p>The function:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/generateSubtyperData.html">generateSubtyperData</a></span><span class="op">(</span> <span class="fl">100</span> <span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">n</span> <span class="op">=</span> <span class="fl">250</span> <span class="co"># number of subjects</span>
+<span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/generateSubtyperData.html">generateSubtyperData</a></span><span class="op">(</span> <span class="va">n</span> <span class="op">)</span></code></pre></div>
 <p>simply supplies a dataframe that fits our assumptions about how data is organized.</p>
 <ul>
 <li><p>subject IDs are provided</p></li>
@@ -132,12 +131,11 @@
 <div id="outlierness" class="section level2">
 <h2 class="hasAnchor">
 <a href="#outlierness" class="anchor"></a>Outlierness</h2>
-<p>While we assume that the data comes with some quality measurements (domain specific), we may also use data-driven approaches to measuring how close each timepoint-repeat is to related data. If such a datapoint is “far away” from its nearest neighbors, then it is likely to be an outlier. The <code>outlierness</code> function implements several methods for making such estimations which can guide data inspection.</p>
+<p>It is important to note that these methods are likely to be more generalizable if they are trained and applied to data that is “good” quality. While we assume that the data comes with some quality measurements (domain specific), we may also use data-driven approaches to measuring how close each timepoint-repeat is to related data. If such a datapoint is “far away” from its nearest neighbors, then it is likely to be an outlier. The <code>outlierness</code> function implements several methods for making such estimations which can guide data inspection.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">rbfnames</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"Random"</span>,<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>
 <span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/outlierness.html">outlierness</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">rbfnames</span> <span class="op">)</span></code></pre></div>
 <p>These outlierness measurements are added to the data frame by the above call. The names are prepended with “OL_”. Which particular measurement – or set of measurements – is best may depend on your dataset.</p>
-<p>It is important to note that these methods are likely to be more generalizable if they are trained and applied to data that is “good” quality.</p>
 <p><strong>Warning:</strong> Some subjects will always be outliers according to these methods. However, that does not mean they should be rejected. Decisions about data rejection should be put off to the last possible moment. Another option is to simply covary for the outlierness score — with the assumption that the score is not or is only marginally related to the outcomes of interest.</p>
 </div>
 <div id="filter-for-quality" class="section level2">
@@ -160,7 +158,42 @@
 <a href="#train-the-subtyping-model" class="anchor"></a>Train the subtyping model</h2>
 <p>We use a four group model here in order to demonstrate the difference from the known three group diagnosis.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">qdf</span> <span class="op">=</span> <span class="fu"><a href="../reference/trainSubtypeUni.html">trainSubtypeUni</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="st">"cognition_adjusted"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"C0"</span>,<span class="st">"C1"</span>,<span class="st">"C2"</span>,<span class="st">"C3"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.25</span>,<span class="fl">0.5</span>, <span class="fl">0.75</span><span class="op">)</span> <span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">qdf</span> <span class="op">=</span> <span class="fu"><a href="../reference/trainSubtypeUni.html">trainSubtypeUni</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="st">"cognition_adjusted"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"C0"</span>,<span class="st">"C1"</span>,<span class="st">"C2"</span>,<span class="st">"C3"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.25</span>,<span class="fl">0.5</span>, <span class="fl">0.75</span><span class="op">)</span> <span class="op">)</span>
+<span class="va">qdf</span> <span class="op">=</span> <span class="fu"><a href="../reference/trainSubtypeUni.html">trainSubtypeUni</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="st">"cognition_adjusted"</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"C0"</span>,<span class="st">"C1"</span>,<span class="st">"C2"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span> <span class="fl">0.33</span>, <span class="fl">0.66</span> <span class="op">)</span> <span class="op">)</span>
+<span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html">kable</a></span><span class="op">(</span> <span class="va">qdf</span>, caption<span class="op">=</span><span class="st">"Subtyping training result."</span><span class="op">)</span></code></pre></div>
+<table class="table">
+<caption>Subtyping training result.</caption>
+<thead><tr class="header">
+<th align="left">subtype</th>
+<th align="left">measurement</th>
+<th align="right">quantiles</th>
+<th align="right">quantileValues</th>
+<th align="left">group</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">C0</td>
+<td align="left">cognition_adjusted</td>
+<td align="right">0.00</td>
+<td align="right">-Inf</td>
+<td align="left">NA</td>
+</tr>
+<tr class="even">
+<td align="left">C1</td>
+<td align="left">cognition_adjusted</td>
+<td align="right">0.33</td>
+<td align="right">2.014896</td>
+<td align="left">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">C2</td>
+<td align="left">cognition_adjusted</td>
+<td align="right">0.66</td>
+<td align="right">5.497247</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="perform-inference-with-the-subtyping-model" class="section level2">
 <h2 class="hasAnchor">
@@ -184,27 +217,21 @@
 <tbody>
 <tr class="odd">
 <td align="left">C0</td>
-<td align="right">3</td>
-<td align="right">12</td>
+<td align="right">13</td>
+<td align="right">7</td>
 <td align="right">0</td>
 </tr>
 <tr class="even">
 <td align="left">C1</td>
+<td align="right">5</td>
+<td align="right">12</td>
 <td align="right">0</td>
-<td align="right">0</td>
-<td align="right">6</td>
 </tr>
 <tr class="odd">
 <td align="left">C2</td>
 <td align="right">0</td>
 <td align="right">0</td>
-<td align="right">5</td>
-</tr>
-<tr class="even">
-<td align="left">C3</td>
-<td align="right">9</td>
-<td align="right">0</td>
-<td align="right">0</td>
+<td align="right">18</td>
 </tr>
 </tbody>
 </table>
@@ -216,12 +243,18 @@
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">summ</span> <span class="op">=</span> <span class="fu"><a href="../reference/plotSubtypeChange.html">plotSubtypeChange</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="st">"Id"</span>, <span class="st">"cognition"</span>, <span class="st">"DX"</span>, <span class="st">"visit"</span>, whiskervar<span class="op">=</span><span class="st">'se'</span>  <span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span></code></pre></div>
-<p><img src="subtyper_files/figure-html/plotit-1.png" width="768"> See the difference with subtype.</p>
+<p><img src="subtyper_files/figure-html/plotit-1.png" width="768"></p>
+<p>See the difference with subtype.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">summ</span> <span class="op">=</span> <span class="fu"><a href="../reference/plotSubtypeChange.html">plotSubtypeChange</a></span><span class="op">(</span> <span class="va">pdf</span>, <span class="st">"Id"</span>, <span class="st">"cognition"</span>, <span class="st">"subtype"</span>, <span class="st">"visit"</span>, whiskervar<span class="op">=</span><span class="st">'se'</span> <span class="op">)</span>
-<span class="co">#&gt; Warning in qt(conf.interval/2 + 0.5, datac$N - 1): NaNs produced</span>
 <span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span></code></pre></div>
 <p><img src="subtyper_files/figure-html/plotit2-1.png" width="768"></p>
+<p>Plot the subtypes with cutpoints displayed.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">pdf</span> <span class="op">=</span> <span class="fu"><a href="../reference/predictSubtypeUni.html">predictSubtypeUni</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">qdf</span>, <span class="st">"Id"</span>, <span class="st">"visit"</span>, <span class="st">"V0"</span>, rename<span class="op">=</span><span class="cn">FALSE</span> <span class="op">)</span>
+<span class="va">summ</span> <span class="op">=</span> <span class="fu"><a href="../reference/plotSubtypeChange.html">plotSubtypeChange</a></span><span class="op">(</span> <span class="va">pdf</span>, <span class="st">"Id"</span>, <span class="st">"cognition"</span>, <span class="st">"subtype"</span>, <span class="st">"visit"</span>, whiskervar<span class="op">=</span><span class="st">'se'</span> <span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span></code></pre></div>
+<p><img src="subtyper_files/figure-html/plotit3-1.png" width="768"></p>
 <p>Visualization of the subtype definition against various outcomes is key to establishing validity.</p>
 </div>
 </div>

@@ -12,6 +12,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+set.seed( 000 )
 ```
 
 # Overview of `subtyper`
@@ -59,7 +60,8 @@ pdf = predictSubtypeUni( mydf, qdf, "Id" )
 The function:
 
 ```r
-mydf = generateSubtyperData( 100 )
+n = 250 # number of subjects
+mydf = generateSubtyperData( n )
 ```
 
 simply supplies a dataframe that fits our assumptions about how data is organized.
@@ -84,6 +86,8 @@ mydf[ mixna, "cognition" ] = NA
 
 ## Outlierness
 
+It is important to note that these methods are likely to be more generalizable
+if they are trained and applied to data that is "good" quality.
 While we assume that the data comes with some quality measurements (domain specific),
 we may also use data-driven approaches to measuring how close each timepoint-repeat
 is to related data.  If such a datapoint is "far away" from its nearest neighbors,
@@ -99,8 +103,6 @@ These outlierness measurements are added to the data frame by the above call.
 The names are prepended with "OL_".  Which particular measurement -- or set of
 measurements -- is best may depend on your dataset.
 
-It is important to note that these methods are likely to be more generalizable
-if they are trained and applied to data that is "good" quality.
 
 **Warning:** Some subjects will always be outliers according to these methods.
 However, that does not mean they should be rejected.  Decisions about data
@@ -138,6 +140,8 @@ difference from the known three group diagnosis.
 
 ```{r train}
 qdf = trainSubtypeUni( mydf, "cognition_adjusted", c("C0","C1","C2","C3"), c(0.25,0.5, 0.75) )
+qdf = trainSubtypeUni( mydf, "cognition_adjusted", c("C0","C1","C2"), c( 0.33, 0.66 ) )
+knitr::kable( qdf, caption="Subtyping training result.")
 ```
 
 ## Perform inference with the subtyping model
@@ -166,9 +170,19 @@ See the difference with diagnosis.
 summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit", whiskervar='se'  )
 print( summ )
 ```
+
 See the difference with subtype.
 
 ```{r plotit2,fig.width=8,fig.height=4}
+summ = plotSubtypeChange( pdf, "Id", "cognition", "subtype", "visit", whiskervar='se' )
+print( summ )
+```
+
+
+Plot the subtypes with cutpoints displayed.
+
+```{r plotit3,fig.width=8,fig.height=4}
+pdf = predictSubtypeUni( mydf, qdf, "Id", "visit", "V0", rename=FALSE )
 summ = plotSubtypeChange( pdf, "Id", "cognition", "subtype", "visit", whiskervar='se' )
 print( summ )
 ```

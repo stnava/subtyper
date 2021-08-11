@@ -4,10 +4,17 @@
 \alias{generateSubtyperData}
 \title{Generate example data for illustrating \code{subtyper}}
 \usage{
-generateSubtyperData(n = 100)
+generateSubtyperData(
+  n = 100,
+  groupmeansbytime = c(1, 3, 8, 0.95, 3.5, 12, 1.05, 4, 20)
+)
 }
 \arguments{
 \item{n}{numer of subjects}
+
+\item{groupmeansbytime}{a 9-vector for each group by time mean for cognition.
+the cognitive data is simulated from these mean values.  Group 3 changes
+more rapidly, by default.}
 }
 \value{
 data frame

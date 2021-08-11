@@ -12,6 +12,9 @@
 #' Generate example data for illustrating `subtyper`
 #'
 #' @param n numer of subjects
+#' @param groupmeansbytime a 9-vector for each group by time mean for cognition.
+#' the cognitive data is simulated from these mean values.  Group 3 changes
+#' more rapidly, by default.
 #'
 #' @return data frame
 #' @author Avants BB
@@ -20,10 +23,16 @@
 #' mydf = generateSubtyperData( 5 )
 #'
 #' @export
-generateSubtyperData <-function( n = 100 ) {
+generateSubtyperData <-function( n = 100,
+  groupmeansbytime = c(
+      1, 3, 8, # V0 G0,G1,G2
+      0.95, 3.5, 12,  # V1 G0,G1,G2
+      1.05, 4.0, 20 )  # V2 G0,G1,G2
+) {
 
-  myids = c("A","B","C","D","E", "F", "G", "H", "I", "J", "K", "L" )
-  mygroup = c( rep("G0",4), rep("G1",4), rep("G2",4) )
+  myids = LETTERS[1:24]
+  groupn = round( length( myids )/3 )
+  mygroup = c( rep("G0",groupn), rep("G1",groupn), rep("G2",groupn) )
   sampler = sample( 1:length(myids), n, replace=TRUE )
   mydf = data.frame(
     Id = myids[ sampler ],
@@ -60,12 +69,11 @@ generateSubtyperData <-function( n = 100 ) {
   mydf$repeater = repeati
 
   cognition = rep( NA, n )
-  mymeans = c( 1, 3, 8, 1, 4, 10, 1, 5, 16 )
   ct = 1
   for ( v in vizzes ) {
     for ( k in unique( mygroup ) ) {
       losel = mydf$DX == k & mydf$visit == v
-      cognition[ losel ] = rnorm( sum(losel), mean = mymeans[ct] )
+      cognition[ losel ] = rnorm( sum(losel), mean = groupmeansbytime[ct] )
       ct = ct + 1
     }
   }
@@ -433,6 +441,7 @@ trainSubtypeUni  <- function(
 #' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
+#' @param rename boolean will rename levels to user-provided names
 #' @return data frame with attached subtypess
 #' @author Avants BB
 #' @examples
@@ -449,7 +458,8 @@ predictSubtypeUni  <- function(
   subtypeDataFrame,
   idvar,
   visitName,
-  baselineVisit ) {
+  baselineVisit,
+  rename = TRUE ) {
 
   msr = as.character( subtypeDataFrame[, "measurement"][1] )
   thesubtypes = subtypeDataFrame[,1]
@@ -458,13 +468,17 @@ predictSubtypeUni  <- function(
   quantsP = as.numeric( subtypeDataFrame[,"quantiles"][-1] )
   # by default, just run across each row
   mxdfin[,names(subtypeDataFrame)[1]] = Hmisc::cut2( mxdfin[,msr], cuts = quantsV )
-  mxdfin[,names(subtypeDataFrame)[1]] = as.character( mxdfin[,names(subtypeDataFrame)[1]] )
   theselevs = sort( na.omit( unique(  mxdfin[,names(subtypeDataFrame)[1]] ) ) )
-  for ( k in 1:length( theselevs ) ) {
-    losel = mxdfin[,names(subtypeDataFrame)[1]] == theselevs[k]
-    mxdfin[,names(subtypeDataFrame)[1]][ losel ] = thesubtypes[k]
+  if ( rename ) {
+    mxdfin[,names(subtypeDataFrame)[1]] = as.character( mxdfin[,names(subtypeDataFrame)[1]] )
+    for ( k in 1:length( theselevs ) ) {
+      losel = mxdfin[,names(subtypeDataFrame)[1]] == theselevs[k]
+      mxdfin[,names(subtypeDataFrame)[1]][ losel ] = thesubtypes[k]
+    }
+    mxdfin[,names(subtypeDataFrame)[1]] <- factor(mxdfin[,names(subtypeDataFrame)[1]], levels=thesubtypes )
+  } else {
+    mxdfin[,names(subtypeDataFrame)[1]] <- factor(mxdfin[,names(subtypeDataFrame)[1]], levels=theselevs )
   }
-  mxdfin[,names(subtypeDataFrame)[1]] <- factor(mxdfin[,names(subtypeDataFrame)[1]], levels=thesubtypes )
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( mxdfin )
   if ( ! ( baselineVisit %in% unique( mxdfin[,visitName] ) ) )
