@@ -175,7 +175,6 @@ plotSubtypeChange <-function( mxdfin,
       theme(legend.position = 'top') +
       guides(fill=guide_legend(title.position="top")) +
       scale_colour_hue(name=subtype, l=40) + # Use darker colors, lightness=40
-#        ggtitle( namer ) + scale_y_continuous(breaks=0:20*4) +  # Set tick every 4
         theme_bw() +
         theme(text = element_text(size=14),
             axis.text.x = element_text(angle=0, vjust=1),
@@ -267,8 +266,14 @@ highestQualityRepeat  <-function(
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' mydf[8,rbfnames] = mydf[8,rbfnames] * 4.0
 #' mydfol = outlierness( mydf, rbfnames )
+#' olnames = names(mydf)[grep("OL_",names(mydf))]
+#' mydf[6,olnames]
+#' mydf[8,olnames]
 #' @export
+#' @importFrom stats quantile
+#' @importFrom utils tail
 outlierness <- function( mxdfin, measureColumns, calck, report=FALSE ) {
   olnames = c("OL_LOOP", "OL_LOF", "OL_NOF", "OL_INFLO", "OL_RDOS", "OL_KDEOS",
     "OL_LDF", "OL_KNN_AGG", "OL_KNN_IN", "OL_KNN_SUM", "OL_RKOF" )

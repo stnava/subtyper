@@ -2,6 +2,7 @@ VERSION = $(shell grep ^Version DESCRIPTION | sed s/Version:\ //)
 
 doc:
 	R --slave -e 'library(roxygen2); roxygenise()'
+	R --slave -e 'pkgdown::build_site()'
 	-git add --all man/*.Rd
 
 test:

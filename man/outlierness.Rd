@@ -24,7 +24,11 @@ Produce several complementary measurements of outlierness
 \examples{
 mydf = generateSubtyperData( 100 )
 rbfnames = names(mydf)[grep("Random",names(mydf))]
+mydf[8,rbfnames] = mydf[8,rbfnames] * 4.0
 mydfol = outlierness( mydf, rbfnames )
+olnames = names(mydf)[grep("OL_",names(mydf))]
+mydf[6,olnames]
+mydf[8,olnames]
 }
 \author{
 Avants BB
