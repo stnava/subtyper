@@ -88,7 +88,7 @@ generateSubtyperData <-function( n = 100 ) {
 #' @param xlab additional naming variable
 #' @param ylab additional naming variable
 #'
-#' @return data frame
+#' @return ggplot
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
@@ -126,7 +126,7 @@ plotSubtypeChange <-function( mxdfin,
 
           # This does the summary. For each group's data frame, return a vector with
           # N, mean, and sd
-          datac <- ddply(data, groupvars, .drop=.drop,
+          datac <- plyr::ddply(data, groupvars, .drop=.drop,
             .fun = function(xx, col) {
               c(N    = length2(xx[[col]], na.rm=TRUE),
                 mean = mean   (xx[[col]], na.rm=TRUE),
@@ -136,7 +136,7 @@ plotSubtypeChange <-function( mxdfin,
             measurevar
           )
           # Rename the "mean" column
-          datac <- rename(datac, c("mean" = measurevar))
+          datac <- plyr::rename(datac, c("mean" = measurevar))
 
           datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
 
@@ -164,7 +164,7 @@ plotSubtypeChange <-function( mxdfin,
     pd <- position_dodge( 0.05 ) # move them .05 to the left and right
     ww = 0.5
     namer=paste( subtype, ' vs ', measurement , extra )
-    print( ggplot( tgcWithin,
+    return( ggplot( tgcWithin,
       aes(x=timer, y=Changer, group = Quant, color = Quant , shape = Quant )) +
       geom_errorbar(aes(ymin=ymin, ymax=ymax), colour="black", width=ww, position=pd) +
       geom_line(lwd = 1, show.legend = FALSE ) +
@@ -180,7 +180,8 @@ plotSubtypeChange <-function( mxdfin,
             axis.text.x = element_text(angle=0, vjust=1),
             legend.direction = "horizontal", legend.position = "top" )
       )
-    return( tgcWithin )
+
+#    return( tgcWithin )
     }
 
 
@@ -452,14 +453,13 @@ predictSubtypeUni  <- function(
 
   msr = as.character( subtypeDataFrame[, "measurement"][1] )
   thesubtypes = subtypeDataFrame[,1]
-  defaultST = tail( thesubtypes, 1 )
-  mxdfin[,names(subtypeDataFrame)[1]] = defaultST
+  mxdfin[,names(subtypeDataFrame)[1]] = NA
   quantsV = as.numeric( subtypeDataFrame[,"quantileValues"][-1] )
   quantsP = as.numeric( subtypeDataFrame[,"quantiles"][-1] )
   # by default, just run across each row
   mxdfin[,names(subtypeDataFrame)[1]] = Hmisc::cut2( mxdfin[,msr], cuts = quantsV )
   mxdfin[,names(subtypeDataFrame)[1]] = as.character( mxdfin[,names(subtypeDataFrame)[1]] )
-  theselevs = unique(  mxdfin[,names(subtypeDataFrame)[1]] )
+  theselevs = sort( na.omit( unique(  mxdfin[,names(subtypeDataFrame)[1]] ) ) )
   for ( k in 1:length( theselevs ) ) {
     losel = mxdfin[,names(subtypeDataFrame)[1]] == theselevs[k]
     mxdfin[,names(subtypeDataFrame)[1]][ losel ] = thesubtypes[k]

@@ -164,11 +164,13 @@ See the difference with diagnosis.
 
 ```{r plotit,fig.width=8,fig.height=4}
 summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit", whiskervar='se'  )
+print( summ )
 ```
 See the difference with subtype.
 
 ```{r plotit2,fig.width=8,fig.height=4}
 summ = plotSubtypeChange( pdf, "Id", "cognition", "subtype", "visit", whiskervar='se' )
+print( summ )
 ```
 
 Visualization of the subtype definition against various outcomes is key to

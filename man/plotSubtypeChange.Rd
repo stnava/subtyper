@@ -36,7 +36,7 @@ plotSubtypeChange(
 \item{ylab}{additional naming variable}
 }
 \value{
-data frame
+ggplot
 }
 \description{
 Uses \code{ggplot2} to visualize differences between subtypes over time.
