@@ -131,15 +131,19 @@ variables may include age, sex and other nuisance variables.
 ```{r covars}
 myform = "cognition ~ RandomBasisProjection01 "
 mydf = adjustByCovariates(mydf,myform,"DX","G0")
+# produces a variable called cognition_adjusted
 ```
 
 ## Train the subtyping model
 
-We use a four group model here in order to demonstrate the
+We employ a three group model as it matches our known (simulated) diagnostic groups.
+Otherwise, we could use a four group model here in order to demonstrate the
 difference from the known three group diagnosis.
 
 ```{r train}
-qdf = trainSubtypeUni( mydf, "cognition_adjusted", c("C0","C1","C2","C3"), c(0.25,0.5, 0.75) )
+# four group model
+qdf4 = trainSubtypeUni( mydf, "cognition_adjusted", c("C0","C1","C2","C3"), c(0.25,0.5, 0.75) )
+# three group model
 qdf = trainSubtypeUni( mydf, "cognition_adjusted", c("C0","C1","C2"), c( 0.33, 0.66 ) )
 knitr::kable( qdf, caption="Subtyping training result.")
 ```
