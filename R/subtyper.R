@@ -173,9 +173,9 @@ plotSubtypeChange <-function( mxdfin,
     ww = 0.5
     namer=paste( subtype, ' vs ', measurement , extra )
     return( ggplot( tgcWithin,
-      aes(x=tgcWithin$timer, y=tgcWithin$Changer,
-        group = tgcWithin$Quant, color = tgcWithin$Quant , shape = tgcWithin$Quant )) +
-      geom_errorbar(aes(ymin=tgcWithin$ymin, ymax=tgcWithin$ymax), colour="black", width=ww, position=pd) +
+      aes(x=tgcWithin$timer, y=Changer,
+        group = Quant, color = Quant , shape = Quant )) +
+      geom_errorbar(aes(ymin=ymin, ymax=ymax), colour="black", width=ww, position=pd) +
       geom_line(lwd = 1, show.legend = FALSE ) +
       geom_point(position=pd, size=3, shape=21, fill="white") + # 21 is filled circle
       xlab( xlab ) + ylab( paste(ylab, measurement," +/-", whiskervar )) +
