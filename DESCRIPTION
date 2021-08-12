@@ -1,10 +1,10 @@
 Package: subtyper
 Type: Package
-Title: Subtyping, filtering and visualization for longitudinal population data
+Title: Subtyping, Filtering and Visualization for Longitudinal Population Data
 Description: We ingest dataframes describing populations that are followed
     longitudinally, potentially with repeat measurements at each visit/timepoint.
     Subtypes are identified after filtering the data frame for good quality.
-    Training the subtyping method can be performed after covariate adjustment.
+    Training the subtyping method can be performed after covariates adjustment.
     Training is made explicit and its results are captured in an intuitive data
     frame detailing results.  Inference or prediction of subtypes in new data
     is facilitated by a single function call. The package provides intuitive
@@ -13,14 +13,15 @@ Version: 0.1.0
 Authors@R: person(c("Brian", "B."), "Avants", role=c("aut", "cre"), email="stnava@gmail.com")
 URL: https://github.com/stnava/subtyper
 BugReports: https://github.com/stnava/subtyper/issues
-License: Apache 3.0
+License: GPL-3
 Depends:
     R (>= 3.0.0)
 Imports:
   ggplot2,
   Hmisc,
   plyr,
-  DDoutlier
+  DDoutlier,
+  ClusterR
 Suggests:
     covr,
     knitr,

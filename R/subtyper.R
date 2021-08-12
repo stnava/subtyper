@@ -102,7 +102,7 @@ generateSubtyperData <-function( n = 100,
 #' mydf = generateSubtyperData( 100 )
 #' summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit" )
 #' @export
-#' @importFrom stats lm predict qt rnorm var
+#' @importFrom stats lm predict qt rnorm var na.omit
 #' @importFrom DDoutlier  LOOP  LOF  INFLO  RDOS  KDEOS  LDF  KNN_AGG  KNN_IN  KNN_SUM  RKOF
 #' @importFrom ggplot2 aes ylim guides theme_bw scale_colour_hue geom_errorbar position_dodge element_text geom_line geom_point ggplot guide_legend
 #' @importFrom ggplot2 xlab ylab theme rel
@@ -173,8 +173,9 @@ plotSubtypeChange <-function( mxdfin,
     ww = 0.5
     namer=paste( subtype, ' vs ', measurement , extra )
     return( ggplot( tgcWithin,
-      aes(x=timer, y=Changer, group = Quant, color = Quant , shape = Quant )) +
-      geom_errorbar(aes(ymin=ymin, ymax=ymax), colour="black", width=ww, position=pd) +
+      aes(x=tgcWithin$timer, y=tgcWithin$Changer,
+        group = tgcWithin$Quant, color = tgcWithin$Quant , shape = tgcWithin$Quant )) +
+      geom_errorbar(aes(ymin=tgcWithin$ymin, ymax=tgcWithin$ymax), colour="black", width=ww, position=pd) +
       geom_line(lwd = 1, show.legend = FALSE ) +
       geom_point(position=pd, size=3, shape=21, fill="white") + # 21 is filled circle
       xlab( xlab ) + ylab( paste(ylab, measurement," +/-", whiskervar )) +
@@ -523,7 +524,7 @@ predictSubtypeUni  <- function(
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
 #' @export
-#' @importFrom ClusterR predict_GMM GMM Optimal_Clusters_GMM
+#' @importFrom ClusterR predict_GMM GMM Optimal_Clusters_GMM KMeans_rcpp Optimal_Clusters_KMeans
 trainSubtypeClusterMulti  <- function(
   mxdfin,
   measureColumns,
@@ -563,10 +564,10 @@ trainSubtypeClusterMulti  <- function(
     return( gmm )
   }
   if ( method == "kmeans" ) {
-    opt = Optimal_Clusters_KMeans( subdf, max_clusters = maxk, plot_clusters = FALSE,
+    opt = ClusterR::Optimal_Clusters_KMeans( subdf, max_clusters = maxk, plot_clusters = FALSE,
                                   criterion = 'distortion_fK', fK_threshold = 0.85,
                                   initializer = 'optimal_init', tol_optimal_init = 0.2)
-    km_rc = KMeans_rcpp(subdf, clusters = which.min(opt), num_init = 5, max_iters = 100,
+    km_rc = ClusterR::KMeans_rcpp(subdf, clusters = which.min(opt), num_init = 5, max_iters = 100,
       initializer = 'optimal_init', verbose = F)
     return( km_rc )
   }
