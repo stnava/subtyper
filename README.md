@@ -1,7 +1,5 @@
 # subtyper
 
-[![Build Status](https://travis-ci.org/stnava/subtyper.png?branch=master)](https://travis-ci.org/stnava/subtyper)
-
 documentation page [here](https://stnava.github.io/subtyper/)
 
 ## Subtype and staging analyses in disease modeling
