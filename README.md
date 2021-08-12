@@ -1,5 +1,7 @@
 # subtyper
 
+[![CircleCI](https://circleci.com/gh/stnava/subtyper/tree/master.svg?style=svg)](https://circleci.com/gh/stnava/subtyper/tree/master)
+
 documentation page [here](https://stnava.github.io/subtyper/)
 
 ## Subtype and staging analyses in disease modeling
