@@ -173,7 +173,7 @@ plotSubtypeChange <-function( mxdfin,
     ww = 0.5
     namer=paste( subtype, ' vs ', measurement , extra )
     return( ggplot( tgcWithin,
-      aes(x=tgcWithin$timer, y=Changer,
+      aes(x=timer, y=Changer,
         group = Quant, color = Quant , shape = Quant )) +
       geom_errorbar(aes(ymin=ymin, ymax=ymax), colour="black", width=ww, position=pd) +
       geom_line(lwd = 1, show.legend = FALSE ) +
@@ -592,6 +592,7 @@ trainSubtypeClusterMulti  <- function(
 #' @param measureColumns vector defining the data columns to be used for clustering.
 #' @param clusteringObject a GMM object to predict clusters
 #' @param clustername column name for the identified clusters
+#' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
 #' @return the clusters attached to the data frame
@@ -607,6 +608,7 @@ predictSubtypeClusterMulti  <- function(
   measureColumns,
   clusteringObject,
   clustername = 'GMMClusters',
+  idvar,
   visitName,
   baselineVisit
 ) {
@@ -630,6 +632,7 @@ predictSubtypeClusterMulti  <- function(
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
 
+  msr = measureColumns[1]
   if ( ! ( baselineVisit %in% unique( mxdfin[,visitName] ) ) )
     stop( "! ( baselineVisit %in% unique( mxdfin[,visitName] ) )" )
   uids = unique( mxdfin[,idvar] )

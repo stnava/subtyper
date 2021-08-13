@@ -245,33 +245,18 @@
 <p>See the difference with diagnosis.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">summ</span> <span class="op">=</span> <span class="fu"><a href="../reference/plotSubtypeChange.html">plotSubtypeChange</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="st">"Id"</span>, <span class="st">"cognition"</span>, <span class="st">"DX"</span>, <span class="st">"visit"</span>, whiskervar<span class="op">=</span><span class="st">'se'</span>  <span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span>
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span>
-
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span>
-
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span></code></pre></div>
 <p><img src="subtyper_files/figure-html/plotit-1.png" width="768"></p>
 <p>See the difference with subtype.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">summ</span> <span class="op">=</span> <span class="fu"><a href="../reference/plotSubtypeChange.html">plotSubtypeChange</a></span><span class="op">(</span> <span class="va">pdf</span>, <span class="st">"Id"</span>, <span class="st">"cognition"</span>, <span class="st">"subtype"</span>, <span class="st">"visit"</span>, whiskervar<span class="op">=</span><span class="st">'se'</span> <span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span>
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span>
-
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span>
-
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span></code></pre></div>
 <p><img src="subtyper_files/figure-html/plotit2-1.png" width="768"></p>
 <p>Plot the subtypes with cutpoints displayed.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">pdf</span> <span class="op">=</span> <span class="fu"><a href="../reference/predictSubtypeUni.html">predictSubtypeUni</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">qdf</span>, <span class="st">"Id"</span>, <span class="st">"visit"</span>, <span class="st">"V0"</span>, rename<span class="op">=</span><span class="cn">FALSE</span> <span class="op">)</span>
 <span class="va">summ</span> <span class="op">=</span> <span class="fu"><a href="../reference/plotSubtypeChange.html">plotSubtypeChange</a></span><span class="op">(</span> <span class="va">pdf</span>, <span class="st">"Id"</span>, <span class="st">"cognition"</span>, <span class="st">"subtype"</span>, <span class="st">"visit"</span>, whiskervar<span class="op">=</span><span class="st">'se'</span> <span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span>
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span>
-
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span>
-
-<span class="co">#&gt; Warning: Use of `tgcWithin$timer` is discouraged. Use `timer` instead.</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/base/print.html">print</a></span><span class="op">(</span> <span class="va">summ</span> <span class="op">)</span></code></pre></div>
 <p><img src="subtyper_files/figure-html/plotit3-1.png" width="768"></p>
 <p>Visualization of the subtype definition against various outcomes is key to establishing validity.</p>
 </div>

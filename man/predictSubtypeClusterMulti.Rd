@@ -9,6 +9,7 @@ predictSubtypeClusterMulti(
   measureColumns,
   clusteringObject,
   clustername = "GMMClusters",
+  idvar,
   visitName,
   baselineVisit
 )
@@ -21,6 +22,8 @@ predictSubtypeClusterMulti(
 \item{clusteringObject}{a GMM object to predict clusters}
 
 \item{clustername}{column name for the identified clusters}
+
+\item{idvar}{variable name for unique subject identifier column}
 
 \item{visitName}{the column name defining the visit variables}
 

@@ -2,6 +2,8 @@
 ^Makefile$
 ^.*\.tar\.gz$
 ^.*\.Rcheck$
+^.circleci$
+^\.circleci\.yml$
 ^\.travis\.yml$
 ^appveyor.yml$
 ^.*\.log$
