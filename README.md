@@ -7,8 +7,9 @@ documentation page [here](https://stnava.github.io/subtyper/)
 ## Subtype and staging analyses in disease modeling
 
 Common tasks for subtyping include making measurements of data consistency,
-*filtering* for good subjects, training the subtyping algorithm, predicting
-the subtypes in new data and visualizing results, often over time.
+filtering for subjects with good/high quality data, training the
+subtyping algorithm, predicting the subtypes in new data and
+visualizing results, often over time.
 
 This package expects population-level data frames with longitudinal data.
 
