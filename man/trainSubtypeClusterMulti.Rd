@@ -21,7 +21,7 @@ trainSubtypeClusterMulti(
 Note that these methods may be sensitive to scaling so the user may want to
 scale columns accordingly.}
 
-\item{method}{string only GMM for now}
+\item{method}{string GMM or kmeans}
 
 \item{desiredk}{number of subtypes}
 

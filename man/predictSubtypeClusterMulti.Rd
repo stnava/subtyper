@@ -8,7 +8,9 @@ predictSubtypeClusterMulti(
   mxdfin,
   measureColumns,
   clusteringObject,
-  clustername = "GMMClusters"
+  clustername = "GMMClusters",
+  visitName,
+  baselineVisit
 )
 }
 \arguments{
@@ -19,6 +21,10 @@ predictSubtypeClusterMulti(
 \item{clusteringObject}{a GMM object to predict clusters}
 
 \item{clustername}{column name for the identified clusters}
+
+\item{visitName}{the column name defining the visit variables}
+
+\item{baselineVisit}{the string naming the baseline visit}
 }
 \value{
 the clusters attached to the data frame

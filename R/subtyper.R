@@ -512,7 +512,7 @@ predictSubtypeUni  <- function(
 #' @param measureColumns vector defining the data columns to be used for clustering.
 #' Note that these methods may be sensitive to scaling so the user may want to
 #' scale columns accordingly.
-#' @param method string only GMM for now
+#' @param method string GMM or kmeans
 #' @param desiredk number of subtypes
 #' @param maxk maximum number of subtypes
 #' @param groupVariable names of the column that defines the group to use for training.
@@ -546,7 +546,7 @@ trainSubtypeClusterMulti  <- function(
   }
   subdf = data.matrix( subdf )
   if ( method == "GMM" ) {
-    if ( missing( desiredk ) & ! missing( maxk ) ) {
+    if ( missing( desiredk ) ) {
       if ( missing( maxk ) ) maxk = 10
       opt_gmm = ClusterR::Optimal_Clusters_GMM(subdf, max_clusters = maxk, criterion = "BIC",
         dist_mode = "maha_dist", seed_mode = "random_subset",
@@ -564,10 +564,15 @@ trainSubtypeClusterMulti  <- function(
     return( gmm )
   }
   if ( method == "kmeans" ) {
-    opt = ClusterR::Optimal_Clusters_KMeans( subdf, max_clusters = maxk, plot_clusters = FALSE,
+    if ( missing( desiredk ) ) {
+      if ( missing( maxk ) ) maxk = 10
+      opt = ClusterR::Optimal_Clusters_KMeans( subdf, max_clusters = maxk, plot_clusters = FALSE,
                                   criterion = 'distortion_fK', fK_threshold = 0.85,
                                   initializer = 'optimal_init', tol_optimal_init = 0.2)
-    km_rc = ClusterR::KMeans_rcpp(subdf, clusters = which.min(opt), num_init = 5, max_iters = 100,
+      desiredk = which.min(opt)
+      }
+    km_rc = ClusterR::KMeans_rcpp(subdf,
+      clusters = desiredk, num_init = 5, max_iters = 100,
       initializer = 'optimal_init', verbose = F)
     return( km_rc )
   }
@@ -587,6 +592,8 @@ trainSubtypeClusterMulti  <- function(
 #' @param measureColumns vector defining the data columns to be used for clustering.
 #' @param clusteringObject a GMM object to predict clusters
 #' @param clustername column name for the identified clusters
+#' @param visitName the column name defining the visit variables
+#' @param baselineVisit the string naming the baseline visit
 #' @return the clusters attached to the data frame
 #' @author Avants BB
 #' @examples
@@ -599,14 +606,43 @@ predictSubtypeClusterMulti  <- function(
   mxdfin,
   measureColumns,
   clusteringObject,
-  clustername = 'GMMClusters'
+  clustername = 'GMMClusters',
+  visitName,
+  baselineVisit
 ) {
 
   subdf = mxdfin[ , measureColumns ]
   subdf = data.matrix( subdf )
-  pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
-    clusteringObject$covariance_matrices, clusteringObject$weights )
-  mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
+  if ( class( clusteringObject  ) == "Gaussian Mixture Models" ) {
+    pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
+      clusteringObject$covariance_matrices, clusteringObject$weights )
+    mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
+  } else if (  class( clusteringObject  ) == "k-means clustering" ) {
+    # compute distance of every subject to each centroid
+    cluster_labels = rep( NA, nrow( subdf ) )
+    for ( kk in 1:nrow( subdf ) ) {
+      dd=( subdf[kk,]-clusteringObject$centroids)^2
+      cluster_labels[kk] = which.min(rowMeans(dd))
+    }
+    mxdfin = cbind( mxdfin, factor( cluster_labels ) )
+  } else stop("Unknown class of clustering object.")
   colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+  if ( missing( visitName ) | missing( baselineVisit ) )
+    return( data.frame( mxdfin ) )
+
+  if ( ! ( baselineVisit %in% unique( mxdfin[,visitName] ) ) )
+    stop( "! ( baselineVisit %in% unique( mxdfin[,visitName] ) )" )
+  uids = unique( mxdfin[,idvar] )
+  for ( u in uids ) {
+    usel = mxdfin[,idvar] == u
+    losel0 = mxdfin[,idvar] == u & mxdfin[,visitName] == baselineVisit & !is.na(mxdfin[,msr])
+    losel0[ is.na( losel0 ) ] = FALSE
+    if ( sum( losel0 ) > 0 ) {
+      mytbl = table( mxdfin[losel0,clustername] )
+      mostcommon = names( mytbl )[which.max(mytbl)]
+      mxdfin[usel,clustername] = mostcommon
+    }
+  }
+
   return( data.frame( mxdfin ) )
 }
