@@ -20,6 +20,7 @@
 #'   \item{BP}{base pair}
 #'   \item{NearestGene}{nearest gene}
 #' }
+#' @usage data(nallspdma)
 "nallspdma"
 
 

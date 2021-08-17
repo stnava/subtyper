@@ -14,7 +14,7 @@ A data frame (subset of columns described here):
 }
 }
 \usage{
-nallspdma
+data(nallspdma)
 }
 \description{
 Supplementary table S2 from Nalls 2019 Parkinsons disease meta-analysis of
