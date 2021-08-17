@@ -17,35 +17,8 @@
 #' \describe{
 #'   \item{SNP}{the SNP of interest}
 #'   \item{CHR}{associated chromosome}
-#'   \item{BP}{}
-#'   \item{Nearest Gene}{}
-#'   \item{QTL Nominated Gene (nearest QTL)}{}
-#'   \item{Effect allele}{}
-#'   \item{Other allele}{}
-#'   \item{Effect allele frequency}{}
-#'   \item{Beta, all studies}{}
-#'   \item{SE, all studies}{}
-#'   \item{P, all studies}{}
-#'   \item{P, COJO, all studies}{}
-#'   \item{P, random effects, all studies}{}
-#'   \item{P, Conditional 23AndMe only}{}
-#'   \item{P, 23AndMe only}{}
-#'   \item{I2, all studies}{}
-#'   \item{Freq1, previous studies}{}
-#'   \item{Beta, previous studies}{}
-#'   \item{StdErr, previous studies}{}
-#'   \item{P, previous studies}{}
-#'   \item{I2, previous studies}{}
-#'   \item{Freq1, new studies}{}
-#'   \item{Beta, new studies}{}
-#'   \item{StdErr, new studies}{}
-#'   \item{P, new studies}{}
-#'   \item{I2, new studies}{}
-#'   \item{Passes pooled 23andMe QC}{}
-#'   \item{Known GWAS locus within 1MB}{}
-#'   \item{Failed final filtering and QC}{}
-#'   \item{Locus within 250KB}{}
-#'   \item{Locus Number}{}
+#'   \item{BP}{base pair}
+#'   \item{NearestGene}{nearest gene}
 #' }
 "nallspdma"
 
