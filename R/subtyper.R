@@ -6,7 +6,48 @@
 }
 
 
-
+#' nallspdma
+#'
+#' Supplementary table S2 from Nalls 2019 Parkinsons disease meta-analysis of
+#' genome wide association studies.
+#'
+#' @docType data
+#' @references \url{https://pubmed.ncbi.nlm.nih.gov/31701892/}
+#' @format A data frame (subset of columns described here):
+#' \describe{
+#'   \item{SNP}{the SNP of interest}
+#'   \item{CHR}{associated chromosome}
+#'   \item{BP}{}
+#'   \item{Nearest Gene}{}
+#'   \item{QTL Nominated Gene (nearest QTL)}{}
+#'   \item{Effect allele}{}
+#'   \item{Other allele}{}
+#'   \item{Effect allele frequency}{}
+#'   \item{Beta, all studies}{}
+#'   \item{SE, all studies}{}
+#'   \item{P, all studies}{}
+#'   \item{P, COJO, all studies}{}
+#'   \item{P, random effects, all studies}{}
+#'   \item{P, Conditional 23AndMe only}{}
+#'   \item{P, 23AndMe only}{}
+#'   \item{I2, all studies}{}
+#'   \item{Freq1, previous studies}{}
+#'   \item{Beta, previous studies}{}
+#'   \item{StdErr, previous studies}{}
+#'   \item{P, previous studies}{}
+#'   \item{I2, previous studies}{}
+#'   \item{Freq1, new studies}{}
+#'   \item{Beta, new studies}{}
+#'   \item{StdErr, new studies}{}
+#'   \item{P, new studies}{}
+#'   \item{I2, new studies}{}
+#'   \item{Passes pooled 23andMe QC}{}
+#'   \item{Known GWAS locus within 1MB}{}
+#'   \item{Failed final filtering and QC}{}
+#'   \item{Locus within 250KB}{}
+#'   \item{Locus Number}{}
+#' }
+"nallspdma"
 
 
 #' Generate example data for illustrating `subtyper`
@@ -102,11 +143,12 @@ generateSubtyperData <-function( n = 100,
 #' mydf = generateSubtyperData( 100 )
 #' summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit" )
 #' @export
-#' @importFrom stats lm predict qt rnorm var na.omit
+#' @importFrom stats lm predict qt rnorm var na.omit kmeans
 #' @importFrom DDoutlier  LOOP  LOF  INFLO  RDOS  KDEOS  LDF  KNN_AGG  KNN_IN  KNN_SUM  RKOF
 #' @importFrom ggplot2 aes ylim guides theme_bw scale_colour_hue geom_errorbar position_dodge element_text geom_line geom_point ggplot guide_legend
 #' @importFrom ggplot2 xlab ylab theme rel
 #' @importFrom plyr ddply rename
+#' @importFrom biclust biclust
 plotSubtypeChange <-function( mxdfin,
                            idvar,
                            measurement,
@@ -571,9 +613,10 @@ trainSubtypeClusterMulti  <- function(
                                   initializer = 'optimal_init', tol_optimal_init = 0.2)
       desiredk = which.min(opt)
       }
-    km_rc = ClusterR::KMeans_rcpp(subdf,
-      clusters = desiredk, num_init = 5, max_iters = 100,
-      initializer = 'optimal_init', verbose = F)
+    km_rc = # stats::kmeans( subdf, desiredk )
+      ClusterR::KMeans_rcpp(subdf,
+        clusters = desiredk, num_init = 5, max_iters = 100,
+        initializer = 'optimal_init', verbose = F)
     return( km_rc )
   }
 
@@ -621,10 +664,13 @@ predictSubtypeClusterMulti  <- function(
     mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
   } else if (  class( clusteringObject  ) == "k-means clustering" ) {
     # compute distance of every subject to each centroid
+#    clusteringObject = stats::kmeans( subdf, desiredk )
     cluster_labels = rep( NA, nrow( subdf ) )
     for ( kk in 1:nrow( subdf ) ) {
-      dd=( subdf[kk,]-clusteringObject$centroids)^2
-      cluster_labels[kk] = which.min(rowMeans(dd))
+      dd = rep( NA, nrow( clusteringObject$centroids) )
+      for ( jj in 1:nrow( clusteringObject$centroids) )
+        dd[jj]=mean( ( as.numeric(subdf[kk,])-clusteringObject$centroids[jj,])^2 )
+      cluster_labels[kk] = which.min(dd)
     }
     mxdfin = cbind( mxdfin, factor( cluster_labels ) )
   } else stop("Unknown class of clustering object.")

@@ -21,7 +21,8 @@ Imports:
   Hmisc,
   plyr,
   DDoutlier,
-  ClusterR
+  ClusterR,
+  biclust
 Suggests:
     covr,
     knitr,
