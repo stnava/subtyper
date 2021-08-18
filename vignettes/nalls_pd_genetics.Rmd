@@ -119,10 +119,11 @@ for ( k in 1:length( myq ) ) {
   assoc = gostres$result$term_name
   if ( ! is.null( assoc ) ) {
     assocp = gostres$result$p_value
-    if ( assoc %in%  assocK  ) {
-      ptx = log( assocp[ assoc %in%  assocK ] )
-      myviz2[ k, assoc[assoc %in%  assocK] ] =
-        myviz2[ k, assoc[assoc %in%  assocK] ] + ptx
+    assocp = assocp[ assoc %in%  assocK  ]
+    assoc=assoc[ assoc %in%  assocK  ]
+    if ( length( assoc ) > 0  ) {
+      ptx = log( assocp )
+      myviz2[ k, assoc ] = myviz2[ k, assoc ] + ptx
       }
     }
   }
@@ -209,11 +210,12 @@ for ( j in 1:nv ) {
 ```
 
 
-```{r nmf,echo=FALSE,eval=TRUE}
+```{r nmf,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
 library( NMF )
 nmfmat = fixmat( myviz2 * ( -1.0 ) )
 # perform a k-rank NMF using the default algorithm
-nv = 4
+nv = 8
+nmfmat[ nmfmat == 0 ] = 0.00001 # this hack improves convergence
 res <- nmf( nmfmat, nv )
 w <- basis(res)
 h <- coef(res)
@@ -231,16 +233,16 @@ for ( j in 1:nv ) {
   print( snps1 )
   print( func1 )
   subviz = nmfmat[ rownames( nmfmat ) %in% snps1 ,  colnames( nmfmat ) %in% func1  ]
-  pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
-  Sys.sleep( 3 )
+  print( pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T ) )
 }
 ```
 
 
 ```{r,echo=FALSE,eval=FALSE}
 library( biclust )
-mybc = biclust( x = data.matrix( bcdata ), method = BCPlaid() )
-heatmapBC( x = bcdata, bicResult = mybc )
+eanatmat = antsrimpute( scale( abs(data.matrix( fixmat(myviz2) )), T,T) )
+mybc = biclust( x = data.matrix( eanatmat ), method = BCPlaid() )
+heatmapBC( x = eanatmat, bicResult = mybc )
 #
 # biclustbarchart(bcdata,mybc, col="#A3E0D8")
 # ord<-bicorder( data.frame(bcdata), cols=TRUE, rev=TRUE)
