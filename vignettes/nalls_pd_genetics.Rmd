@@ -13,6 +13,17 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 set.seed( 000 )
+fixmat <- function( x ) {
+  xt = t( x )
+  zz=apply( xt, FUN=var, MARGIN=2)
+  x = t( xt[, zz != 0 ] )
+  zz=apply( x, FUN=var, MARGIN=2)
+  myrm = rowMeans( x, na.rm=T )
+  for ( rr in which( zz == 0 ) )
+    x[,rr]=myrm
+  return( x )
+}
+
 ```
 
 # Functional enrichment
@@ -34,7 +45,7 @@ associated with pleiotropic properties.  See [this review](https://www.frontiers
 
 First, we generate the association data.
 
-```{r functionalenrichment,echo=FALSE,eval=FALSE}
+```{r functionalenrichment,echo=FALSE,eval=TRUE}
 library( gprofiler2 )
 library( subtyper )
 data( nallspdma, package = 'subtyper' )
@@ -131,7 +142,8 @@ bcdata = -1.0 * t( myviz2 )
 bcdata[ is.na( bcdata ) ] = 0.0
 myclusts = trainSubtypeClusterMulti( bcdata,
   colnames(bcdata), method = "kmeans",  desiredk = 3 )
-bcdatac = predictSubtypeClusterMulti( bcdata, colnames(bcdata), myclusts )
+bcdatac = predictSubtypeClusterMulti( bcdata, colnames(bcdata), myclusts,
+  clustername='FUNCcluster'  )
 ```
 
 
@@ -142,10 +154,88 @@ bcdata2 = 1.0 * ( myviz2 )
 bcdata2[ is.na( bcdata2 ) ] = 0.0
 myclusts2 = trainSubtypeClusterMulti( bcdata2,
   colnames(bcdata2), method = "kmeans",  maxk = 10 )
-bcdata2c = predictSubtypeClusterMulti( bcdata2, colnames(bcdata2), myclusts2 )
+bcdata2c = predictSubtypeClusterMulti( bcdata2, colnames(bcdata2), myclusts2,
+  clustername='SNPcluster' )
 ```
 
-Lastly, do bi-clustering.
+
+## bi-clustering via NMF
+
+
+```{r simple,echo=FALSE,eval=FALSE}
+mysnps = rownames( myviz2 )
+myfunc = colnames( myviz2 )
+jointClusterMatrix = matrix( "", nrow = nrow(myviz2), ncol = ncol(myviz2) )
+colnames( jointClusterMatrix ) = colnames( myviz2 )
+rownames( jointClusterMatrix ) =
+for ( i in 1:nrow(myviz2) ) {
+  mysnp = mysnps[i]
+  snpcluster = bcdata2c$SNPcluster[ rownames( bcdata2c ) == mysnp ]
+  for ( j in 1:ncol(myviz2) ) {
+    myfnc = myfunc[j]
+    fnccluster = bcdatac$FUNCcluster[ rownames( bcdatac ) == myfnc ]
+    myclustid = paste0( snpcluster, '-',  fnccluster )
+    jointClusterMatrix[i,j]=myclustid
+  }
+}
+######## show a resulting matrix
+binmat = myviz2 * 0
+binmat[ jointClusterMatrix == "1-2" ] = 1
+pheatmap::pheatmap( myviz2 * binmat, cluster_cols=F, cluster_rows=F, show_rownames=F, show_colnames=F)
+```
+
+```{r eanat,echo=FALSE,eval=FALSE}
+nv = 4
+eanatmat = antsrimpute( scale( abs(data.matrix( fixmat(myviz2) )), T,T) )
+eanat = sparseDecom( eanatmat, sparseness = 0.1, nvecs = nv,
+  its = 25, z = 0.1, mycoption = 0 )
+qq = 0.5
+for ( j in 1:nv ) {
+  uvec = abs( eanat$umatrix[,j] )
+  vvec = abs( eanat$eigenanatomyimages[j,] )
+  uvec = uvec / sum( uvec )
+  vvec = vvec / sum( vvec )
+  snps1=rownames( eanatmat )[ uvec > quantile(uvec,qq)  & uvec > 1e-9 ]
+  func1=colnames( eanatmat )[ vvec > quantile(vvec,qq)  & vvec > 1e-9 ]
+  print( j )
+  print( snps1 )
+  print( func1 )
+  subviz = eanatmat[ rownames( eanatmat ) %in% snps1 ,  colnames( eanatmat ) %in% func1  ]
+  pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
+  Sys.sleep( 3 )
+}
+
+
+```
+
+
+```{r nmf,echo=FALSE,eval=TRUE}
+library( NMF )
+nmfmat = fixmat( myviz2 * ( -1.0 ) )
+# perform a k-rank NMF using the default algorithm
+nv = 4
+res <- nmf( nmfmat, nv )
+w <- basis(res)
+h <- coef(res)
+basismap(res)
+# coefmap(res)
+qq = 0.90
+for ( j in 1:nv ) {
+  uvec = w[,j]
+  vvec = h[j,]
+  uvec = uvec / sum( uvec )
+  vvec = vvec / sum( vvec )
+  snps1=rownames( nmfmat )[ uvec > quantile(uvec,qq) & uvec > 1e-9 ]
+  func1=colnames( nmfmat )[ vvec > quantile(vvec,qq) & vvec > 1e-9 ]
+  print( j )
+  print( snps1 )
+  print( func1 )
+  subviz = nmfmat[ rownames( nmfmat ) %in% snps1 ,  colnames( nmfmat ) %in% func1  ]
+  pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
+  Sys.sleep( 3 )
+}
+```
+
 
 ```{r,echo=FALSE,eval=FALSE}
 library( biclust )
@@ -159,7 +249,6 @@ heatmapBC( x = bcdata, bicResult = mybc )
 ```
 
 
-sparse bi-clustering
 
 ```{r,echo=FALSE,eval=FALSE}
 library( sparseBC )
