@@ -60,7 +60,7 @@ gostresall <- gost(query = myq,
   measure_underrepresentation = FALSE, evcodes = FALSE,
   user_threshold = myThresh, correction_method = myCorr,
   domain_scope = "annotated", custom_bg = NULL,
-  numeric_ns = "", sources = NULL, as_short_link = FALSE)
+  numeric_ns = "", sources = NULL )
 assocall = sort( unique( gostresall$result$term_name ) )
 off = 1
 assocK = list()
@@ -77,7 +77,7 @@ for ( k in 1:length( myq ) ) {
     measure_underrepresentation = FALSE, evcodes = FALSE,
     user_threshold = 0.01, correction_method = myCorr,
     domain_scope = "annotated", custom_bg = NULL,
-    numeric_ns = "", sources = NULL, as_short_link = FALSE)
+    numeric_ns = "", sources = NULL )
 
   assoc = gostres$result$term_name
   if ( ! is.null( assoc ) ) {
@@ -117,7 +117,7 @@ for ( k in 1:length( myq ) ) {
     measure_underrepresentation = FALSE, evcodes = FALSE,
     user_threshold = 0.2, correction_method = myCorr,
     domain_scope = "annotated", custom_bg = NULL,
-    numeric_ns = "", sources = NULL, as_short_link = FALSE)
+    numeric_ns = "", sources = NULL )
   assoc = gostres$result$term_name
   if ( ! is.null( assoc ) ) {
     assocp = gostres$result$p_value
