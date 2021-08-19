@@ -125,7 +125,6 @@ generateSubtyperData <-function( n = 100,
 #' @importFrom ggplot2 aes ylim guides theme_bw scale_colour_hue geom_errorbar position_dodge element_text geom_line geom_point ggplot guide_legend
 #' @importFrom ggplot2 xlab ylab theme rel
 #' @importFrom plyr ddply rename
-#' @importFrom biclust biclust
 plotSubtypeChange <-function( mxdfin,
                            idvar,
                            measurement,
@@ -671,4 +670,67 @@ predictSubtypeClusterMulti  <- function(
   }
 
   return( data.frame( mxdfin ) )
+}
+
+
+
+
+
+#' Matrix factorization biclustering
+#'
+#' Cluster both rows and columns.  Return the joint cluster membership.
+#'
+#' @param mxdfin Input data frame
+#' @param measureColumns vector defining the data columns to be used for clustering.
+#' @param k the number of clusters
+#' @param verbose boolean
+#' @return a matrix with label identities; 0 indicates not in a cluster.
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
+#' @export
+biclusterMatrixFactorization  <- function(
+  mxdfin,
+  measureColumns,
+  k = 2,
+  verbose = FALSE
+) {
+
+  fixmat <- function( x ) {
+    if ( is.null( rownames( x ) ) )
+      rownames( x )=as.character( 1:nrow(x) )
+    xt = t( x )
+    zz=apply( xt, FUN=var, MARGIN=2)
+    x = t( xt[, zz != 0 ] )
+    zz=apply( x, FUN=var, MARGIN=2)
+    myrm = rowMeans( x, na.rm=T )
+    for ( rr in which( zz == 0 ) )
+      x[,rr]=myrm
+    return( x - min( x, na.rm=TRUE ) )
+  }
+
+  mybcmat = fixmat( data.matrix( mxdfin[,measureColumns]  ) )
+  biclustmat = matrix( 0, nrow = nrow( mybcmat ), ncol = ncol( mybcmat ) )
+  colnames( biclustmat ) = colnames( mybcmat )
+  rownames( biclustmat ) = rownames( mybcmat )
+  mynmf = NMF::nmf( mybcmat, k, method="Frobenius", seed='ica' )
+  w <- NMF::basis( mynmf )
+  h <- NMF::coef( mynmf )
+  maxw = apply( w, FUN=which.max, MARGIN=1 )
+  maxh = apply( h, FUN=which.max, MARGIN=2 )
+  qq = 0.5
+  for ( j in 1:k ) {
+    snps1 = names( maxw )[ maxw == j ]
+    func1 = names( maxh )[ maxh == j ]
+    if ( verbose ) {
+      print( k )
+      print( snps1 )
+      print( func1 )
+      }
+    biclustmat[ rownames( biclustmat ) %in% snps1 ,  colnames( biclustmat ) %in% func1  ] = j
+    }
+
+ return( biclustmat )
 }

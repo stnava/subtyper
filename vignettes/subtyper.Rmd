@@ -193,3 +193,15 @@ print( summ )
 
 Visualization of the subtype definition against various outcomes is key to
 establishing validity.
+
+
+
+
+## Biclustering
+
+We implement a simple biclustering method based on matrix factorization.
+
+```{r nmfbi,echo=FALSE,eval=TRUE}
+mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 3 )
+pheatmap::pheatmap( mybic )
+```

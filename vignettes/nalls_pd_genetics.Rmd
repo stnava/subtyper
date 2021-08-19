@@ -232,43 +232,9 @@ for ( j in 1:nv ) {
 
 
 ```{r nmf,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
-nmfmat = fixmat( myviz2 * ( -1.0 ) )
-# perform a k-rank NMF using the default algorithm
-nv = 5
-# nmfmat[ nmfmat == 0 ] = 0.00001 # this hack improves convergence for default but we switch to Frob
-# res <- nmf( nmfmat, nv, method="Frobenius", seed='ica' )
-res <- nmf( nmfmat, nv, method='ns', theta=0.7, seed='ica' )
-# res <- nmf( nmfmat, nv, method='pe', alpha=0.01, beta=1, seed='ica' )
-w <- basis(res)
-h <- coef(res)
-basismap(res)
-# coefmap(res)
-glist = list()
-qq = 0.5
-for ( j in 1:nv ) {
-  uvec = w[,j]
-  vvec = h[j,]
-  uvec = uvec / sum( uvec )
-  vvec = vvec / sum( vvec )
-  snps1=rownames( nmfmat )[ uvec > quantile(uvec,qq) & uvec > 1e-9 ]
-  func1=colnames( nmfmat )[ vvec > quantile(vvec,qq) & vvec > 1e-9 ]
-  print( paste( "NMF: ", j ) )
-  print( snps1 )
-  print( func1 )
-  subviz = nmfmat[ rownames( nmfmat ) %in% snps1 ,  colnames( nmfmat ) %in% func1  ]
-  colnames(subviz)=substr( colnames(subviz), 0, 12 )
-  glist[[ length(glist) + 1 ]] =
-    ( pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T ) )
-  }
-
-```
-
-```{r nmf1,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
-glist[[ 1 ]]
-```
-
-```{r nmf2,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
-glist[[ 2 ]]
+mybic = biclusterMatrixFactorization( myviz2 * ( -1.0 ), colnames(myviz2), k = 5 )
+colnames(mybic)=substr( colnames(mybic), 0, 12 )
+pheatmap::pheatmap( mybic, cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
 ```
 
 
