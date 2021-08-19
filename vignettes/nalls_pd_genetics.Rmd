@@ -62,7 +62,7 @@ gostresall <- gost(query = myq,
   domain_scope = "annotated", custom_bg = NULL,
   numeric_ns = "", sources = NULL, as_short_link = FALSE)
 assocall = sort( unique( gostresall$result$term_name ) )
-off = 3
+off = 1
 assocK = list()
 myviz = matrix( 0, nrow = length( myq ), ncol = length( assocall ) )
 rownames(myviz)=myq
