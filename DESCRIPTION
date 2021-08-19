@@ -24,7 +24,8 @@ Imports:
   ClusterR,
   NMF,
   pheatmap,
-  gprofiler2
+  gprofiler2,
+  fastICA
 Suggests:
     covr,
     knitr,

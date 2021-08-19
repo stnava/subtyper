@@ -692,6 +692,7 @@ predictSubtypeClusterMulti  <- function(
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
+#' @importFrom fastICA fastICA
 #' @export
 biclusterMatrixFactorization  <- function(
   mxdfin,
