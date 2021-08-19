@@ -23,6 +23,9 @@ fixmat <- function( x ) {
     x[,rr]=myrm
   return( x )
 }
+library( gprofiler2 )
+library( NMF )
+library( subtyper )
 
 ```
 
@@ -45,9 +48,7 @@ associated with pleiotropic properties.  See [this review](https://www.frontiers
 
 First, we generate the association data.
 
-```{r functionalenrichment,echo=FALSE,eval=TRUE}
-library( gprofiler2 )
-library( subtyper )
+```{r functionalenrichment,echo=FALSE,eval=TRUE,fig.width=24,fig.height=12}
 data( nallspdma, package = 'subtyper' )
 myq = nallspdma$SNP[  ]
 myq = myq[ -grep("Note",myq)]
@@ -61,8 +62,7 @@ gostresall <- gost(query = myq,
   domain_scope = "annotated", custom_bg = NULL,
   numeric_ns = "", sources = NULL, as_short_link = FALSE)
 assocall = sort( unique( gostresall$result$term_name ) )
-print( assocall )
-off = 1
+off = 3
 assocK = list()
 myviz = matrix( 0, nrow = length( myq ), ncol = length( assocall ) )
 rownames(myviz)=myq
@@ -82,10 +82,12 @@ for ( k in 1:length( myq ) ) {
   assoc = gostres$result$term_name
   if ( ! is.null( assoc ) ) {
     assocp = gostres$result$p_value
-    if ( assoc %in%  assocall  ) {
-      ptx = log( assocp[ assoc %in%  assocall ] )
-      myviz[ k, assoc[assoc %in%  assocall] ] =
-        myviz[ k, assoc[assoc %in%  assocall] ] + ptx
+    assocp = assocp[ assoc %in%  assocall ]
+    assoc = assoc[ assoc %in%  assocall ]
+    if ( length( assoc ) > 0  ) {
+      ptx = log( assocp )
+      myviz[ k, assoc ] =
+        myviz[ k, assoc ] + ptx
       }
     }
   assocK[[k]] = assoc
@@ -94,8 +96,8 @@ for ( k in 1:length( myq ) ) {
   grepcer = grep("ereb",assoc)
   grepmorph = grep("ynucle",assoc)
   if ( length( grepdopa) > 0 | length( grepcer ) > 0 | length( grepubs ) > 0 | length( grepmorph ) > 0 ) {
-    print( paste(k,myq[k] ) )
-    print( assoc[ c(grepubs,grepdopa,grepcer,grepmorph) ] )
+#    print( paste(k,myq[k] ) )
+#    print( assoc[ c(grepubs,grepdopa,grepcer,grepmorph) ] )
     }
   }
 assocK = unique( sort( unlist( assocK ) ) )
@@ -130,7 +132,7 @@ for ( k in 1:length( myq ) ) {
 
 # pheatmap::pheatmap( abs(myviz), cluster_cols=F, cluster_rows=F, show_rownames=F, show_colnames=F )
 # pdf("~/Downloads/temp/temp.pdf",width=32,height=96)
-# pheatmap::pheatmap( abs(t(myviz2)), cluster_cols=T, cluster_rows=T, show_rownames=T, show_colnames=T )
+pheatmap::pheatmap( abs(t(myviz2)), cluster_cols=T, cluster_rows=T, show_rownames=T, show_colnames=T )
 # dev.off()
 
 gsnpenseres = gsnpense( query = myq, filter_na = TRUE )
@@ -138,7 +140,7 @@ gsnpenseres = gsnpense( query = myq, filter_na = TRUE )
 
 Next, we explicitly perform clustering.  First, cluster based on SNPs.
 
-```{r stfeasnpclusters,echo=FALSE,eval=FALSE}
+```{r stfeasnpclusters,echo=FALSE,eval=TRUE}
 bcdata = -1.0 * t( myviz2 )
 bcdata[ is.na( bcdata ) ] = 0.0
 myclusts = trainSubtypeClusterMulti( bcdata,
@@ -150,7 +152,7 @@ bcdatac = predictSubtypeClusterMulti( bcdata, colnames(bcdata), myclusts,
 
 Second, cluster based on function.
 
-```{r stfeagoclusters,echo=FALSE,eval=FALSE}
+```{r stfeagoclusters,echo=FALSE,eval=TRUE}
 bcdata2 = 1.0 * ( myviz2 )
 bcdata2[ is.na( bcdata2 ) ] = 0.0
 myclusts2 = trainSubtypeClusterMulti( bcdata2,
@@ -160,10 +162,13 @@ bcdata2c = predictSubtypeClusterMulti( bcdata2, colnames(bcdata2), myclusts2,
 ```
 
 
-## bi-clustering via NMF
+## bi-clustering via joint clustering and via NMF
 
+* tabulate the pairs of clusters that exist
 
-```{r simple,echo=FALSE,eval=FALSE}
+* provide evidence that joint clusters are valid (TODO)
+
+```{r simple,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
 mysnps = rownames( myviz2 )
 myfunc = colnames( myviz2 )
 jointClusterMatrix = matrix( "", nrow = nrow(myviz2), ncol = ncol(myviz2) )
@@ -180,20 +185,36 @@ for ( i in 1:nrow(myviz2) ) {
   }
 }
 ######## show a resulting matrix
+mytbl = table( jointClusterMatrix )
+knitr::kable( mytbl, caption='Joint cluster counts.')
+
+cnames = names( mytbl )
 binmat = myviz2 * 0
-binmat[ jointClusterMatrix == "1-2" ] = 1
-pheatmap::pheatmap( myviz2 * binmat, cluster_cols=F, cluster_rows=F, show_rownames=F, show_colnames=F)
+ct = 1
+for ( nm in cnames ) {
+  binmat[ jointClusterMatrix == nm ] = ct
+  ct = ct + 1
+}
+pheatmap::pheatmap( myviz2, cluster_cols=T, cluster_rows=T, show_rownames=F, show_colnames=F)
+pheatmap::pheatmap( binmat, cluster_cols=T, cluster_rows=T, show_rownames=F, show_colnames=F)
+
+# pheatmap::pheatmap( jointClusterMatrix , cluster_cols=F, cluster_rows=F, show_rownames=F, show_colnames=F)
 ```
 
 ```{r eanat,echo=FALSE,eval=FALSE}
-nv = 4
+library( ANTsR )
+nv = 10
 eanatmat = antsrimpute( scale( abs(data.matrix( fixmat(myviz2) )), T,T) )
-eanat = sparseDecom( eanatmat, sparseness = 0.1, nvecs = nv,
-  its = 25, z = 0.1, mycoption = 0 )
+eanatmat = scale( abs(data.matrix( fixmat(myviz2) )), T,T)
+inmats = list( eanatmat, eanatmat )
+eanat = simlr( inmats, initialUMatrix = nv, sparsenessQuantiles=rep(0.9,nv),
+  mixAlg = 'ica', energyType = 'regression' )
+# eanat = sparseDecom( eanatmat, sparseness = 0.1, nvecs = nv,
+#  its = 25, z = 0.2, mycoption = 0 )
 qq = 0.5
 for ( j in 1:nv ) {
-  uvec = abs( eanat$umatrix[,j] )
-  vvec = abs( eanat$eigenanatomyimages[j,] )
+  uvec = abs( eanat$u[[1]][,j] )
+  vvec = abs( eanat$v[[1]][,j] )
   uvec = uvec / sum( uvec )
   vvec = vvec / sum( vvec )
   snps1=rownames( eanatmat )[ uvec > quantile(uvec,qq)  & uvec > 1e-9 ]
@@ -202,7 +223,7 @@ for ( j in 1:nv ) {
   print( snps1 )
   print( func1 )
   subviz = eanatmat[ rownames( eanatmat ) %in% snps1 ,  colnames( eanatmat ) %in% func1  ]
-  pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
+  pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=F )
   Sys.sleep( 3 )
 }
 
@@ -211,17 +232,19 @@ for ( j in 1:nv ) {
 
 
 ```{r nmf,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
-library( NMF )
 nmfmat = fixmat( myviz2 * ( -1.0 ) )
 # perform a k-rank NMF using the default algorithm
-nv = 8
-nmfmat[ nmfmat == 0 ] = 0.00001 # this hack improves convergence
-res <- nmf( nmfmat, nv )
+nv = 5
+# nmfmat[ nmfmat == 0 ] = 0.00001 # this hack improves convergence for default but we switch to Frob
+# res <- nmf( nmfmat, nv, method="Frobenius", seed='ica' )
+res <- nmf( nmfmat, nv, method='ns', theta=0.7, seed='ica' )
+# res <- nmf( nmfmat, nv, method='pe', alpha=0.01, beta=1, seed='ica' )
 w <- basis(res)
 h <- coef(res)
 basismap(res)
 # coefmap(res)
-qq = 0.90
+glist = list()
+qq = 0.5
 for ( j in 1:nv ) {
   uvec = w[,j]
   vvec = h[j,]
@@ -229,12 +252,23 @@ for ( j in 1:nv ) {
   vvec = vvec / sum( vvec )
   snps1=rownames( nmfmat )[ uvec > quantile(uvec,qq) & uvec > 1e-9 ]
   func1=colnames( nmfmat )[ vvec > quantile(vvec,qq) & vvec > 1e-9 ]
-  print( j )
+  print( paste( "NMF: ", j ) )
   print( snps1 )
   print( func1 )
   subviz = nmfmat[ rownames( nmfmat ) %in% snps1 ,  colnames( nmfmat ) %in% func1  ]
-  print( pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T ) )
-}
+  colnames(subviz)=substr( colnames(subviz), 0, 12 )
+  glist[[ length(glist) + 1 ]] =
+    ( pheatmap::pheatmap( abs(subviz), cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T ) )
+  }
+
+```
+
+```{r nmf1,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
+glist[[ 1 ]]
+```
+
+```{r nmf2,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
+glist[[ 2 ]]
 ```
 
 

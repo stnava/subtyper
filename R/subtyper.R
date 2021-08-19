@@ -117,6 +117,9 @@ generateSubtyperData <-function( n = 100,
 #' mydf = generateSubtyperData( 100 )
 #' summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit" )
 #' @export
+#' @importFrom pheatmap pheatmap
+#' @importFrom gprofiler2 gost gsnpense
+#' @importFrom NMF nmf basismap
 #' @importFrom stats lm predict qt rnorm var na.omit kmeans
 #' @importFrom DDoutlier  LOOP  LOF  INFLO  RDOS  KDEOS  LDF  KNN_AGG  KNN_IN  KNN_SUM  RKOF
 #' @importFrom ggplot2 aes ylim guides theme_bw scale_colour_hue geom_errorbar position_dodge element_text geom_line geom_point ggplot guide_legend

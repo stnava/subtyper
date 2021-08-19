@@ -22,7 +22,9 @@ Imports:
   plyr,
   DDoutlier,
   ClusterR,
-  biclust
+  NMF,
+  pheatmap,
+  gprofiler2
 Suggests:
     covr,
     knitr,

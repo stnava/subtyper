@@ -101,10 +101,426 @@
 <p>Single nucleotide polymorphisms (SNPs) are the most common type of genetic variation among people and represent a difference, within or between genes, in a sigle base pair. SNPs are a “digital code” for genetic patterns. Consequently, they are a very fine-grained, noisy measurement of genetic variability.</p>
 <p>Functional enrichment analysis uses meta-analysis to associate high-level properties such as disease risk, high expression within given cell types or other phenotypes with genes or SNPs. This vignette uses an open dataset <a href="https://pubmed.ncbi.nlm.nih.gov/31701892/">Nalls 2019</a> and gene ontology query tool (<code>ggprofiler</code>) to identify clusters of SNPs associated with pleiotropic properties. See <a href="https://www.frontiersin.org/articles/10.3389/fgene.2020.00424/full">this review</a> for conceptual background on functional genomics.</p>
 <p>First, we generate the association data.</p>
+<pre><code>#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE
+#&gt; No results to show
+#&gt; Please make sure that the organism is correct or set significant = FALSE</code></pre>
+<p><img src="nalls_pd_genetics_files/figure-html/functionalenrichment-1.png" width="2304"></p>
 <p>Next, we explicitly perform clustering. First, cluster based on SNPs.</p>
 <p>Second, cluster based on function.</p>
-<p>Lastly, do bi-clustering.</p>
-<p>sparse bi-clustering</p>
+<div id="bi-clustering-via-joint-clustering-and-via-nmf" class="section level2">
+<h2 class="hasAnchor">
+<a href="#bi-clustering-via-joint-clustering-and-via-nmf" class="anchor"></a>bi-clustering via joint clustering and via NMF</h2>
+<ul>
+<li><p>tabulate the pairs of clusters that exist</p></li>
+<li><p>provide evidence that joint clusters are valid (TODO)</p></li>
+</ul>
+<table class="table">
+<caption>Joint cluster counts.</caption>
+<thead><tr class="header">
+<th align="left">jointClusterMatrix</th>
+<th align="right">Freq</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">1-1</td>
+<td align="right">594</td>
+</tr>
+<tr class="even">
+<td align="left">1-2</td>
+<td align="right">979</td>
+</tr>
+<tr class="odd">
+<td align="left">1-3</td>
+<td align="right">770</td>
+</tr>
+<tr class="even">
+<td align="left">2-1</td>
+<td align="right">1026</td>
+</tr>
+<tr class="odd">
+<td align="left">2-2</td>
+<td align="right">1691</td>
+</tr>
+<tr class="even">
+<td align="left">2-3</td>
+<td align="right">1330</td>
+</tr>
+<tr class="odd">
+<td align="left">3-1</td>
+<td align="right">4482</td>
+</tr>
+<tr class="even">
+<td align="left">3-2</td>
+<td align="right">7387</td>
+</tr>
+<tr class="odd">
+<td align="left">3-3</td>
+<td align="right">5810</td>
+</tr>
+</tbody>
+</table>
+<p><img src="nalls_pd_genetics_files/figure-html/simple-1.png" width="1152"><img src="nalls_pd_genetics_files/figure-html/simple-2.png" width="1152"></p>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf-1.png" width="1152"></p>
+<pre><code>#&gt; [1] "NMF:  1"
+#&gt;  [1] "rs12283611"  "rs979812"    "rs356228"    "rs356182"    "rs5019538"  
+#&gt;  [6] "rs356203"    "rs2042477"   "rs4771268"   "rs26431"     "rs11707416" 
+#&gt; [11] "rs114138760" "rs35749011"  "rs76763715"  "rs35643925"  "rs1450522"  
+#&gt; [16] "rs6658353"   "rs10797576"  "rs147288664" "rs143756968" "rs180751015"
+#&gt; [21] "rs76763715"  "rs112485576" "rs34637584" 
+#&gt;  [1] "Abnormal speech prosody"                                        
+#&gt;  [2] "Abnormal substantia nigra morphology"                           
+#&gt;  [3] "Abnormality of binocular vision"                                
+#&gt;  [4] "Abnormality of midbrain morphology"                             
+#&gt;  [5] "Akinesia"                                                       
+#&gt;  [6] "alcohol biosynthetic process"                                   
+#&gt;  [7] "autophagosome organization"                                     
+#&gt;  [8] "autophagy"                                                      
+#&gt;  [9] "axon"                                                           
+#&gt; [10] "axon terminus"                                                  
+#&gt; [11] "beta-glucosidase activity"                                      
+#&gt; [12] "beta-glucoside catabolic process"                               
+#&gt; [13] "beta-glucoside metabolic process"                               
+#&gt; [14] "Bradykinesia"                                                   
+#&gt; [15] "C-palmitoyltransferase activity"                                
+#&gt; [16] "cellular lipid metabolic process"                               
+#&gt; [17] "Cerebral inclusion bodies"                                      
+#&gt; [18] "Chronic constipation"                                           
+#&gt; [19] "determination of adult lifespan"                                
+#&gt; [20] "Diplopia"                                                       
+#&gt; [21] "DJ-1-SNCA complex, high molecular weight complex"               
+#&gt; [22] "Gliosis"                                                        
+#&gt; [23] "glucosylceramidase activity"                                    
+#&gt; [24] "glucosylceramide catabolic process"                             
+#&gt; [25] "Hypomimic face"                                                 
+#&gt; [26] "Hyposmia"                                                       
+#&gt; [27] "inositol trisphosphate kinase activity"                         
+#&gt; [28] "inositol-1,4,5-trisphosphate 3-kinase activity"                 
+#&gt; [29] "Lewy bodies"                                                    
+#&gt; [30] "lipid biosynthetic process"                                     
+#&gt; [31] "Low frustration tolerance"                                      
+#&gt; [32] "lysosome"                                                       
+#&gt; [33] "lysosome organization"                                          
+#&gt; [34] "lytic vacuole"                                                  
+#&gt; [35] "lytic vacuole organization"                                     
+#&gt; [36] "macroautophagy"                                                 
+#&gt; [37] "MAPK cascade"                                                   
+#&gt; [38] "mitochondrion organization"                                     
+#&gt; [39] "Monotonic speech"                                               
+#&gt; [40] "multicellular organism aging"                                   
+#&gt; [41] "negative regulation of neuron death"                            
+#&gt; [42] "negative regulation of protein phosphorylation"                 
+#&gt; [43] "negative regulation of protein-containing complex assembly"     
+#&gt; [44] "negative regulation of signal transduction"                     
+#&gt; [45] "neuron death"                                                   
+#&gt; [46] "neuron projection terminus"                                     
+#&gt; [47] "Orthostatic hypotension"                                        
+#&gt; [48] "Orthostatic hypotension due to autonomic dysfunction"           
+#&gt; [49] "Parkinsonism with favorable response to dopaminergic medication"
+#&gt; [50] "phosphomevalonate kinase activity"                              
+#&gt; [51] "positive regulation of catabolic process"                       
+#&gt; [52] "positive regulation of neuronal action potential"               
+#&gt; [53] "positive regulation of protein lipidation"                      
+#&gt; [54] "potassium channel complex"                                      
+#&gt; [55] "process utilizing autophagic mechanism"                         
+#&gt; [56] "regulation of autophagy"                                        
+#&gt; [57] "regulation of ion transmembrane transport"                      
+#&gt; [58] "regulation of macroautophagy"                                   
+#&gt; [59] "regulation of neuron death"                                     
+#&gt; [60] "regulation of peroxidase activity"                              
+#&gt; [61] "regulation of water loss via skin"                              
+#&gt; [62] "Resting tremor"                                                 
+#&gt; [63] "RSC-type complex"                                               
+#&gt; [64] "scavenger receptor binding"                                     
+#&gt; [65] "Schizophrenia"                                                  
+#&gt; [66] "serine C-palmitoyltransferase activity"                         
+#&gt; [67] "Serine-palmitoyltransferase (SPTLC1, SPTLC2, ssSPTb) complex"   
+#&gt; [68] "Serine-palmitoyltransferase (SPTLC1, SPTLC3, ssSPTb) complex"   
+#&gt; [69] "Shuffling gait"                                                 
+#&gt; [70] "SNCA-TUBB3 complex"                                             
+#&gt; [71] "Spastic/hyperactive bladder"                                    
+#&gt; [72] "sphingolipid biosynthetic process"                              
+#&gt; [73] "steryl-beta-glucosidase activity"                               
+#&gt; [74] "Substantia nigra gliosis"                                       
+#&gt; [75] "tarsal gland development"                                       
+#&gt; [76] "termination of signal transduction"                             
+#&gt; [77] "trans-Golgi network"                                            
+#&gt; [78] "uterine gland development"                                      
+#&gt; [79] "vacuolar lumen"                                                 
+#&gt; [80] "vacuole"                                                        
+#&gt; [81] "vacuole organization"                                           
+#&gt; [82] "Visual hallucinations"                                          
+#&gt; [83] "voltage-gated potassium channel complex"                        
+#&gt; [84] "volume-sensitive chloride channel activity"</code></pre>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf-2.png" width="1152"></p>
+<pre><code>#&gt; [1] "NMF:  2"
+#&gt;  [1] "rs6476434"   "rs12147950"  "rs2248244"   "rs76904798"  "rs12456492" 
+#&gt;  [6] "rs34637584"  "rs12951632"  "rs117073808" "rs141128804" "rs180751015"
+#&gt; [11] "rs76763715"  "rs112485576" "rs34637584" 
+#&gt;  [1] "amphisome"                                                                                   
+#&gt;  [2] "autophagosome organization"                                                                  
+#&gt;  [3] "autophagy"                                                                                   
+#&gt;  [4] "axon"                                                                                        
+#&gt;  [5] "axon terminus"                                                                               
+#&gt;  [6] "beta-catenin destruction complex binding"                                                    
+#&gt;  [7] "caveola neck"                                                                                
+#&gt;  [8] "cytoplasmic side of mitochondrial outer membrane"                                            
+#&gt;  [9] "dendrite"                                                                                    
+#&gt; [10] "dendritic tree"                                                                              
+#&gt; [11] "determination of adult lifespan"                                                             
+#&gt; [12] "Gliosis"                                                                                     
+#&gt; [13] "GTP-dependent protein kinase activity"                                                       
+#&gt; [14] "HSP90-CDC37-LRRK2 complex"                                                                   
+#&gt; [15] "LRRK2-CHIP-HSP90 complex"                                                                    
+#&gt; [16] "LRRK2-FADD-CASP8 complex"                                                                    
+#&gt; [17] "lysosome organization"                                                                       
+#&gt; [18] "lytic vacuole organization"                                                                  
+#&gt; [19] "macroautophagy"                                                                              
+#&gt; [20] "MAPK cascade"                                                                                
+#&gt; [21] "mitochondrion organization"                                                                  
+#&gt; [22] "multicellular organism aging"                                                                
+#&gt; [23] "multivesicular body, internal vesicle"                                                       
+#&gt; [24] "negative regulation of establishment of protein localization to mitochondrion"               
+#&gt; [25] "negative regulation of late endosome to lysosome transport"                                  
+#&gt; [26] "negative regulation of neuron death"                                                         
+#&gt; [27] "negative regulation of peroxidase activity"                                                  
+#&gt; [28] "negative regulation of protein phosphorylation"                                              
+#&gt; [29] "negative regulation of protein processing involved in protein targeting to mitochondrion"    
+#&gt; [30] "negative regulation of protein targeting to mitochondrion"                                   
+#&gt; [31] "negative regulation of signal transduction"                                                  
+#&gt; [32] "negative regulation of thioredoxin peroxidase activity by peptidyl-threonine phosphorylation"
+#&gt; [33] "negative regulation of vacuolar transport"                                                   
+#&gt; [34] "neuron death"                                                                                
+#&gt; [35] "neuron projection terminus"                                                                  
+#&gt; [36] "peroxidase inhibitor activity"                                                               
+#&gt; [37] "positive regulation of catabolic process"                                                    
+#&gt; [38] "positive regulation of protein autoubiquitination"                                           
+#&gt; [39] "positive regulation of protein deacetylation"                                                
+#&gt; [40] "process utilizing autophagic mechanism"                                                      
+#&gt; [41] "protein localization to endoplasmic reticulum exit site"                                     
+#&gt; [42] "protein serine/threonine/tyrosine kinase activity"                                           
+#&gt; [43] "regulation of autophagy"                                                                     
+#&gt; [44] "regulation of CAMKK-AMPK signaling cascade"                                                  
+#&gt; [45] "regulation of cellular response to stress"                                                   
+#&gt; [46] "regulation of deacetylase activity"                                                          
+#&gt; [47] "regulation of histone deacetylase activity"                                                  
+#&gt; [48] "regulation of kidney size"                                                                   
+#&gt; [49] "regulation of late endosome to lysosome transport"                                           
+#&gt; [50] "regulation of macroautophagy"                                                                
+#&gt; [51] "regulation of neuron death"                                                                  
+#&gt; [52] "regulation of peroxidase activity"                                                           
+#&gt; [53] "regulation of protein processing involved in protein targeting to mitochondrion"             
+#&gt; [54] "regulation of retrograde transport, endosome to Golgi"                                       
+#&gt; [55] "regulation of vacuolar transport"                                                            
+#&gt; [56] "somatodendritic compartment"                                                                 
+#&gt; [57] "trans-Golgi network"                                                                         
+#&gt; [58] "vacuole organization"                                                                        
+#&gt; [59] "Wnt signalosome assembly"</code></pre>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf-3.png" width="1152"></p>
+<pre><code>#&gt; [1] "NMF:  3"
+#&gt;  [1] "rs896435"    "rs181609621" "rs117615688" "rs6854006"   "rs12283611" 
+#&gt;  [6] "rs979812"    "rs356228"    "rs356182"    "rs5019538"   "rs356203"   
+#&gt; [11] "rs2042477"   "rs4771268"   "rs26431"     "rs11683001"  "rs10748818" 
+#&gt; [16] "rs997368"    "rs13117519"  "rs72840788"  "rs117896735" "rs55961674" 
+#&gt; [21] "rs10847864"  "rs6875262"   "rs2086641"   "rs11610045"  "rs75859381" 
+#&gt; [26] "rs3802920"   "rs11950533"  "rs4954162"   "rs57891859" 
+#&gt;  [1] "ARF protein signal transduction"                                                      
+#&gt;  [2] "asymmetric synapse"                                                                   
+#&gt;  [3] "autophagosome organization"                                                           
+#&gt;  [4] "BAG3-HSC70-HSPB8-CHIP complex"                                                        
+#&gt;  [5] "CAMK2-delta-MASH1 promoter-coactivator complex"                                       
+#&gt;  [6] "cell projection"                                                                      
+#&gt;  [7] "cellular localization"                                                                
+#&gt;  [8] "clathrin-coated pit"                                                                  
+#&gt;  [9] "clathrin-coated vesicle"                                                              
+#&gt; [10] "CTCF-nucleophosmin-PARP-HIS-KPNA-LMNA-TOP complex"                                    
+#&gt; [11] "dendrite"                                                                             
+#&gt; [12] "dendritic tree"                                                                       
+#&gt; [13] "establishment of localization in cell"                                                
+#&gt; [14] "Hip1R-cortactin complex"                                                              
+#&gt; [15] "inositol monophosphate 1-phosphatase activity"                                        
+#&gt; [16] "inositol monophosphate 3-phosphatase activity"                                        
+#&gt; [17] "inositol monophosphate 4-phosphatase activity"                                        
+#&gt; [18] "inositol monophosphate phosphatase activity"                                          
+#&gt; [19] "MHC class Ib protein binding"                                                         
+#&gt; [20] "MHC class Ib protein binding, via antigen binding groove"                             
+#&gt; [21] "MHC class Ib protein complex binding"                                                 
+#&gt; [22] "mitochondrion organization"                                                           
+#&gt; [23] "movement of cell or subcellular component"                                            
+#&gt; [24] "negative regulation of cytoskeleton organization"                                     
+#&gt; [25] "negative regulation of establishment of protein localization to mitochondrion"        
+#&gt; [26] "negative regulation of neuron projection regeneration"                                
+#&gt; [27] "negative regulation of protein phosphorylation"                                       
+#&gt; [28] "negative regulation of protein polymerization"                                        
+#&gt; [29] "negative regulation of protein targeting to mitochondrion"                            
+#&gt; [30] "negative regulation of protein-containing complex assembly"                           
+#&gt; [31] "negative regulation of supramolecular fiber organization"                             
+#&gt; [32] "neuron projection"                                                                    
+#&gt; [33] "neuron to neuron synapse"                                                             
+#&gt; [34] "phosphatidylinositol-3,4,5-trisphosphate binding"                                     
+#&gt; [35] "phosphatidylinositol-3,5-bisphosphate binding"                                        
+#&gt; [36] "phosphatidylinositol-4-phosphate phosphatase activity"                                
+#&gt; [37] "plasma membrane bounded cell projection"                                              
+#&gt; [38] "positive regulation of clathrin coat assembly"                                        
+#&gt; [39] "positive regulation of memory T cell activation"                                      
+#&gt; [40] "positive regulation of platelet-derived growth factor receptor-beta signaling pathway"
+#&gt; [41] "postsynapse"                                                                          
+#&gt; [42] "postsynaptic density"                                                                 
+#&gt; [43] "postsynaptic specialization"                                                          
+#&gt; [44] "postsynaptic specialization of symmetric synapse"                                     
+#&gt; [45] "protein localization to endoplasmic reticulum exit site"                              
+#&gt; [46] "regeneration"                                                                         
+#&gt; [47] "regulation of ARF protein signal transduction"                                        
+#&gt; [48] "regulation of autophagy"                                                              
+#&gt; [49] "regulation of cellular localization"                                                  
+#&gt; [50] "regulation of cellular response to stress"                                            
+#&gt; [51] "regulation of clathrin coat assembly"                                                 
+#&gt; [52] "regulation of deacetylase activity"                                                   
+#&gt; [53] "regulation of histone deacetylase activity"                                           
+#&gt; [54] "regulation of ion transmembrane transport"                                            
+#&gt; [55] "regulation of localization"                                                           
+#&gt; [56] "regulation of macroautophagy"                                                         
+#&gt; [57] "regulation of memory T cell activation"                                               
+#&gt; [58] "regulation of neuron projection regeneration"                                         
+#&gt; [59] "regulation of protein polymerization"                                                 
+#&gt; [60] "SERCA2a-alphaKAP-CaM-CaMKII complex"                                                  
+#&gt; [61] "somatodendritic compartment"                                                          
+#&gt; [62] "synapse"                                                                              
+#&gt; [63] "vacuole organization"</code></pre>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf-4.png" width="1152"></p>
+<pre><code>#&gt; [1] "NMF:  4"
+#&gt;  [1] "rs873786"    "rs34311866"  "rs55818311"  "rs2295545"   "rs77351827" 
+#&gt;  [6] "rs12600861"  "rs7938782"   "rs1293298"   "rs896435"    "rs4698412"  
+#&gt; [11] "rs620513"    "rs13294100"  "rs10756907"  "rs34025766"  "rs76116224" 
+#&gt; [16] "rs73038319"  "rs6497339"   "rs2280104"   "rs199351"    "rs4140646"  
+#&gt; [21] "rs6808178"   "rs2904880"   "rs9261484"   "rs11150601"  "rs1941685"  
+#&gt; [26] "rs9267659"   "rs112485576" "rs181609621" "rs12147950"  "rs2248244"  
+#&gt; [31] "rs76904798"  "rs12456492"  "rs34637584"  "rs12951632"  "rs117073808"
+#&gt; [36] "rs141128804" "rs2269906"   "rs138017112" "rs850738"    "rs144755950"
+#&gt; [41] "rs17686238"  "rs62053943"  "rs9912362"   "rs6854006"   "rs12283611" 
+#&gt; [46] "rs979812"    "rs356228"    "rs356182"    "rs5019538"   "rs356203"   
+#&gt; [51] "rs4954162"   "rs57891859"  "rs10797576"  "rs180751015" "rs76763715" 
+#&gt; [56] "rs112485576"
+#&gt;  [1] "ADP-ribosyl cyclase activity"                                              
+#&gt;  [2] "cardiolipin synthase activity"                                             
+#&gt;  [3] "CD19-VAV1-PIK3R1 complex"                                                  
+#&gt;  [4] "CDP-diacylglycerol-glycerol-3-phosphate 3-phosphatidyltransferase activity"
+#&gt;  [5] "CDP-diacylglycerol-phosphatidylglycerol phosphatidyltransferase activity"  
+#&gt;  [6] "CIN85-CBL-SH3GL2 complex"                                                  
+#&gt;  [7] "CIN85-SH3GL2 complex"                                                      
+#&gt;  [8] "clathrin-coated pit"                                                       
+#&gt;  [9] "clathrin-coated vesicle"                                                   
+#&gt; [10] "CR2-CD19 complex"                                                          
+#&gt; [11] "cyclic ADP-ribose hydrolase"                                               
+#&gt; [12] "dendrite extension"                                                        
+#&gt; [13] "developmental growth involved in morphogenesis"                            
+#&gt; [14] "HCF-1 complex"                                                             
+#&gt; [15] "ITGA8-ITGB1 complex"                                                       
+#&gt; [16] "lipid biosynthetic process"                                                
+#&gt; [17] "lysosome"                                                                  
+#&gt; [18] "lysosome organization"                                                     
+#&gt; [19] "lytic vacuole"                                                             
+#&gt; [20] "lytic vacuole organization"                                                
+#&gt; [21] "MOF complex"                                                               
+#&gt; [22] "neuron to neuron synapse"                                                  
+#&gt; [23] "phosphatidyltransferase activity"                                          
+#&gt; [24] "phosphotransferase activity, for other substituted phosphate groups"       
+#&gt; [25] "plasma membrane tubulation"                                                
+#&gt; [26] "postsynaptic specialization"                                               
+#&gt; [27] "potassium channel complex"                                                 
+#&gt; [28] "RNA polymerase I cis-regulatory region sequence-specific DNA binding"      
+#&gt; [29] "RNA polymerase I general transcription initiation factor activity"         
+#&gt; [30] "Set1A complex"                                                             
+#&gt; [31] "synapse"                                                                   
+#&gt; [32] "thiamine pyrophosphate transmembrane transporter activity"                 
+#&gt; [33] "UDP-D-xylose:beta-D-glucoside alpha-1,3-D-xylosyltransferase activity"     
+#&gt; [34] "vacuolar lumen"                                                            
+#&gt; [35] "vacuole"                                                                   
+#&gt; [36] "voltage-gated potassium channel complex"</code></pre>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf-5.png" width="1152"></p>
+<pre><code>#&gt; [1] "NMF:  5"
+#&gt;  [1] "rs34311866"  "rs12147950"  "rs2248244"   "rs76904798"  "rs12456492" 
+#&gt;  [6] "rs34637584"  "rs9912362"   "rs117615688" "rs7221167"   "rs7225002"  
+#&gt; [11] "rs199453"    "rs11658976"  "rs7134559"   "rs8087969"   "rs12497850" 
+#&gt; [16] "rs9568188"   "rs6500328"   "rs3104783"   "rs10221156"  "rs11158026" 
+#&gt; [21] "rs61169879"  "rs1867598"   "rs2251086"   "rs76949143"  "rs12528068" 
+#&gt; [26] "rs3742785"   "rs666463"    "rs6825004"   "rs4101061"   "rs11683001" 
+#&gt; [31] "rs10748818"  "rs997368"    "rs13117519"  "rs1474055"   "rs62333164" 
+#&gt; [36] "rs11578699"  "rs10513789"  "rs823118"    "rs11557080"  "rs4653767"  
+#&gt; [41] "rs10797576" 
+#&gt;  [1] "3-methylcrotonyl-CoA carboxylase"                            
+#&gt;  [2] "adenyl nucleotide binding"                                   
+#&gt;  [3] "adenyl ribonucleotide binding"                               
+#&gt;  [4] "alcohol biosynthetic process"                                
+#&gt;  [5] "anion binding"                                               
+#&gt;  [6] "ATP binding"                                                 
+#&gt;  [7] "biotin binding"                                              
+#&gt;  [8] "biotin carboxylase activity"                                 
+#&gt;  [9] "BRCA1-BACH1 complex"                                         
+#&gt; [10] "C-palmitoyltransferase activity"                             
+#&gt; [11] "carbohydrate derivative binding"                             
+#&gt; [12] "CoA carboxylase activity"                                    
+#&gt; [13] "cyclohydrolase activity"                                     
+#&gt; [14] "developmental growth involved in morphogenesis"              
+#&gt; [15] "flavonoid binding"                                           
+#&gt; [16] "GTP cyclohydrolase activity"                                 
+#&gt; [17] "GTP cyclohydrolase I activity"                               
+#&gt; [18] "inositol hexakisphosphate 5-kinase activity"                 
+#&gt; [19] "inositol hexakisphosphate kinase activity"                   
+#&gt; [20] "inositol trisphosphate kinase activity"                      
+#&gt; [21] "inositol-1,4,5-trisphosphate 3-kinase activity"              
+#&gt; [22] "macroautophagy"                                              
+#&gt; [23] "methylcrotonoyl-CoA carboxylase activity"                    
+#&gt; [24] "MSL complex"                                                 
+#&gt; [25] "muramyl dipeptide binding"                                   
+#&gt; [26] "neuron projection terminus"                                  
+#&gt; [27] "NSL complex"                                                 
+#&gt; [28] "nucleoside phosphate binding"                                
+#&gt; [29] "nucleotide binding"                                          
+#&gt; [30] "positive regulation of catabolic process"                    
+#&gt; [31] "purine nucleotide binding"                                   
+#&gt; [32] "purine ribonucleoside triphosphate binding"                  
+#&gt; [33] "purine ribonucleotide binding"                               
+#&gt; [34] "regulation of autophagy"                                     
+#&gt; [35] "regulation of cellular response to stress"                   
+#&gt; [36] "regulation of macroautophagy"                                
+#&gt; [37] "regulation of retrograde transport, endosome to Golgi"       
+#&gt; [38] "ribonucleotide binding"                                      
+#&gt; [39] "RSC-type complex"                                            
+#&gt; [40] "serine C-palmitoyltransferase activity"                      
+#&gt; [41] "Serine-palmitoyltransferase (SPTLC1, SPTLC2, ssSPTb) complex"
+#&gt; [42] "Serine-palmitoyltransferase (SPTLC1, SPTLC3, ssSPTb) complex"
+#&gt; [43] "small molecule binding"                                      
+#&gt; [44] "sphingolipid biosynthetic process"                           
+#&gt; [45] "volume-sensitive chloride channel activity"</code></pre>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf-6.png" width="1152"></p>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf1-1.png" width="1152"></p>
+<p><img src="nalls_pd_genetics_files/figure-html/nmf2-1.png" width="1152"></p>
+</div>
 </div>
   </div>
 
