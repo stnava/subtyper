@@ -245,7 +245,7 @@ return( mxdfin[ mxdfin[,visitvar] %in% visitselect, ] )
 #'
 #' @param mxdfin Input data frame with repeated measurements and a grouped time variable
 #' @param idvar variable name for unique subject identifier column
-#' @param visitvar variable name for the visit column
+#' @param visitvar variable name for the visit or date column
 #' @param qualityvar variable name for the quality column; higher values should map to
 #' higher quality data.
 #'
@@ -268,7 +268,9 @@ highestQualityRepeat  <-function(
   uids = unique( mxdfin[,idvar] )
   useit = rep( FALSE, nrow( mxdfin ) )
   for ( u in uids ) {
-    for ( v in vizzes ) {
+    losel = mxdfin[,idvar] == u
+    vizzesloc = unique( mxdfin[ losel, visitvar ] )
+    for ( v in vizzesloc ) {
       losel = mxdfin[,idvar] == u & mxdfin[,visitvar] == v
       mysnr = mxdfin[losel,qualityvar]
       myw = which( losel )

@@ -11,7 +11,7 @@ highestQualityRepeat(mxdfin, idvar, visitvar, qualityvar)
 
 \item{idvar}{variable name for unique subject identifier column}
 
-\item{visitvar}{variable name for the visit column}
+\item{visitvar}{variable name for the visit or date column}
 
 \item{qualityvar}{variable name for the quality column; higher values should map to
 higher quality data.}
