@@ -377,7 +377,7 @@ adjustByCovariates  <- function(
   outcomevar = gsub( " ", "", unlist(strsplit( adjustmentFormula, "~" ))[[1]] )
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
-    gsel = mxdfin[,groupVariable] == group
+    gsel = mxdfin[,groupVariable] %in% group
     if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
     subdf = mxdfin[ gsel, ]
   } else subdf = mxdfin
@@ -426,7 +426,7 @@ trainSubtypeUni  <- function(
     stop( "length( subtypes ) != ( length( quantiles ) + 1 )" )
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
-    gsel = mxdfin[,groupVariable] == group
+    gsel = mxdfin[,groupVariable] %in% group
     if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
     subdf = mxdfin[ gsel, ]
   } else {
@@ -557,7 +557,7 @@ trainSubtypeClusterMulti  <- function(
 
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
-    gsel = mxdfin[,groupVariable] == group
+    gsel = mxdfin[,groupVariable] %in% group
     if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
     subdf = mxdfin[ gsel, measureColumns ]
   } else {
