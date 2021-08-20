@@ -737,5 +737,5 @@ biclusterMatrixFactorization  <- function(
       }
     biclustmat[ rownames( biclustmat ) %in% myrow ,  colnames( biclustmat ) %in% mycol  ] = j
     }
- return( biclustmat )
+ return( list( rowClusters=maxh, colClusters=maxw, jointClusters=biclustmat ) )
 }
