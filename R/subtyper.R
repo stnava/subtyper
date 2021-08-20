@@ -704,6 +704,8 @@ biclusterMatrixFactorization  <- function(
   fixmat <- function( x ) {
     if ( is.null( rownames( x ) ) )
       rownames( x )=as.character( 1:nrow(x) )
+    if ( is.null( colnames( x ) ) )
+      colnames( x )=as.character( 1:ncol(x) )
     xt = t( x )
     zz=apply( xt, FUN=var, MARGIN=2)
     x = t( xt[, zz != 0 ] )
@@ -716,24 +718,24 @@ biclusterMatrixFactorization  <- function(
 
   mybcmat = fixmat( data.matrix( mxdfin[,measureColumns]  ) )
   biclustmat = matrix( 0, nrow = nrow( mybcmat ), ncol = ncol( mybcmat ) )
+  if ( is.null( rownames( mybcmat ) ) )
+    rownames( mybcmat )=as.character( 1:nrow(mybcmat) )
   colnames( biclustmat ) = colnames( mybcmat )
   rownames( biclustmat ) = rownames( mybcmat )
   mynmf = NMF::nmf( mybcmat, k, method="Frobenius", seed='ica' )
-  w <- NMF::basis( mynmf )
-  h <- NMF::coef( mynmf )
-  maxw = apply( w, FUN=which.max, MARGIN=1 )
-  maxh = apply( h, FUN=which.max, MARGIN=2 )
-  qq = 0.5
+#  w <- NMF::basis( mynmf )
+#  h <- NMF::coef( mynmf )
+  maxw = NMF::predict( mynmf, 'columns')
+  maxh = NMF::predict( mynmf, 'rows')
   for ( j in 1:k ) {
-    snps1 = names( maxw )[ maxw == j ]
-    func1 = names( maxh )[ maxh == j ]
+    mycol = names( maxw )[ maxw == j ]
+    myrow = names( maxh )[ maxh == j ]
     if ( verbose ) {
       print( k )
-      print( snps1 )
-      print( func1 )
+      print( mycol )
+      print( myrow )
       }
-    biclustmat[ rownames( biclustmat ) %in% snps1 ,  colnames( biclustmat ) %in% func1  ] = j
+    biclustmat[ rownames( biclustmat ) %in% myrow ,  colnames( biclustmat ) %in% mycol  ] = j
     }
-
  return( biclustmat )
 }
