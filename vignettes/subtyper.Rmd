@@ -203,5 +203,5 @@ We implement a simple biclustering method based on matrix factorization.
 
 ```{r nmfbi,echo=FALSE,eval=TRUE}
 mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 3 )
-pheatmap::pheatmap( mybic )
+pheatmap::pheatmap( mybic$jointClusters )
 ```
