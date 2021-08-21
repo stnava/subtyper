@@ -233,8 +233,8 @@ for ( j in 1:nv ) {
 
 ```{r nmf,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
 mybic = biclusterMatrixFactorization( myviz2 * ( -1.0 ), colnames(myviz2), k = 5 )
-colnames(mybic)=substr( colnames(mybic), 0, 12 )
-pheatmap::pheatmap( mybic, cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
+colnames(mybic$jointClusters)=substr( colnames(mybic$jointClusters), 0, 12 )
+pheatmap::pheatmap( mybic$jointClusters, cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
 ```
 
 
