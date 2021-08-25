@@ -41,6 +41,5 @@ workflows:
   all:
     jobs:
       - release
-      - devel
       - oldrel
-
+#      - devel
