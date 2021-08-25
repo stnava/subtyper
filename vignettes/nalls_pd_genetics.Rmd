@@ -48,7 +48,7 @@ associated with pleiotropic properties.  See [this review](https://www.frontiers
 
 First, we generate the association data.
 
-```{r functionalenrichment,echo=FALSE,eval=TRUE,fig.width=24,fig.height=12}
+```{r functionalenrichment,echo=FALSE,eval=TRUE,fig.width=24,fig.height=12,message=FALSE}
 data( nallspdma, package = 'subtyper' )
 myq = nallspdma$SNP[  ]
 myq = myq[ -grep("Note",myq)]
