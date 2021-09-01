@@ -192,7 +192,7 @@ plotSubtypeChange <-function( mxdfin,
     namer=paste( subtype, ' vs ', measurement , extra )
     return( ggplot( tgcWithin,
       aes(x=timer, y=Changer,
-        group = Quant, color = Quant , shape = Quant )) +
+        group = Quant, color = Quant  )) + #, shape = Quant
       geom_errorbar(aes(ymin=ymin, ymax=ymax), colour="black", width=ww, position=pd) +
       geom_line(lwd = 1, show.legend = FALSE ) +
       geom_point(position=pd, size=3, shape=21, fill="white") + # 21 is filled circle
