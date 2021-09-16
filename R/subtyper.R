@@ -486,6 +486,7 @@ filterForGoodData <- function( dataIn,
   }
 
   rbvars = sort( names(dataIn)[grep(rbj,names(dataIn))] )
+  goodsel = goodsel[  !is.na( dataIn[,rbvars[1]]) ]
   dataIn = dataIn[ !is.na( dataIn[,rbvars[1]]),  ]
   if ( length( grep("Pos",rbvars) ) > 0 )
     rbvars = rbvars[ -grep("Pos",rbvars)]
