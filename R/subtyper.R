@@ -497,8 +497,13 @@ filterForGoodData <- function( dataIn,
     !is.na(   dataIn[,bestolvar])
   olvarinds = 1:length( olvar )
   olvarinds = olvarinds[ ! ( olvarinds %in% which( olvar == bestolvar ) ) ]
-  for ( k in olvarinds )
-    goodsel = goodsel & dataIn[,olvar[k]] < quantile( dataIn[,olvar[k]], quantileThreshold, na.rm=T )
+  for ( k in olvarinds ) {
+    if ( ! is.na( dataIn[1,olvar[k]] ) ) {
+      nextsel = dataIn[,olvar[k]] < quantile( dataIn[,olvar[k]], quantileThreshold, na.rm=T )
+      goodsel = goodsel & nextsel
+      }
+    }
+  goodsel[ is.na( goodsel )] = FALSE
   return( dataIn[ goodsel ,  ] )
 }
 
