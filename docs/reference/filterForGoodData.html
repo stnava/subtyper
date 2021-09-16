@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Outlierness scoring — outlierness • subtyper</title>
+<title>Uses outlierness scoring to filter a data frame — filterForGoodData • subtyper</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,10 @@
 
 
 
-<meta property="og:title" content="Outlierness scoring — outlierness" />
-<meta property="og:description" content="Produce several complementary measurements of outlierness" />
+<meta property="og:title" content="Uses outlierness scoring to filter a data frame — filterForGoodData" />
+<meta property="og:description" content="This will produce an inclusion function based on scores genetrated by the
+outlinerness function within this package.  We assume the data frame
+has values of the type RandBasisProj* or RandomBasisProj* within its column names." />
 
 
 
@@ -126,46 +128,47 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Outlierness scoring</h1>
+    <h1>Uses outlierness scoring to filter a data frame</h1>
     <small class="dont-index">Source: <a href='https://github.com/stnava/subtyper/blob/master/R/subtyper.R'><code>R/subtyper.R</code></a></small>
-    <div class="hidden name"><code>outlierness.Rd</code></div>
+    <div class="hidden name"><code>filterForGoodData.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Produce several complementary measurements of outlierness</p>
+    <p>This will produce an inclusion function based on scores genetrated by the
+<code>outlinerness</code> function within this package.  We assume the data frame
+has values of the type <code>RandBasisProj*</code> or <code>RandomBasisProj*</code> within its column names.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>outlierness</span><span class='op'>(</span>
-  <span class='va'>mxdfin</span>,
-  <span class='va'>measureColumns</span>,
-  <span class='va'>calck</span>,
-  outlierfunctions <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"LOOP"</span>, <span class='st'>"LOF"</span>, <span class='st'>"INFLO"</span>, <span class='st'>"RDOS"</span>, <span class='st'>"KDEOS"</span>, <span class='st'>"LDF"</span>, <span class='st'>"KNN_AGG"</span>,
-    <span class='st'>"KNN_IN"</span>, <span class='st'>"KNN_SUM"</span>, <span class='st'>"RKOF"</span><span class='op'>)</span>,
-  verbose <span class='op'>=</span> <span class='cn'>FALSE</span>
+    <pre class="usage"><span class='fu'>filterForGoodData</span><span class='op'>(</span>
+  <span class='va'>dataIn</span>,
+  bestolvar <span class='op'>=</span> <span class='st'>"OL_RKOF"</span>,
+  quantileThreshold <span class='op'>=</span> <span class='fl'>0.99</span>,
+  extraFiltering <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  calck <span class='op'>=</span> <span class='fl'>256</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>mxdfin</th>
-      <td><p>Input data frame with repeated measurements and a grouped time variable</p></td>
+      <th>dataIn</th>
+      <td><p>Input data frame</p></td>
     </tr>
     <tr>
-      <th>measureColumns</th>
-      <td><p>vector string of column names to use in outlier detection</p></td>
+      <th>bestolvar</th>
+      <td><p>the outlier variable to prioritize</p></td>
+    </tr>
+    <tr>
+      <th>quantileThreshold</th>
+      <td><p>the quantile to use for thresholing outlierness values</p></td>
+    </tr>
+    <tr>
+      <th>extraFiltering</th>
+      <td><p>will perform brain-based application-specific filtering</p></td>
     </tr>
     <tr>
       <th>calck</th>
-      <td><p>optional integer for knn</p></td>
-    </tr>
-    <tr>
-      <th>outlierfunctions</th>
-      <td><p>vector of strings naming outlier functions to report</p></td>
-    </tr>
-    <tr>
-      <th>verbose</th>
-      <td><p>boolean</p></td>
+      <td><p>optional parameter to pass to outlierness</p></td>
     </tr>
     </table>
 
@@ -178,18 +181,8 @@
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='va'>mydf</span> <span class='op'>=</span> <span class='fu'><a href='generateSubtyperData.html'>generateSubtyperData</a></span><span class='op'>(</span> <span class='fl'>100</span> <span class='op'>)</span>
-<span class='va'>rbfnames</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/grep.html'>grep</a></span><span class='op'>(</span><span class='st'>"Random"</span>,<span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
-<span class='va'>mydf</span><span class='op'>[</span><span class='fl'>8</span>,<span class='va'>rbfnames</span><span class='op'>]</span> <span class='op'>=</span> <span class='va'>mydf</span><span class='op'>[</span><span class='fl'>8</span>,<span class='va'>rbfnames</span><span class='op'>]</span> <span class='op'>*</span> <span class='fl'>4.0</span>
-<span class='va'>mydfol</span> <span class='op'>=</span> <span class='fu'>outlierness</span><span class='op'>(</span> <span class='va'>mydf</span>, <span class='va'>rbfnames</span> <span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] "r update: 2"
-#&gt; [1] "r update: 3"
-#&gt; [1] "r update: 4"
-#&gt; [1] "r update: 5"
-#&gt; [1] "r update: 6"
-#&gt; [1] "r update: 7"</div><div class='input'><span class='va'>olnames</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/grep.html'>grep</a></span><span class='op'>(</span><span class='st'>"OL_"</span>,<span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
-<span class='va'>mydf</span><span class='op'>[</span><span class='fl'>6</span>,<span class='va'>olnames</span><span class='op'>]</span>
-</div><div class='output co'>#&gt; data frame with 0 columns and 1 row</div><div class='input'><span class='va'>mydf</span><span class='op'>[</span><span class='fl'>8</span>,<span class='va'>olnames</span><span class='op'>]</span>
-</div><div class='output co'>#&gt; data frame with 0 columns and 1 row</div></pre>
+<span class='va'>mydfol</span> <span class='op'>=</span> <span class='fu'>filterForGoodData</span><span class='op'>(</span> <span class='va'>mydf</span>, calck <span class='op'>=</span> <span class='fl'>8</span> <span class='op'>)</span>
+</div><div class='output co'>#&gt; calc: LOOP ... calc: LOF ... calc: INFLO ... calc: KDEOS ... calc: LDF ... calc: KNN_AGG ... calc: KNN_IN ... </div><div class='output co'>#&gt; <span class='error'>Error in `$&lt;-.data.frame`(`*tmp*`, "OL_KNN_IN", value = c(-8, -5, -7, -14, -8, -3, -5, -16, 0, -6, 0, -4, -10, -2, -6, -1, -8, 0, -6, -6, -16, -8, -10, -6, -1, -7, -16, -3, -8, -14, -15, -22, -10, -9, -2, -10, -15, -18, -3, -4, 0, -2, -9, -11, -10, -7, -15, -21, -4, -15, -6, -1, -16, -5, -14, -9, -4, -16, -3, -10, -9, -9, -4, -12, -10, -9, -11, -5, -1, -19, -3, -11, -5, -3, -4, -10, -7, -9, -4, -5, -10, -17, -3, -8, -1, -7, -3, -8, -15, -19, -11, -9, -5, -6, -3, -11, -4, -13, -7)): replacement has 99 rows, data has 100</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

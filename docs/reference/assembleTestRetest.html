@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Outlierness scoring — outlierness • subtyper</title>
+<title>Find test-retest data within a dataframe — assembleTestRetest • subtyper</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,13 @@
 
 
 
-<meta property="og:title" content="Outlierness scoring — outlierness" />
-<meta property="og:description" content="Produce several complementary measurements of outlierness" />
+<meta property="og:title" content="Find test-retest data within a dataframe — assembleTestRetest" />
+<meta property="og:description" content="We assume there is a quality or related measure that will let us compute
+distances between different time points and that these distances relate to
+how similar two images are.  Note that the measurement may not relate to
+quality at all but should map images into a similar metric space based on
+appearance or some other objective quality that leads to the same value
+when images are the same and changes continuously as images differ." />
 
 
 
@@ -126,52 +131,67 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Outlierness scoring</h1>
+    <h1>Find test-retest data within a dataframe</h1>
     <small class="dont-index">Source: <a href='https://github.com/stnava/subtyper/blob/master/R/subtyper.R'><code>R/subtyper.R</code></a></small>
-    <div class="hidden name"><code>outlierness.Rd</code></div>
+    <div class="hidden name"><code>assembleTestRetest.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Produce several complementary measurements of outlierness</p>
+    <p>We assume there is a quality or related measure that will let us compute
+distances between different time points and that these distances relate to
+how similar two images are.  Note that the measurement may not relate to
+quality at all but should map images into a similar metric space based on
+appearance or some other objective quality that leads to the same value
+when images are the same and changes continuously as images differ.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>outlierness</span><span class='op'>(</span>
-  <span class='va'>mxdfin</span>,
-  <span class='va'>measureColumns</span>,
-  <span class='va'>calck</span>,
-  outlierfunctions <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"LOOP"</span>, <span class='st'>"LOF"</span>, <span class='st'>"INFLO"</span>, <span class='st'>"RDOS"</span>, <span class='st'>"KDEOS"</span>, <span class='st'>"LDF"</span>, <span class='st'>"KNN_AGG"</span>,
-    <span class='st'>"KNN_IN"</span>, <span class='st'>"KNN_SUM"</span>, <span class='st'>"RKOF"</span><span class='op'>)</span>,
-  verbose <span class='op'>=</span> <span class='cn'>FALSE</span>
+    <pre class="usage"><span class='fu'>assembleTestRetest</span><span class='op'>(</span>
+  <span class='va'>dataIn</span>,
+  <span class='va'>qualitycolumns</span>,
+  <span class='va'>subjectID</span>,
+  <span class='va'>visitID</span>,
+  <span class='va'>whichVisit</span>,
+  <span class='va'>measureToRepeat</span>,
+  <span class='va'>uniqueID</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>mxdfin</th>
-      <td><p>Input data frame with repeated measurements and a grouped time variable</p></td>
+      <th>dataIn</th>
+      <td><p>Input data frame with the old name within</p></td>
     </tr>
     <tr>
-      <th>measureColumns</th>
-      <td><p>vector string of column names to use in outlier detection</p></td>
+      <th>qualitycolumns</th>
+      <td><p>the name(s) of quality-related column measurements</p></td>
     </tr>
     <tr>
-      <th>calck</th>
-      <td><p>optional integer for knn</p></td>
+      <th>subjectID</th>
+      <td><p>the unique subject id column name</p></td>
     </tr>
     <tr>
-      <th>outlierfunctions</th>
-      <td><p>vector of strings naming outlier functions to report</p></td>
+      <th>visitID</th>
+      <td><p>the column name that gives the visit / date; typically we look
+for data the exists on the same visit.</p></td>
     </tr>
     <tr>
-      <th>verbose</th>
-      <td><p>boolean</p></td>
+      <th>whichVisit</th>
+      <td><p>optional visit to use for the analysis</p></td>
+    </tr>
+    <tr>
+      <th>measureToRepeat</th>
+      <td><p>the measurement to assemble for computing trt stats (e.g. ICC)</p></td>
+    </tr>
+    <tr>
+      <th>uniqueID</th>
+      <td><p>optional column to contatenate to trt dataframe</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>data frame</p>
+    <p>data frame with test-retest friendly organization</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Avants BB</p>
@@ -179,17 +199,8 @@
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='va'>mydf</span> <span class='op'>=</span> <span class='fu'><a href='generateSubtyperData.html'>generateSubtyperData</a></span><span class='op'>(</span> <span class='fl'>100</span> <span class='op'>)</span>
 <span class='va'>rbfnames</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/grep.html'>grep</a></span><span class='op'>(</span><span class='st'>"Random"</span>,<span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
-<span class='va'>mydf</span><span class='op'>[</span><span class='fl'>8</span>,<span class='va'>rbfnames</span><span class='op'>]</span> <span class='op'>=</span> <span class='va'>mydf</span><span class='op'>[</span><span class='fl'>8</span>,<span class='va'>rbfnames</span><span class='op'>]</span> <span class='op'>*</span> <span class='fl'>4.0</span>
-<span class='va'>mydfol</span> <span class='op'>=</span> <span class='fu'>outlierness</span><span class='op'>(</span> <span class='va'>mydf</span>, <span class='va'>rbfnames</span> <span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] "r update: 2"
-#&gt; [1] "r update: 3"
-#&gt; [1] "r update: 4"
-#&gt; [1] "r update: 5"
-#&gt; [1] "r update: 6"
-#&gt; [1] "r update: 7"</div><div class='input'><span class='va'>olnames</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/grep.html'>grep</a></span><span class='op'>(</span><span class='st'>"OL_"</span>,<span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
-<span class='va'>mydf</span><span class='op'>[</span><span class='fl'>6</span>,<span class='va'>olnames</span><span class='op'>]</span>
-</div><div class='output co'>#&gt; data frame with 0 columns and 1 row</div><div class='input'><span class='va'>mydf</span><span class='op'>[</span><span class='fl'>8</span>,<span class='va'>olnames</span><span class='op'>]</span>
-</div><div class='output co'>#&gt; data frame with 0 columns and 1 row</div></pre>
+<span class='va'>mytrt</span> <span class='op'>=</span> <span class='fu'>assembleTestRetest</span><span class='op'>(</span> <span class='va'>mydf</span>, <span class='va'>rbfnames</span><span class='op'>[</span><span class='fl'>1</span><span class='op'>]</span>, <span class='st'>'Id'</span>, <span class='st'>'visit'</span> <span class='op'>)</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

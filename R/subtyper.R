@@ -352,6 +352,156 @@ outlierness <- function( mxdfin, measureColumns, calck,
 
 
 
+
+#' Carefully replace a column name with a new one
+#'
+#' This will replace a column name with a new column name - it will not make
+#' any changes to the underlying data.
+#'
+#' @param dataIn Input data frame with the old name within
+#' @param oldName string column name to replace
+#' @param newName the replacement name
+#' @return data frame
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' mydf = replaceName( mydf, rbfnames[1], 'mileyCyrus' )
+#' @export
+replaceName <- function( dataIn, oldName, newName ) {
+  if ( oldName %in% names( dataIn ) )
+    names(dataIn)[ names(dataIn) == oldName ] = newName
+  return( dataIn )
+}
+
+
+#' Find test-retest data within a dataframe
+#'
+#' We assume there is a quality or related measure that will let us compute
+#' distances between different time points and that these distances relate to
+#' how similar two images are.  Note that the measurement may not relate to
+#' quality at all but should map images into a similar metric space based on
+#' appearance or some other objective quality that leads to the same value
+#' when images are the same and changes continuously as images differ.
+#'
+#' @param dataIn Input data frame with the old name within
+#' @param qualitycolumns the name(s) of quality-related column measurements
+#' @param subjectID the unique subject id column name
+#' @param visitID the column name that gives the visit / date; typically we look
+#' for data the exists on the same visit.
+#' @param whichVisit optional visit to use for the analysis
+#' @param measureToRepeat the measurement to assemble for computing trt stats (e.g. ICC)
+#' @param uniqueID optional column to contatenate to trt dataframe
+#' @return data frame with test-retest friendly organization
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' mytrt = assembleTestRetest( mydf, rbfnames[1], 'Id', 'visit' )
+#' @export
+assembleTestRetest <- function(
+  dataIn,
+  qualitycolumns,
+  subjectID,
+  visitID,
+  whichVisit,
+  measureToRepeat,
+  uniqueID ) {
+
+  usubs = sort( unique( dataIn[,subjectID] ) )
+  trtdf = data.frame( )
+  for ( u in usubs ) {
+    usel = dataIn[,subjectID] == u
+    if ( ! missing( whichVisit ) ) {
+      usel = dataIn[,subjectID] == u & dataIn[,visitID] == whichVisit
+    }
+    usel[ is.na( usel ) ] = FALSE
+    if (sum(usel) > 1 ) {
+      rowinds = which( usel )
+      mydist = as.matrix( dist( dataIn[usel,qualitycolumns] ) )
+      diag(mydist) = Inf
+      mymin = min(mydist,na.rm=TRUE)
+      bestind = which( mydist == mymin, arr.ind = T)[1,]
+      n = nrow(trtdf) + 1
+      trtdf[ n , subjectID ] = u
+      if ( ! missing( whichVisit ) )
+        trtdf[ n , visitID ] = whichVisit
+      trtdf[ n , "distance" ] = mymin
+      trtdf[ n , "trt0" ] = rowinds[ bestind[1] ]
+      trtdf[ n , "trt1" ] = rowinds[ bestind[2] ]
+      if ( ! missing( measureToRepeat )) {
+        trtdf[ n , paste0(measureToRepeat,0) ] = dataIn[ trtdf[ n , "trt0" ], measureToRepeat ]
+        trtdf[ n , paste0(measureToRepeat,1) ] = dataIn[ trtdf[ n , "trt1" ], measureToRepeat ]
+      }
+      if ( ! missing( uniqueID )) {
+        trtdf[ n , paste0(uniqueID,0) ] = dataIn[ trtdf[ n , "trt0" ], uniqueID ]
+        trtdf[ n , paste0(uniqueID,1) ] = dataIn[ trtdf[ n , "trt1" ], uniqueID ]
+      }
+    }
+  }
+  return( trtdf )
+}
+
+
+#' Uses outlierness scoring to filter a data frame
+#'
+#' This will produce an inclusion function based on scores genetrated by the
+#' \code{outlinerness} function within this package.  We assume the data frame
+#' has values of the type \code{RandBasisProj*} or \code{RandomBasisProj*} within its column names.
+#'
+#' @param dataIn Input data frame
+#' @param bestolvar the outlier variable to prioritize
+#' @param quantileThreshold the quantile to use for thresholing outlierness values
+#' @param extraFiltering will perform brain-based application-specific filtering
+#' @param calck optional parameter to pass to outlierness
+#' @return data frame
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' mydfol = filterForGoodData( mydf, calck = 8 )
+#' @export
+#' @importFrom stats quantile
+#' @importFrom utils tail
+filterForGoodData <- function( dataIn,
+    bestolvar = "OL_RKOF",
+    quantileThreshold=0.99,
+    extraFiltering = FALSE,
+    calck = 256 ) {
+  rbj = "RandBasisProj"
+  if ( length( grep(rbj,names(dataIn)) ) == 0 ) {
+    rbj = "RandomBasisProj"
+    if ( length( grep(rbj,names(dataIn)) ) == 0 ) {
+      stop("No RandBasisProj or RandomBasisProj column names. Cannot proceed.")
+    }
+  }
+  epshvbrain_adjusted = 1.0 - quantileThreshold
+  goodsel = rep( TRUE, nrow( dataIn ) )
+  if ( ( "dkt_parc_wmSNR_dkt_parc_wmSNR" %in% names( dataIn ) ) & extraFiltering ) {
+    qval = quantile( dataIn$dkt_parc_wmSNR_dkt_parc_wmSNR, epshvbrain_adjusted, na.rm=T  )
+    goodsel = goodsel & dataIn$dkt_parc_wmSNR_dkt_parc_wmSNR > qval
+  }
+  if ( ( "GM_vol_tissues" %in% names( dataIn ) ) & extraFiltering ) {
+    qval = quantile( dataIn$GM_vol_tissues, c(epshvbrain_adjusted, 1.0 - epshvbrain_adjusted), na.rm=T  )
+    goodsel = goodsel & dataIn$GM_vol_tissues > qval[1]
+  }
+
+  rbvars = sort( names(dataIn)[grep(rbj,names(dataIn))] )
+  dataIn = dataIn[ !is.na( dataIn[,rbvars[1]]),  ]
+  if ( length( grep("Pos",rbvars) ) > 0 )
+    rbvars = rbvars[ -grep("Pos",rbvars)]
+  dataIn = outlierness( dataIn, rbvars, calck=calck, verbose = TRUE)
+  olvar = names(dataIn)[grep("OL_",names(dataIn)) ]
+  goodsel = goodsel &
+    dataIn[,bestolvar] < quantile( dataIn[,bestolvar], quantileThreshold, na.rm=T) &
+    !is.na(   dataIn[,bestolvar])
+  olvarinds = 1:length( olvar )
+  olvarinds = olvarinds[ ! ( olvarinds %in% which( olvar == bestolvar ) ) ]
+  for ( k in olvarinds )
+    goodsel = goodsel & dataIn[,olvar[k]] < quantile( dataIn[,olvar[k]], quantileThreshold, na.rm=T )
+  return( dataIn[ goodsel ,  ] )
+}
+
+
 #' Covariate adjustment
 #'
 #' Adjust a training vector value by nuisance variables eg field strength etc.
