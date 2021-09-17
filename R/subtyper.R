@@ -508,6 +508,64 @@ filterForGoodData <- function( dataIn,
 }
 
 
+
+#' fill baseline column
+#'
+#' build a column of data that maps baseline values to every row. baseline values
+#' starting points or reference points for each subject, e.g. a value of a measurement
+#' at time zero.  the method will produce a mean value if multiple entries match
+#' the subjectID and visitID conditions.
+#'
+#' @param mxdfin Input data frame with repeated measurements and a grouped time variable
+#' @param columnName string defining a valid column in the data frame.
+#' @param subjectID the unique subject id column name
+#' @param visitID names of the column that defines the variable defining
+#' baseline-ness. e.g. \code{isBaseline}
+#' @param baselineVisitValue the value defining baseline e.g. \code{TRUE}
+#' @param baselineExt string appended to column name defining the baseline variable
+#' @param deltaExt string appended to column name defining the change variable
+#' @return data frame with new columns
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' mydf = fillBaselineColumn( mydf, "RandomBasisProjection01", "Id", "visit", "V0" )
+#' @export
+fillBaselineColumn <- function(
+   mxdfin,
+   columnName,
+   subjectID,
+   visitID,
+   baselineVisitValue,
+   baselineExt = "_BL",
+   deltaExt = "_delta"
+) {
+  if ( ! ( subjectID %in% names( mxdfin ) ) )
+    stop("subjectID not in data frame's columns")
+  if ( ! ( columnName %in% names( mxdfin ) ) )
+    stop("columnName not in data frame's columns")
+  if ( ! ( visitID %in% names( mxdfin ) ) )
+    stop("visitID not in data frame's columns")
+  if ( ! ( baselineVisitValue %in% mxdfin[,visitID] ) )
+    stop("baselineVisitValue not in data frame's visitID")
+  newcolname = paste0( columnName, baselineExt )
+  newcolnamed = paste0( columnName, deltaExt )
+  mxdfin[,newcolname]=NA
+  mxdfin[,newcolnamed]=NA
+  for ( u in unique( mxdfin[,subjectID] ) ) {
+    losel = mxdfin[,subjectID] == u
+    lomxdfin = mxdfin[ losel ,  ]
+    selbase = losel & mxdfin[,visitID] == baselineVisitValue
+    selbase[ is.na(selbase) ] = FALSE
+    if ( sum( selbase ) > 0 ) {
+      baseval = mean( mxdfin[ selbase, columnName ],  na.rm=T )
+    } else baseval = NA
+    mxdfin[ losel , newcolname ] = baseval
+  }
+  mxdfin[,newcolnamed] = mxdfin[,columnName] - mxdfin[,newcolname]
+  return( list(mxdfin, newcolname, newcolnamed ) )
+}
+
+
 #' Covariate adjustment
 #'
 #' Adjust a training vector value by nuisance variables eg field strength etc.
