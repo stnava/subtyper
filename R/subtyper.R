@@ -751,6 +751,11 @@ predictSubtypeUni  <- function(
 #' @param maxk maximum number of subtypes
 #' @param groupVariable names of the column that defines the group to use for training.
 #' @param group string defining a subgroup on which to train
+#' @param gmmThresh fractional value less than 1 indicating the amount of change
+#' in the frobenius norm from the previous iteration 1 - F_cur / F_prev that
+#' will determine the optimal number of clusters. For GMM clustering.
+#' @param trainTestRatio Training testing split for finding optimal number
+#' of clusters. For GMM clustering.  If zero, then will not split data.
 #' @return the clustering object
 #' @author Avants BB
 #' @examples
@@ -766,9 +771,12 @@ trainSubtypeClusterMulti  <- function(
   desiredk,
   maxk,
   groupVariable,
-  group
+  group,
+  gmmThresh = 0.01,
+  trainTestRatio = 0
 ) {
 
+  .env <- environment() ## identify the environment of cv.step
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
     gsel = mxdfin[,groupVariable] %in% group
@@ -782,19 +790,47 @@ trainSubtypeClusterMulti  <- function(
   if ( method == "GMM" ) {
     if ( missing( desiredk ) ) {
       if ( missing( maxk ) ) maxk = 10
-      opt_gmm = ClusterR::Optimal_Clusters_GMM(subdf, max_clusters = maxk, criterion = "BIC",
-        dist_mode = "maha_dist", seed_mode = "random_subset",
-        km_iter = 10, em_iter = 10, var_floor = 1e-10,
-        plot_data = FALSE )
-      desiredk = which.min( opt_gmm )
+#      opt_gmm = ClusterR::Optimal_Clusters_GMM(subdf, max_clusters = maxk, criterion = "BIC",
+#        dist_mode = "maha_dist", seed_mode = "random_subset",
+#        km_iter = 10, em_iter = 10, var_floor = 1e-10,
+#        plot_data = FALSE )
+#      desiredk = which.min( opt_gmm )
+        opt_gmm = rep( NA, maxk )
+        opt_gmm_delta = Inf
+        ii = 1
+        if ( trainTestRatio == 0 ) {
+          isTrain = rep( TRUE, nrow(subdf) )
+          isTest = rep( TRUE, nrow(subdf) )
+        } else {
+          isTrainNum = sample( 1:nrow( subdf ), round( trainTestRatio * nrow( subdf ) ) )
+          isTrain = rep( FALSE, nrow(subdf) )
+          isTrain[ isTrainNum ] = TRUE
+          isTest = !isTrain
+        }
+        while ( opt_gmm_delta > thresh & ii < maxk ) {
+          gmm = ClusterR::GMM(subdf[isTrain,], gaussian_comps = ii,
+              dist_mode = "maha_dist", seed_mode = "random_subset",
+              km_iter = 10, em_iter = 5, verbose = FALSE)
+          gmmclp = predictSubtypeClusterMulti( subdf[isTest,], measureColumns, gmm,
+              clustername = "predictSubtypeClusterMultiClustersX" )
+          if ( ii == 1 ) {
+            myform = as.formula( "data.matrix(subdf[isTest,]) ~  1" , env = .env)
+          } else {
+            myform = as.formula( "data.matrix(subdf[isTest,]) ~  factor(gmmclp$predictSubtypeClusterMultiClustersX)" , env = .env)
+          }
+          mdl = lm( myform )
+          opt_gmm[ii] = norm( data.matrix(predict(mdl,newdata=gmmclp)) - data.matrix(subdf[isTest,]), "F")
+          if ( ii > 1 ) opt_gmm_delta = 1.0 - opt_gmm[ ii ]/opt_gmm[ ii - 1 ]
+          ii = ii + 1
+        }
+        desiredk = ii
     }
     gmm = ClusterR::GMM( subdf,
-      gaussian_comps = desiredk,
-      dist_mode = "maha_dist",
-      seed_mode = "random_subset",
-      km_iter = 100,
-      em_iter = 100, verbose = FALSE )
-#    pr = ClusterR::predict_GMM( subdf, gmm$centroids, gmm$covariance_matrices, gmm$weights)
+        gaussian_comps = desiredk,
+        dist_mode = "maha_dist",
+        seed_mode = "random_subset",
+        km_iter = 10,
+        em_iter = 5, verbose = FALSE )
     return( gmm )
   }
   if ( method == "kmeans" ) {

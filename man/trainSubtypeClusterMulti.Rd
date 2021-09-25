@@ -11,7 +11,9 @@ trainSubtypeClusterMulti(
   desiredk,
   maxk,
   groupVariable,
-  group
+  group,
+  gmmThresh = 0.01,
+  trainTestRatio = 0
 )
 }
 \arguments{
@@ -30,6 +32,13 @@ scale columns accordingly.}
 \item{groupVariable}{names of the column that defines the group to use for training.}
 
 \item{group}{string defining a subgroup on which to train}
+
+\item{gmmThresh}{fractional value less than 1 indicating the amount of change
+in the frobenius norm from the previous iteration 1 - F_cur / F_prev that
+will determine the optimal number of clusters. For GMM clustering.}
+
+\item{trainTestRatio}{Training testing split for finding optimal number
+of clusters. For GMM clustering.  If zero, then will not split data.}
 }
 \value{
 the clustering object

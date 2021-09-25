@@ -148,7 +148,9 @@ One may want to use a specific sub-group for this, e.g. patients.</p>
   <span class='va'>desiredk</span>,
   <span class='va'>maxk</span>,
   <span class='va'>groupVariable</span>,
-  <span class='va'>group</span>
+  <span class='va'>group</span>,
+  gmmThresh <span class='op'>=</span> <span class='fl'>0.01</span>,
+  trainTestRatio <span class='op'>=</span> <span class='fl'>0</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -184,6 +186,17 @@ scale columns accordingly.</p></td>
       <th>group</th>
       <td><p>string defining a subgroup on which to train</p></td>
     </tr>
+    <tr>
+      <th>gmmThresh</th>
+      <td><p>fractional value less than 1 indicating the amount of change
+in the frobenius norm from the previous iteration 1 - F_cur / F_prev that
+will determine the optimal number of clusters. For GMM clustering.</p></td>
+    </tr>
+    <tr>
+      <th>trainTestRatio</th>
+      <td><p>Training testing split for finding optimal number
+of clusters. For GMM clustering.  If zero, then will not split data.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -197,7 +210,7 @@ scale columns accordingly.</p></td>
     <pre class="examples"><div class='input'><span class='va'>mydf</span> <span class='op'>=</span> <span class='fu'><a href='generateSubtyperData.html'>generateSubtyperData</a></span><span class='op'>(</span> <span class='fl'>100</span> <span class='op'>)</span>
 <span class='va'>rbfnames</span> <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>[</span><span class='fu'><a href='https://rdrr.io/r/base/grep.html'>grep</a></span><span class='op'>(</span><span class='st'>"Random"</span>,<span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>mydf</span><span class='op'>)</span><span class='op'>)</span><span class='op'>]</span>
 <span class='va'>gmmcl</span> <span class='op'>=</span> <span class='fu'>trainSubtypeClusterMulti</span><span class='op'>(</span> <span class='va'>mydf</span>, <span class='va'>rbfnames</span>, maxk<span class='op'>=</span><span class='fl'>4</span> <span class='op'>)</span>
-</div></pre>
+</div><div class='output co'>#&gt; <span class='error'>Error in trainSubtypeClusterMulti(mydf, rbfnames, maxk = 4): object 'thresh' not found</span></div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
