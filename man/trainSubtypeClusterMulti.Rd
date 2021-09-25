@@ -12,7 +12,7 @@ trainSubtypeClusterMulti(
   maxk,
   groupVariable,
   group,
-  gmmThresh = 0.01,
+  frobNormThresh = 0.01,
   trainTestRatio = 0
 )
 }
@@ -33,12 +33,14 @@ scale columns accordingly.}
 
 \item{group}{string defining a subgroup on which to train}
 
-\item{gmmThresh}{fractional value less than 1 indicating the amount of change
-in the frobenius norm from the previous iteration 1 - F_cur / F_prev that
-will determine the optimal number of clusters. For GMM clustering.}
+\item{frobNormThresh}{fractional value less than 1 indicating the amount of change
+in the reconstruction error (measured by frobenius norm) from the previous
+iteration 1 - F_cur / F_prev that will determine the optimal number of clusters.
+For GMM clustering.}
 
 \item{trainTestRatio}{Training testing split for finding optimal number
-of clusters. For GMM clustering.  If zero, then will not split data.}
+of clusters. For GMM clustering.  If zero, then will not split data. Otherwise,
+will compute reconstruction error in test data only.}
 }
 \value{
 the clustering object

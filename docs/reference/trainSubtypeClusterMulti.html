@@ -149,7 +149,7 @@ One may want to use a specific sub-group for this, e.g. patients.</p>
   <span class='va'>maxk</span>,
   <span class='va'>groupVariable</span>,
   <span class='va'>group</span>,
-  gmmThresh <span class='op'>=</span> <span class='fl'>0.01</span>,
+  frobNormThresh <span class='op'>=</span> <span class='fl'>0.01</span>,
   trainTestRatio <span class='op'>=</span> <span class='fl'>0</span>
 <span class='op'>)</span></pre>
 
@@ -187,15 +187,17 @@ scale columns accordingly.</p></td>
       <td><p>string defining a subgroup on which to train</p></td>
     </tr>
     <tr>
-      <th>gmmThresh</th>
+      <th>frobNormThresh</th>
       <td><p>fractional value less than 1 indicating the amount of change
-in the frobenius norm from the previous iteration 1 - F_cur / F_prev that
-will determine the optimal number of clusters. For GMM clustering.</p></td>
+in the reconstruction error (measured by frobenius norm) from the previous
+iteration 1 - F_cur / F_prev that will determine the optimal number of clusters.
+For GMM clustering.</p></td>
     </tr>
     <tr>
       <th>trainTestRatio</th>
       <td><p>Training testing split for finding optimal number
-of clusters. For GMM clustering.  If zero, then will not split data.</p></td>
+of clusters. For GMM clustering.  If zero, then will not split data. Otherwise,
+will compute reconstruction error in test data only.</p></td>
     </tr>
     </table>
 

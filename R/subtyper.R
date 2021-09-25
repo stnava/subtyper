@@ -751,11 +751,13 @@ predictSubtypeUni  <- function(
 #' @param maxk maximum number of subtypes
 #' @param groupVariable names of the column that defines the group to use for training.
 #' @param group string defining a subgroup on which to train
-#' @param gmmThresh fractional value less than 1 indicating the amount of change
-#' in the frobenius norm from the previous iteration 1 - F_cur / F_prev that
-#' will determine the optimal number of clusters. For GMM clustering.
+#' @param frobNormThresh fractional value less than 1 indicating the amount of change
+#' in the reconstruction error (measured by frobenius norm) from the previous
+#' iteration 1 - F_cur / F_prev that will determine the optimal number of clusters.
+#' For GMM clustering.
 #' @param trainTestRatio Training testing split for finding optimal number
-#' of clusters. For GMM clustering.  If zero, then will not split data.
+#' of clusters. For GMM clustering.  If zero, then will not split data. Otherwise,
+#' will compute reconstruction error in test data only.
 #' @return the clustering object
 #' @author Avants BB
 #' @examples
@@ -772,7 +774,7 @@ trainSubtypeClusterMulti  <- function(
   maxk,
   groupVariable,
   group,
-  gmmThresh = 0.01,
+  frobNormThresh = 0.01,
   trainTestRatio = 0
 ) {
 
@@ -807,7 +809,7 @@ trainSubtypeClusterMulti  <- function(
           isTrain[ isTrainNum ] = TRUE
           isTest = !isTrain
         }
-        while ( opt_gmm_delta > thresh & ii < maxk ) {
+        while ( opt_gmm_delta > frobNormThresh & ii < maxk ) {
           gmm = ClusterR::GMM(subdf[isTrain,], gaussian_comps = ii,
               dist_mode = "maha_dist", seed_mode = "random_subset",
               km_iter = 10, em_iter = 5, verbose = FALSE)
