@@ -991,3 +991,99 @@ biclusterMatrixFactorization  <- function(
     }
  return( list( rowClusters=maxh, colClusters=maxw, jointClusters=biclustmat ) )
 }
+
+
+
+
+
+
+#' subtype feature importance
+#'
+#' Associate predictors (or features) with subtypes; these could be diagnoses
+#' or cluster assignments.  Will use regression to return data frames intended
+#' to visualize the most important relationships between features and types.
+#' There are two approaches - worth using both.  Can be combined with
+#' boostrapping to give distributional visualizations.
+#'
+#' @param subtypeLabels Input subtype assignments.
+#' @param featureMatrix matrix/dataframe defining the data columns as features.
+#' @param associationType either predictor features from subtypes or predict
+#' subtypes from features.  will produce related but complementary results. in
+#' some cases, depending on subtypes/degrees of freedom, only one will work.
+#' @param visualize boolean
+#' @return dataframes for visualization that show feature to subtype importance e.g. via \code{pheatmap}
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames] )
+#' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames], "subtypes2features" )
+#' @importFrom fastICA fastICA
+#' @export
+featureImportanceForSubtypes <- function(
+    subtypeLabels,   # cluster
+    featureMatrix,   # featureColumns
+    associationType = c( "features2subtypes", "subtypes2features" ),
+    visualize = FALSE ) {
+  if ( length( subtypeLabels ) != nrow( featureMatrix ) )
+    stop("length( subtypeLabels ) != nrow( featureMatrix )")
+  uniqClusts = sort(unique(subtypeLabels))
+  mync = length( uniqClusts )
+  # stores feature importance
+  clustzdescribe = data.frame( matrix( nrow = mync, ncol = ncol( featureMatrix ) ) )
+  clustsigdescribe = data.frame( matrix( nrow = mync, ncol = ncol( featureMatrix ) ) )
+  colnames( clustsigdescribe ) = colnames( featureMatrix )
+  rownames( clustsigdescribe ) = paste0("z_",1:mync)
+  clustmat = matrix( 0, nrow = length( subtypeLabels ), ncol=mync )
+  colnames(clustmat) = as.character( uniqClusts )
+  for ( j in 1:mync ) {
+    clustmat[ subtypeLabels == uniqClusts[j], j] = 1
+    }
+  if ( associationType[1] == "features2subtypes" ) {
+    # converts cluster labels to one-hot coding
+    for ( j in 1:mync ) {
+      c1reg = glm( factor( clustmat[,j]) ~ data.matrix(featureMatrix), family='binomial' )
+      mycoffs = coefficients(summary(c1reg))
+      sigthresh = rep( 0, ncol(featureMatrix))
+      sigthresh[ mycoffs[-1,"Pr(>|z|)"] <= 0.05 ] = 1
+      clustzdescribe[j,]=mycoffs[-1,"z value"]
+      clustsigdescribe[j,]=mycoffs[-1,"z value"] * sigthresh
+    }
+    pheatmap::pheatmap(abs(clustzdescribe),cluster_rows=F,cluster_cols=F)
+    # get the max for each column
+    clustsigdescribemax = clustsigdescribe * 0
+    for ( j in 1:ncol(clustzdescribe) ) {
+      wmax = which.max(abs(clustzdescribe[,j]))
+      clustsigdescribemax[ wmax, j ] = clustzdescribe[wmax,j]
+    }
+    if ( visualize ) pheatmap::pheatmap(abs(clustsigdescribemax),cluster_rows=F,cluster_cols=F)
+    return( list(
+      subtypeFeatureZScores = clustzdescribe,
+      subtypeFeatureZScoresSignificant = clustsigdescribe,
+      subtypeFeatureZScoresMax = clustsigdescribemax
+    ) )
+  } else {
+    for ( j in 1:ncol(featureMatrix) ) {
+      for( k in 1:mync ) {
+        c1reg = lm( featureMatrix[,j] ~ clustmat[,k] )
+        mycoffs = coefficients(summary(c1reg))
+        sigthresh = as.numeric( mycoffs[2,"Pr(>|t|)"] <= 0.05 )
+        clustzdescribe[k,j]=mycoffs[2,"t value"]
+        clustsigdescribe[k,j]=mycoffs[2,"t value"] * sigthresh
+      }
+    }
+    # get the max for each column
+    clustsigdescribemax = clustsigdescribe * 0
+    for ( j in 1:nrow(clustzdescribe) ) {
+      wmax = which.max(abs(clustzdescribe[j,]))
+      clustsigdescribemax[ j, wmax ] = clustzdescribe[j, wmax]
+    }
+    if ( visualize ) pheatmap::pheatmap(abs(clustsigdescribemax),cluster_rows=F,cluster_cols=F)
+    return( list(
+      subtypeFeatureTScores = clustzdescribe,
+      subtypeFeatureTScoresSignificant = clustsigdescribe,
+      subtypeFeatureTScoresMax = clustsigdescribemax
+    ) )
+
+  }
+}

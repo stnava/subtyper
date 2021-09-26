@@ -3,6 +3,7 @@
 export(adjustByCovariates)
 export(assembleTestRetest)
 export(biclusterMatrixFactorization)
+export(featureImportanceForSubtypes)
 export(fillBaselineColumn)
 export(filterByVisit)
 export(filterForGoodData)
