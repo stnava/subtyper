@@ -1033,7 +1033,7 @@ featureImportanceForSubtypes <- function(
   clustzdescribe = data.frame( matrix( nrow = mync, ncol = ncol( featureMatrix ) ) )
   clustsigdescribe = data.frame( matrix( nrow = mync, ncol = ncol( featureMatrix ) ) )
   colnames( clustsigdescribe ) = colnames( featureMatrix )
-  rownames( clustsigdescribe ) = paste0("z_",1:mync)
+  rownames( clustsigdescribe ) = paste0("z_",uniqClusts)
   clustmat = matrix( 0, nrow = length( subtypeLabels ), ncol=mync )
   colnames(clustmat) = as.character( uniqClusts )
   for ( j in 1:mync ) {
