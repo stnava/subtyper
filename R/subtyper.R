@@ -1049,7 +1049,7 @@ featureImportanceForSubtypes <- function(
       clustzdescribe[j,]=mycoffs[-1,"z value"]
       clustsigdescribe[j,]=mycoffs[-1,"z value"] * sigthresh
     }
-    pheatmap::pheatmap(abs(clustzdescribe),cluster_rows=F,cluster_cols=F)
+    if ( visualize ) pheatmap::pheatmap(abs(clustzdescribe),cluster_rows=F,cluster_cols=F)
     # get the max for each column
     clustsigdescribemax = clustsigdescribe * 0
     for ( j in 1:ncol(clustzdescribe) ) {
