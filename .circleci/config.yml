@@ -26,11 +26,11 @@ steps: &steps
         name: Check package
         command: R CMD check *tar.gz
     - store_artifacts:
-        path: ci4r.Rcheck/
+        path: ci4rB.Rcheck/
     - save_cache:
         key: cache-{{ .Environment.CIRCLE_JOB }}
         paths:
-          - "/usr/local/lib/R/site-library"
+          - "/usr/local/lib/R/site-libraryX"
 
 jobs:
   release:
