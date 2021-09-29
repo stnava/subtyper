@@ -22,7 +22,9 @@ A "subtyping method" uses data to classify subjects into groups that represent
 different disease etiologies, different progression paths or different sets of
 symptoms potentially arising from the same underlying pathology.  Subtyping
 therefore tries to identify smaller but distinctive groups within an overall
-disorder.
+disorder.  If the overall condition is dementia, then diagnoses could be
+considered as subtypes:
+Alzheimer's disease, parkinson's disease or frontotemporal lobar degeneration.
 
 Subtyping methods must be predictive.  That is, they follow a machine learning
 style with a "training" phase for the models followed by inference wherein we
@@ -195,8 +197,6 @@ Visualization of the subtype definition against various outcomes is key to
 establishing validity.
 
 
-
-
 ## Biclustering
 
 We implement a simple biclustering method based on matrix factorization.
@@ -205,3 +205,8 @@ We implement a simple biclustering method based on matrix factorization.
 mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 3 )
 pheatmap::pheatmap( mybic$jointClusters )
 ```
+
+
+## Future work
+
+The package will evolve with the associated needs of related projects.

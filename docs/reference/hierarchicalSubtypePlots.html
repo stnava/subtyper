@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot longitudinal trajectories across subtypes — plotSubtypeChange • subtyper</title>
+<title>subtype plotting — hierarchicalSubtypePlots • subtyper</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="Plot longitudinal trajectories across subtypes — plotSubtypeChange" />
-<meta property="og:description" content="Uses ggplot2 to visualize differences between subtypes over time." />
+<meta property="og:title" content="subtype plotting — hierarchicalSubtypePlots" />
+<meta property="og:description" content="Assemble a set of standard plots looking at subtype results to support comparing
+across a hierarchy of types both cross-sectionally and longitudinally." />
 
 
 
@@ -126,45 +127,46 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot longitudinal trajectories across subtypes</h1>
+    <h1>subtype plotting</h1>
     <small class="dont-index">Source: <a href='https://github.com/stnava/subtyper/blob/master/R/subtyper.R'><code>R/subtyper.R</code></a></small>
-    <div class="hidden name"><code>plotSubtypeChange.Rd</code></div>
+    <div class="hidden name"><code>hierarchicalSubtypePlots.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Uses <code>ggplot2</code> to visualize differences between subtypes over time.</p>
+    <p>Assemble a set of standard plots looking at subtype results to support comparing
+across a hierarchy of types both cross-sectionally and longitudinally.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plotSubtypeChange</span><span class='op'>(</span>
-  <span class='va'>mxdfin</span>,
+    <pre class="usage"><span class='fu'>hierarchicalSubtypePlots</span><span class='op'>(</span>
+  <span class='va'>inputDataFrame</span>,
+  <span class='va'>variableToVisualize</span>,
+  <span class='va'>hierarchyOfSubtypes</span>,
   <span class='va'>idvar</span>,
-  <span class='va'>measurement</span>,
-  <span class='va'>subtype</span>,
-  vizname <span class='op'>=</span> <span class='st'>"timer"</span>,
+  <span class='va'>vizname</span>,
   whiskervar <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"ci"</span>, <span class='st'>"se"</span><span class='op'>)</span>,
-  extra <span class='op'>=</span> <span class='st'>""</span>,
-  xlab <span class='op'>=</span> <span class='st'>""</span>,
-  ylab <span class='op'>=</span> <span class='st'>""</span>
+  <span class='va'>outputPrefix</span>,
+  width <span class='op'>=</span> <span class='fl'>12</span>,
+  height <span class='op'>=</span> <span class='fl'>8</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>mxdfin</th>
-      <td><p>Input data frame with repeated measurements and a grouped time variable</p></td>
+      <th>inputDataFrame</th>
+      <td><p>Input complete data frame</p></td>
+    </tr>
+    <tr>
+      <th>variableToVisualize</th>
+      <td><p>string naming the variable to display across subtypes</p></td>
+    </tr>
+    <tr>
+      <th>hierarchyOfSubtypes</th>
+      <td><p>string vector of subtypes with increasing degrees of specificity</p></td>
     </tr>
     <tr>
       <th>idvar</th>
       <td><p>variable name for unique subject identifier column</p></td>
-    </tr>
-    <tr>
-      <th>measurement</th>
-      <td><p>the numeric variable to plot over time stratified by subtype</p></td>
-    </tr>
-    <tr>
-      <th>subtype</th>
-      <td><p>the categorical (possibly ordinal) subtype variable</p></td>
     </tr>
     <tr>
       <th>vizname</th>
@@ -175,29 +177,30 @@
       <td><p>character either ci or se</p></td>
     </tr>
     <tr>
-      <th>extra</th>
-      <td><p>additional naming variable</p></td>
+      <th>outputPrefix</th>
+      <td><p>filename prefix for the stored pdf plots; if missing, just plot to display</p></td>
     </tr>
     <tr>
-      <th>xlab</th>
-      <td><p>additional naming variable</p></td>
-    </tr>
-    <tr>
-      <th>ylab</th>
-      <td><p>additional naming variable</p></td>
+      <th>the</th>
+      <td><p>height of the graphics region in inches.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>ggplot</p>
+    <p>the output is a set of plots saved at the outputPrefix location</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Avants BB</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='va'>mydf</span> <span class='op'>=</span> <span class='fu'><a href='generateSubtyperData.html'>generateSubtyperData</a></span><span class='op'>(</span> <span class='fl'>100</span> <span class='op'>)</span>
-<span class='va'>summ</span> <span class='op'>=</span> <span class='fu'>plotSubtypeChange</span><span class='op'>(</span> <span class='va'>mydf</span>, <span class='st'>"Id"</span>, <span class='st'>"cognition"</span>, <span class='st'>"DX"</span>, <span class='st'>"visit"</span> <span class='op'>)</span>
+<span class='va'>qdf</span> <span class='op'>=</span> <span class='fu'><a href='trainSubtypeUni.html'>trainSubtypeUni</a></span><span class='op'>(</span> <span class='va'>mydf</span>, <span class='st'>"cognition"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"C0"</span>,<span class='st'>"C1"</span>,<span class='st'>"C2"</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='fl'>0.33</span>,<span class='fl'>0.66</span><span class='op'>)</span> <span class='op'>)</span>
+<span class='va'>qdf</span> <span class='op'>=</span> <span class='fu'><a href='predictSubtypeUni.html'>predictSubtypeUni</a></span><span class='op'>(</span> <span class='va'>mydf</span>, <span class='va'>qdf</span>, <span class='st'>"Id"</span> <span class='op'>)</span>
+<span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'>hierarchicalSubtypePlots</span><span class='op'>(</span> <span class='va'>qdf</span>, <span class='st'>"cognition"</span>, <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"DX"</span>, <span class='st'>"subtype"</span> <span class='op'>)</span>,
+ <span class='st'>"Id"</span>, <span class='st'>"visit"</span>, outputPrefix<span class='op'>=</span><span class='st'>'/tmp/X'</span> <span class='op'>)</span>
+<span class='op'>}</span>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -130,14 +130,14 @@ plotSubtypeChange <-function( mxdfin,
                            measurement,
                            subtype,
                            vizname='timer', # should be roundable to integer
-                           whiskervar = 'ci',
+                           whiskervar = c('ci','se'),
                            extra = "",
                            xlab = '',
                            ylab = ''
                           )
     {
 
-      if ( ! ( whiskervar %in% c("ci","se") ) )
+      if ( ! all( whiskervar %in% c("ci","se") ) )
         stop("Must choose ci or se as a string for whiskervar")
 
       mysd <- function( x,na.rm ) sqrt(var(x,na.rm=na.rm))
@@ -184,10 +184,10 @@ plotSubtypeChange <-function( mxdfin,
             groupvars=c('timer',subtype), na.rm=TRUE, conf.interval=.95 )
 
     colnames( tgcWithin )[1:5] = c('timer',"Quant","N","Changer","Changer_norm")
-    tgcWithin$ymin = tgcWithin[,"Changer"] - tgcWithin[,whiskervar]
-    tgcWithin$ymax = tgcWithin[,"Changer"] + tgcWithin[,whiskervar]
+    tgcWithin$ymin = tgcWithin[,"Changer"] - tgcWithin[,whiskervar[1]]
+    tgcWithin$ymax = tgcWithin[,"Changer"] + tgcWithin[,whiskervar[1]]
     yran = range( c( tgcWithin$ymin,tgcWithin$ymax ) )
-    pd <- position_dodge( 0.05 ) # move them .05 to the left and right
+    pd <- ggplot2::position_dodge( 0.05 ) # move them .05 to the left and right
     ww = 0.5
     namer=paste( subtype, ' vs ', measurement , extra )
     return( ggplot( tgcWithin,
@@ -196,14 +196,14 @@ plotSubtypeChange <-function( mxdfin,
       geom_errorbar(aes(ymin=ymin, ymax=ymax), colour="black", width=ww, position=pd) +
       geom_line(lwd = 1, show.legend = FALSE ) +
       geom_point(position=pd, size=3, shape=21, fill="white") + # 21 is filled circle
-      xlab( xlab ) + ylab( paste(ylab, measurement," +/-", whiskervar )) +
+      xlab( xlab ) + ylab( paste(ylab, measurement," +/-", whiskervar[1] )) +
       ylim(yran[1], yran[2]) +
       theme(strip.text = element_text(size = rel(1.1))) +
       theme(legend.position = 'top') +
       guides(fill=guide_legend(title.position="top")) +
       scale_colour_hue(name=subtype, l=40) + # Use darker colors, lightness=40
         theme_bw() +
-        theme(text = element_text(size=14),
+        theme(text = element_text(size=20),
             axis.text.x = element_text(angle=0, vjust=1),
             legend.direction = "horizontal", legend.position = "top" )
       )
@@ -1056,7 +1056,7 @@ featureImportanceForSubtypes <- function(
       wmax = which.max(abs(clustzdescribe[,j]))
       clustsigdescribemax[ wmax, j ] = clustzdescribe[wmax,j]
     }
-    if ( visualize ) pheatmap::pheatmap(abs(clustsigdescribemax),cluster_rows=F,cluster_cols=F)
+    if ( visualize ) pheatmap::pheatmap((clustsigdescribemax),cluster_rows=F,cluster_cols=F)
     return( list(
       subtypeFeatureZScores = clustzdescribe,
       subtypeFeatureZScoresSignificant = clustsigdescribe,
@@ -1078,7 +1078,7 @@ featureImportanceForSubtypes <- function(
       wmax = which.max(abs(clustzdescribe[j,]))
       clustsigdescribemax[ j, wmax ] = clustzdescribe[j, wmax]
     }
-    if ( visualize ) pheatmap::pheatmap(abs(clustsigdescribemax),cluster_rows=F,cluster_cols=F)
+    if ( visualize ) pheatmap::pheatmap((clustsigdescribemax),cluster_rows=F,cluster_cols=F)
     return( list(
       subtypeFeatureTScores = clustzdescribe,
       subtypeFeatureTScoresSignificant = clustsigdescribe,
@@ -1086,4 +1086,178 @@ featureImportanceForSubtypes <- function(
     ) )
 
   }
+}
+
+
+
+
+
+
+
+#' subtype plotting
+#'
+#' Assemble a set of standard plots looking at subtype results to support comparing
+#' across a hierarchy of types both cross-sectionally and longitudinally.
+#'
+#' @param inputDataFrame Input complete data frame
+#' @param variableToVisualize string naming the variable to display across subtypes
+#' @param hierarchyOfSubtypes string vector of subtypes with increasing degrees of specificity
+#' @param idvar variable name for unique subject identifier column
+#' @param vizname the name of the grouped time variable (e.g. years change rounded to nearest quarter year)
+#' @param whiskervar character either ci or se
+#' @param outputPrefix filename prefix for the stored pdf plots; if missing, just plot to display
+#' @param the width of the graphics region in inches.
+#' @param the height of the graphics region in inches.
+#' @return the output is a set of plots saved at the outputPrefix location
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
+#' qdf = predictSubtypeUni( mydf, qdf, "Id" )
+#' \dontrun{
+#' hierarchicalSubtypePlots( qdf, "cognition", c("DX", "subtype" ),
+#'  "Id", "visit", outputPrefix='/tmp/X' )
+#' }
+#' @importFrom ggstatsplot ggbetweenstats
+#' @importFrom wesanderson wes_palette wes_palettes
+#' @importFrom ggthemes theme_tufte
+#' @importFrom dplyr sym
+#' @importFrom ggplot2 labs element_text theme
+#' @export
+hierarchicalSubtypePlots <- function(
+    inputDataFrame,
+    variableToVisualize,
+    hierarchyOfSubtypes,
+    idvar,
+    vizname,
+    whiskervar=c('ci','se'),
+    outputPrefix,
+    width=12, height=8 ) {
+  if ( ! ( any(hierarchyOfSubtypes %in% names(inputDataFrame) ) ) )
+    stop("some hierarchyOfSubtypes variables do not exist in the data frame.")
+  if ( ! ( any(variableToVisualize %in% names(inputDataFrame) ) ) )
+    stop("some hierarchyOfSubtypes variables do not exist in the data frame.")
+
+  figs = c()
+  ct = 1
+  if ( missing( outputPrefix ) ) visualize = TRUE else visualize = FALSE
+
+  # first level in hierarchy
+  for (  k in 1:length( hierarchyOfSubtypes ) ) {
+    xplot0 <- ggstatsplot::ggbetweenstats(
+          data = inputDataFrame,
+          x = !!dplyr::sym( hierarchyOfSubtypes[k] ),
+          y = !!dplyr::sym( variableToVisualize ),
+          plot.type = "boxviolin", # type of plot
+          bf.message = FALSE,
+          results.subtitle = FALSE,
+#          ggtheme = ggthemes::theme_tufte(), # ggplot2::theme_minimal(), # a different theme
+          package = "wesanderson",
+          palette = "Royal2"
+        ) + ggplot2::labs( x = hierarchyOfSubtypes[k], y = variableToVisualize,
+        title = paste("Subtype:",hierarchyOfSubtypes[k], "vs", variableToVisualize ) ) +
+        ggplot2::theme(text = ggplot2::element_text(size = 20) ) +
+        ggplot2::theme(plot.title = ggplot2::element_text(size=22))
+    if ( visualize ) print( xplot0 ) else {
+      poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize, ".pdf" )
+      outfn = paste0( outputPrefix, "_", poster )
+      pdf( outfn, width=width, height=height )
+      print( xplot0 )
+      dev.off()
+      figs[ct] = outfn
+      ct = ct + 1
+      }
+    }
+
+  # 2nd level in hierarchy - do level 1 vs other levels
+  # e.g. if 1st level is DX, then plot subtypes within each DX
+  if ( is.factor( inputDataFrame[,hierarchyOfSubtypes[1]] ) ) {
+    unqDX = levels( inputDataFrame[,hierarchyOfSubtypes[1]] )
+  } else unqDX = sort( unique( inputDataFrame[,hierarchyOfSubtypes[1]] ) )
+  if ( length( hierarchyOfSubtypes ) > 1 ) {
+    for (  k in 2:length( hierarchyOfSubtypes ) ) {
+      for ( j in 1:length( unqDX ) ) {
+        losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j]
+        losel[ is.na(losel) ] = FALSE
+        xplot1 <- ggstatsplot::ggbetweenstats(
+              data = inputDataFrame[ losel, ],
+              x = !!dplyr::sym( hierarchyOfSubtypes[k] ),
+              y = !!dplyr::sym( variableToVisualize ),
+              plot.type = "boxviolin", # type of plot
+              bf.message = FALSE,
+              results.subtitle = FALSE,
+#              ggtheme = ggthemes::theme_tufte(), # ggplot2::theme_minimal(), # a different theme
+              package = "wesanderson",
+              palette = "Royal2"
+            ) + ggplot2::labs( x = hierarchyOfSubtypes[k], y = variableToVisualize,
+            title = paste("Subtype:",hierarchyOfSubtypes[k], "vs", variableToVisualize, "@", unqDX[j] ) ) +
+            ggplot2::theme(text = ggplot2::element_text(size = 20) ) +
+            ggplot2::theme(plot.title = ggplot2::element_text(size=22))
+        if ( visualize ) print( xplot1 ) else {
+          poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize, "_at_", toString(unqDX[j]),".pdf" )
+          outfn = paste0( outputPrefix, "_", poster )
+          pdf( outfn, width=width, height=height )
+          print( xplot1 )
+          dev.off()
+          figs[ct] = outfn
+          ct = ct + 1
+          }
+        }
+      }
+  }
+
+  # now do something similar with longitudinal data
+  if ( ! missing( vizname ) ) {
+    # do first level plots
+    for (  k in 1:length( hierarchyOfSubtypes ) ) {
+      lplot0 = plotSubtypeChange(
+        inputDataFrame,
+        idvar = idvar,
+        measurement = variableToVisualize,
+        subtype = hierarchyOfSubtypes[k],
+        vizname = vizname,
+        whiskervar = whiskervar[1] )
+      if ( visualize ) print( lplot0 ) else {
+        poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize, "_longitudinal.pdf" )
+        outfn = paste0( outputPrefix, "_", poster )
+        pdf( outfn, width=width, height=height )
+        print( lplot0 )
+        dev.off()
+        figs[ct] = outfn
+        ct = ct + 1
+        }
+      }
+
+
+    if ( length( hierarchyOfSubtypes ) > 1 ) {
+      for (  k in 2:length( hierarchyOfSubtypes ) ) {
+        for ( j in 1:length( unqDX ) ) {
+          losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j]
+          losel[ is.na(losel) ] = FALSE
+          lplot1 = plotSubtypeChange(
+            inputDataFrame[losel,],
+            idvar = idvar,
+            measurement = variableToVisualize,
+            subtype = hierarchyOfSubtypes[k],
+            vizname = vizname,
+            whiskervar = whiskervar[1] )
+          if ( visualize ) print( lplot0 ) else {
+            poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize,
+              "_at_", toString(unqDX[j]),
+              "_longitudinal.pdf" )
+            outfn = paste0( outputPrefix, "_", poster )
+            pdf( outfn, width=width, height=height )
+            print( lplot1 )
+            dev.off()
+            figs[ct] = outfn
+            ct = ct + 1
+            }
+        }
+      }
+    }
+
+
+    }
+  return( figs )
+
 }

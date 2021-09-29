@@ -10,7 +10,7 @@ plotSubtypeChange(
   measurement,
   subtype,
   vizname = "timer",
-  whiskervar = "ci",
+  whiskervar = c("ci", "se"),
   extra = "",
   xlab = "",
   ylab = ""

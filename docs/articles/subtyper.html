@@ -99,7 +99,7 @@
 <h1 class="hasAnchor">
 <a href="#overview-of-subtyper" class="anchor"></a>Overview of <code>subtyper</code>
 </h1>
-<p>Subtyper is a package for defining subtypes in patient populations based on data. A “subtyping method” uses data to classify subjects into groups that represent different disease etiologies, different progression paths or different sets of symptoms potentially arising from the same underlying pathology. Subtyping therefore tries to identify smaller but distinctive groups within an overall disorder.</p>
+<p>Subtyper is a package for defining subtypes in patient populations based on data. A “subtyping method” uses data to classify subjects into groups that represent different disease etiologies, different progression paths or different sets of symptoms potentially arising from the same underlying pathology. Subtyping therefore tries to identify smaller but distinctive groups within an overall disorder. If the overall condition is dementia, then diagnoses could be considered as subtypes: Alzheimer’s disease, parkinson’s disease or frontotemporal lobar degeneration.</p>
 <p>Subtyping methods must be predictive. That is, they follow a machine learning style with a “training” phase for the models followed by inference wherein we apply the fixed models to new data. Subtyper’s design follows this paradigm which will be seen in the examples below. While we only use linear regression here, the basic principles can extend to other modeling techniques including deep learning.</p>
 <p>Subtyping and “staging” are or may be inter-related. For example, some sub-types may only be identifiable at a given disease stage. Other subtypes are fundamentally different across all disease stages (e.g. genetic forms of AD or PD vs idiopathic forms). In PD, some patients “jump” between classically defined subtypes (see 2021 Lancet review on PD diagnosis). Ths package does not claim to produce “good” subtypes. It’s just a tool that allows one to test and visualize different approaches to subtyping whether they are stage-specific or not.</p>
 <div id="generic-processing-steps" class="section level2">
@@ -108,6 +108,19 @@
 <p>The brief code block below shows us the core steps in <code>subtyper</code>. We will comment on each step within its own section.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/stnava/subtyper">subtyper</a></span><span class="op">)</span>
+<span class="co">#&gt; Registered S3 methods overwritten by 'parameters':</span>
+<span class="co">#&gt;   method                           from      </span>
+<span class="co">#&gt;   as.double.parameters_kurtosis    datawizard</span>
+<span class="co">#&gt;   as.double.parameters_skewness    datawizard</span>
+<span class="co">#&gt;   as.double.parameters_smoothness  datawizard</span>
+<span class="co">#&gt;   as.numeric.parameters_kurtosis   datawizard</span>
+<span class="co">#&gt;   as.numeric.parameters_skewness   datawizard</span>
+<span class="co">#&gt;   as.numeric.parameters_smoothness datawizard</span>
+<span class="co">#&gt;   print.parameters_distribution    datawizard</span>
+<span class="co">#&gt;   print.parameters_kurtosis        datawizard</span>
+<span class="co">#&gt;   print.parameters_skewness        datawizard</span>
+<span class="co">#&gt;   summary.parameters_kurtosis      datawizard</span>
+<span class="co">#&gt;   summary.parameters_skewness      datawizard</span>
 <span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/generateSubtyperData.html">generateSubtyperData</a></span><span class="op">(</span> <span class="fl">100</span> <span class="op">)</span>
 <span class="va">rbfnames</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html">grep</a></span><span class="op">(</span><span class="st">"Random"</span>,<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>
 <span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/outlierness.html">outlierness</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">rbfnames</span> <span class="op">)</span>
@@ -277,6 +290,11 @@
 <a href="#biclustering" class="anchor"></a>Biclustering</h2>
 <p>We implement a simple biclustering method based on matrix factorization.</p>
 <p><img src="subtyper_files/figure-html/nmfbi-1.png" width="700"></p>
+</div>
+<div id="future-work" class="section level2">
+<h2 class="hasAnchor">
+<a href="#future-work" class="anchor"></a>Future work</h2>
+<p>The package will evolve with the associated needs of related projects.</p>
 </div>
 </div>
   </div>
