@@ -1286,7 +1286,7 @@ hierarchicalSubtypePlots <- function(
                 geom_beeswarm() +
                 geom_smooth(method = "lm", alpha = .15, aes(fill = (!!sym2)) ) +
                 ggtitle( myxlab ) +
-                theme(text = element_text(size=20))
+                theme(text = element_text(size=20),legend.position='top')
         if ( ! missing( manualColors ) )
           lplot1 <- lplot1 + scale_colour_manual(values = manualColors[[k]] )
         if ( visualize ) print( lplot1 ) else {
@@ -1349,7 +1349,7 @@ hierarchicalSubtypePlots <- function(
                   geom_beeswarm() + # stat_smooth(method='lm')
                   geom_smooth(method = "lm", alpha = .15, aes(fill = (!!sym2)) ) +
                   ggtitle( myxlab ) +
-                  theme(text = element_text(size=20))
+                  theme(text = element_text(size=20),legend.position='top')
           if ( ! missing( manualColors ) )
             lplot1 <- lplot1 + scale_colour_manual(values = manualColors[[k]] )
           if ( visualize ) print( lplot1 ) else {
