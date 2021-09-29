@@ -48,7 +48,7 @@ Assemble a set of standard plots looking at subtype results to support comparing
 across a hierarchy of types both cross-sectionally and longitudinally.
 }
 \examples{
-mydf = generateSubtyperData( 100 )
+mydf = generateSubtyperData( 1000 )
 qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
 qdf = predictSubtypeUni( mydf, qdf, "Id" )
 \dontrun{

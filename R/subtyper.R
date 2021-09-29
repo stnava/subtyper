@@ -123,7 +123,7 @@ generateSubtyperData <-function( n = 100,
 #' @importFrom stats lm predict qt rnorm var na.omit kmeans
 #' @importFrom DDoutlier  LOOP  LOF  INFLO  RDOS  KDEOS  LDF  KNN_AGG  KNN_IN  KNN_SUM  RKOF
 #' @importFrom ggplot2 aes ylim guides theme_bw scale_colour_hue geom_errorbar position_dodge element_text geom_line geom_point ggplot guide_legend
-#' @importFrom ggplot2 xlab ylab theme rel geom_violin
+#' @importFrom ggplot2 xlab ylab theme rel geom_violin geom_boxplot
 #' @importFrom plyr ddply rename
 plotSubtypeChange <-function( mxdfin,
                            idvar,
@@ -1114,7 +1114,7 @@ featureImportanceForSubtypes <- function(
 #' @return the output is a set of plots saved at the outputPrefix location
 #' @author Avants BB
 #' @examples
-#' mydf = generateSubtyperData( 100 )
+#' mydf = generateSubtyperData( 1000 )
 #' qdf = trainSubtypeUni( mydf, "cognition", c("C0","C1","C2"), c(0.33,0.66) )
 #' qdf = predictSubtypeUni( mydf, qdf, "Id" )
 #' \dontrun{
@@ -1290,7 +1290,7 @@ hierarchicalSubtypePlots <- function(
     #              wrap_by(!!sym(hierarchyOfSubtypes[1])) +
 #                  scale_color_brewer( palette="Accent" ) +
                   geom_point( alpha = 0.3 ) +
-                  theme_bw() + geom_violin() +
+                  theme_bw() + geom_violin() + geom_boxplot(width=0.2)+
                   geom_smooth( method = "lm",  se=TRUE ) +
                   ggtitle( myxlab ) +
                   theme(text = element_text(size=20))
