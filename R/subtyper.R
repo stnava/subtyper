@@ -1105,6 +1105,9 @@ featureImportanceForSubtypes <- function(
 #' @param idvar variable name for unique subject identifier column
 #' @param vizname the name of the grouped time variable (e.g. years change rounded to nearest quarter year)
 #' @param whiskervar character either ci or se
+#' @param manualColors a list of user defined manual colors; the length of this list
+#' should match the length of hierarchyOfSubtypes and colors should be named according
+#' to the levels therein.  each entry in the list should be a string vector of color names.
 #' @param outputPrefix filename prefix for the stored pdf plots; if missing, just plot to display
 #' @param width the width of the graphics region in inches.
 #' @param height the height of the graphics region in inches.
@@ -1131,13 +1134,15 @@ hierarchicalSubtypePlots <- function(
     idvar,
     vizname,
     whiskervar=c('ci','se'),
+    manualColors,
     outputPrefix,
     width=12, height=8 ) {
   if ( ! ( any(hierarchyOfSubtypes %in% names(inputDataFrame) ) ) )
     stop("some hierarchyOfSubtypes variables do not exist in the data frame.")
   if ( ! ( any(variableToVisualize %in% names(inputDataFrame) ) ) )
     stop(paste("the variableToVisualize", variableToVisualize, "does not exist in the data frame."))
-
+  if ( ! missing( manualColors ) )
+    stopifnot( length(manualColors) == length( hierarchyOfSubtypes ) )
   figs = c()
   ct = 1
   if ( missing( outputPrefix ) ) visualize = TRUE else visualize = FALSE
@@ -1160,6 +1165,8 @@ hierarchicalSubtypePlots <- function(
         title = paste("Subtype:",hierarchyOfSubtypes[k], "vs", variableToVisualize ) ) +
         ggplot2::theme(text = ggplot2::element_text(size = 20) ) +
         ggplot2::theme(plot.title = ggplot2::element_text(size=22))
+    if ( ! missing( manualColors ) )
+      xplot0 <- xplot0 + scale_colour_manual(values = manualColors[[k]] )
     if ( visualize ) print( xplot0 ) else {
       poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize, ".pdf" )
       outfn = paste0( outputPrefix, "_", poster )
@@ -1196,6 +1203,8 @@ hierarchicalSubtypePlots <- function(
             title = paste("Subtype:",hierarchyOfSubtypes[k], "vs", variableToVisualize, "@", unqDX[j] ) ) +
             ggplot2::theme(text = ggplot2::element_text(size = 20) ) +
             ggplot2::theme(plot.title = ggplot2::element_text(size=22))
+        if ( ! missing( manualColors ) )
+          xplot1 <- xplot1 + scale_colour_manual(values = manualColors[[k]] )
         if ( visualize ) print( xplot1 ) else {
           poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize, "_at_", toString(unqDX[j]),".pdf" )
           outfn = paste0( outputPrefix, "_", poster )
@@ -1224,6 +1233,8 @@ hierarchicalSubtypePlots <- function(
         subtype = hierarchyOfSubtypes[k],
         vizname = vizname, xlab = myxlab,
         whiskervar = whiskervar[1] )
+      if ( ! missing( manualColors ) )
+        lplot0 <- lplot0 + scale_colour_manual(values = manualColors[[k]] )
       if ( visualize ) print( lplot0 ) else {
         poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize, "_longitudinal.pdf" )
         outfn = paste0( outputPrefix, "_", poster )
@@ -1253,6 +1264,8 @@ hierarchicalSubtypePlots <- function(
             vizname = vizname,
             whiskervar = whiskervar[1],
             xlab = myxlab )
+          if ( ! missing( manualColors ) )
+            lplot1 <- lplot1 + scale_colour_manual(values = manualColors[[k]] )
           if ( visualize ) print( lplot0 ) else {
             poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize,
               "_at_", toString(unqDX[j]),

@@ -11,6 +11,7 @@ hierarchicalSubtypePlots(
   idvar,
   vizname,
   whiskervar = c("ci", "se"),
+  manualColors,
   outputPrefix,
   width = 12,
   height = 8
@@ -28,6 +29,10 @@ hierarchicalSubtypePlots(
 \item{vizname}{the name of the grouped time variable (e.g. years change rounded to nearest quarter year)}
 
 \item{whiskervar}{character either ci or se}
+
+\item{manualColors}{a list of user defined manual colors; the length of this list
+should match the length of hierarchyOfSubtypes and colors should be named according
+to the levels therein.  each entry in the list should be a string vector of color names.}
 
 \item{outputPrefix}{filename prefix for the stored pdf plots; if missing, just plot to display}
 

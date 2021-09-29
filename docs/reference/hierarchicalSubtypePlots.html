@@ -144,6 +144,7 @@ across a hierarchy of types both cross-sectionally and longitudinally.</p>
   <span class='va'>idvar</span>,
   <span class='va'>vizname</span>,
   whiskervar <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"ci"</span>, <span class='st'>"se"</span><span class='op'>)</span>,
+  <span class='va'>manualColors</span>,
   <span class='va'>outputPrefix</span>,
   width <span class='op'>=</span> <span class='fl'>12</span>,
   height <span class='op'>=</span> <span class='fl'>8</span>
@@ -175,6 +176,12 @@ across a hierarchy of types both cross-sectionally and longitudinally.</p>
     <tr>
       <th>whiskervar</th>
       <td><p>character either ci or se</p></td>
+    </tr>
+    <tr>
+      <th>manualColors</th>
+      <td><p>a list of user defined manual colors; the length of this list
+should match the length of hierarchyOfSubtypes and colors should be named according
+to the levels therein.  each entry in the list should be a string vector of color names.</p></td>
     </tr>
     <tr>
       <th>outputPrefix</th>
