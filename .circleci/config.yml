@@ -9,7 +9,7 @@ steps: &steps
     - checkout
     - run:
         name: Install package dependencies env
-        command: sudo apt-get update && sudo apt-get install jags
+        command: sudo apt-get update && sudo apt install r-cran-rjags
     - run:
         name: Install package dependencies
         command: R -e "devtools::install_deps(dep = TRUE)"
