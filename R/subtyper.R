@@ -1281,6 +1281,14 @@ hierarchicalSubtypePlots <- function(
       }
     }
 
+    myplot[[ k ]] = ggplot(tempsel[ tempsel$VISCODE != 'bl',],
+      aes(x=!!sym(changevar), y=!!sym(avar),
+      group=interaction(subtype, APOE4), col=APOE4, shape=APOE4 )) +
+              facet_grid(~subtype) + scale_color_brewer(palette="Accent") +
+              geom_point(alpha = 0.3) + theme_bw() + ylim(-50.,50.0) +
+              theme_bw()+ geom_smooth(method = "lm",  se=TRUE) + ggtitle(dxtitle) +
+              theme(text = element_text(size=12))
+
 
     }
   return( figs )
