@@ -144,6 +144,7 @@ across a hierarchy of types both cross-sectionally and longitudinally.</p>
   <span class='va'>idvar</span>,
   <span class='va'>vizname</span>,
   whiskervar <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"ci"</span>, <span class='st'>"se"</span><span class='op'>)</span>,
+  consistentSubset <span class='op'>=</span> <span class='cn'>FALSE</span>,
   <span class='va'>manualColors</span>,
   <span class='va'>outputPrefix</span>,
   width <span class='op'>=</span> <span class='fl'>12</span>,
@@ -176,6 +177,10 @@ across a hierarchy of types both cross-sectionally and longitudinally.</p>
     <tr>
       <th>whiskervar</th>
       <td><p>character either ci or se</p></td>
+    </tr>
+    <tr>
+      <th>consistentSubset</th>
+      <td><p>display longitudinal data only from subjects that are consistently present at all visits</p></td>
     </tr>
     <tr>
       <th>manualColors</th>

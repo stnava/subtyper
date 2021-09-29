@@ -11,6 +11,7 @@ hierarchicalSubtypePlots(
   idvar,
   vizname,
   whiskervar = c("ci", "se"),
+  consistentSubset = FALSE,
   manualColors,
   outputPrefix,
   width = 12,
@@ -29,6 +30,8 @@ hierarchicalSubtypePlots(
 \item{vizname}{the name of the grouped time variable (e.g. years change rounded to nearest quarter year)}
 
 \item{whiskervar}{character either ci or se}
+
+\item{consistentSubset}{display longitudinal data only from subjects that are consistently present at all visits}
 
 \item{manualColors}{a list of user defined manual colors; the length of this list
 should match the length of hierarchyOfSubtypes and colors should be named according

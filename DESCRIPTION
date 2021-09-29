@@ -30,6 +30,7 @@ Imports:
   NMF,
   pheatmap,
   gprofiler2,
+  magrittr,
   fastICA
 Suggests:
     covr,

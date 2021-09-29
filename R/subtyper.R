@@ -1105,6 +1105,7 @@ featureImportanceForSubtypes <- function(
 #' @param idvar variable name for unique subject identifier column
 #' @param vizname the name of the grouped time variable (e.g. years change rounded to nearest quarter year)
 #' @param whiskervar character either ci or se
+#' @param consistentSubset display longitudinal data only from subjects that are consistently present at all visits
 #' @param manualColors a list of user defined manual colors; the length of this list
 #' should match the length of hierarchyOfSubtypes and colors should be named according
 #' to the levels therein.  each entry in the list should be a string vector of color names.
@@ -1137,6 +1138,7 @@ hierarchicalSubtypePlots <- function(
     idvar,
     vizname,
     whiskervar=c('ci','se'),
+    consistentSubset = FALSE,
     manualColors,
     outputPrefix,
     width=12, height=8 ) {
@@ -1228,6 +1230,20 @@ hierarchicalSubtypePlots <- function(
 
   # now do something similar with longitudinal data
   if ( ! missing( vizname ) ) {
+    uviz = sort( unique(  inputDataFrame[,vizname] ) )
+    if ( length( uviz ) == 1 ) {
+#      message("length( uviz ) == 1")
+#      return( figs )
+    }
+    mysubs = unique( inputDataFrame[,idvar] )
+    if ( consistentSubset ) {
+      mysubs = unique( inputDataFrame[ inputDataFrame[,vizname] == uviz[1],idvar] )
+      for ( jj in 2:length(uviz) ) {
+        mysubs = intersect( mysubs,
+          unique( inputDataFrame[ inputDataFrame[,vizname] == uviz[jj],idvar] ) )
+        }
+      print( paste( "length(mysubs) = ", length(mysubs)) )
+      }
     # do first level plots
     for (  k in 1:length( hierarchyOfSubtypes ) ) {
       myxlab = paste( hierarchyOfSubtypes[k], "vs", variableToVisualize,
