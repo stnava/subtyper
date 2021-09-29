@@ -31,7 +31,8 @@ Imports:
   pheatmap,
   gprofiler2,
   magrittr,
-  fastICA
+  fastICA,
+  grDevices
 Suggests:
     covr,
     knitr,

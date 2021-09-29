@@ -123,8 +123,9 @@ generateSubtyperData <-function( n = 100,
 #' @importFrom stats lm predict qt rnorm var na.omit kmeans
 #' @importFrom DDoutlier  LOOP  LOF  INFLO  RDOS  KDEOS  LDF  KNN_AGG  KNN_IN  KNN_SUM  RKOF
 #' @importFrom ggplot2 aes ylim guides theme_bw scale_colour_hue geom_errorbar position_dodge element_text geom_line geom_point ggplot guide_legend
-#' @importFrom ggplot2 xlab ylab theme rel geom_violin geom_boxplot
+#' @importFrom ggplot2 xlab ylab theme rel geom_violin geom_boxplot scale_colour_manual
 #' @importFrom plyr ddply rename
+#' @importFrom grDevices dev.off pdf
 plotSubtypeChange <-function( mxdfin,
                            idvar,
                            measurement,
@@ -1248,7 +1249,8 @@ hierarchicalSubtypePlots <- function(
     for (  k in 1:length( hierarchyOfSubtypes ) ) {
       myxlab = paste( hierarchyOfSubtypes[k], "vs", variableToVisualize,
         "longitudinal" )
-      losel = !is.na(inputDataFrame[,hierarchyOfSubtypes[k]])
+      losel = !is.na(inputDataFrame[,hierarchyOfSubtypes[k]]) &
+        inputDataFrame[,idvar] %in% mysubs
       losel[ is.na(losel) ] = FALSE
       lplot0 = plotSubtypeChange(
         inputDataFrame[losel,],
@@ -1307,7 +1309,8 @@ hierarchicalSubtypePlots <- function(
             "at", toString(unqDX[j]),
             "longitudinal" )
           losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j] &
-            !is.na(inputDataFrame[,hierarchyOfSubtypes[k]])
+            !is.na(inputDataFrame[,hierarchyOfSubtypes[k]]) &
+              inputDataFrame[,idvar] %in% mysubs
           losel[ is.na(losel) ] = FALSE
           lplot1 = plotSubtypeChange(
             inputDataFrame[losel,],
