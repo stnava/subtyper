@@ -18,7 +18,7 @@ steps: &steps
         command: R -e "devtools::install_deps(dep = FALSE)"
     - run:
         name: Install package dependencies manually
-        command: Rscript -e "install.packages(c("wesanderson","ggthemes","ggstatsplot"))"
+        command: Rscript -e "install.packages(c('wesanderson','ggthemes','ggstatsplot'))"
     - run:
         name: Build package
         command: R CMD build .
