@@ -1242,7 +1242,7 @@ hierarchicalSubtypePlots <- function(
         mysubs = intersect( mysubs,
           unique( inputDataFrame[ inputDataFrame[,vizname] == uviz[jj],idvar] ) )
         }
-      print( paste( "length(mysubs) = ", length(mysubs)) )
+#      print( paste( "length(mysubs) = ", length(mysubs)) )
       }
     # do first level plots
     for (  k in 1:length( hierarchyOfSubtypes ) ) {
