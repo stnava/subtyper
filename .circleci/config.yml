@@ -15,7 +15,7 @@ steps: &steps
         command: R -e "devtools::install_cran('Matrix')"
     - run:
         name: Install package dependencies
-        command: R -e "devtools::install_deps(dep = FALSE)"
+        command: R -e "devtools::install_deps(dep = TRUE)"
     - run:
         name: Install package dependencies manually
         command: Rscript -e "install.packages(c('wesanderson','ggthemes','ggstatsplot'))"
