@@ -1277,17 +1277,28 @@ hierarchicalSubtypePlots <- function(
             figs[ct] = outfn
             ct = ct + 1
             }
+
+        wrap_by <- function(...) {
+              facet_wrap(vars(...), labeller = label_both)
+            }
+        ggplot(
+          temp,
+          aes(
+            # !!dplyr::sym( hierarchyOfSubtypes[k] )
+            y=!!sym(variableToVisualize), x=!!sym(vizname) )) +
+#              group=interaction(subtype, APOE4), col=APOE4, shape=APOE4 )) +
+              wrap_by(!!sym(hierarchyOfSubtypes[1])) +
+              scale_color_brewer( palette="Accent" ) +
+              geom_point( alpha = 0.3 ) +
+              theme_bw() +
+              geom_smooth( method = "lm",  se=TRUE ) +
+              ggtitle( myxlab ) +
+              theme(text = element_text(size=20))
+
         }
       }
     }
 
-    myplot[[ k ]] = ggplot(tempsel[ tempsel$VISCODE != 'bl',],
-      aes(x=!!sym(changevar), y=!!sym(avar),
-      group=interaction(subtype, APOE4), col=APOE4, shape=APOE4 )) +
-              facet_grid(~subtype) + scale_color_brewer(palette="Accent") +
-              geom_point(alpha = 0.3) + theme_bw() + ylim(-50.,50.0) +
-              theme_bw()+ geom_smooth(method = "lm",  se=TRUE) + ggtitle(dxtitle) +
-              theme(text = element_text(size=12))
 
 
     }
