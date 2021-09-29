@@ -123,7 +123,7 @@ generateSubtyperData <-function( n = 100,
 #' @importFrom stats lm predict qt rnorm var na.omit kmeans
 #' @importFrom DDoutlier  LOOP  LOF  INFLO  RDOS  KDEOS  LDF  KNN_AGG  KNN_IN  KNN_SUM  RKOF
 #' @importFrom ggplot2 aes ylim guides theme_bw scale_colour_hue geom_errorbar position_dodge element_text geom_line geom_point ggplot guide_legend
-#' @importFrom ggplot2 xlab ylab theme rel
+#' @importFrom ggplot2 xlab ylab theme rel geom_violin
 #' @importFrom plyr ddply rename
 plotSubtypeChange <-function( mxdfin,
                            idvar,
@@ -1125,7 +1125,7 @@ featureImportanceForSubtypes <- function(
 #' @importFrom wesanderson wes_palette wes_palettes
 #' @importFrom ggthemes theme_tufte
 #' @importFrom dplyr sym
-#' @importFrom ggplot2 labs element_text theme
+#' @importFrom ggplot2 labs element_text theme geom_smooth geom_violin ggtitle
 #' @export
 hierarchicalSubtypePlots <- function(
     inputDataFrame,
@@ -1311,23 +1311,6 @@ hierarchicalSubtypePlots <- function(
         }
       }
 
-
-      for (  k in 2:length( hierarchyOfSubtypes ) ) {
-        sym2 = sym(hierarchyOfSubtypes[k])
-        ggplot(
-          temp,
-          aes(
-            # !!dplyr::sym( hierarchyOfSubtypes[k] )
-            y=!!sym(variableToVisualize), x=!!sym(vizname),
-              group=interaction(!!sym(vizname), !!sym2), col=!!sym2  )) +
-#              wrap_by(!!sym(hierarchyOfSubtypes[1])) +
-              scale_color_brewer( palette="Accent" ) +
-              geom_point( alpha = 0.3 ) +
-              theme_bw() + geom_violin() +
-              geom_smooth( method = "lm",  se=TRUE ) +
-              ggtitle( myxlab ) +
-              theme(text = element_text(size=20)) + scale_colour_manual(values = tcolor[[k]] )
-        }
 
     }
   return( figs )
