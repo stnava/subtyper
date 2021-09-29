@@ -1136,7 +1136,7 @@ hierarchicalSubtypePlots <- function(
   if ( ! ( any(hierarchyOfSubtypes %in% names(inputDataFrame) ) ) )
     stop("some hierarchyOfSubtypes variables do not exist in the data frame.")
   if ( ! ( any(variableToVisualize %in% names(inputDataFrame) ) ) )
-    stop("some hierarchyOfSubtypes variables do not exist in the data frame.")
+    stop(paste("the variableToVisualize", variableToVisualize, "does not exist in the data frame."))
 
   figs = c()
   ct = 1
@@ -1210,12 +1210,14 @@ hierarchicalSubtypePlots <- function(
   if ( ! missing( vizname ) ) {
     # do first level plots
     for (  k in 1:length( hierarchyOfSubtypes ) ) {
+      myxlab = paste( hierarchyOfSubtypes[k], "vs", variableToVisualize,
+        "longitudinal" )
       lplot0 = plotSubtypeChange(
         inputDataFrame,
         idvar = idvar,
         measurement = variableToVisualize,
         subtype = hierarchyOfSubtypes[k],
-        vizname = vizname,
+        vizname = vizname, xlab = myxlab,
         whiskervar = whiskervar[1] )
       if ( visualize ) print( lplot0 ) else {
         poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize, "_longitudinal.pdf" )
@@ -1232,6 +1234,9 @@ hierarchicalSubtypePlots <- function(
     if ( length( hierarchyOfSubtypes ) > 1 ) {
       for (  k in 2:length( hierarchyOfSubtypes ) ) {
         for ( j in 1:length( unqDX ) ) {
+          myxlab = paste( hierarchyOfSubtypes[k], "vs", variableToVisualize,
+            "at", toString(unqDX[j]),
+            "longitudinal" )
           losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j]
           losel[ is.na(losel) ] = FALSE
           lplot1 = plotSubtypeChange(
@@ -1240,7 +1245,8 @@ hierarchicalSubtypePlots <- function(
             measurement = variableToVisualize,
             subtype = hierarchyOfSubtypes[k],
             vizname = vizname,
-            whiskervar = whiskervar[1] )
+            whiskervar = whiskervar[1],
+            xlab = myxlab )
           if ( visualize ) print( lplot0 ) else {
             poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize,
               "_at_", toString(unqDX[j]),
