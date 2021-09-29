@@ -1266,10 +1266,40 @@ hierarchicalSubtypePlots <- function(
             xlab = myxlab )
           if ( ! missing( manualColors ) )
             lplot1 <- lplot1 + scale_colour_manual(values = manualColors[[k]] )
-          if ( visualize ) print( lplot0 ) else {
+          if ( visualize ) print( lplot1 ) else {
             poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize,
               "_at_", toString(unqDX[j]),
               "_longitudinal.pdf" )
+            outfn = paste0( outputPrefix, "_", poster )
+            pdf( outfn, width=width, height=height )
+            print( lplot1 )
+            dev.off()
+            figs[ct] = outfn
+            ct = ct + 1
+            }
+
+          wrap_by <- function(...) {
+                facet_wrap(vars(...), labeller = label_both)
+              }
+          sym2 = sym(hierarchyOfSubtypes[k])
+          lplot1 = ggplot(
+              inputDataFrame[losel,],
+              aes(
+                y=!!sym(variableToVisualize), x=!!sym(vizname),
+                  group=interaction(!!sym(vizname), !!sym2), col=!!sym2  )) +
+    #              wrap_by(!!sym(hierarchyOfSubtypes[1])) +
+#                  scale_color_brewer( palette="Accent" ) +
+                  geom_point( alpha = 0.3 ) +
+                  theme_bw() + geom_violin() +
+                  geom_smooth( method = "lm",  se=TRUE ) +
+                  ggtitle( myxlab ) +
+                  theme(text = element_text(size=20))
+          if ( ! missing( manualColors ) )
+            lplot1 <- lplot1 + scale_colour_manual(values = manualColors[[k]] )
+          if ( visualize ) print( lplot1 ) else {
+            poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize,
+              "_at_", toString(unqDX[j]),
+              "_longitudinal_violin.pdf" )
             outfn = paste0( outputPrefix, "_", poster )
             pdf( outfn, width=width, height=height )
             print( lplot1 )
@@ -1282,10 +1312,6 @@ hierarchicalSubtypePlots <- function(
       }
 
 
-      wrap_by <- function(...) {
-            facet_wrap(vars(...), labeller = label_both)
-          }
-
       for (  k in 2:length( hierarchyOfSubtypes ) ) {
         sym2 = sym(hierarchyOfSubtypes[k])
         ggplot(
@@ -1294,13 +1320,13 @@ hierarchicalSubtypePlots <- function(
             # !!dplyr::sym( hierarchyOfSubtypes[k] )
             y=!!sym(variableToVisualize), x=!!sym(vizname),
               group=interaction(!!sym(vizname), !!sym2), col=!!sym2  )) +
-              wrap_by(!!sym(hierarchyOfSubtypes[1])) +
+#              wrap_by(!!sym(hierarchyOfSubtypes[1])) +
               scale_color_brewer( palette="Accent" ) +
               geom_point( alpha = 0.3 ) +
-              theme_bw() +
+              theme_bw() + geom_violin() +
               geom_smooth( method = "lm",  se=TRUE ) +
               ggtitle( myxlab ) +
-              theme(text = element_text(size=20))
+              theme(text = element_text(size=20)) + scale_colour_manual(values = tcolor[[k]] )
         }
 
     }
