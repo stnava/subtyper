@@ -1144,8 +1144,10 @@ hierarchicalSubtypePlots <- function(
 
   # first level in hierarchy
   for (  k in 1:length( hierarchyOfSubtypes ) ) {
+    losel = !is.na(inputDataFrame[,hierarchyOfSubtypes[k]])
+    losel[ is.na(losel) ] = FALSE
     xplot0 <- ggstatsplot::ggbetweenstats(
-          data = inputDataFrame,
+          data = inputDataFrame[losel,],
           x = !!dplyr::sym( hierarchyOfSubtypes[k] ),
           y = !!dplyr::sym( variableToVisualize ),
           plot.type = "boxviolin", # type of plot
@@ -1177,7 +1179,8 @@ hierarchicalSubtypePlots <- function(
   if ( length( hierarchyOfSubtypes ) > 1 ) {
     for (  k in 2:length( hierarchyOfSubtypes ) ) {
       for ( j in 1:length( unqDX ) ) {
-        losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j]
+        losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j] &
+          !is.na(inputDataFrame[,hierarchyOfSubtypes[k]])
         losel[ is.na(losel) ] = FALSE
         xplot1 <- ggstatsplot::ggbetweenstats(
               data = inputDataFrame[ losel, ],
@@ -1212,8 +1215,10 @@ hierarchicalSubtypePlots <- function(
     for (  k in 1:length( hierarchyOfSubtypes ) ) {
       myxlab = paste( hierarchyOfSubtypes[k], "vs", variableToVisualize,
         "longitudinal" )
+      losel = !is.na(inputDataFrame[,hierarchyOfSubtypes[k]])
+      losel[ is.na(losel) ] = FALSE
       lplot0 = plotSubtypeChange(
-        inputDataFrame,
+        inputDataFrame[losel,],
         idvar = idvar,
         measurement = variableToVisualize,
         subtype = hierarchyOfSubtypes[k],
@@ -1237,7 +1242,8 @@ hierarchicalSubtypePlots <- function(
           myxlab = paste( hierarchyOfSubtypes[k], "vs", variableToVisualize,
             "at", toString(unqDX[j]),
             "longitudinal" )
-          losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j]
+          losel = inputDataFrame[,hierarchyOfSubtypes[1]] == unqDX[j] &
+            !is.na(inputDataFrame[,hierarchyOfSubtypes[k]])
           losel[ is.na(losel) ] = FALSE
           lplot1 = plotSubtypeChange(
             inputDataFrame[losel,],
