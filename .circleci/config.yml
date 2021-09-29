@@ -3,9 +3,9 @@ version: 2
 
 steps: &steps
   steps:
-    - restore_cache:
-        keys:
-          - cache-{{ .Environment.CIRCLE_JOB }}
+#    - restore_cache:
+#        keys:
+#          - cache-{{ .Environment.CIRCLE_JOB }}
     - checkout
     - run:
         name: Install package dependencies env
@@ -25,12 +25,12 @@ steps: &steps
     - run:
         name: Check package
         command: R CMD check *tar.gz
-    - store_artifacts:
-        path: ci4rB.Rcheck/
-    - save_cache:
-        key: cache-{{ .Environment.CIRCLE_JOB }}
-        paths:
-          - "/usr/local/lib/R/site-libraryX"
+#    - store_artifacts:
+#        path: ci4rB.Rcheck/
+#    - save_cache:
+#        key: cache-{{ .Environment.CIRCLE_JOB }}
+#        paths:
+#          - "/usr/local/lib/R/site-libraryX"
 
 jobs:
   release:
