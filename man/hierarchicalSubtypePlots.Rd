@@ -31,7 +31,9 @@ hierarchicalSubtypePlots(
 
 \item{outputPrefix}{filename prefix for the stored pdf plots; if missing, just plot to display}
 
-\item{the}{height of the graphics region in inches.}
+\item{width}{the width of the graphics region in inches.}
+
+\item{height}{the height of the graphics region in inches.}
 }
 \value{
 the output is a set of plots saved at the outputPrefix location

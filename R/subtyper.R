@@ -1106,8 +1106,8 @@ featureImportanceForSubtypes <- function(
 #' @param vizname the name of the grouped time variable (e.g. years change rounded to nearest quarter year)
 #' @param whiskervar character either ci or se
 #' @param outputPrefix filename prefix for the stored pdf plots; if missing, just plot to display
-#' @param the width of the graphics region in inches.
-#' @param the height of the graphics region in inches.
+#' @param width the width of the graphics region in inches.
+#' @param height the height of the graphics region in inches.
 #' @return the output is a set of plots saved at the outputPrefix location
 #' @author Avants BB
 #' @examples
