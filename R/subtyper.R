@@ -1277,16 +1277,23 @@ hierarchicalSubtypePlots <- function(
             figs[ct] = outfn
             ct = ct + 1
             }
+          }
+        }
+      }
 
-        wrap_by <- function(...) {
-              facet_wrap(vars(...), labeller = label_both)
-            }
+
+      wrap_by <- function(...) {
+            facet_wrap(vars(...), labeller = label_both)
+          }
+
+      for (  k in 2:length( hierarchyOfSubtypes ) ) {
+        sym2 = sym(hierarchyOfSubtypes[k])
         ggplot(
           temp,
           aes(
             # !!dplyr::sym( hierarchyOfSubtypes[k] )
-            y=!!sym(variableToVisualize), x=!!sym(vizname) )) +
-#              group=interaction(subtype, APOE4), col=APOE4, shape=APOE4 )) +
+            y=!!sym(variableToVisualize), x=!!sym(vizname),
+              group=interaction(!!sym(vizname), !!sym2), col=!!sym2  )) +
               wrap_by(!!sym(hierarchyOfSubtypes[1])) +
               scale_color_brewer( palette="Accent" ) +
               geom_point( alpha = 0.3 ) +
@@ -1294,12 +1301,7 @@ hierarchicalSubtypePlots <- function(
               geom_smooth( method = "lm",  se=TRUE ) +
               ggtitle( myxlab ) +
               theme(text = element_text(size=20))
-
         }
-      }
-    }
-
-
 
     }
   return( figs )
