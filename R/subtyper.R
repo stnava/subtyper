@@ -1124,8 +1124,11 @@ featureImportanceForSubtypes <- function(
 #' @importFrom ggstatsplot ggbetweenstats
 #' @importFrom wesanderson wes_palette wes_palettes
 #' @importFrom ggthemes theme_tufte
-#' @importFrom dplyr sym
-#' @importFrom ggplot2 labs element_text theme geom_smooth geom_violin ggtitle
+#' @importFrom magrittr %>%
+#' @importFrom ggbeeswarm geom_beeswarm
+#' @importFrom dplyr sym left_join mutate summarize n group_by
+#' @importFrom ggplot2 labs element_text theme geom_smooth geom_violin geom_boxplot geom_dotplot ggtitle stat_smooth
+#' @importFrom ggplot2 facet_grid facet_wrap label_both vars
 #' @export
 hierarchicalSubtypePlots <- function(
     inputDataFrame,
@@ -1218,6 +1221,11 @@ hierarchicalSubtypePlots <- function(
       }
   }
 
+  # for facetting
+  wrap_by <- function(...) {
+        facet_wrap(vars(...), labeller = label_both)
+      }
+
   # now do something similar with longitudinal data
   if ( ! missing( vizname ) ) {
     # do first level plots
@@ -1244,6 +1252,35 @@ hierarchicalSubtypePlots <- function(
         figs[ct] = outfn
         ct = ct + 1
         }
+
+
+
+      sym2 = sym(hierarchyOfSubtypes[k])
+      ttt = inputDataFrame[losel,]
+      viznameB=paste0(vizname,'_c')
+      ttt[,viznameB] = as.numeric( as.factor( ttt[,vizname] ) )
+      lplot1 =  ggplot( ttt,
+            aes(
+              y=!!sym(variableToVisualize), x=!!sym(viznameB),
+                fill = (!!sym2), color =  (!!sym2)
+            ) ) + wrap_by(!!sym2) +
+                theme_bw() +
+                geom_beeswarm() +
+                geom_smooth(method = "lm", alpha = .15, aes(fill = (!!sym2)) ) +
+                ggtitle( myxlab ) +
+                theme(text = element_text(size=20))
+        if ( ! missing( manualColors ) )
+          lplot1 <- lplot1 + scale_colour_manual(values = manualColors[[k]] )
+        if ( visualize ) print( lplot1 ) else {
+          poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize,
+            "_longitudinal_swarmplot.pdf" )
+          outfn = paste0( outputPrefix, "_", poster )
+          pdf( outfn, width=width, height=height )
+          print( lplot1 )
+          dev.off()
+          figs[ct] = outfn
+          ct = ct + 1
+          }
       }
 
 
@@ -1278,20 +1315,20 @@ hierarchicalSubtypePlots <- function(
             ct = ct + 1
             }
 
-          wrap_by <- function(...) {
-                facet_wrap(vars(...), labeller = label_both)
-              }
           sym2 = sym(hierarchyOfSubtypes[k])
-          lplot1 = ggplot(
-              inputDataFrame[losel,],
+          sample_size = inputDataFrame[losel,] %>% group_by(!!sym(vizname)) %>% summarize(num=n())
+          ttt = inputDataFrame[losel,]
+          viznameB=paste0(vizname,'_c')
+          ttt[,viznameB] = as.numeric( as.factor( ttt[,vizname] ) )
+          lplot1 =  ggplot( ttt,
               aes(
-                y=!!sym(variableToVisualize), x=!!sym(vizname),
-                  group=interaction(!!sym(vizname), !!sym2), col=!!sym2  )) +
-    #              wrap_by(!!sym(hierarchyOfSubtypes[1])) +
-#                  scale_color_brewer( palette="Accent" ) +
-                  geom_point( alpha = 0.3 ) +
-                  theme_bw() + geom_violin() + geom_boxplot(width=0.2)+
-                  geom_smooth( method = "lm",  se=TRUE ) +
+                y=!!sym(variableToVisualize), x=!!sym(viznameB),
+                  fill = (!!sym2), color =  (!!sym2)
+#                  group=interaction(!!sym(viznameB), !!sym2)
+              ) ) + wrap_by(!!sym2) +
+                  theme_bw() +
+                  geom_beeswarm() + # stat_smooth(method='lm')
+                  geom_smooth(method = "lm", alpha = .15, aes(fill = (!!sym2)) ) +
                   ggtitle( myxlab ) +
                   theme(text = element_text(size=20))
           if ( ! missing( manualColors ) )
@@ -1299,7 +1336,7 @@ hierarchicalSubtypePlots <- function(
           if ( visualize ) print( lplot1 ) else {
             poster = paste0( hierarchyOfSubtypes[k], "_vs_", variableToVisualize,
               "_at_", toString(unqDX[j]),
-              "_longitudinal_violin.pdf" )
+              "_longitudinal_swarmplot.pdf" )
             outfn = paste0( outputPrefix, "_", poster )
             pdf( outfn, width=width, height=height )
             print( lplot1 )

@@ -21,6 +21,7 @@ Imports:
   dplyr,
   ggthemes,
   ggstatsplot,
+  ggbeeswarm,
   wesanderson,
   Hmisc,
   plyr,
