@@ -12,7 +12,7 @@ steps: &steps
 #        command: sudo apt-get update && sudo apt install jags && sudo apt-get install -y r-cran-rgl
     - run:
         name: Install Biobase
-        command: R -e "install.packages('BiocManager'); BiocManager::install('Biobase')""
+        command: R -e "install.packages('BiocManager'); BiocManager::install('Biobase')"
     - run:
         name: Install package dependencies
         command: R -e "devtools::install_deps(dep = TRUE)"
