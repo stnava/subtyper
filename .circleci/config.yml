@@ -35,7 +35,7 @@ steps: &steps
 jobs:
   release:
     docker:
-      - image: rocker/verse:3.6.0
+      - image: rocker/binder:latest
     <<: *steps
   oldrel:
     docker:
@@ -51,5 +51,5 @@ workflows:
   all:
     jobs:
       - release
-      - oldrel
+#      - oldrel
 #      - devel
