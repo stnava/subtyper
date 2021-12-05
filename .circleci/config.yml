@@ -10,9 +10,9 @@ steps: &steps
 #    - run:
 #        name: Install package dependencies env
 #        command: sudo apt-get update && sudo apt install jags && sudo apt-get install -y r-cran-rgl
-#    - run:
-#        name: Install Matrix
-#        command: R -e "devtools::install_cran('Matrix')"
+    - run:
+        name: Install Biobase
+        command: R -e "install.packages("BiocManager"); BiocManager::install('Biobase')""
     - run:
         name: Install package dependencies
         command: R -e "devtools::install_deps(dep = TRUE)"
