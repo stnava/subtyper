@@ -241,7 +241,7 @@ return( mxdfin[ mxdfin[,visitvar] %in% visitselect, ] )
 #' Get subjects and timepoints with the best quality
 #'
 #' This filters data that has both repeats (e.g. multiple images on the same day)
-#' and (optionally) longitudinal data.  The quality measure should be a "higher"
+#' and (optionally) longitudinal data.  The quality measure should be a "higher
 #' is better" measurement.
 #'
 #' @param mxdfin Input data frame with repeated measurements and a grouped time variable
@@ -282,6 +282,51 @@ highestQualityRepeat  <-function(
   return( mxdfin[ useit, ] )
 }
 
+
+#' Reject subjects and timepoints with lowest quality
+#'
+#' This filters data that has both repeats (e.g. multiple images on the same day)
+#' and (optionally) longitudinal data.  The quality measure should be a "higher
+#' is better" measurement.  This function can be called recursively until it
+#' converges.  It is less aggressive than \code{highestQualityRepeat}.
+#'
+#' @param mxdfin Input data frame with repeated measurements and a grouped time variable
+#' @param idvar variable name for unique subject identifier column
+#' @param visitvar variable name for the visit or date column
+#' @param qualityvar variable name for the quality column; higher values should map to
+#' higher quality data.
+#'
+#' @return data frame
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' mydfhq = rejectLowestQualityRepeat( mydf, "Id", "visit", "quality")
+#' @export
+rejectLowestQualityRepeat <-function(
+  mxdfin,
+  idvar,
+  visitvar,
+  qualityvar ) {
+
+  if ( ! ( visitvar %in% names( mxdfin ) ) ) stop("visitvar not in dataframe")
+  if ( ! ( idvar %in% names( mxdfin ) ) ) stop("idvar not in dataframe")
+  if ( ! ( qualityvar %in% names( mxdfin ) ) ) stop("qualityvar not in dataframe")
+  vizzes = sort(unique( mxdfin[,visitvar] ))
+  uids = sort(unique( mxdfin[,idvar] ))
+  useit = rep( TRUE, nrow( mxdfin ) )
+  for ( u in uids ) {
+    losel = mxdfin[,idvar] == u
+    vizzesloc = unique( mxdfin[ losel, visitvar ] )
+    for ( v in vizzesloc ) {
+      losel = mxdfin[,idvar] == u & mxdfin[,visitvar] == v
+      mysnr = mxdfin[losel,qualityvar]
+      myw = which( losel )
+      if ( any( !is.na(mysnr) )  )
+        useit[ myw[ which.min(mysnr) ] ] = FALSE
+      }
+    }
+  return( mxdfin[ useit, ] )
+}
 
 
 #' Outlierness scoring
