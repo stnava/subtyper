@@ -4,7 +4,7 @@
 \alias{rejectLowestQualityRepeat}
 \title{Reject subjects and timepoints with lowest quality}
 \usage{
-rejectLowestQualityRepeat(mxdfin, idvar, visitvar, qualityvar)
+rejectLowestQualityRepeat(mxdfin, idvar, visitvar, qualityvar, verbose = FALSE)
 }
 \arguments{
 \item{mxdfin}{Input data frame with repeated measurements and a grouped time variable}
@@ -15,6 +15,8 @@ rejectLowestQualityRepeat(mxdfin, idvar, visitvar, qualityvar)
 
 \item{qualityvar}{variable name for the quality column; higher values should map to
 higher quality data.}
+
+\item{vebose}{boolean}
 }
 \value{
 data frame

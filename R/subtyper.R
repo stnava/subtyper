@@ -295,6 +295,7 @@ highestQualityRepeat  <-function(
 #' @param visitvar variable name for the visit or date column
 #' @param qualityvar variable name for the quality column; higher values should map to
 #' higher quality data.
+#' @param vebose boolean
 #'
 #' @return data frame
 #' @author Avants BB
@@ -306,7 +307,8 @@ rejectLowestQualityRepeat <-function(
   mxdfin,
   idvar,
   visitvar,
-  qualityvar ) {
+  qualityvar,
+  verbose = FALSE ) {
 
   if ( ! ( visitvar %in% names( mxdfin ) ) ) stop("visitvar not in dataframe")
   if ( ! ( idvar %in% names( mxdfin ) ) ) stop("idvar not in dataframe")
@@ -321,10 +323,12 @@ rejectLowestQualityRepeat <-function(
       losel = mxdfin[,idvar] == u & mxdfin[,visitvar] == v
       mysnr = mxdfin[losel,qualityvar]
       myw = which( losel )
-      if ( any( !is.na(mysnr) )  )
-        useit[ myw[ which.min(mysnr) ] ] = FALSE
+      if ( length( mysnr ) > 0 )
+        if ( any( !is.na(mysnr) )  )
+          useit[ myw[ which.min(mysnr) ] ] = FALSE
       }
     }
+  if ( verbose ) print( table( useit ) )
   return( mxdfin[ useit, ] )
 }
 
