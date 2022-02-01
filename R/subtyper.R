@@ -275,9 +275,10 @@ highestQualityRepeat  <-function(
       losel = mxdfin[,idvar] == u & mxdfin[,visitvar] == v
       mysnr = mxdfin[losel,qualityvar]
       myw = which( losel )
-      if ( length( myw ) > 1 )
+      if ( length( myw ) > 1 ) {
         if ( any( !is.na(mysnr) )  )
           useit[ myw[ which.max(mysnr) ] ] = TRUE
+        } else useit[ myw ] = TRUE
       }
     }
   return( mxdfin[ useit, ] )
