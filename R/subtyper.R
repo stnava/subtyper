@@ -6,6 +6,30 @@
 }
 
 
+
+#' Extract column names with concatenated search parameters
+#'
+#' @param x vector of strings
+#' @param demogIn the dataframe with column names to search.
+#'
+#' @return vector of string column names
+#' @author Avants BB
+#' @examples
+#'
+#' mydf = generateSubtyperData( 5 )
+#' nms = getNamesFromDataframe( c("it","v"), mydf )
+#'
+#' @export
+getNamesFromDataframe <- function( x, demogIn ) {
+  if ( missing( demogIn ) ) demogIn=demog
+  outnames = names(demogIn)[ grep(x[1],names(demogIn ) ) ]
+  if ( length( x ) > 1 )
+  for ( y in x[-1] )
+    outnames = outnames[ grep(y,outnames ) ]
+  return( outnames )
+}
+
+
 #' nallspdma
 #'
 #' Supplementary table S2 from Nalls 2019 Parkinsons disease meta-analysis of
