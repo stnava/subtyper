@@ -21,6 +21,15 @@ The pre-release version of the package can be pulled from GitHub using the [devt
     # install.packages("devtools")
     devtools::install_github("stnava/subtyper", build_vignettes=TRUE)
 
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+if (!requireNamespace("Biobase", quietly = TRUE))
+  BiocManager::install("Biobase")
+install.packages("NMF")
+```
+
 ## For developers
 
 The repository includes a Makefile to facilitate some common tasks.
