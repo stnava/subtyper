@@ -18,9 +18,10 @@ This package expects population-level data frames with longitudinal data.
 
 The pre-release version of the package can be pulled from GitHub using the [devtools](https://github.com/r-lib/devtools) package:
 
+```r
     # install.packages("devtools")
     devtools::install_github("stnava/subtyper", build_vignettes=TRUE)
-
+```
 
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -28,6 +29,11 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 if (!requireNamespace("Biobase", quietly = TRUE))
   BiocManager::install("Biobase")
 install.packages("NMF")
+```
+
+```r
+sudo apt install libgmp-dev
+# then install ClusterR
 ```
 
 ## For developers
