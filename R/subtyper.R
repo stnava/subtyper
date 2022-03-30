@@ -637,7 +637,8 @@ fillBaselineColumn <- function(
     } else baseval = NA
     mxdfin[ losel , newcolname ] = baseval
   }
-  mxdfin[,newcolnamed] = mxdfin[,columnName] - mxdfin[,newcolname]
+  if ( ! is.na( deltaExt ) )
+    mxdfin[,newcolnamed] = mxdfin[,columnName] - mxdfin[,newcolname]
   return( list(mxdfin, newcolname, newcolnamed ) )
 }
 
