@@ -627,14 +627,19 @@ fillBaselineColumn <- function(
   newcolnamed = paste0( columnName, deltaExt )
   mxdfin[,newcolname]=NA
   mxdfin[,newcolnamed]=NA
+  isFactor = class( mxdfin[,columnName] ) != "numeric"
   for ( u in unique( mxdfin[,subjectID] ) ) {
     losel = mxdfin[,subjectID] == u
     lomxdfin = mxdfin[ losel ,  ]
     selbase = losel & mxdfin[,visitID] == baselineVisitValue
     selbase[ is.na(selbase) ] = FALSE
-    if ( sum( selbase ) > 0 ) {
+    baseval = NA
+    if ( sum( selbase ) > 0  & !isFactor ) {
       baseval = mean( mxdfin[ selbase, columnName ],  na.rm=T )
-    } else baseval = NA
+    }
+    if ( sum( selbase ) > 0  & isFactor ) {
+      baseval = median( mxdfin[ selbase, columnName ],  na.rm=T )
+    }
     mxdfin[ losel , newcolname ] = baseval
   }
   if ( ! is.na( deltaExt ) )
