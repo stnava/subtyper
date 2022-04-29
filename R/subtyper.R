@@ -8,8 +8,8 @@
 
 #' Grep entries with a vector search parameters
 #'
-#' @param x vector
-#' @param desc a vector of search terms
+#' @param x a vector of search terms
+#' @param desc target vector of items to be searched
 #'
 #' @return result of grep
 #' @author Avants BB

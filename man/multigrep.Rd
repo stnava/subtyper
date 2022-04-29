@@ -7,9 +7,9 @@
 multigrep(x, desc)
 }
 \arguments{
-\item{x}{vector}
+\item{x}{a vector of search terms}
 
-\item{desc}{a vector of search terms}
+\item{desc}{target vector of items to be searched}
 }
 \value{
 result of grep
