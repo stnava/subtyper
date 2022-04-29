@@ -4,12 +4,14 @@
 \alias{multigrep}
 \title{Grep entries with a vector search parameters}
 \usage{
-multigrep(x, desc)
+multigrep(x, desc, intersect = FALSE)
 }
 \arguments{
 \item{x}{a vector of search terms}
 
 \item{desc}{target vector of items to be searched}
+
+\item{intersect}{boolean whether to use intersection or union otherwise}
 }
 \value{
 result of grep

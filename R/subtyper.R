@@ -10,14 +10,20 @@
 #'
 #' @param x a vector of search terms
 #' @param desc target vector of items to be searched
+#' @param intersect boolean whether to use intersection or union otherwise
 #'
 #' @return result of grep
 #' @author Avants BB
 #' @export
-multigrep <- function( x, desc ) {
+multigrep <- function( x, desc, intersect=FALSE ) {
   roisel = c()
-  for ( xx in x )
-    roisel = c( roisel, grep(xx, desc) )
+  for ( xx in x ) {
+    if (length(roisel)==0 | !intersect ) {
+      roisel = c( roisel, grep(xx, desc) )
+    } else {
+      roisel = intersect( roisel, grep(xx, desc) )
+    }
+  }
   return(  roisel )
 }
 
