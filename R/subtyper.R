@@ -6,6 +6,22 @@
 }
 
 
+#' Grep entries with a vector search parameters
+#'
+#' @param x vector
+#' @param desc a vector of search terms
+#'
+#' @return result of grep
+#' @author Avants BB
+#' @export
+multigrep <- function( x, desc ) {
+  roisel = c()
+  for ( xx in x )
+    roisel = c( roisel, grep(xx, desc) )
+  return(  roisel )
+}
+
+
 
 #' Extract column names with concatenated search parameters
 #'

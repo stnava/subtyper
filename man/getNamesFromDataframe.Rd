@@ -20,7 +20,7 @@ Extract column names with concatenated search parameters
 \examples{
 
 mydf = generateSubtyperData( 5 )
-nms = getNamesFromDataframe( "", mydf )
+nms = getNamesFromDataframe( c("it","v"), mydf )
 
 }
 \author{
