@@ -991,11 +991,11 @@ predictSubtypeClusterMulti  <- function(
 
   subdf = mxdfin[ , measureColumns ]
   subdf = data.matrix( subdf )
-  if ( class( clusteringObject  ) == "Gaussian Mixture Models" ) {
+  if ( class( clusteringObject  )[2] == "Gaussian Mixture Models" ) {
     pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
       clusteringObject$covariance_matrices, clusteringObject$weights )
     mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
-  } else if (  class( clusteringObject  ) == "k-means clustering" ) {
+  } else if (  class( clusteringObject  )[2] == "k-means clustering" ) {
     # compute distance of every subject to each centroid
 #    clusteringObject = stats::kmeans( subdf, desiredk )
     cluster_labels = rep( NA, nrow( subdf ) )
