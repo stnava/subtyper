@@ -43,7 +43,6 @@ multigrep <- function( x, desc, intersect=FALSE ) {
 #'
 #' @export
 getNamesFromDataframe <- function( x, demogIn ) {
-  if ( missing( demogIn ) ) demogIn=demog
   outnames = names(demogIn)[ grep(x[1],names(demogIn ) ) ]
   if ( length( x ) > 1 )
   for ( y in x[-1] )
@@ -343,7 +342,7 @@ highestQualityRepeat  <-function(
 #' @param visitvar variable name for the visit or date column
 #' @param qualityvar variable name for the quality column; higher values should map to
 #' higher quality data.
-#' @param vebose boolean
+#' @param verbose boolean
 #'
 #' @return data frame
 #' @author Avants BB
@@ -1474,4 +1473,34 @@ hierarchicalSubtypePlots <- function(
     }
   return( figs )
 
+}
+
+
+
+
+#' genetic variants data frame from plink data
+#'
+#' @param rootFileName root for pgen psam and pvar files
+#' @param targetSNPs snps to extract
+#' @return dataframes with both variants and subject ids
+#' @author Avants BB
+#' @examples
+#' # mydf = plinkVariantsDataFrame( fn, c( 'rs6469804', 'rs6859' ) )
+#' @importFrom pgenlibr NewPvar NewPgen ReadList
+#' @importFrom data.table fread
+#' @export
+plinkVariantsDataFrame <- function( rootFileName, targetSNPs ) {
+  f.pvar = paste0(rootFileName, '.pvar')
+  f.pgen = paste0(rootFileName, '.pgen')
+  f.sam = paste0(rootFileName, '.psam')
+  subjectIDs = fread( f.sam )
+  myvariants = fread( f.pvar, select = 3)
+  i  <- which( myvariants$ID %in% targetSNPs)
+  pvar <- pgenlibr::NewPvar(f.pvar)
+  pgen <- pgenlibr::NewPgen(f.pgen, pvar=pvar) #,sample_subset = c(1,2,3,4) )
+  myderk = pgenlibr::ReadList( pgen, i, meanimpute=F )
+  snpdf = data.frame( myderk )
+  colnames( snpdf ) = myvariants$ID[i]
+  outdf = data.frame( subjectIDs = subjectIDs$IID, snpdf )
+  outdf
 }

@@ -10,7 +10,8 @@ Description: We ingest dataframes describing populations that are followed
     is facilitated by a single function call. The package provides intuitive
     visualization that show how subtyped data varies by group over time.
 Version: 0.1.0
-Authors@R: c( person(c("Brian", "B."), "Avants", role=c("aut", "cre"), email="stnava@gmail.com") )
+Author: c( person(c("Brian", "B."), "Avants", role=c("aut", "cre"), email="stnava@gmail.com") )
+Maintainer: Brian Avants <stnava@debian.org>
 URL: https://github.com/stnava/subtyper
 BugReports: https://github.com/stnava/subtyper/issues
 License: GPL-3
@@ -18,6 +19,7 @@ Depends:
     R (>= 3.0.0)
 Imports:
   ggplot2,
+  ClusterR,
   dplyr,
   ggthemes,
   ggstatsplot,
@@ -26,12 +28,13 @@ Imports:
   Hmisc,
   plyr,
   DDoutlier,
-  ClusterR,
+  data.table,
   NMF,
   pheatmap,
   gprofiler2,
   magrittr,
   fastICA,
+  pgenlibr,
   grDevices
 Suggests:
     covr,
@@ -39,7 +42,7 @@ Suggests:
     testthat,
     spelling,
     rmarkdown
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.1
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Language: en-US

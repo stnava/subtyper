@@ -16,7 +16,7 @@ rejectLowestQualityRepeat(mxdfin, idvar, visitvar, qualityvar, verbose = FALSE)
 \item{qualityvar}{variable name for the quality column; higher values should map to
 higher quality data.}
 
-\item{vebose}{boolean}
+\item{verbose}{boolean}
 }
 \value{
 data frame
