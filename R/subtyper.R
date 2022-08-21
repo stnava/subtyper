@@ -614,7 +614,7 @@ filterForGoodData <- function( dataIn,
 #' the subjectID and visitID conditions.
 #'
 #' @param mxdfin Input data frame with repeated measurements and a grouped time variable
-#' @param columnName string defining a valid column in the data frame.
+#' @param columnName string defining valid columns in the data frame.
 #' @param subjectID the unique subject id column name
 #' @param visitID names of the column that defines the variable defining
 #' baseline-ness. e.g. \code{isBaseline}
@@ -638,7 +638,7 @@ fillBaselineColumn <- function(
 ) {
   if ( ! ( subjectID %in% names( mxdfin ) ) )
     stop("subjectID not in data frame's columns")
-  if ( ! ( columnName %in% names( mxdfin ) ) )
+  if ( ! all( columnName %in% names( mxdfin ) ) )
     stop("columnName not in data frame's columns")
   if ( ! ( visitID %in% names( mxdfin ) ) )
     stop("visitID not in data frame's columns")
@@ -648,20 +648,24 @@ fillBaselineColumn <- function(
   newcolnamed = paste0( columnName, deltaExt )
   mxdfin[,newcolname]=NA
   mxdfin[,newcolnamed]=NA
-  isFactor = class( mxdfin[,columnName] ) != "numeric"
   for ( u in unique( mxdfin[,subjectID] ) ) {
     losel = mxdfin[,subjectID] == u
     lomxdfin = mxdfin[ losel ,  ]
     selbase = losel & mxdfin[,visitID] == baselineVisitValue
     selbase[ is.na(selbase) ] = FALSE
-    baseval = NA
-    if ( sum( selbase ) > 0  & !isFactor ) {
-      baseval = mean( mxdfin[ selbase, columnName ],  na.rm=T )
+    for ( jj in 1:length( columnName ) ) {
+      columnNameLoc = columnName[jj]
+      newcolnameLoc = newcolname[jj]
+      isFactor = class( mxdfin[,columnNameLoc] ) != "numeric"
+      baseval = NA
+      if ( sum( selbase ) > 0  & !isFactor ) {
+        baseval = mean( mxdfin[ selbase, columnNameLoc ],  na.rm=T )
+      }
+      if ( sum( selbase ) > 0  & isFactor ) {
+        baseval = median( mxdfin[ selbase, columnNameLoc ],  na.rm=T )
+      }
+      mxdfin[ losel , newcolnameLoc ] = baseval
     }
-    if ( sum( selbase ) > 0  & isFactor ) {
-      baseval = median( mxdfin[ selbase, columnName ],  na.rm=T )
-    }
-    mxdfin[ losel , newcolname ] = baseval
   }
   if ( ! is.na( deltaExt ) )
     mxdfin[,newcolnamed] = mxdfin[,columnName] - mxdfin[,newcolname]
