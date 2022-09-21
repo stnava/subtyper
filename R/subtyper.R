@@ -33,6 +33,7 @@ multigrep <- function( x, desc, intersect=FALSE ) {
 #'
 #' @param x vector of strings
 #' @param demogIn the dataframe with column names to search.
+#' @param exclusions the strings to exclude
 #'
 #' @return vector of string column names
 #' @author Avants BB
@@ -42,11 +43,20 @@ multigrep <- function( x, desc, intersect=FALSE ) {
 #' nms = getNamesFromDataframe( c("it","v"), mydf )
 #'
 #' @export
-getNamesFromDataframe <- function( x, demogIn ) {
+getNamesFromDataframe <- function( x, demogIn, exclusions ) {
   outnames = names(demogIn)[ grep(x[1],names(demogIn ) ) ]
   if ( length( x ) > 1 )
   for ( y in x[-1] )
     outnames = outnames[ grep(y,outnames ) ]
+
+  if ( ! missing( exclusions ) ) {
+    toexclude=grep(exclusions[1],outnames)
+    if ( length(exclusions) > 1 )
+      for ( zz in exclusions[-1] ) {
+        toexclude = c( toexclude, grep(zz,outnames) )
+      }
+    if ( length( toexclude ) > 0 ) outnames = outnames[ -toexclude ]
+  }
   return( outnames )
 }
 

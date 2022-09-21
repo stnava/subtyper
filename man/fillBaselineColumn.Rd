@@ -17,7 +17,7 @@ fillBaselineColumn(
 \arguments{
 \item{mxdfin}{Input data frame with repeated measurements and a grouped time variable}
 
-\item{columnName}{string defining a valid column in the data frame.}
+\item{columnName}{string defining valid columns in the data frame.}
 
 \item{subjectID}{the unique subject id column name}
 

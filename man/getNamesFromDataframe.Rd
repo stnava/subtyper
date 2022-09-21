@@ -4,12 +4,14 @@
 \alias{getNamesFromDataframe}
 \title{Extract column names with concatenated search parameters}
 \usage{
-getNamesFromDataframe(x, demogIn)
+getNamesFromDataframe(x, demogIn, exclusions)
 }
 \arguments{
 \item{x}{vector of strings}
 
 \item{demogIn}{the dataframe with column names to search.}
+
+\item{exclusions}{the strings to exclude}
 }
 \value{
 vector of string column names
