@@ -36,6 +36,16 @@ sudo apt install libgmp-dev
 # then install ClusterR
 ```
 
+`pgenlibr`
+
+```
+# brew install libsm
+gh repo clone chrchang/plink-ng
+cd plink-ng/2.0/pgenlibr/
+# edit src/Makevars to include  -I/System/Volumes/Data/Users/stnava/code/extern/plink-ng/2.0/simde
+R CMD INSTALL . # FIXME not on arm64 yet
+```
+
 ## For developers
 
 The repository includes a Makefile to facilitate some common tasks.
