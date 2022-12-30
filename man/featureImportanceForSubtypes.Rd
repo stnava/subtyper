@@ -5,13 +5,17 @@
 \title{subtype feature importance}
 \usage{
 featureImportanceForSubtypes(
+  dataframein,
   subtypeLabels,
   featureMatrix,
   associationType = c("features2subtypes", "subtypes2features"),
+  covariates = "1",
   visualize = FALSE
 )
 }
 \arguments{
+\item{dataframein}{Input dataframe with all relevant data}
+
 \item{subtypeLabels}{Input subtype assignments.}
 
 \item{featureMatrix}{matrix/dataframe defining the data columns as features.}
@@ -19,6 +23,8 @@ featureImportanceForSubtypes(
 \item{associationType}{either predictor features from subtypes or predict
 subtypes from features.  will produce related but complementary results. in
 some cases, depending on subtypes/degrees of freedom, only one will work.}
+
+\item{covariates}{optional string of covariates}
 
 \item{visualize}{boolean}
 }

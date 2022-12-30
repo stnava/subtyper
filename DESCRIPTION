@@ -42,7 +42,7 @@ Suggests:
     testthat,
     spelling,
     rmarkdown
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.2
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
 Language: en-US

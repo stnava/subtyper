@@ -1122,11 +1122,13 @@ biclusterMatrixFactorization  <- function(
 #' There are two approaches - worth using both.  Can be combined with
 #' boostrapping to give distributional visualizations.
 #'
+#' @param dataframein Input dataframe with all relevant data
 #' @param subtypeLabels Input subtype assignments.
 #' @param featureMatrix matrix/dataframe defining the data columns as features.
 #' @param associationType either predictor features from subtypes or predict
 #' subtypes from features.  will produce related but complementary results. in
 #' some cases, depending on subtypes/degrees of freedom, only one will work.
+#' @param covariates optional string of covariates
 #' @param visualize boolean
 #' @return dataframes for visualization that show feature to subtype importance e.g. via \code{pheatmap}
 #' @author Avants BB
@@ -1138,10 +1140,26 @@ biclusterMatrixFactorization  <- function(
 #' @importFrom fastICA fastICA
 #' @export
 featureImportanceForSubtypes <- function(
+    dataframein,
     subtypeLabels,   # cluster
     featureMatrix,   # featureColumns
     associationType = c( "features2subtypes", "subtypes2features" ),
+    covariates = "1",
     visualize = FALSE ) {
+
+  form_pred<-function (object, ...) 
+  {
+      if (inherits(object, "formula")) {
+          object <- terms(object)
+      }
+      y_index <- attr(object, "response")
+      if (y_index != 0) {
+          object[[2]] <- NULL
+          object <- terms(object)
+      }
+      all.vars(object, ...)
+  }
+
   if ( length( subtypeLabels ) != nrow( featureMatrix ) )
     stop("length( subtypeLabels ) != nrow( featureMatrix )")
   uniqClusts = sort(unique(subtypeLabels))
@@ -1180,13 +1198,27 @@ featureImportanceForSubtypes <- function(
       subtypeFeatureZScoresMax = clustsigdescribemax
     ) )
   } else {
+    myform = as.formula(paste( "featureMatrix[,j] ~ clustmat[,k] + ", covariates ))
+    if ( covariates != "1")
+      locvars = form_pred( myform )[-c(1:2)]
     for ( j in 1:ncol(featureMatrix) ) {
       for( k in 1:mync ) {
-        c1reg = lm( featureMatrix[,j] ~ clustmat[,k] )
+#        print(paste(colnames(featureMatrix)[j],k))
+        localdf = data.frame(
+          feat=featureMatrix[,j], 
+          clust=clustmat[,k])
+        if ( covariates != "1")
+          localdf=cbind(localdf, dataframein[,locvars])
+        c1reg = lm( as.formula(myform), data=localdf )
         mycoffs = coefficients(summary(c1reg))
-        sigthresh = as.numeric( mycoffs[2,"Pr(>|t|)"] <= 0.05 )
-        clustzdescribe[k,j]=mycoffs[2,"t value"]
-        clustsigdescribe[k,j]=mycoffs[2,"t value"] * sigthresh
+        if ( nrow(mycoffs ) > 1 ) {
+          sigthresh = as.numeric( mycoffs[2,"Pr(>|t|)"] <= 0.05 )
+          clustzdescribe[k,j]=mycoffs[2,"t value"]
+          clustsigdescribe[k,j]=mycoffs[2,"t value"] * sigthresh
+        } else {
+          clustzdescribe[k,j]=NA
+          clustsigdescribe[k,j]=NA
+        }
       }
     }
     # get the max for each column
