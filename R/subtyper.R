@@ -6,6 +6,17 @@
 }
 
 
+#' Convert NA to false
+#'
+#' @param x a vector of bool
+#' @return fixed x
+#' @author Avants BB
+#' @export
+fs <- function( x ) {
+  x[ is.na(x)]=FALSE
+  x
+}
+
 #' Grep entries with a vector search parameters
 #'
 #' @param x a vector of search terms
@@ -1147,7 +1158,7 @@ featureImportanceForSubtypes <- function(
     covariates = "1",
     visualize = FALSE ) {
 
-  form_pred<-function (object, ...) 
+  form_pred<-function (object, ...)
   {
       if (inherits(object, "formula")) {
           object <- terms(object)
@@ -1205,7 +1216,7 @@ featureImportanceForSubtypes <- function(
       for( k in 1:mync ) {
 #        print(paste(colnames(featureMatrix)[j],k))
         localdf = data.frame(
-          feat=featureMatrix[,j], 
+          feat=featureMatrix[,j],
           clust=clustmat[,k])
         if ( covariates != "1")
           localdf=cbind(localdf, dataframein[,locvars])
