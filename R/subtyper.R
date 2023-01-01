@@ -20,10 +20,8 @@ mapAsymVar <- function( mydataframe, leftvar, replacer='Asym' ) {
   hasright = rightvar %in% colnames(mydataframe)
   temp = mydataframe[,leftvar[hasright]] - mydataframe[,rightvar[hasright]]
   temp = temp * sign(temp )
-  if ( ! missing( replacer ) ) {
-    newnames = gsub("left", replacer,leftvar[hasright])
-    colnames(temp)=newnames
-  }
+  newnames = gsub("left", replacer,leftvar[hasright])
+  colnames(temp)=newnames
   return( temp )
 }
 
