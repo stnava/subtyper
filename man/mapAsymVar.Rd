@@ -4,14 +4,12 @@
 \alias{mapAsymVar}
 \title{Convert left/right variables to a measure of asymmetry}
 \usage{
-mapAsymVar(mydataframe, leftvar, rightvar, replacer = "Asym")
+mapAsymVar(mydataframe, leftvar, replacer = "Asym")
 }
 \arguments{
 \item{mydataframe}{dataframe containing relevant variables}
 
 \item{leftvar}{left variable names}
-
-\item{rightvar}{right variable names}
 
 \item{replacer}{string to replace left with in column names of output}
 }

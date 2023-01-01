@@ -11,18 +11,17 @@
 #'
 #' @param mydataframe dataframe containing relevant variables
 #' @param leftvar left variable names
-#' @param rightvar right variable names
 #' @param replacer string to replace left with in column names of output
 #' @return fixed x
 #' @author Avants BB
 #' @export
-mapAsymVar <- function( mydataframe, leftvar, rightvar, replacer='Asym' ) {
-  if ( ! all( gsub("left","right",leftvar) == rightvar   ) )
-    stop("left and right variables do not match")
-  temp = mydataframe[,leftvar] - mydataframe[,rightvar]
+mapAsymVar <- function( mydataframe, leftvar, replacer='Asym' ) {
+  rightvar =  gsub( "left", "right", leftvar )
+  hasright = rightvar %in% colnames(mydataframe)
+  temp = mydataframe[,leftvar[hasright]] - mydataframe[,rightvar[hasright]]
   temp = temp * sign(temp )
   if ( ! missing( replacer ) )
-    newnames = gsub("left", replacer,leftvar)
+    newnames = gsub("left", replacer,leftvar[hasright])
   colnames(temp)=newnames
   return( temp )
 }
