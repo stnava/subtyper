@@ -1016,7 +1016,7 @@ trainSubtypeClusterMulti  <- function(
 #' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
-#' @return the clusters attached to the data frame
+#' @return the clusters attached to the data frame; kmeans also returns membership probabilities
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
@@ -1040,19 +1040,26 @@ predictSubtypeClusterMulti  <- function(
     pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
       clusteringObject$covariance_matrices, clusteringObject$weights )
     mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else if (  class( clusteringObject  )[2] == "k-means clustering" ) {
     # compute distance of every subject to each centroid
 #    clusteringObject = stats::kmeans( subdf, desiredk )
     cluster_labels = rep( NA, nrow( subdf ) )
+    cluster_memberships = matrix( nrow=nrow( subdf ), ncol=nrow( clusteringObject$centroids) )
     for ( kk in 1:nrow( subdf ) ) {
       dd = rep( NA, nrow( clusteringObject$centroids) )
-      for ( jj in 1:nrow( clusteringObject$centroids) )
+      for ( jj in 1:nrow( clusteringObject$centroids) ) {
         dd[jj]=mean( ( as.numeric(subdf[kk,])-clusteringObject$centroids[jj,])^2 )
+        cluster_memberships[kk,jj] = dd[jj]
+        }
       cluster_labels[kk] = which.min(dd)
     }
     mxdfin = cbind( mxdfin, factor( cluster_labels ) )
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+    cluster_memberships = data.frame(cluster_memberships)
+    colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
+    mxdfin = cbind( mxdfin, cluster_memberships )
   } else stop("Unknown class of clustering object.")
-  colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
 
