@@ -30,7 +30,7 @@ predictSubtypeClusterMulti(
 \item{baselineVisit}{the string naming the baseline visit}
 }
 \value{
-the clusters attached to the data frame; kmeans also returns membership probabilities
+the clusters attached to the data frame; also returns membership probabilities
 }
 \description{
 This is the inference module for subtype definition based on a matrix.

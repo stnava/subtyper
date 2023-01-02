@@ -988,13 +988,14 @@ trainSubtypeClusterMulti  <- function(
       if ( missing( maxk ) ) maxk = 10
       opt = ClusterR::Optimal_Clusters_KMeans( subdf, max_clusters = maxk, plot_clusters = FALSE,
                                   criterion = 'distortion_fK', fK_threshold = 0.85,
-                                  initializer = 'optimal_init', tol_optimal_init = 0.2)
+                                  initializer = 'optimal_init', 
+                                  tol_optimal_init = 0.2, fuzzy=TRUE)
       desiredk = which.min(opt)
       }
     km_rc = # stats::kmeans( subdf, desiredk )
       ClusterR::KMeans_rcpp(subdf,
         clusters = desiredk, num_init = 5, max_iters = 100,
-        initializer = 'optimal_init', verbose = F)
+        initializer = 'optimal_init', verbose = F, fuzzy=TRUE)
     return( km_rc )
   }
 
@@ -1016,7 +1017,7 @@ trainSubtypeClusterMulti  <- function(
 #' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
-#' @return the clusters attached to the data frame; kmeans also returns membership probabilities
+#' @return the clusters attached to the data frame; also returns membership probabilities
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
@@ -1041,6 +1042,9 @@ predictSubtypeClusterMulti  <- function(
       clusteringObject$covariance_matrices, clusteringObject$weights )
     mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+    cluster_memberships = data.frame(pr$cluster_proba)
+    colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
+    mxdfin = cbind( mxdfin, cluster_memberships )
   } else if (  class( clusteringObject  )[2] == "k-means clustering" ) {
     # compute distance of every subject to each centroid
 #    clusteringObject = stats::kmeans( subdf, desiredk )
