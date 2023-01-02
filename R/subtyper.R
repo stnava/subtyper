@@ -1040,7 +1040,7 @@ predictSubtypeClusterMulti  <- function(
   if ( class( clusteringObject  )[2] == "Gaussian Mixture Models" ) {
     pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
       clusteringObject$covariance_matrices, clusteringObject$weights )
-    mxdfin = cbind( mxdfin, factor( pr$cluster_labels ) )
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,pr$cluster_labels ) ))
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
     cluster_memberships = data.frame(pr$cluster_proba)
     colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
@@ -1058,7 +1058,7 @@ predictSubtypeClusterMulti  <- function(
         }
       cluster_labels[kk] = which.min(dd)
     }
-    mxdfin = cbind( mxdfin, factor( cluster_labels ) )
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
     cluster_memberships = data.frame(cluster_memberships)
     colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
@@ -1204,13 +1204,13 @@ featureImportanceForSubtypes <- function(
 
   if ( length( subtypeLabels ) != nrow( featureMatrix ) )
     stop("length( subtypeLabels ) != nrow( featureMatrix )")
-  uniqClusts = sort(unique(subtypeLabels))
+  uniqClusts = levels( subtypeLabels )
   mync = length( uniqClusts )
   # stores feature importance
   clustzdescribe = data.frame( matrix( nrow = mync, ncol = ncol( featureMatrix ) ) )
   clustsigdescribe = data.frame( matrix( nrow = mync, ncol = ncol( featureMatrix ) ) )
   colnames( clustsigdescribe ) = colnames( featureMatrix )
-  rownames( clustsigdescribe ) = paste0("z_",uniqClusts)
+  rownames( clustsigdescribe ) = uniqClusts
   clustmat = matrix( 0, nrow = length( subtypeLabels ), ncol=mync )
   colnames(clustmat) = as.character( uniqClusts )
   for ( j in 1:mync ) {
@@ -1270,6 +1270,7 @@ featureImportanceForSubtypes <- function(
       clustsigdescribemax[ j, wmax ] = clustzdescribe[j, wmax]
     }
     if ( visualize ) pheatmap::pheatmap((clustsigdescribemax),cluster_rows=F,cluster_cols=F)
+    rownames(clustzdescribe)=rownames(clustsigdescribemax)
     return( list(
       subtypeFeatureTScores = clustzdescribe,
       subtypeFeatureTScoresSignificant = clustsigdescribe,
