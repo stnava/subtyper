@@ -689,21 +689,31 @@ fillBaselineColumn <- function(
   newcolnamed = paste0( columnName, deltaExt )
   mxdfin[,newcolname]=NA
   mxdfin[,newcolnamed]=NA
-  for ( u in unique( mxdfin[,subjectID] ) ) {
-    losel = mxdfin[,subjectID] == u
+  visitidisnumeric = class(mxdfin[,visitID]) == "numeric"
+  usubs = unique( mxdfin[,subjectID] )
+  nsubs = length( usubs )
+  ct=0
+  for ( u in usubs ) {
+    if ( ct %% 20 == 0 ) cat( paste0(round(ct/nsubs*100),"%.") )
+    ct=ct+1
+    losel = fs( mxdfin[,subjectID] == u )
     lomxdfin = mxdfin[ losel ,  ]
-    selbase = losel & mxdfin[,visitID] == baselineVisitValue
+    selbase = fs( lomxdfin[,visitID] == baselineVisitValue )
+    if ( sum(selbase) == 0 & visitidisnumeric ) { # take next best value
+      minval = min( lomxdfin[,visitID],na.rm=T )
+      selbase = fs(lomxdfin[,visitID] == minval)
+      }
     selbase[ is.na(selbase) ] = FALSE
     for ( jj in 1:length( columnName ) ) {
       columnNameLoc = columnName[jj]
       newcolnameLoc = newcolname[jj]
-      isFactor = class( mxdfin[,columnNameLoc] ) != "numeric"
+      isFactor = class( lomxdfin[,columnNameLoc] ) != "numeric"
       baseval = NA
       if ( sum( selbase ) > 0  & !isFactor ) {
-        baseval = mean( mxdfin[ selbase, columnNameLoc ],  na.rm=T )
+        baseval = mean( lomxdfin[ selbase, columnNameLoc ],  na.rm=T )
       }
       if ( sum( selbase ) > 0  & isFactor ) {
-        baseval = median( mxdfin[ selbase, columnNameLoc ],  na.rm=T )
+        baseval = median( lomxdfin[ selbase, columnNameLoc ],  na.rm=T )
       }
       mxdfin[ losel , newcolnameLoc ] = baseval
     }
