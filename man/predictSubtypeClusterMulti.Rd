@@ -11,7 +11,8 @@ predictSubtypeClusterMulti(
   clustername = "GMMClusters",
   idvar,
   visitName,
-  baselineVisit
+  baselineVisit,
+  distance_metric = "pearson_correlation"
 )
 }
 \arguments{
@@ -19,7 +20,7 @@ predictSubtypeClusterMulti(
 
 \item{measureColumns}{vector defining the data columns to be used for clustering.}
 
-\item{clusteringObject}{a GMM object to predict clusters}
+\item{clusteringObject}{a clustering object to predict clusters}
 
 \item{clustername}{column name for the identified clusters}
 
@@ -28,6 +29,8 @@ predictSubtypeClusterMulti(
 \item{visitName}{the column name defining the visit variables}
 
 \item{baselineVisit}{the string naming the baseline visit}
+
+\item{distance_metric}{see medoid methods in ClusterR}
 }
 \value{
 the clusters attached to the data frame; also returns membership probabilities

@@ -13,7 +13,8 @@ trainSubtypeClusterMulti(
   groupVariable,
   group,
   frobNormThresh = 0.01,
-  trainTestRatio = 0
+  trainTestRatio = 0,
+  distance_metric = "pearson_correlation"
 )
 }
 \arguments{
@@ -23,7 +24,7 @@ trainSubtypeClusterMulti(
 Note that these methods may be sensitive to scaling so the user may want to
 scale columns accordingly.}
 
-\item{method}{string GMM or kmeans}
+\item{method}{string GMM or kmeans or medoid}
 
 \item{desiredk}{number of subtypes}
 
@@ -41,6 +42,8 @@ For GMM clustering.}
 \item{trainTestRatio}{Training testing split for finding optimal number
 of clusters. For GMM clustering.  If zero, then will not split data. Otherwise,
 will compute reconstruction error in test data only.}
+
+\item{distance_metric}{see medoid methods in ClusterR}
 }
 \value{
 the clustering object

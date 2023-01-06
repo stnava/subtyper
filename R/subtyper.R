@@ -904,7 +904,7 @@ predictSubtypeUni  <- function(
 #' @param measureColumns vector defining the data columns to be used for clustering.
 #' Note that these methods may be sensitive to scaling so the user may want to
 #' scale columns accordingly.
-#' @param method string GMM or kmeans
+#' @param method string GMM or kmeans or medoid
 #' @param desiredk number of subtypes
 #' @param maxk maximum number of subtypes
 #' @param groupVariable names of the column that defines the group to use for training.
@@ -916,6 +916,7 @@ predictSubtypeUni  <- function(
 #' @param trainTestRatio Training testing split for finding optimal number
 #' of clusters. For GMM clustering.  If zero, then will not split data. Otherwise,
 #' will compute reconstruction error in test data only.
+#' @param distance_metric see medoid methods in ClusterR
 #' @return the clustering object
 #' @author Avants BB
 #' @examples
@@ -923,7 +924,7 @@ predictSubtypeUni  <- function(
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
 #' @export
-#' @importFrom ClusterR predict_GMM GMM Optimal_Clusters_GMM KMeans_rcpp Optimal_Clusters_KMeans
+#' @importFrom ClusterR Cluster_Medoids predict_GMM Clara_Medoids GMM Optimal_Clusters_GMM KMeans_rcpp Optimal_Clusters_KMeans Optimal_Clusters_Medoids predict_Medoids
 trainSubtypeClusterMulti  <- function(
   mxdfin,
   measureColumns,
@@ -933,7 +934,8 @@ trainSubtypeClusterMulti  <- function(
   groupVariable,
   group,
   frobNormThresh = 0.01,
-  trainTestRatio = 0
+  trainTestRatio = 0,
+  distance_metric='pearson_correlation'
 ) {
 
   .env <- environment() ## identify the environment of cv.step
@@ -996,10 +998,10 @@ trainSubtypeClusterMulti  <- function(
   if ( method == "kmeans" ) {
     if ( missing( desiredk ) ) {
       if ( missing( maxk ) ) maxk = 10
-      opt = ClusterR::Optimal_Clusters_KMeans( subdf, max_clusters = maxk, plot_clusters = FALSE,
-                                  criterion = 'distortion_fK', fK_threshold = 0.85,
-                                  initializer = 'optimal_init', 
-                                  tol_optimal_init = 0.2, fuzzy=TRUE)
+      opt = ClusterR::Optimal_Clusters_KMeans( subdf, 
+        max_clusters = maxk, plot_clusters = FALSE,
+        criterion = 'distortion_fK', fK_threshold = 0.85,
+        initializer = 'optimal_init', tol_optimal_init = 0.2, fuzzy=TRUE)
       desiredk = which.min(opt)
       }
     km_rc = # stats::kmeans( subdf, desiredk )
@@ -1009,6 +1011,34 @@ trainSubtypeClusterMulti  <- function(
     return( km_rc )
   }
 
+  if ( method == "medoid" ) {
+    cl_X = data.matrix( subdf )
+    for (i in 1:ncol(subdf)) { cl_X[, i] = as.numeric(cl_X[, i]) }
+    if ( missing( desiredk ) ) {
+      opt = Optimal_Clusters_Medoids(
+          cl_X,
+          max_clusters=maxk,
+          distance_metric=distance_metric,
+          criterion = "dissimilarity",
+          clara_samples = 0,
+          clara_sample_size = 0,
+          minkowski_p = 1,
+          swap_phase = TRUE,
+          threads = 1,
+          verbose = FALSE,
+          plot_clusters = FALSE,
+          seed = 1
+        )
+      return(opt)
+    }
+    cl_f = Cluster_Medoids(cl_X, clusters = desiredk, 
+      distance_metric = distance_metric, minkowski_p = 1,
+       threads = 1,
+       swap_phase = TRUE,
+       fuzzy = TRUE,
+       verbose = FALSE )
+    return( cl_f )
+  }
 }
 
 
@@ -1022,11 +1052,12 @@ trainSubtypeClusterMulti  <- function(
 #'
 #' @param mxdfin Input data frame
 #' @param measureColumns vector defining the data columns to be used for clustering.
-#' @param clusteringObject a GMM object to predict clusters
+#' @param clusteringObject a clustering object to predict clusters
 #' @param clustername column name for the identified clusters
 #' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
+#' @param distance_metric see medoid methods in ClusterR
 #' @return the clusters attached to the data frame; also returns membership probabilities
 #' @author Avants BB
 #' @examples
@@ -1042,7 +1073,8 @@ predictSubtypeClusterMulti  <- function(
   clustername = 'GMMClusters',
   idvar,
   visitName,
-  baselineVisit
+  baselineVisit,
+  distance_metric = 'pearson_correlation'
 ) {
 
   subdf = mxdfin[ , measureColumns ]
@@ -1063,6 +1095,28 @@ predictSubtypeClusterMulti  <- function(
     for ( kk in 1:nrow( subdf ) ) {
       dd = rep( NA, nrow( clusteringObject$centroids) )
       for ( jj in 1:nrow( clusteringObject$centroids) ) {
+        dd[jj]=mean( ( as.numeric(subdf[kk,])-clusteringObject$centroids[jj,])^2 )
+        cluster_memberships[kk,jj] = dd[jj]
+        }
+      cluster_labels[kk] = which.min(dd)
+    }
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+    cluster_memberships = data.frame(cluster_memberships)
+    colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
+    mxdfin = cbind( mxdfin, cluster_memberships )
+  } else if (  class( clusteringObject  )[2] == "cluster medoids silhouette" ) { 
+    cl_X = subdf
+    for (i in 1:ncol(subdf)) { cl_X[, i] = as.numeric(cl_X[, i]) }
+    pr = ClusterR::predict_Medoids( cl_X, clusteringObject$medoids,
+      distance_metric =  distance_metric, fuzzy=TRUE )
+    return( pr )
+    cluster_labels = rep( NA, nrow( subdf ) )
+    nclust = nrow(clusteringObject$medoids)
+    cluster_memberships = matrix( nrow=nrow( subdf ), ncol=nclust )
+    for ( kk in 1:nrow( subdf ) ) {
+      dd = rep( NA, nclust )
+      for ( jj in 1:nclust ) {
         dd[jj]=mean( ( as.numeric(subdf[kk,])-clusteringObject$centroids[jj,])^2 )
         cluster_memberships[kk,jj] = dd[jj]
         }
