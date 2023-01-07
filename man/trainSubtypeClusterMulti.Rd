@@ -14,7 +14,9 @@ trainSubtypeClusterMulti(
   group,
   frobNormThresh = 0.01,
   trainTestRatio = 0,
-  distance_metric = "pearson_correlation"
+  distance_metric = "pearson_correlation",
+  flexweights = NULL,
+  flexgroup = NULL
 )
 }
 \arguments{
@@ -44,6 +46,10 @@ of clusters. For GMM clustering.  If zero, then will not split data. Otherwise,
 will compute reconstruction error in test data only.}
 
 \item{distance_metric}{see medoid methods in ClusterR}
+
+\item{flexweights}{optional weights}
+
+\item{flexgroup}{optional group}
 }
 \value{
 the clustering object

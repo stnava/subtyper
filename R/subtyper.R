@@ -917,6 +917,8 @@ predictSubtypeUni  <- function(
 #' of clusters. For GMM clustering.  If zero, then will not split data. Otherwise,
 #' will compute reconstruction error in test data only.
 #' @param distance_metric see medoid methods in ClusterR
+#' @param flexweights optional weights
+#' @param flexgroup optional group
 #' @return the clustering object
 #' @author Avants BB
 #' @examples
@@ -935,7 +937,9 @@ trainSubtypeClusterMulti  <- function(
   group,
   frobNormThresh = 0.01,
   trainTestRatio = 0,
-  distance_metric='pearson_correlation'
+  distance_metric='pearson_correlation',
+  flexweights=NULL,
+  flexgroup=NULL
 ) {
 
   .env <- environment() ## identify the environment of cv.step
@@ -1001,7 +1005,7 @@ trainSubtypeClusterMulti  <- function(
       opt = ClusterR::Optimal_Clusters_KMeans( subdf, 
         max_clusters = maxk, plot_clusters = FALSE,
         criterion = 'distortion_fK', fK_threshold = 0.85,
-        initializer = 'optimal_init', tol_optimal_init = 0.2, fuzzy=TRUE)
+        initializer = 'optimal_init', tol_optimal_init = 0.2)
       desiredk = which.min(opt)
       }
     km_rc = # stats::kmeans( subdf, desiredk )
@@ -1039,6 +1043,18 @@ trainSubtypeClusterMulti  <- function(
        verbose = FALSE )
     return( cl_f )
   }
+  flexmeth = c("kmeansflex", "kmedians", "angle", "jaccard", "ejaccard")
+  if ( method %in% flexmeth )
+    if ( method == "kmeansflex" ) method='kmeans'
+    return( 
+      flexclust::kcca(
+          subdf,
+          k = nClust,
+          weights=flexweights, group=flexgroup,
+        family = kccaFamily(method, trim=0.01, groupFun = "minSumClusters")  
+        )
+   )
+
 }
 
 
@@ -1076,10 +1092,12 @@ predictSubtypeClusterMulti  <- function(
   baselineVisit,
   distance_metric = 'pearson_correlation'
 ) {
-
+  myclustclass = class(clusteringObject)
+  if ( length(myclustclass) == 1 )
+    myclustclass=c(myclustclass,'flex')
   subdf = mxdfin[ , measureColumns ]
   subdf = data.matrix( subdf )
-  if ( class( clusteringObject  )[2] == "Gaussian Mixture Models" ) {
+  if ( myclustclass[2] == "Gaussian Mixture Models" ) {
     pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
       clusteringObject$covariance_matrices, clusteringObject$weights )
     mxdfin = cbind( mxdfin, factor( paste0(clustername,pr$cluster_labels ) ))
@@ -1087,7 +1105,7 @@ predictSubtypeClusterMulti  <- function(
     cluster_memberships = data.frame(pr$cluster_proba)
     colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
     mxdfin = cbind( mxdfin, cluster_memberships )
-  } else if (  class( clusteringObject  )[2] == "k-means clustering" ) {
+  } else if (  myclustclass[2] == "k-means clustering" ) {
     # compute distance of every subject to each centroid
 #    clusteringObject = stats::kmeans( subdf, desiredk )
     cluster_labels = rep( NA, nrow( subdf ) )
@@ -1105,7 +1123,7 @@ predictSubtypeClusterMulti  <- function(
     cluster_memberships = data.frame(cluster_memberships)
     colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
     mxdfin = cbind( mxdfin, cluster_memberships )
-  } else if (  class( clusteringObject  )[2] == "cluster medoids silhouette" ) { 
+  } else if ( myclustclass[2] == "cluster medoids silhouette" ) { 
     cl_X = subdf
     for (i in 1:ncol(subdf)) { cl_X[, i] = as.numeric(cl_X[, i]) }
     pr = ClusterR::predict_Medoids( cl_X, clusteringObject$medoids,
@@ -1127,6 +1145,10 @@ predictSubtypeClusterMulti  <- function(
     cluster_memberships = data.frame(cluster_memberships)
     colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
     mxdfin = cbind( mxdfin, cluster_memberships )
+  } else if ( myclustclass[1] == "kcca" ) {
+    cluster_labels = predict( clusteringObject, newdata=subdf )
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else stop("Unknown class of clustering object.")
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
