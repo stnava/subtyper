@@ -16,7 +16,8 @@ trainSubtypeClusterMulti(
   trainTestRatio = 0,
   distance_metric = "pearson_correlation",
   flexweights = NULL,
-  flexgroup = NULL
+  flexgroup = NULL,
+  groupFun = c("minSumClusters", "majorityClusters", "differentClusters")
 )
 }
 \arguments{
