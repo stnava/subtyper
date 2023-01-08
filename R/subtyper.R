@@ -940,7 +940,7 @@ trainSubtypeClusterMulti  <- function(
   distance_metric='pearson_correlation',
   flexweights=NULL,
   flexgroup=NULL,
-  groupFun = c( "minSumClusters", "majorityClusters", "differentClusters" )
+  groupFun = NULL
 ) {
 
   .env <- environment() ## identify the environment of cv.step
@@ -1053,22 +1053,30 @@ trainSubtypeClusterMulti  <- function(
   if ( method == "FuzzyCluster" ) return( FuzzyCluster(subdf,desiredk) )
   flexmeth = c("kmeansflex", "flexkmeans", "kmedians", 
     "angle", "jaccard", "ejaccard","bootclust","hardcl","neuralgas")
-  if ( method %in% flexmeth )
+  if ( method %in% flexmeth ) {
+    initk = ClusterR::KMeans_rcpp(subdf,
+        clusters = desiredk, num_init = 5, max_iters = 100,
+        initializer = 'optimal_init', verbose = F, fuzzy=TRUE)$clusters
     if ( method %in% c("hardcl","neuralgas"))
       return( 
-        cclust(subdf, k=desiredk,weights=flexweights, group=flexgroup ) )
+        cclust(subdf, k=initk, weights=flexweights, group=flexgroup ) )
     if ( method == "bootclust ")
       return( 
         bootFlexclust(subdf, k=2:desiredk, nboot=100, FUN=cclust) )
     if ( method == "kmeansflex" | method == "flexkmeans" ) method='kmeans'
+      if ( !is.null(groupFun ) ) {
+        #  c( "minSumClusters", "majorityClusters", "differentClusters" )
+        myfam = kccaFamily(method, trim=0.005, groupFun =groupFun)
+        } else {
+        myfam = kccaFamily(method, trim=0.005)
+        }
     return( 
       flexclust::kcca(
           subdf,
-          k = nClust,
+          k = initk,
           weights=flexweights, group=flexgroup,
-        family = kccaFamily(method, trim=0.01, groupFun =groupFun)  
-        )
-   )
+        family = myfam ) )
+  }
 
 }
 
