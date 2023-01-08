@@ -1015,7 +1015,9 @@ trainSubtypeClusterMulti  <- function(
         initializer = 'optimal_init', verbose = F, fuzzy=TRUE)
     return( km_rc )
   }
-
+  if ( method == "mclust" ) { 
+    return( mclust::Mclust(  subdf, desiredk ) )
+  }
   if ( method == "medoid" ) {
     cl_X = data.matrix( subdf )
     for (i in 1:ncol(subdf)) { cl_X[, i] = as.numeric(cl_X[, i]) }
@@ -1044,6 +1046,11 @@ trainSubtypeClusterMulti  <- function(
        verbose = FALSE )
     return( cl_f )
   }
+  if ( method == "pamCluster" ) return( pamCluster(subdf,desiredk) )
+  if ( method == "nmfCluster" ) return( nmfCluster(subdf,desiredk) )
+  if ( method == "hierarchicalCluster" ) return( hierarchicalCluster(subdf,desiredk,distmethod=distance_metric) )
+  if ( method == "EMCluster" ) return( EMCluster(subdf,desiredk) )
+  if ( method == "FuzzyCluster" ) return( FuzzyCluster(subdf,desiredk) )
   flexmeth = c("kmeansflex", "flexkmeans", "kmedians", 
     "angle", "jaccard", "ejaccard","bootclust","hardcl","neuralgas")
   if ( method %in% flexmeth )
@@ -1102,7 +1109,7 @@ predictSubtypeClusterMulti  <- function(
 ) {
   myclustclass = class(clusteringObject)
   if ( length(myclustclass) == 1 )
-    myclustclass=c(myclustclass,'flex')
+    myclustclass=c(myclustclass,'other')
   subdf = mxdfin[ , measureColumns ]
   subdf = data.matrix( subdf )
   if ( myclustclass[2] == "Gaussian Mixture Models" ) {
@@ -1157,6 +1164,19 @@ predictSubtypeClusterMulti  <- function(
     cluster_labels = predict( clusteringObject, newdata=subdf )
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+  } else if ( myclustclass[1] == "Mclust" ) {
+    mypr = mclust::predict.Mclust( clusteringObject, newdata=subdf )
+    cluster_labels = mypr$classification
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+    cluster_memberships = data.frame(mypr$z)
+    colnames(cluster_memberships) = paste0(clustername,"_mem_",1:ncol(mypr$z))
+    mxdfin = cbind( mxdfin, cluster_memberships )
+  } else if ( myclustclass[1] %in% c("FuzzyCluster","pamCluster","EMCluster","hierarchicalCluster","nmfCluster") ) {
+    mypr = predict( clusteringObject, newdata=subdf )
+    cluster_labels = mypr$classification
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else stop("Unknown class of clustering object.")
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
@@ -1198,6 +1218,10 @@ predictSubtypeClusterMulti  <- function(
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
 #' @importFrom fastICA fastICA
+#' @importFrom mclust Mclust predict.Mclust mclustBIC
+#' @importFrom fpc pamk
+#' @importFrom Evacluster pamCluster nmfCluster kmeansCluster hierarchicalCluster FuzzyCluster EMCluster 
+#' @importFrom Evacluster predict.pamCluster predict.nmfCluster predict.kmeansCluster predict.hierarchicalCluster predict.FuzzyCluster predict.EMCluster 
 #' @export
 biclusterMatrixFactorization  <- function(
   mxdfin,
