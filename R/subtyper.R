@@ -937,7 +937,7 @@ trainSubtypeClusterMulti  <- function(
   group,
   frobNormThresh = 0.01,
   trainTestRatio = 0,
-  distance_metric='pearson_correlation',
+  distance_metric=NULL,
   flexweights=NULL,
   flexgroup=NULL,
   groupFun = NULL
@@ -1048,7 +1048,10 @@ trainSubtypeClusterMulti  <- function(
   }
   if ( method == "pamCluster" ) return( pamCluster(subdf,desiredk) )
   if ( method == "nmfCluster" ) return( nmfCluster(subdf,desiredk) )
-  if ( method == "hierarchicalCluster" ) return( hierarchicalCluster(subdf,desiredk,distmethod=distance_metric) )
+  if ( method == "hierarchicalCluster" ) {
+    if ( is.null(distance_metric) ) distance_metric='euclidean'
+    return( hierarchicalCluster(subdf,desiredk,distmethod=distance_metric) )
+  }
   if ( method == "EMCluster" ) return( EMCluster(subdf,desiredk) )
   if ( method == "FuzzyCluster" ) return( FuzzyCluster(subdf,desiredk) )
   flexmeth = c("kmeansflex", "flexkmeans", "kmedians", 
