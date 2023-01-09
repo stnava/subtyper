@@ -1193,7 +1193,7 @@ predictSubtypeClusterMulti  <- function(
     colnames(cluster_memberships) = paste0(clustername,"_mem_",1:nrow( clusteringObject$centroids))
     mxdfin = cbind( mxdfin, cluster_memberships )
   } else if ( myclustclass[1] == "kcca" ) {
-    cluster_labels = predict( clusteringObject, newdata=subdf )
+    cluster_labels = flexclust::predict( clusteringObject, newdata=subdf )
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else if ( myclustclass[1] == "Mclust" ) {
