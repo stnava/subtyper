@@ -7,14 +7,14 @@
 trainSubtypeClusterMulti(
   mxdfin,
   measureColumns,
-  method = "GMM",
+  method = "kmeans",
   desiredk,
   maxk,
   groupVariable,
   group,
   frobNormThresh = 0.01,
   trainTestRatio = 0,
-  distance_metric = "pearson_correlation",
+  distance_metric = NULL,
   flexweights = NULL,
   flexgroup = NULL,
   groupFun = NULL

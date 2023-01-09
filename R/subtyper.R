@@ -930,7 +930,7 @@ predictSubtypeUni  <- function(
 trainSubtypeClusterMulti  <- function(
   mxdfin,
   measureColumns,
-  method = 'GMM',
+  method = 'kmeans',
   desiredk,
   maxk,
   groupVariable,
@@ -942,6 +942,17 @@ trainSubtypeClusterMulti  <- function(
   flexgroup=NULL,
   groupFun = NULL
 ) {
+
+  ktypes = c( "kmeans", 'kmeansflex', "GMM", "mclust", "pamCluster", 
+    "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr",
+    "hardcl","neuralgas", "hierarchicalCluster", "jaccard")
+
+  if ( ! (method %in% ktypes ) ) {
+    allmeth = paste( ktypes, collapse=' | ')
+    message(paste("your chosen method:",method, "is not available."))
+    message(paste( "try one of:" , allmeth ) )
+    return( ktypes )
+  }
 
   .env <- environment() ## identify the environment of cv.step
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
@@ -1055,11 +1066,21 @@ trainSubtypeClusterMulti  <- function(
   if ( method == "EMCluster" ) return( EMCluster(subdf,desiredk) )
   if ( method == "FuzzyCluster" ) return( FuzzyCluster(subdf,desiredk) )
   flexmeth = c("kmeansflex", "flexkmeans", "kmedians", 
-    "angle", "jaccard", "ejaccard","bootclust","hardcl","neuralgas")
+    "angle", "jaccard", "ejaccard","bootclust",
+    "hardcl","neuralgas", "flexcorr")
   if ( method %in% flexmeth ) {
     initk = ClusterR::KMeans_rcpp(subdf,
         clusters = desiredk, num_init = 5, max_iters = 100,
         initializer = 'optimal_init', verbose = F, fuzzy=TRUE)$clusters
+    if ( method == 'flexcorr') {
+      ejacFam <- flexclust::kccaFamily(dist=distCor,cent=centMean)
+      mycl = flexclust::kcca(
+          subdf,
+          k = initk,
+          weights=flexweights, group=flexgroup,
+        family = ejacFam )
+      return( mycl )
+    }
     if ( method %in% c("hardcl","neuralgas"))
       return( 
         cclust(subdf, k=initk, weights=flexweights, group=flexgroup ) )
