@@ -1197,7 +1197,7 @@ predictSubtypeClusterMulti  <- function(
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else if ( myclustclass[1] == "Mclust" ) {
-    mypr = mclust::predict( clusteringObject, newdata=subdf )
+    mypr = mclust::predict.Mclust( clusteringObject, newdata=subdf )
     cluster_labels = mypr$classification
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
@@ -1322,7 +1322,8 @@ biclusterMatrixFactorization  <- function(
 #' subtypes from features.  will produce related but complementary results. in
 #' some cases, depending on subtypes/degrees of freedom, only one will work.
 #' @param covariates optional string of covariates
-#' @param transform optional effect_sizes
+#' @param transform optional effect_size
+#' @param significance_level to threshold effects
 #' @param visualize boolean
 #' @return dataframes for visualization that show feature to subtype importance e.g. via \code{pheatmap}
 #' @author Avants BB
@@ -1341,6 +1342,7 @@ featureImportanceForSubtypes <- function(
     associationType = c( "features2subtypes", "subtypes2features" ),
     covariates = "1",
     transform = 'effect_sizes',
+    significance_level = 0.001,
     visualize = FALSE ) {
 
   form_pred<-function (object, ...)
@@ -1377,7 +1379,7 @@ featureImportanceForSubtypes <- function(
       c1reg = glm( factor( clustmat[,j]) ~ data.matrix(featureMatrix), family='binomial' )
       mycoffs = coefficients(summary(c1reg))
       sigthresh = rep( 0, ncol(featureMatrix))
-      sigthresh[ mycoffs[-1,"Pr(>|z|)"] <= 0.05 ] = 1
+      sigthresh[ mycoffs[-1,"Pr(>|z|)"] <= significance_level ] = 1
       myz = mycoffs[-1,"z value"]
       if ( transform == 'effect_sizes' ) 
         myz = as.numeric( effectsize::z_to_d( myz, nrow(featureMatrix) ) )
@@ -1417,7 +1419,7 @@ featureImportanceForSubtypes <- function(
         c1reg = lm( as.formula(myform), data=localdf )
         mycoffs = coefficients(summary(c1reg))
         if ( nrow(mycoffs ) > 1 ) {
-          sigthresh = as.numeric( mycoffs[2,"Pr(>|t|)"] <= 0.05 )
+          sigthresh = as.numeric( mycoffs[2,"Pr(>|t|)"] <= significance_level )
           myz = mycoffs[2,"t value"]
           if ( transform == 'effect_sizes' ) 
             myz = data.frame(effectsize::t_to_d( myz, nrow(localdf) ))[1,1]
