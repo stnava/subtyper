@@ -11,6 +11,7 @@ featureImportanceForSubtypes(
   associationType = c("features2subtypes", "subtypes2features"),
   covariates = "1",
   transform = "effect_sizes",
+  significance_level = 0.001,
   visualize = FALSE
 )
 }
@@ -27,7 +28,9 @@ some cases, depending on subtypes/degrees of freedom, only one will work.}
 
 \item{covariates}{optional string of covariates}
 
-\item{transform}{optional effect_sizes}
+\item{transform}{optional effect_size}
+
+\item{significance_level}{to threshold effects}
 
 \item{visualize}{boolean}
 }
