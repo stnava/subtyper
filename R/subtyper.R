@@ -1197,7 +1197,7 @@ predictSubtypeClusterMulti  <- function(
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else if ( myclustclass[1] == "Mclust" ) {
-    mypr = mclust::predict.Mclust( clusteringObject, newdata=subdf )
+    mypr = mclust::predict( clusteringObject, newdata=subdf )
     cluster_labels = mypr$classification
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
@@ -1322,6 +1322,7 @@ biclusterMatrixFactorization  <- function(
 #' subtypes from features.  will produce related but complementary results. in
 #' some cases, depending on subtypes/degrees of freedom, only one will work.
 #' @param covariates optional string of covariates
+#' @param transform optional effect_sizes
 #' @param visualize boolean
 #' @return dataframes for visualization that show feature to subtype importance e.g. via \code{pheatmap}
 #' @author Avants BB
@@ -1331,6 +1332,7 @@ biclusterMatrixFactorization  <- function(
 #' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames] )
 #' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames], "subtypes2features" )
 #' @importFrom fastICA fastICA
+#' @importFrom effectsize t_to_d z_to_d
 #' @export
 featureImportanceForSubtypes <- function(
     dataframein,
@@ -1338,10 +1340,12 @@ featureImportanceForSubtypes <- function(
     featureMatrix,   # featureColumns
     associationType = c( "features2subtypes", "subtypes2features" ),
     covariates = "1",
+    transform = 'effect_sizes',
     visualize = FALSE ) {
 
   form_pred<-function (object, ...)
   {
+      if ( is.character(object)) object = as.formula(object)
       if (inherits(object, "formula")) {
           object <- terms(object)
       }
@@ -1374,8 +1378,11 @@ featureImportanceForSubtypes <- function(
       mycoffs = coefficients(summary(c1reg))
       sigthresh = rep( 0, ncol(featureMatrix))
       sigthresh[ mycoffs[-1,"Pr(>|z|)"] <= 0.05 ] = 1
-      clustzdescribe[j,]=mycoffs[-1,"z value"]
-      clustsigdescribe[j,]=mycoffs[-1,"z value"] * sigthresh
+      myz = mycoffs[-1,"z value"]
+      if ( transform == 'effect_sizes' ) 
+        myz = as.numeric( effectsize::z_to_d( myz, nrow(featureMatrix) ) )
+      clustzdescribe[j,]=myz
+      clustsigdescribe[j,]=myz * sigthresh
     }
     if ( visualize ) pheatmap::pheatmap(abs(clustzdescribe),cluster_rows=F,cluster_cols=F)
     # get the max for each column
@@ -1396,18 +1403,26 @@ featureImportanceForSubtypes <- function(
       locvars = form_pred( myform )[-c(1:2)]
     for ( j in 1:ncol(featureMatrix) ) {
       for( k in 1:mync ) {
-#        print(paste(colnames(featureMatrix)[j],k))
         localdf = data.frame(
           feat=featureMatrix[,j],
           clust=clustmat[,k])
-        if ( covariates != "1")
-          localdf=cbind(localdf, dataframein[,locvars])
+        if ( covariates != "1") {
+          temper = dataframein[,locvars]
+          if (length(locvars)==1) {
+            temper=data.frame( temper )
+            colnames(temper)=locvars
+            }
+          localdf=cbind(localdf, temper)
+        }
         c1reg = lm( as.formula(myform), data=localdf )
         mycoffs = coefficients(summary(c1reg))
         if ( nrow(mycoffs ) > 1 ) {
           sigthresh = as.numeric( mycoffs[2,"Pr(>|t|)"] <= 0.05 )
-          clustzdescribe[k,j]=mycoffs[2,"t value"]
-          clustsigdescribe[k,j]=mycoffs[2,"t value"] * sigthresh
+          myz = mycoffs[2,"t value"]
+          if ( transform == 'effect_sizes' ) 
+            myz = data.frame(effectsize::t_to_d( myz, nrow(localdf) ))[1,1]
+          clustzdescribe[k,j]=myz
+          clustsigdescribe[k,j]=myz * sigthresh
         } else {
           clustzdescribe[k,j]=NA
           clustsigdescribe[k,j]=NA

@@ -10,6 +10,7 @@ featureImportanceForSubtypes(
   featureMatrix,
   associationType = c("features2subtypes", "subtypes2features"),
   covariates = "1",
+  transform = "effect_sizes",
   visualize = FALSE
 )
 }
@@ -25,6 +26,8 @@ subtypes from features.  will produce related but complementary results. in
 some cases, depending on subtypes/degrees of freedom, only one will work.}
 
 \item{covariates}{optional string of covariates}
+
+\item{transform}{optional effect_sizes}
 
 \item{visualize}{boolean}
 }

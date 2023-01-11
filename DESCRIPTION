@@ -21,6 +21,7 @@ Imports:
   ggplot2,
   ClusterR,
   dplyr,
+  effectsize,
   Evacluster,
   flexclust,
   fpc,
