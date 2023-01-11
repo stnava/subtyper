@@ -1252,7 +1252,7 @@ predictSubtypeClusterMulti  <- function(
 #' @importFrom fastICA fastICA
 #' @importFrom mclust Mclust predict.Mclust mclustBIC
 #' @importFrom fpc pamk
-#' @importFrom flexclust predict kccaFamily kcca bootFlexclust cclust
+#' @importFrom flexclust kccaFamily kcca bootFlexclust cclust
 #' @importFrom Evacluster pamCluster nmfCluster kmeansCluster hierarchicalCluster FuzzyCluster EMCluster 
 #' @importFrom Evacluster predict.pamCluster predict.nmfCluster predict.kmeansCluster predict.hierarchicalCluster predict.FuzzyCluster predict.EMCluster 
 #' @export
