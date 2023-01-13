@@ -421,6 +421,48 @@ rejectLowestQualityRepeat <-function(
 }
 
 
+
+#' Average repeat data
+#'
+#' @param mxdfin Input data frame with repeated measurements and a grouped time variable
+#' @param idvar variable name for unique subject identifier column
+#' @param visitvar variable name for the visit or date column
+#'
+#' @return data frame
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' mydfhq = averageRepeats( mydf, "Id", "visit", "quality")
+#' @export
+averageRepeats  <-function(
+  mxdfin,
+  idvar,
+  visitvar ) {
+
+  if ( ! ( visitvar %in% names( mxdfin ) ) ) stop("visitvar not in dataframe")
+  if ( ! ( idvar %in% names( mxdfin ) ) ) stop("idvar not in dataframe")
+  if ( ! ( qualityvar %in% names( mxdfin ) ) ) stop("qualityvar not in dataframe")
+  vizzes = unique( mxdfin[,visitvar] )
+  uids = unique( mxdfin[,idvar] )
+  useit = rep( FALSE, nrow( mxdfin ) )
+  num_cols <- unlist(lapply(mxdfin, is.numeric))
+  for ( u in uids ) {
+    losel = mxdfin[,idvar] == u
+    vizzesloc = unique( mxdfin[ losel, visitvar ] )
+    for ( v in vizzesloc ) {
+      losel = mxdfin[,idvar] == u & mxdfin[,visitvar] == v
+      myw = which( losel )
+      if ( length( myw ) > 1 ) {
+          useit[ myw[ 1 ] ] = TRUE
+          mxdfin[ myw[ 1 ] , num_cols ] = colMeans( mxdfin[ myw, num_cols ], na.rm=TRUE )
+        } else useit[ myw ] = TRUE
+      }
+    }
+  return( mxdfin[ useit, ] )
+}
+
+
+
 #' Outlierness scoring
 #'
 #' Produce several complementary measurements of outlierness

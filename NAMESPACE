@@ -2,6 +2,7 @@
 
 export(adjustByCovariates)
 export(assembleTestRetest)
+export(averageRepeats)
 export(biclusterMatrixFactorization)
 export(featureImportanceForSubtypes)
 export(fillBaselineColumn)
