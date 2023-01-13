@@ -441,7 +441,6 @@ averageRepeats  <-function(
 
   if ( ! ( visitvar %in% names( mxdfin ) ) ) stop("visitvar not in dataframe")
   if ( ! ( idvar %in% names( mxdfin ) ) ) stop("idvar not in dataframe")
-  if ( ! ( qualityvar %in% names( mxdfin ) ) ) stop("qualityvar not in dataframe")
   vizzes = unique( mxdfin[,visitvar] )
   uids = unique( mxdfin[,idvar] )
   useit = rep( FALSE, nrow( mxdfin ) )
