@@ -6,6 +6,20 @@
 }
 
 
+#' Convert nrg format date to R format date
+#'
+#' @param x nrg format date
+#' @return fixed x
+#' @author Avants BB
+#' @export
+nrgDateToRDate <- function( x ) {
+  for ( k in 1:length(x)) {
+    x[k]=paste0( substr(x[k],1,4), "-", substr(x[k],5,6)  , "-", substr(x[k],7,8))
+  }
+  as.Date( x, format="%Y-%m-%d" )
+}
+
+
 
 #' Convert left/right variables to a measure of asymmetry
 #'
