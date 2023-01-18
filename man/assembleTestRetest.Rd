@@ -11,7 +11,8 @@ assembleTestRetest(
   visitID,
   whichVisit,
   measureToRepeat,
-  uniqueID
+  uniqueID,
+  nozeroes = FALSE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ for data the exists on the same visit.}
 \item{measureToRepeat}{the measurement to assemble for computing trt stats (e.g. ICC)}
 
 \item{uniqueID}{optional column to contatenate to trt dataframe}
+
+\item{nozeroes}{optional boolean - do not allow zero distance time}
 }
 \value{
 data frame with test-retest friendly organization

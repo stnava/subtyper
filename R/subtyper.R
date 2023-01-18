@@ -585,6 +585,7 @@ replaceName <- function( dataIn, oldName, newName ) {
 #' @param whichVisit optional visit to use for the analysis
 #' @param measureToRepeat the measurement to assemble for computing trt stats (e.g. ICC)
 #' @param uniqueID optional column to contatenate to trt dataframe
+#' @param nozeroes optional boolean - do not allow zero distance time
 #' @return data frame with test-retest friendly organization
 #' @author Avants BB
 #' @examples
@@ -599,7 +600,7 @@ assembleTestRetest <- function(
   visitID,
   whichVisit,
   measureToRepeat,
-  uniqueID ) {
+  uniqueID, nozeroes=FALSE ) {
 
   usubs = sort( unique( dataIn[,subjectID] ) )
   trtdf = data.frame( )
@@ -613,6 +614,7 @@ assembleTestRetest <- function(
       rowinds = which( usel )
       mydist = as.matrix( dist( dataIn[usel,qualitycolumns] ) )
       diag(mydist) = Inf
+      if ( nozeroes ) mydist[ mydist == 0 ] = Inf
       mymin = min(mydist,na.rm=TRUE)
       bestind = which( mydist == mymin, arr.ind = T)[1,]
       n = nrow(trtdf) + 1
