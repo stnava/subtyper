@@ -1553,7 +1553,7 @@ regressionBasedFeatureSelection <- function(
         myor = order( as.numeric(mm[1,]), decreasing=TRUE )
         thefeats = c( thefeats, colnames( mm )[ head(myor,n_features) ] )
         }
-    return( thefeats )
+    return( unique( thefeats ) )
     }
 
 
