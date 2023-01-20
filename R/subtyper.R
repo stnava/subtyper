@@ -983,6 +983,7 @@ predictSubtypeUni  <- function(
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
 #' @export
+#' @importFrom mlr3cluster
 #' @importFrom ClusterR Cluster_Medoids predict_GMM Clara_Medoids GMM Optimal_Clusters_GMM KMeans_rcpp Optimal_Clusters_KMeans Optimal_Clusters_Medoids predict_Medoids
 trainSubtypeClusterMulti  <- function(
   mxdfin,
@@ -1002,7 +1003,7 @@ trainSubtypeClusterMulti  <- function(
 
   ktypes = c( "kmeans", 'kmeansflex', "GMM", "mclust", "pamCluster", 
     "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr",
-    "hardcl","neuralgas", "hierarchicalCluster", "jaccard")
+    "hardcl","neuralgas", "hierarchicalCluster", "jaccard", mlr_learners$keys("clust") )
 
   if ( ! (method %in% ktypes ) ) {
     allmeth = paste( ktypes, collapse=' | ')
@@ -1010,6 +1011,9 @@ trainSubtypeClusterMulti  <- function(
     message(paste( "try one of:" , allmeth ) )
     return( ktypes )
   }
+  ismlr3=FALSE
+  if ( grep( "clust[.]", method ) ) ismlr3=TRUE
+
 
   .env <- environment() ## identify the environment of cv.step
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
@@ -1022,6 +1026,16 @@ trainSubtypeClusterMulti  <- function(
     group=NA
   }
   subdf = data.matrix( subdf )
+
+  if ( ismlr3 ) {
+    task = as_task_clust(subdf)
+    learner = mlr_learners$get(method)
+    learner$param_set$values = list(centers = 3L)
+    myp = learner$train(task)
+    predict(myp,newdata=subdf)
+    return( myp )
+  }
+
   if ( method == "GMM" ) {
     if ( missing( desiredk ) ) {
       if ( missing( maxk ) ) maxk = 10
@@ -1415,7 +1429,8 @@ featureImportanceForSubtypes <- function(
       }
       all.vars(object, ...)
   }
-
+  if ( class(subtypeLabels) != 'factor' )
+    subtypeLabels=factor(subtypeLabels)
   if ( length( subtypeLabels ) != nrow( featureMatrix ) )
     stop("length( subtypeLabels ) != nrow( featureMatrix )")
   uniqClusts = levels( subtypeLabels )
@@ -1428,7 +1443,9 @@ featureImportanceForSubtypes <- function(
   clustmat = matrix( 0, nrow = length( subtypeLabels ), ncol=mync )
   colnames(clustmat) = as.character( uniqClusts )
   for ( j in 1:mync ) {
-    clustmat[ subtypeLabels == uniqClusts[j], j] = 1
+    losel = subtypeLabels == uniqClusts[j]
+    if ( sum(losel) > 0 )
+      clustmat[ losel , j] = 1
     }
   if ( associationType[1] == "features2subtypes" ) {
     # converts cluster labels to one-hot coding
@@ -1506,6 +1523,38 @@ featureImportanceForSubtypes <- function(
 }
 
 
+
+#' select top features via linear regression on an outcome
+#'
+#' @param dataframein Input dataframe with all relevant data
+#' @param subtypeLabels Input subtype assignments.
+#' @param featureMatrix matrix/dataframe defining the data columns as features.
+#' @param covariates optional string of covariates
+#' @param n_features select this many features per level
+#' @return vector of feature names
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' fimp = regressionBasedFeatureSelection( mydf$DX, mydf[,rbfnames] )
+#' @export
+regressionBasedFeatureSelection <- function( 
+    dataframein, subtypeLabels, featureMatrix, covariates="1", n_features=25 ) {
+    fimp = featureImportanceForSubtypes(
+        dataframein,
+        subtypeLabels, 
+        featureMatrix, 
+        "subtypes2features", 
+        covariates=covariates )
+    thefeats = c()
+    myfimp = fimp$subtypeFeatureTScoresSignificant
+    for ( k in 1:nrow( fimp$subtypeFeatureTScores )) {
+        mm = abs(myfimp[k,])
+        myor = order( as.numeric(mm[1,]), decreasing=TRUE )
+        thefeats = c( thefeats, colnames( mm )[ head(myor,n_features) ] )
+        }
+    return( thefeats )
+    }
 
 
 

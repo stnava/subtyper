@@ -28,6 +28,7 @@ Imports:
   ggthemes,
   ggstatsplot,
   ggbeeswarm,
+  mlr3cluster,
   wesanderson,
   Hmisc,
   plyr,
