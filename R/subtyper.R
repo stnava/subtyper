@@ -40,6 +40,25 @@ mapAsymVar <- function( mydataframe, leftvar, replacer='Asym' ) {
 }
 
 
+
+#' Convert left/right variables to an average measurement
+#'
+#' @param mydataframe dataframe containing relevant variables
+#' @param leftvar left variable names
+#' @param replacer string to replace left with in column names of output
+#' @return fixed x
+#' @author Avants BB
+#' @export
+mapLRAverageVar <- function( mydataframe, leftvar, replacer='LRAVG' ) {
+  rightvar =  gsub( "left", "right", leftvar )
+  hasright = rightvar %in% colnames(mydataframe)
+  temp = mydataframe[,leftvar[hasright]] * 0.5 + mydataframe[,rightvar[hasright]] * 0.5
+  newnames = gsub("left", replacer,leftvar[hasright])
+  colnames(temp)=newnames
+  return( temp )
+}
+
+
 #' Convert NA to false
 #'
 #' @param x a vector of bool
