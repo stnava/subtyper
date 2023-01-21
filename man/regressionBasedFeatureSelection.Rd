@@ -8,7 +8,7 @@ regressionBasedFeatureSelection(
   dataframein,
   subtypeLabels,
   featureMatrix,
-  covariates,
+  covariates = "1",
   n_features = 25
 )
 }

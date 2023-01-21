@@ -983,7 +983,8 @@ predictSubtypeUni  <- function(
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' gmmcl = trainSubtypeClusterMulti( mydf, rbfnames, maxk=4 )
 #' @export
-#' @importFrom mlr3cluster
+#' @importFrom mlr3cluster as_task_clust
+#' @importFrom mlr3 mlr_learners
 #' @importFrom ClusterR Cluster_Medoids predict_GMM Clara_Medoids GMM Optimal_Clusters_GMM KMeans_rcpp Optimal_Clusters_KMeans Optimal_Clusters_Medoids predict_Medoids
 trainSubtypeClusterMulti  <- function(
   mxdfin,
@@ -1013,7 +1014,6 @@ trainSubtypeClusterMulti  <- function(
   }
   ismlr3=FALSE
   if ( length(grep( "clust[.]", method )) > 0 ) ismlr3=TRUE
-
 
   .env <- environment() ## identify the environment of cv.step
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
