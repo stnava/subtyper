@@ -1012,7 +1012,7 @@ trainSubtypeClusterMulti  <- function(
     return( ktypes )
   }
   ismlr3=FALSE
-  if ( grep( "clust[.]", method ) ) ismlr3=TRUE
+  if ( length(grep( "clust[.]", method )) > 0 ) ismlr3=TRUE
 
 
   .env <- environment() ## identify the environment of cv.step
