@@ -606,7 +606,7 @@ replaceName <- function( dataIn, oldName, newName ) {
 #' @param uniqueID optional column to contatenate to trt dataframe
 #' @param covariates optional additional column name(s) to add to dataframe
 #' @param nozeroes optional boolean - do not allow zero distance time
-#' @return data frame with test-retest friendly organization
+#' @return data frame with test-retest friendly organization ... trt0 and trt1 show the row indices of the test retest data
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
