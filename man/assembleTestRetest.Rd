@@ -12,6 +12,7 @@ assembleTestRetest(
   whichVisit,
   measureToRepeat,
   uniqueID,
+  covariates,
   nozeroes = FALSE
 )
 }
@@ -30,6 +31,8 @@ for data the exists on the same visit.}
 \item{measureToRepeat}{the measurement to assemble for computing trt stats (e.g. ICC)}
 
 \item{uniqueID}{optional column to contatenate to trt dataframe}
+
+\item{covariates}{optional additional column name(s) to add to dataframe}
 
 \item{nozeroes}{optional boolean - do not allow zero distance time}
 }

@@ -604,6 +604,7 @@ replaceName <- function( dataIn, oldName, newName ) {
 #' @param whichVisit optional visit to use for the analysis
 #' @param measureToRepeat the measurement to assemble for computing trt stats (e.g. ICC)
 #' @param uniqueID optional column to contatenate to trt dataframe
+#' @param covariates optional additional column name(s) to add to dataframe
 #' @param nozeroes optional boolean - do not allow zero distance time
 #' @return data frame with test-retest friendly organization
 #' @author Avants BB
@@ -619,7 +620,9 @@ assembleTestRetest <- function(
   visitID,
   whichVisit,
   measureToRepeat,
-  uniqueID, nozeroes=FALSE ) {
+  uniqueID, 
+  covariates,
+  nozeroes=FALSE ) {
 
   usubs = sort( unique( dataIn[,subjectID] ) )
   trtdf = data.frame( )
@@ -651,6 +654,11 @@ assembleTestRetest <- function(
         trtdf[ n , paste0(uniqueID,0) ] = dataIn[ trtdf[ n , "trt0" ], uniqueID ]
         trtdf[ n , paste0(uniqueID,1) ] = dataIn[ trtdf[ n , "trt1" ], uniqueID ]
       }
+      if ( ! missing( covariates ) ) {
+        for (covariate in covariates) {
+          trtdf[ n , covariate ] = dataIn[ trtdf[ n , "trt0" ], covariate ]
+        }
+      } 
     }
   }
   return( trtdf )
