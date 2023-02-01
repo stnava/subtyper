@@ -656,7 +656,8 @@ assembleTestRetest <- function(
       }
       if ( ! missing( covariates ) ) {
         for (covariate in covariates) {
-          trtdf[ n , covariate ] = dataIn[ trtdf[ n , "trt0" ], covariate ]
+          trtdf[ n , paste0(covariate,"_0") ] = dataIn[ trtdf[ n , "trt0" ], covariate ]
+          trtdf[ n , paste0(covariate,"_1") ] = dataIn[ trtdf[ n , "trt1" ], covariate ]
         }
       } 
     }
