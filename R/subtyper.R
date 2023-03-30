@@ -1900,12 +1900,14 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen' ) {
     library(genio)
     obj <- read_plink( rootFileName )
     uids = colnames(obj$X)
-    snpnames=rownames( obj$X )
-    myentries = multigrep( unique(targetSNPs), snpnames )
-    if ( length( myentries ) > 0 ) {
-      return( data.frame( obj$X[myentries,uids] ) )
-    } else {
-      return( data.frame( obj$X[,uids] ) )
-    }    
+    snpnames=intersect( targetSNPs, rownames( obj$X ) )
+    if ( length( snpnames ) == 0 )
+      message("No target SNPs are present")
+      return(NA)
+    mydf = data.frame( id=uids )
+    for ( snp in snpnames) {
+      mydf[,snp]=obj$X[snp,]
+    }
+    return(mydf)
   }
 }
