@@ -37,7 +37,7 @@ for data the exists on the same visit.}
 \item{nozeroes}{optional boolean - do not allow zero distance time}
 }
 \value{
-data frame with test-retest friendly organization
+data frame with test-retest friendly organization ... trt0 and trt1 show the row indices of the test retest data
 }
 \description{
 We assume there is a quality or related measure that will let us compute

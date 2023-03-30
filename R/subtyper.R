@@ -1873,6 +1873,7 @@ hierarchicalSubtypePlots <- function(
 #'
 #' @param rootFileName root for pgen psam and pvar files
 #' @param targetSNPs snps to extract
+#' @param type either pgen or bed (character)
 #' @return dataframes with both variants and subject ids
 #' @author Avants BB
 #' @examples
@@ -1880,18 +1881,31 @@ hierarchicalSubtypePlots <- function(
 #' @importFrom pgenlibr NewPvar NewPgen ReadList
 #' @importFrom data.table fread
 #' @export
-plinkVariantsDataFrame <- function( rootFileName, targetSNPs ) {
-  f.pvar = paste0(rootFileName, '.pvar')
-  f.pgen = paste0(rootFileName, '.pgen')
-  f.sam = paste0(rootFileName, '.psam')
-  subjectIDs = fread( f.sam )
-  myvariants = fread( f.pvar, select = 3)
-  i  <- which( myvariants$ID %in% targetSNPs)
-  pvar <- pgenlibr::NewPvar(f.pvar)
-  pgen <- pgenlibr::NewPgen(f.pgen, pvar=pvar) #,sample_subset = c(1,2,3,4) )
-  myderk = pgenlibr::ReadList( pgen, i, meanimpute=F )
-  snpdf = data.frame( myderk )
-  colnames( snpdf ) = myvariants$ID[i]
-  outdf = data.frame( subjectIDs = subjectIDs$IID, snpdf )
-  outdf
+plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen' ) {
+  if ( type == 'pgen' ) {
+    f.pvar = paste0(rootFileName, '.pvar')
+    f.pgen = paste0(rootFileName, '.pgen')
+    f.sam = paste0(rootFileName, '.psam')
+    subjectIDs = fread( f.sam )
+    myvariants = fread( f.pvar, select = 3)
+    i  <- which( myvariants$ID %in% targetSNPs)
+    pvar <- pgenlibr::NewPvar(f.pvar)
+    pgen <- pgenlibr::NewPgen(f.pgen, pvar=pvar) #,sample_subset = c(1,2,3,4) )
+    myderk = pgenlibr::ReadList( pgen, i, meanimpute=F )
+    snpdf = data.frame( myderk )
+    colnames( snpdf ) = myvariants$ID[i]
+    outdf = data.frame( subjectIDs = subjectIDs$IID, snpdf )
+    return( outdf )
+  } else {
+    library(genio)
+    obj <- read_plink( fn )
+    uids = colnames(obj$X)
+    snpnames=rownames( obj$X )
+    myentries = multigrep( unique(targetSNPs), snpnames )
+    if ( length( myentries ) > 0 ) {
+      return( data.frame( obj$X[myentries,uids] ) )
+    } else {
+      return( data.frame( obj$X[,uids] ) )
+    }    
+  }
 }

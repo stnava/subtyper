@@ -4,12 +4,14 @@
 \alias{plinkVariantsDataFrame}
 \title{genetic variants data frame from plink data}
 \usage{
-plinkVariantsDataFrame(rootFileName, targetSNPs)
+plinkVariantsDataFrame(rootFileName, targetSNPs, type = "pgen")
 }
 \arguments{
 \item{rootFileName}{root for pgen psam and pvar files}
 
 \item{targetSNPs}{snps to extract}
+
+\item{type}{either pgen or bed (character)}
 }
 \value{
 dataframes with both variants and subject ids
