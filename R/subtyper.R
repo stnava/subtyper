@@ -1898,7 +1898,7 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen' ) {
     return( outdf )
   } else {
     library(genio)
-    obj <- read_plink( fn )
+    obj <- read_plink( rootFileName )
     uids = colnames(obj$X)
     snpnames=rownames( obj$X )
     myentries = multigrep( unique(targetSNPs), snpnames )
