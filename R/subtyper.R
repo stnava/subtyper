@@ -1872,8 +1872,9 @@ hierarchicalSubtypePlots <- function(
 #' genetic variants data frame from plink data
 #'
 #' @param rootFileName root for pgen psam and pvar files
-#' @param targetSNPs snps to extract
+#' @param targetSNPs snps to extract (optional - if absent, will get all)
 #' @param type either pgen or bed (character)
+#' @param verbose boolean
 #' @return dataframes with both variants and subject ids
 #' @author Avants BB
 #' @examples
@@ -1881,14 +1882,15 @@ hierarchicalSubtypePlots <- function(
 #' @importFrom pgenlibr NewPvar NewPgen ReadList
 #' @importFrom data.table fread
 #' @export
-plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen' ) {
+plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbose=FALSE ) {
   if ( type == 'pgen' ) {
     f.pvar = paste0(rootFileName, '.pvar')
     f.pgen = paste0(rootFileName, '.pgen')
     f.sam = paste0(rootFileName, '.psam')
     subjectIDs = fread( f.sam )
     myvariants = fread( f.pvar, select = 3)
-    i  <- which( myvariants$ID %in% targetSNPs)
+    if ( missing(targetSNPs) ) i = 1:length(myvariants$ID)
+    if ( !missing(targetSNPs) ) i  <- which( myvariants$ID %in% targetSNPs)
     pvar <- pgenlibr::NewPvar(f.pvar)
     pgen <- pgenlibr::NewPgen(f.pgen, pvar=pvar) #,sample_subset = c(1,2,3,4) )
     myderk = pgenlibr::ReadList( pgen, i, meanimpute=F )
@@ -1900,13 +1902,25 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen' ) {
     library(genio)
     obj <- read_plink( rootFileName )
     uids = colnames(obj$X)
-    snpnames=intersect( targetSNPs, rownames( obj$X ) )
-    if ( length( snpnames ) == 0 )
-      message("No target SNPs are present")
-      return(NA)
+    snpnames=rownames( obj$X )
     mydf = data.frame( id=uids )
+    if ( !missing(targetSNPs) ) snpnames=intersect( targetSNPs, snpnames )
+    if ( verbose ) {
+      print("# Subjects & # SNPs")
+      print( paste( "IDS: ", nrow(mydf), " SNPs: ", length(snpnames)))
+    }
+    if ( length( snpnames ) == 0 ) {
+      mymsg = paste("No target SNPs are present: ",length( snpnames ))
+      print(mymsg)
+      message(mymsg)
+      return(NA)
+      }
+    ct=0
+    n = length( snpnames )
     for ( snp in snpnames) {
       mydf[,snp]=obj$X[snp,]
+      ct=ct+1
+      if ( ct %% 5000 == 0 & verbose ) cat( paste( round( ct / n * 100 ), "%.." ) )
     }
     return(mydf)
   }
