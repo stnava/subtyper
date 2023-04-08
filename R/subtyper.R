@@ -1908,9 +1908,10 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
       message(mymsg)
       return(NA)
       }
-    y=gwas[,ww]
-    mydf=as.matrix( y )
-    snpnames=colnames(mydf)
+    y=as.matrix(gwas[,ww])
+    snpnames=colnames(y)
+    mydf=data.frame(sid=rownames(as.matrix( y )))
+    mydf=cbind(mydf,as.matrix( y ))
     return(mydf)
   }
 }
