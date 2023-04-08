@@ -1899,29 +1899,18 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
     outdf = data.frame( subjectIDs = subjectIDs$IID, snpdf )
     return( outdf )
   } else {
-    library(genio)
-    obj <- read_plink( rootFileName )
-    uids = colnames(obj$X)
-    snpnames=rownames( obj$X )
-    mydf = data.frame( id=uids )
-    if ( !missing(targetSNPs) ) snpnames=intersect( targetSNPs, snpnames )
-    if ( verbose ) {
-      print("# Subjects & # SNPs")
-      print( paste( "IDS: ", nrow(mydf), " SNPs: ", length(snpnames)))
-    }
-    if ( length( snpnames ) == 0 ) {
-      mymsg = paste("No target SNPs are present: ",length( snpnames ))
+    library(gaston)
+    gwas=read.bed.matrix( rootFileName )
+    ww=which( gwas@snps$id %in% targetSNPs )
+    if ( length( ww ) == 0 ) {
+      mymsg = paste("No target SNPs are present ")
       print(mymsg)
       message(mymsg)
       return(NA)
       }
-    ct=0
-    n = length( snpnames )
-    for ( snp in snpnames) {
-      mydf[,snp]=obj$X[snp,]
-      ct=ct+1
-      if ( ct %% 5000 == 0 & verbose ) cat( paste( round( ct / n * 100 ), "%.." ) )
-    }
+    y=gwas[,ww]
+    mydf=as.matrix( y )
+    snpnames=colnames(mydf)
     return(mydf)
   }
 }
