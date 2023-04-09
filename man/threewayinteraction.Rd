@@ -4,15 +4,7 @@
 \alias{threewayinteraction}
 \title{three way interaction plot from raw data}
 \usage{
-threewayinteraction(
-  indf,
-  xvar,
-  yvar,
-  colorvar,
-  anat,
-  anatshow,
-  pallete = c("#00AFBB", "#E7B800", "#FC4E07")
-)
+threewayinteraction(indf, xvar, yvar, colorvar, anat, anatshow, ggpallete = NA)
 }
 \arguments{
 \item{indf}{dataframe with relevant variables}
@@ -27,7 +19,7 @@ threewayinteraction(
 
 \item{anatshow}{character name for continuous variable to show on plots (optional)}
 
-\item{palette}{optional palette}
+\item{ggpallete}{optional palette}
 }
 \value{
 the plot
