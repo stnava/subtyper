@@ -1881,6 +1881,7 @@ hierarchicalSubtypePlots <- function(
 #' # mydf = plinkVariantsDataFrame( fn, c( 'rs6469804', 'rs6859' ) )
 #' @importFrom pgenlibr NewPvar NewPgen ReadList
 #' @importFrom data.table fread
+#' @importFrom gaston as.matrix
 #' @export
 plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbose=FALSE ) {
   if ( type == 'pgen' ) {
@@ -1908,10 +1909,11 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
       message(mymsg)
       return(NA)
       }
-    y=as.matrix(gwas[,ww])
-    snpnames=colnames(y)
-    mydf=data.frame(sid=rownames(as.matrix( y )))
-    mydf=cbind(mydf,as.matrix( y ))
+    y=gwas[,ww]
+    snpnames=y@snps$id
+    y=gaston::as.matrix( y )
+    mydf=data.frame(sid=rownames(y))
+    mydf=cbind(mydf,y)
     return(mydf)
   }
 }
