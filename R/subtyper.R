@@ -1943,7 +1943,7 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
   indf$snapfact=factor(indf[,colorvar])
   glist[[length(glist)+1]]= ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow)) #+ theme(legend.position = "none")
 
-  if ( is.factor(indf[,anat]) ) {
+  if ( !is.factor(indf[,anat]) ) {
     medsplit = median( indf[,anat], na.rm=T )
     hisel = indf[,anat] > medsplit
   } else {
