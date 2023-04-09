@@ -25,7 +25,7 @@ threewayinteraction(
 
 \item{anat}{continuous variable by which to split plots}
 
-\item{anatshow}{optional character name for continuous variable to show on plots}
+\item{anatshow}{optional character name for continuous variable to show on plots - can be up to vector length 3 - one for each panel of the plot}
 
 \item{ggpalette}{optional palette}
 }

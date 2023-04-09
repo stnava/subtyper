@@ -1926,7 +1926,7 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
 #' @param yvar variable for y-axis of plots
 #' @param colorvar variable by which to color plots
 #' @param anat continuous variable by which to split plots
-#' @param anatshow optional character name for continuous variable to show on plots
+#' @param anatshow optional character name for continuous variable to show on plots - can be up to vector length 3 - one for each panel of the plot
 #' @param ggpalette optional palette
 #' @return the plot
 #' @author Avants BB
@@ -1937,11 +1937,17 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
 #' @export
 threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggpalette='jco' ) {
   glist = list()
-  if ( missing(anatshow) )
+  if ( ! missing(anatshow) ) {
+    while ( length(anatshow) <  3 )
+      anatshow=c(anatshow,"")
+  }
+  if ( missing(anatshow) ) {
     anatshow=gsub("T1Hier_","",anat)
+    anatshow=rep(anatshow,3)
+  }
   indf[,colorvar]=factor(indf[,colorvar])
   indf$snapfact=factor(indf[,colorvar])
-  glist[[length(glist)+1]]= ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow)) #+ theme(legend.position = "none")
+  glist[[length(glist)+1]]= ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow[1])) #+ theme(legend.position = "none")
 
   if ( !is.factor(indf[,anat]) ) {
     medsplit = median( indf[,anat], na.rm=T )
@@ -1950,10 +1956,10 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
     hisel=indf[,anat]==levels(indf[,anat])[1]
   }
 
-  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('High')) + theme(legend.position = "none")
+  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('+',anatshow[2])) + theme(legend.position = "none")
 
   
-  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('Low'))+ theme(legend.position = "none")
+  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('-',anatshow[3]))+ theme(legend.position = "none")
 
   grid.arrange(grobs=glist,ncol=3)
 
