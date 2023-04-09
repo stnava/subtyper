@@ -1926,8 +1926,8 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
 #' @param yvar variable for y-axis of plots
 #' @param colorvar variable by which to color plots
 #' @param anat continuous variable by which to split plots
-#' @param anatshow character name for continuous variable to show on plots (optional)
 #' @param ggpallete optional palette
+#' @param anatshow optional character name for continuous variable to show on plots
 #' @return the plot
 #' @author Avants BB
 #' @examples
@@ -1935,26 +1935,26 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
 #' @importFrom ggpubr ggscatter set_palette
 #' @importFrom gridExtra grid.arrange
 #' @export
-threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggpallete=NA ) {
+threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, ggpallete,  anatshow ) {
   glist = list()
   if ( missing(anatshow) )
     anatshow=gsub("T1Hier_","",anat)
   indf[,colorvar]=factor(indf[,colorvar])
   indf$snapfact=factor(indf[,colorvar])
   p = ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=F, add = "reg.line", conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow)) #+ theme(legend.position = "none")
-  if ( ! is.na( ggpallete) )
+  if ( ! missing( ggpallete) )
     p = set_palette(p,  ggpallete )
   glist[[length(glist)+1]]= p
 
   medsplit = median( indf[,anat], na.rm=T )
   hisel = indf[,anat] > medsplit
   p=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('High')) + theme(legend.position = "none")
-  if ( ! is.na( ggpallete) )
+  if ( ! missing( ggpallete) )
     p = set_palette(p, ggpalette )
   glist[[length(glist)+1]]=p
 
   p=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('Low'))+ theme(legend.position = "none")
-  if ( ! is.na( ggpallete) )
+  if ( ! missing( ggpallete) )
     p = set_palette( p, ggpalette )
   glist[[length(glist)+1]]=p
 
