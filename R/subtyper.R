@@ -1952,14 +1952,16 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
   if ( is.numeric(indf[,anat]) ) {
     medsplit = median( indf[,anat], na.rm=T )
     hisel = indf[,anat] > medsplit
+    loclev=loclev2=anat
   } else {
     loclev = (unique(indf[,anat])[1])
     hisel=indf[,anat]==loclev
+    loclev2=paste0("!",loclev)
   }
-  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('+',anatshow[2])) + theme(legend.position = "none")
+  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('+',anatshow[2],loclev)) + theme(legend.position = "none")
 
   
-  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('-',anatshow[3]))+ theme(legend.position = "none")
+  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=F, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('-',anatshow[3],loclev2))+ theme(legend.position = "none")
 
   grid.arrange(grobs=glist,ncol=3)
 
