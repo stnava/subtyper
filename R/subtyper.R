@@ -1915,3 +1915,41 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbo
     return(mydf)
   }
 }
+
+
+
+
+#' three way interaction plot from raw data
+#'
+#' @param indf dataframe with relevant variables
+#' @param xvar variable for x-axis of plots
+#' @param yvar variable for y-axis of plots
+#' @param colorvar variable by which to color plots
+#' @param anat continuous variable by which to split plots
+#' @param anatshow character name for continuous variable to show on plots (optional)
+#' @param palette optional palette
+#' @return the plot
+#' @author Avants BB
+#' @examples
+#' # FIXME
+#' @importFrom ggpubr ggscatter
+#' @importFrom gridExtra grid.arrange
+#' @export
+threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, pallete=c("#00AFBB", "#E7B800", "#FC4E07")  ) {
+  library(ggpubr)
+        glist = list()
+        if ( missing(anatshow) )
+          anatshow=gsub("T1Hier_","",anat)
+        indf[,colorvar]=factor(indf[,colorvar])
+        indf$snapfact=factor(indf[,colorvar])
+        glist[[length(glist)+1]]=ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45, palette = palette, point=F, add = "reg.line", conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow)) #+ theme(legend.position = "none")
+
+        medsplit = median( indf[,anat], na.rm=T )
+        hisel = indf[,anat] > medsplit
+        glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, palette = palette, point=F, add = "reg.line", conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('High')) + theme(legend.position = "none")
+
+        glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, palette = palette, point=F, add = "reg.line", conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('Low'))+ theme(legend.position = "none")
+
+        grid.arrange(grobs=glist,ncol=3)
+
+}
