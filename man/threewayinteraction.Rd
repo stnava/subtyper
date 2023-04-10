@@ -11,7 +11,8 @@ threewayinteraction(
   colorvar,
   anat,
   anatshow,
-  ggpalette = "jco"
+  ggpalette = "jco",
+  showpoints = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ threewayinteraction(
 \item{anatshow}{optional character name for continuous variable to show on plots - can be up to vector length 3 - one for each panel of the plot}
 
 \item{ggpalette}{optional palette}
+
+\item{showpoints}{boolean}
 }
 \value{
 the plot
