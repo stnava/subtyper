@@ -1873,7 +1873,6 @@ hierarchicalSubtypePlots <- function(
 #'
 #' @param rootFileName root for pgen psam and pvar files
 #' @param targetSNPs snps to extract (optional - if absent, will get all)
-#' @param type either pgen or bed (character)
 #' @param verbose boolean
 #' @return dataframes with both variants and subject ids
 #' @author Avants BB
@@ -1883,7 +1882,9 @@ hierarchicalSubtypePlots <- function(
 #' @importFrom data.table fread
 #' @importFrom gaston as.matrix
 #' @export
-plinkVariantsDataFrame <- function( rootFileName, targetSNPs, type='pgen', verbose=FALSE ) {
+plinkVariantsDataFrame <- function( rootFileName, targetSNPs,  verbose=FALSE ) {
+  type=getExt(rootFileName)
+  stopifnot( type %in% c("pgen","bed") )
   if ( type == 'pgen' ) {
     f.pvar = paste0(rootFileName, '.pvar')
     f.pgen = paste0(rootFileName, '.pgen')
@@ -1968,4 +1969,36 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
 
   grid.arrange(grobs=glist,ncol=3)
 
+}
+
+
+
+
+#' Get the file extension from a file-name. from `reader` package.
+#'
+#' @param fn filename(s) (with full path is ok too)
+#' @return returns the (usually) 3 character file extension of a filename
+#' @export 
+#' @author Nicholas Cooper \email{nick.cooper@@cimr.cam.ac.uk}
+getExt <- function (fn) 
+{
+    if (length(fn) < 1) {
+        warning("fn had length of zero")
+        return(fn)
+    }
+    if (all(is.na(fn)) | !is.character(fn)) {
+        stop("fn should not be NA and should be of type character()")
+    }
+    strip.file.frags <- function(X) {
+        file.segs <- strsplit(X, ".", fixed = TRUE)[[1]]
+        lss <- length(file.segs)
+        if (lss > 1) {
+            out <- paste(file.segs[lss])
+        }
+        else {
+            out <- ""
+        }
+        return(out)
+    }
+    return(sapply(fn, strip.file.frags))
 }
