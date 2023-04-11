@@ -1914,9 +1914,9 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs,  verbose=FALSE ) {
     y=gwas[,ww]
     snpnames=y@snps$id
     y=gaston::as.matrix( y )
-    mydf=data.frame(sid=rownames(y))
-    mydf=cbind(mydf,y)
-    return(mydf)
+    gmydf=data.frame(subjectIDs=rownames(y))
+    gmydf=cbind(gmydf,y)
+    return(gmydf)
   }
 }
 
