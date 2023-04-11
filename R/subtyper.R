@@ -1886,9 +1886,10 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs,  verbose=FALSE ) {
   type=getExt(rootFileName)
   stopifnot( type %in% c("pgen","bed") )
   if ( type == 'pgen' ) {
-    f.pvar = paste0(rootFileName, '.pvar')
-    f.pgen = paste0(rootFileName, '.pgen')
-    f.sam = paste0(rootFileName, '.psam')
+    rootFileName2 = tools::file_path_sans_ext( rootFileName )
+    f.pvar = paste0(rootFileName2, '.pvar')
+    f.pgen = paste0(rootFileName2, '.pgen')
+    f.sam = paste0(rootFileName2, '.psam')
     subjectIDs = fread( f.sam )
     myvariants = fread( f.pvar, select = 3)
     if ( missing(targetSNPs) ) i = 1:length(myvariants$ID)
