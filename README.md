@@ -46,6 +46,10 @@ cd plink-ng/2.0/pgenlibr/
 R CMD INSTALL . # FIXME not on arm64 yet
 ```
 
+```R
+install.packages(c("ClusterR", "effectsize", "Evacluster", "flexclust", "ggthemes", "ggstatsplot", "ggbeeswarm", "wesanderson", "Hmisc", "DDoutlier", "NMF", "pheatmap", "gprofiler2", "pgenlibr"))
+```
+
 ## For developers
 
 The repository includes a Makefile to facilitate some common tasks.
