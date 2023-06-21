@@ -747,6 +747,7 @@ filterForGoodData <- function( dataIn,
 #' @param baselineVisitValue the value defining baseline e.g. \code{TRUE}
 #' @param baselineExt string appended to column name defining the baseline variable
 #' @param deltaExt string appended to column name defining the change variable
+#' @param fast boolean; will only return subjects with baseline values
 #' @return data frame with new columns
 #' @author Avants BB
 #' @examples
@@ -760,7 +761,8 @@ fillBaselineColumn <- function(
    visitID,
    baselineVisitValue,
    baselineExt = "_BL",
-   deltaExt = "_delta"
+   deltaExt = "_delta",
+   fast = TRUE
 ) {
   if ( ! ( subjectID %in% names( mxdfin ) ) )
     stop("subjectID not in data frame's columns")
@@ -772,6 +774,26 @@ fillBaselineColumn <- function(
     stop("baselineVisitValue not in data frame's visitID")
   newcolname = paste0( columnName, baselineExt )
   newcolnamed = paste0( columnName, deltaExt )
+  if ( fast ) { # use columnful merge (was use_data.table)
+    # get the sid freq
+    mxdfin = mxdfin[ order( mxdfin[,subjectID] ), ]
+    sidfreq = table( mxdfin[,subjectID])
+    bldf = mxdfin[ fs(mxdfin[,visitID] == baselineVisitValue),  c(subjectID,columnName) ]
+    inmcols = colnames( bldf ) %in% columnName
+    colnames( bldf )[ inmcols ] = newcolname
+    sidfreq = sidfreq[ names(sidfreq) %in% bldf[,subjectID] ]
+    sidfreq = sidfreq[ bldf[,subjectID] ]
+    rownames(bldf)=bldf[,subjectID]
+    bldf = bldf[rep.int( bldf[,subjectID] , as.integer(sidfreq)), ]
+    filldf = mxdfin[ mxdfin[,subjectID] %in% bldf[,subjectID], ]
+    filldf[,newcolname]=bldf[,newcolname]
+#    filldf = dplyr::bind_rows( mxdfin, bldf, .id=subjectID )
+#    filldf = data.table(mxdfin)[bldf, on = subjectID, allow.cartesian=FALSE] # data.table
+    if ( ! is.na( deltaExt ) ) {
+      filldf[,newcolnamed] = filldf[,columnName] - filldf[,newcolname]
+    }
+    return( list(filldf, newcolname, newcolnamed ) )
+  }
   mxdfin[,newcolname]=NA
   mxdfin[,newcolnamed]=NA
   visitidisnumeric = class(mxdfin[,visitID]) == "numeric"
@@ -1952,7 +1974,8 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
   }
   indf[,colorvar]=factor(indf[,colorvar])
   indf$snapfact=factor(indf[,colorvar])
-  glist[[length(glist)+1]]= ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow[1])) #+ theme(legend.position = "none")
+  ylimmer = range( indf[,yvar])
+  glist[[length(glist)+1]]= ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow[1])) + ylim( ylimmer ) #+ theme(legend.position = "none")
 
   if ( is.numeric(indf[,anat]) ) {
     medsplit = median( indf[,anat], na.rm=T )
@@ -1963,10 +1986,10 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
     hisel=indf[,anat]==loclev
     loclev2=paste0("!",loclev)
   }
-  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('+',anatshow[2],loclev)) + theme(legend.position = "none")
+  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('+',anatshow[2],loclev)) + theme(legend.position = "none") + ylim( ylimmer )
 
   
-  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('-',anatshow[3],loclev2))+ theme(legend.position = "none")
+  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('-',anatshow[3],loclev2))+ theme(legend.position = "none") + ylim(  ylimmer )
 
   grid.arrange(grobs=glist,ncol=3)
 
