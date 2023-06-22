@@ -2026,3 +2026,40 @@ getExt <- function (fn)
     }
     return(sapply(fn, strip.file.frags))
 }
+
+
+
+
+
+#' Match two vector's distributions based on quantiles 
+#'
+#' @param vecToBeTransformed Input data frame
+#' @param vecReference data frame defining the subtypes and cutpoints
+#' @param quantiles a vector of quantile points to match
+#' @param polynomialOrder integer greater than or equal to one
+#' @param truncate boolean
+#' @return the transformed vector
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' newvec = matchVectorDistributionByQuantiles( mydf[,rbfnames[1]], mydf[,rbfnames[1]] )
+#' @export
+matchVectorDistributionByQuantiles  <- function(
+  vecToBeTransformed,
+  vecReference,
+  quantiles = 1:9/10.0, 
+  polynomialOrder = 1,
+  truncate = TRUE ) {
+    myq1 = quantile( vecToBeTransformed, quantiles, na.rm=T )
+    myq2 = quantile( vecReference, quantiles, na.rm=T )
+    mytd = data.frame( myq2=myq2, myq1=myq1 )
+    mdl = lm( myq2 ~ stats::poly(myq1,polynomialOrder), data=mytd )
+    mynd=data.frame( myq1 = vecToBeTransformed )
+    outvec = predict( mdl, newdata=mynd  )
+    if ( truncate ) {
+      outvec[ outvec < min(vecReference,na.rm=T)]=min(vecReference,na.rm=T)
+      outvec[ outvec > max(vecReference,na.rm=T)]=max(vecReference,na.rm=T)
+    }
+    return( outvec )
+  }

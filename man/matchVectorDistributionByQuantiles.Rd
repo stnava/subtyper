@@ -8,6 +8,7 @@ matchVectorDistributionByQuantiles(
   vecToBeTransformed,
   vecReference,
   quantiles = 1:9/10,
+  polynomialOrder = 1,
   truncate = TRUE
 )
 }
@@ -17,6 +18,8 @@ matchVectorDistributionByQuantiles(
 \item{vecReference}{data frame defining the subtypes and cutpoints}
 
 \item{quantiles}{a vector of quantile points to match}
+
+\item{polynomialOrder}{integer greater than or equal to one}
 
 \item{truncate}{boolean}
 }

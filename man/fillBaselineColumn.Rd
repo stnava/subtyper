@@ -11,7 +11,8 @@ fillBaselineColumn(
   visitID,
   baselineVisitValue,
   baselineExt = "_BL",
-  deltaExt = "_delta"
+  deltaExt = "_delta",
+  fast = TRUE
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ baseline-ness. e.g. \code{isBaseline}}
 \item{baselineExt}{string appended to column name defining the baseline variable}
 
 \item{deltaExt}{string appended to column name defining the change variable}
+
+\item{fast}{boolean; will only return subjects with baseline values}
 }
 \value{
 data frame with new columns
