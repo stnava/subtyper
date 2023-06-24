@@ -2031,10 +2031,10 @@ getExt <- function (fn)
 
 
 
-#' Match two vector's distributions based on quantiles 
+#' Match a pair of vector distributions based on quantiles 
 #'
-#' @param vecToBeTransformed Input data frame
-#' @param vecReference data frame defining the subtypes and cutpoints
+#' @param vecToBeTransformed input vector to be transformed to match the reference
+#' @param vecReference reference vector
 #' @param quantiles a vector of quantile points to match
 #' @param polynomialOrder integer greater than or equal to one
 #' @param truncate boolean
@@ -2062,4 +2062,41 @@ matchVectorDistributionByQuantiles  <- function(
       outvec[ outvec > max(vecReference,na.rm=T)]=max(vecReference,na.rm=T)
     }
     return( outvec )
+  }
+
+
+
+
+
+
+#' quantify by quantiles (quantSquared)
+#' 
+#' transform input vector to a quantile representation relative to a reference. 
+#'
+#' @param vecToBeTransformed Input vector should have same entries as reference;
+#' should be a row of a data frame
+#' @param matrixReferenceDistribution data frame defining the reference data;  
+#' ideally this will not contain missing data. 
+#' @return the quantile transformed vector
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' rbfnames = names(mydf)[grep("Random",names(mydf))]
+#' zz=data.frame(t(colMeans(mydf[,rbfnames])))
+#' newvec = quantSquared( zz, mydf )
+#' newvec2 = quantSquared( mydf[1,rbfnames], mydf )
+#' @export
+quantSquared  <- function(
+  vecToBeTransformed,
+  matrixReferenceDistribution ) {
+    mycnt = colnames( vecToBeTransformed )
+    newvec = rep( NA, length( vecToBeTransformed ) )
+    names(newvec)=mycnt
+    for ( x in mycnt ) {
+      refvec = matrixReferenceDistribution[,x]
+      nna = sum( !is.na( refvec ) )
+      boolvec =  as.numeric(vecToBeTransformed[x]) > as.numeric(refvec)
+      newvec[x] = sum( boolvec , na.rm=TRUE )/ nna
+    }
+    return( newvec )
   }

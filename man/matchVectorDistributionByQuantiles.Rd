@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{matchVectorDistributionByQuantiles}
 \alias{matchVectorDistributionByQuantiles}
-\title{Match two vector's distributions based on quantiles}
+\title{Match a pair of vector distributions based on quantiles}
 \usage{
 matchVectorDistributionByQuantiles(
   vecToBeTransformed,
@@ -13,9 +13,9 @@ matchVectorDistributionByQuantiles(
 )
 }
 \arguments{
-\item{vecToBeTransformed}{Input data frame}
+\item{vecToBeTransformed}{input vector to be transformed to match the reference}
 
-\item{vecReference}{data frame defining the subtypes and cutpoints}
+\item{vecReference}{reference vector}
 
 \item{quantiles}{a vector of quantile points to match}
 
@@ -27,7 +27,7 @@ matchVectorDistributionByQuantiles(
 the transformed vector
 }
 \description{
-Match two vector's distributions based on quantiles
+Match a pair of vector distributions based on quantiles
 }
 \examples{
 mydf = generateSubtyperData( 100 )
