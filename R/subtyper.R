@@ -2100,3 +2100,44 @@ quantSquared  <- function(
     }
     return( newvec )
   }
+
+
+
+#' prplot
+#' 
+#' partial residual regression plot using ggpubr for display 
+#' and visreg for partial residual calculation 
+#'
+#' @param mdl input fitted model
+#' @param xvariable a model term
+#' @param byvariable a model term interacting with the xvariable
+#' @param titlestring string for title
+#' @param ystring string for title
+#' @param addpoints boolean
+#' @return the quantile transformed vector
+#' @author Avants BB
+#' @export
+prplot  <- function(
+  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=TRUE
+   ) {
+  if ( ! missing( byvariable ) ) {
+    vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
+    return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
+                    size=3.45, 
+                    point=addpoints, add='reg.line', conf.int=T,
+                    color=myvoi, facet.by=byvariable,
+                    cor.coef=TRUE ) +  
+                    theme(text = element_text(size=12))+ ylab(ystring) + 
+                    ggtitle( titlestring ) )
+  }
+  if ( missing( byvariable ) ) {
+    vv=visreg::visreg( mdl, xvariable, plot=FALSE)
+    return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
+                    size=3.45, 
+                    point=T, add='reg.line', conf.int=T,
+                    color=myvoi, 
+                    cor.coef=TRUE ) +
+                    theme(text = element_text(size=12))+ ylab(ystring) + 
+                    ggtitle( titlestring ) )
+    }
+  }
