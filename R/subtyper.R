@@ -2113,18 +2113,19 @@ quantSquared  <- function(
 #' @param byvariable a model term interacting with the xvariable
 #' @param titlestring string for title
 #' @param ystring string for title
-#' @param addpoints boolean
+#' @param addpoints continuous value greater than zero
 #' @return the quantile transformed vector
 #' @author Avants BB
 #' @export
 prplot  <- function(
-  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=TRUE
+  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0
    ) {
+  if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
     return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
-                    size=3.45, 
-                    point=addpoints, add='reg.line', conf.int=T,
+                    size=addpoints, 
+                    point=addthepoints, add='reg.line', conf.int=T,
                     color=myvoi, facet.by=byvariable,
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
@@ -2133,8 +2134,8 @@ prplot  <- function(
   if ( missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, plot=FALSE)
     return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
-                    size=3.45, 
-                    point=T, add='reg.line', conf.int=T,
+                    size=addpoints, 
+                    point=addthepoints, add='reg.line', conf.int=T,
                     color=myvoi, 
                     cor.coef=TRUE ) +
                     theme(text = element_text(size=12))+ ylab(ystring) + 
