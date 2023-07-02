@@ -10,7 +10,8 @@ prplot(
   byvariable,
   titlestring = "",
   ystring = "",
-  addpoints = 0
+  addpoints = 0,
+  palette = "npg"
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ prplot(
 \item{ystring}{string for title}
 
 \item{addpoints}{continuous value greater than zero}
+
+\item{palette}{string}
 }
 \value{
 the quantile transformed vector

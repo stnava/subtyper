@@ -2114,17 +2114,18 @@ quantSquared  <- function(
 #' @param titlestring string for title
 #' @param ystring string for title
 #' @param addpoints continuous value greater than zero
+#' @param palette string
 #' @return the quantile transformed vector
 #' @author Avants BB
 #' @export
 prplot  <- function(
-  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0
+  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0, palette='npg'
    ) {
   if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
     return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
-                    size=addpoints, 
+                    size=addpoints, palette=palette,
                     point=addthepoints, add='reg.line', conf.int=T,
                     color=myvoi, facet.by=byvariable,
                     cor.coef=TRUE ) +  
@@ -2136,7 +2137,7 @@ prplot  <- function(
     return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, 
                     point=addthepoints, add='reg.line', conf.int=T,
-                    color=myvoi, 
+                    color=myvoi, palette=palette,
                     cor.coef=TRUE ) +
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) )
