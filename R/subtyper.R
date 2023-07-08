@@ -29,14 +29,14 @@ nrgDateToRDate <- function( x ) {
 #' @return fixed x
 #' @author Avants BB
 #' @export
-mapAsymVar <- function( mydataframe, leftvar, replacer='Asym' ) {
+mapAsymVar <-function( mydataframe, leftvar, replacer='Asym' ) {
   rightvar =  gsub( "left", "right", leftvar )
   hasright = rightvar %in% colnames(mydataframe)
   temp = mydataframe[,leftvar[hasright]] - mydataframe[,rightvar[hasright]]
   temp = temp * sign(temp )
   newnames = gsub("left", replacer,leftvar[hasright])
-  colnames(temp)=newnames
-  return( temp )
+  mydataframe[,newnames]=temp
+  return( mydataframe )
 }
 
 
@@ -2115,19 +2115,21 @@ quantSquared  <- function(
 #' @param ystring string for title
 #' @param addpoints continuous value greater than zero
 #' @param palette string
+#' @param colorvar string
 #' @return the quantile transformed vector
 #' @author Avants BB
 #' @export
 prplot  <- function(
-  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0, palette='npg'
+  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0, palette='npg', colorvar=''
    ) {
+  addthepoints=
   if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
     return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
                     point=addthepoints, add='reg.line', conf.int=T,
-                    color=myvoi, facet.by=byvariable,
+                    color=colorvar, facet.by=byvariable,
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) )
@@ -2137,7 +2139,7 @@ prplot  <- function(
     return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, 
                     point=addthepoints, add='reg.line', conf.int=T,
-                    color=myvoi, palette=palette,
+                    color=colorvar, palette=palette,
                     cor.coef=TRUE ) +
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) )
