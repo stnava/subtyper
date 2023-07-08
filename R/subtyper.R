@@ -54,8 +54,8 @@ mapLRAverageVar <- function( mydataframe, leftvar, replacer='LRAVG' ) {
   hasright = rightvar %in% colnames(mydataframe)
   temp = mydataframe[,leftvar[hasright]] * 0.5 + mydataframe[,rightvar[hasright]] * 0.5
   newnames = gsub("left", replacer,leftvar[hasright])
-  colnames(temp)=newnames
-  return( temp )
+  mydataframe[,newnames]=temp
+  return( mydataframe )
 }
 
 
