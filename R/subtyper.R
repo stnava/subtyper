@@ -2122,7 +2122,7 @@ quantSquared  <- function(
 prplot  <- function(
   mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0, palette='npg', colorvar=''
    ) {
-  addthepoints=
+  addthepoints=FALSE
   if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
