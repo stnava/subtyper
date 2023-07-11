@@ -11,7 +11,8 @@ prplot(
   titlestring = "",
   ystring = "",
   addpoints = 0,
-  palette = "npg"
+  palette = "npg",
+  colorvar = ""
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ prplot(
 \item{addpoints}{continuous value greater than zero}
 
 \item{palette}{string}
+
+\item{colorvar}{string}
 }
 \value{
 the quantile transformed vector

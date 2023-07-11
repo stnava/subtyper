@@ -2126,7 +2126,16 @@ prplot  <- function(
   if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
-    return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
+    if ( class(vv$res[,xvariable] ) %in% c("character","factor") ) {
+      return( ggdotplot(vv$res, x = xvariable, y = 'visregRes', 
+                    size=addpoints, palette=palette,
+                    conf.int=T,
+                    point=addthepoints,
+                    fill=colorvar, facet.by=byvariable,
+                    cor.coef=TRUE ) +  
+                    theme(text = element_text(size=12))+ ylab(ystring) + 
+                    ggtitle( titlestring ) )
+    } else return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
                     point=addthepoints, add='reg.line', conf.int=T,
                     color=colorvar, facet.by=byvariable,
@@ -2136,7 +2145,16 @@ prplot  <- function(
   }
   if ( missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, plot=FALSE)
-    return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
+     if ( class(vv$res[,xvariable] ) %in% c("character","factor") ) {
+      return( ggboxplot(vv$res, x = xvariable, y = 'visregRes', 
+                    size=addpoints, palette=palette,
+                    conf.int=T,
+                    point=addthepoints,
+                    fill=colorvar,
+                    cor.coef=TRUE ) +  
+                    theme(text = element_text(size=12))+ ylab(ystring) + 
+                    ggtitle( titlestring ) )
+    } else return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, 
                     point=addthepoints, add='reg.line', conf.int=T,
                     color=colorvar, palette=palette,
