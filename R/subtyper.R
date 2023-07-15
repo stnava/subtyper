@@ -49,11 +49,11 @@ mapAsymVar <-function( mydataframe, leftvar, replacer='Asym' ) {
 #' @return fixed x
 #' @author Avants BB
 #' @export
-mapLRAverageVar <- function( mydataframe, leftvar, replacer='LRAVG' ) {
-  rightvar =  gsub( "left", "right", leftvar )
+mapLRAverageVar <- function( mydataframe, leftvar, leftname='left',rightname='right', replacer='LRAVG' ) {
+  rightvar =  gsub( leftname, rightname, leftvar )
   hasright = rightvar %in% colnames(mydataframe)
   temp = mydataframe[,leftvar[hasright]] * 0.5 + mydataframe[,rightvar[hasright]] * 0.5
-  newnames = gsub("left", replacer,leftvar[hasright])
+  newnames = gsub(leftname, replacer,leftvar[hasright])
   mydataframe[,newnames]=temp
   return( mydataframe )
 }

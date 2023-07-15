@@ -4,7 +4,13 @@
 \alias{mapLRAverageVar}
 \title{Convert left/right variables to an average measurement}
 \usage{
-mapLRAverageVar(mydataframe, leftvar, replacer = "LRAVG")
+mapLRAverageVar(
+  mydataframe,
+  leftvar,
+  leftname = "left",
+  rightname = "right",
+  replacer = "LRAVG"
+)
 }
 \arguments{
 \item{mydataframe}{dataframe containing relevant variables}
