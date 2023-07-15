@@ -24,17 +24,19 @@ nrgDateToRDate <- function( x ) {
 #' Convert left/right variables to a measure of asymmetry
 #'
 #' @param mydataframe dataframe containing relevant variables
-#' @param leftvar left variable names
+#' @param leftvar left side variable names ie the full names of the variables to asym
+#' @param leftname the variable substring indicating left side
+#' @param rightname the variable substring indicating right side
 #' @param replacer string to replace left with in column names of output
 #' @return fixed x
 #' @author Avants BB
 #' @export
-mapAsymVar <-function( mydataframe, leftvar, replacer='Asym' ) {
-  rightvar =  gsub( "left", "right", leftvar )
+mapAsymVar <-function( mydataframe, leftvar, leftname='left', rightname='right', replacer='Asym' ) {
+  rightvar =  gsub( leftname, rightname, leftvar )
   hasright = rightvar %in% colnames(mydataframe)
   temp = mydataframe[,leftvar[hasright]] - mydataframe[,rightvar[hasright]]
   temp = temp * sign(temp )
-  newnames = gsub("left", replacer,leftvar[hasright])
+  newnames = gsub(leftname, replacer,leftvar[hasright])
   mydataframe[,newnames]=temp
   return( mydataframe )
 }
@@ -44,7 +46,9 @@ mapAsymVar <-function( mydataframe, leftvar, replacer='Asym' ) {
 #' Convert left/right variables to an average measurement
 #'
 #' @param mydataframe dataframe containing relevant variables
-#' @param leftvar left variable names
+#' @param leftvar left side variable names ie the full names of the variables to average
+#' @param leftname the variable substring indicating left side
+#' @param rightname the variable substring indicating right side
 #' @param replacer string to replace left with in column names of output
 #' @return fixed x
 #' @author Avants BB

@@ -15,7 +15,11 @@ mapLRAverageVar(
 \arguments{
 \item{mydataframe}{dataframe containing relevant variables}
 
-\item{leftvar}{left variable names}
+\item{leftvar}{left side variable names ie the full names of the variables to average}
+
+\item{leftname}{the variable substring indicating left side}
+
+\item{rightname}{the variable substring indicating right side}
 
 \item{replacer}{string to replace left with in column names of output}
 }
