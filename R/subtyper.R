@@ -2167,3 +2167,113 @@ prplot  <- function(
                     ggtitle( titlestring ) )
     }
   }
+
+
+
+
+#' mlr3classification
+#' 
+#' cross-validate a mlr3 classification model
+#'
+#' mlr3classification <- function( dfin, tcols, nf, nrepeats=10, partrate=0.80, reportLearner="classif.glmnet", dup_size=0, balancing="smote", verbose=TRUE ) {
+
+#' @param dfin dataframe input
+#' @param tcols columns for the prediction task - first is the target outcome
+#' @param nrepeats number of subsampling-driven train test runs
+#' @param partrate partition ratio for the training 0.8 equals 80 percent train 20 test
+#' @param dup_size integer for over/under/smote sampling
+#' @param balancing string over, under, smote, none are the options
+#' @param verbose boolean
+#' @return dataframe quantifying performance
+#' @author Avants BB
+#' @export
+mlr3classification <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=0, balancing="smote", verbose=TRUE ) {
+    tarzan = tcols[1]
+    if ( ! ( balancing %in% c("none","over","under","smote" ) ) )
+        stop("balancing must be one of none, over, under, smote")
+    if ( sum( table( dfin[,tarzan] ) > 0 ) == 2 ) {
+        twoclass=TRUE 
+        dfin[,tarzan]=as.factor(as.character(dfin[,tarzan]))
+        } else twoclass=FALSE
+    selectviz = subtyper::fs( !is.na( dfin[,tarzan])  )
+    trainppmi = dfin[ selectviz, tcols ]
+    print( table( trainppmi[,tarzan] ))
+    task_penguins_full = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmi)
+    mylcl = myl2$key[ grep("multiclass", myl2$properties)]
+    mylearners =  paste0( "classif.", 
+        c("gbm","glmnet","kknn", 'ranger', 'ksvm',# 'mob',
+        # "lssvm", 
+        "rpart", "xgboost", #"e1071",
+         "randomForest", "fnn",
+        # 'liblinear', 
+        'naive_bayes' ) )
+    if ( twoclass ) mylearners = c( mylearners, 'classif.imbalanced_rfsrc' )
+    if ( verbose ) print( paste("is twoclass",twoclass) )
+    ####################
+    subjdx = data.frame( 
+        id=dfin$PTID[selectviz], 
+        row_ids=1:nrow(trainppmi),
+        truth = dfin[selectviz,tarzan],
+        DX = dfin$pdNeg[selectviz])
+    subjdx = cbind( subjdx, matrix("",nrow=1,ncol=nrepeats))
+    clsdf = data.frame()
+    for ( r in 1:nrepeats ) {
+        if ( verbose ) print(paste("repeat",r))
+        split = mypartition(trainppmi[,tarzan], partrate )
+        trainppmisplit = dfin[ 
+            subtyper::fs( !is.na( dfin[,tarzan]) ), tcols ]
+        task_penguins = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmisplit)
+
+        # SMOTE enriches the minority class with synthetic data
+        if ( balancing == 'smote' )
+        gr_smote =
+            po("colapply", id = "int_to_num",
+                applicator = as.numeric, 
+                affect_columns = selector_type("integer")) %>>%
+            po("smote", dup_size = dup_size) %>>%
+            po("colapply", id = "num_to_int",
+                applicator = function(x) as.integer(round(x, 0L)), 
+                affect_columns = selector_type("numeric"))
+            # enrich minority class by factor (dup_size + 1)
+
+        # oversample majority class (relative to majority class)
+        if ( balancing == 'over' )
+        gr_smote = po("classbalancing",
+            id = "oversample", adjust = "minor",
+            reference = "minor", shuffle = FALSE, ratio = dup_size)
+            # enrich minority class by factor 'ratio'
+
+        if ( balancing == 'under' )
+        gr_smote = po("classbalancing",
+            id = "undersample", adjust = "major",
+            reference = "major", shuffle = FALSE, ratio = 1 / dup_size )
+
+        for ( jj in mylearners ) {
+            if ( verbose ) print(paste("mylearners",jj))
+            learner = lrn( jj )
+            if ( dup_size > 0 & jj != "classif.imbalanced_rfsrc" & 
+                balancing != 'none')
+                learner = as_learner(gr_smote %>>% learner)
+#            if ( jj == 'classif.gbm')
+ #               learner$distribution='adaboost'
+    #        learner$predict_type = "prob"
+            learner$train(task_penguins, split$train)
+            prediction = learner$predict( task_penguins, split$test )
+            if ( jj == reportLearner ) {
+                subjdx[ prediction$row_ids, r + 4 ] = as.character(prediction$response)
+            }
+            prediction$confusion
+            measure = msr("classif.bacc")
+            bacc=prediction$score(measure)
+            measure = msr("classif.acc")
+            acc=prediction$score(measure)
+            n=nrow(clsdf)+1
+            clsdf[n,'mdl']=jj
+            clsdf[n,'bacc']=bacc
+            clsdf[n,'acc']=acc
+            clsdf[n,'r']=r
+            }
+        }
+       
+    return( clsdf )
+}
