@@ -2175,8 +2175,6 @@ prplot  <- function(
 #' 
 #' cross-validate a mlr3 classification model
 #'
-#' mlr3classification <- function( dfin, tcols, nf, nrepeats=10, partrate=0.80, reportLearner="classif.glmnet", dup_size=0, balancing="smote", verbose=TRUE ) {
-
 #' @param dfin dataframe input
 #' @param tcols columns for the prediction task - first is the target outcome
 #' @param nrepeats number of subsampling-driven train test runs
@@ -2259,10 +2257,8 @@ mlr3classification <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_siz
     #        learner$predict_type = "prob"
             learner$train(task_penguins, split$train)
             prediction = learner$predict( task_penguins, split$test )
-            if ( jj == reportLearner ) {
-                subjdx[ prediction$row_ids, r + 4 ] = as.character(prediction$response)
-            }
-            prediction$confusion
+            if ( verbose )
+              print( prediction$confusion )
             measure = msr("classif.bacc")
             bacc=prediction$score(measure)
             measure = msr("classif.acc")
