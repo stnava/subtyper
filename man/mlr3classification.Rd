@@ -35,9 +35,6 @@ dataframe quantifying performance
 \description{
 cross-validate a mlr3 classification model
 }
-\details{
-
-}
 \author{
 Avants BB
 }

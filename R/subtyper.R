@@ -2205,7 +2205,8 @@ mlr3classification <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_siz
          "randomForest", "fnn",
         # 'liblinear', 
         'naive_bayes' ) )
-    if ( twoclass ) mylearners = c( mylearners, 'classif.imbalanced_rfsrc' )
+    twoclassers=c('classif.imbalanced_rfsrc')
+    if ( twoclass ) mylearners = c( mylearners, twoclassers )
     if ( verbose ) print( paste("is twoclass",twoclass) )
     ####################
     subjdx = data.frame( 
