@@ -2169,9 +2169,128 @@ prplot  <- function(
   }
 
 
+#' balanced data partition
+#' 
+#' caret-based data train-test data partition function compatible with mlr3
+#' 
+#' @param x target vector to split to train test
+#' @param perc percentage ( 0 to 1 ) to place in training partition
+#' 
+#' @return vector of strings
+#' @author Avants BB
+#' @export
+dataPartition <- function( x, perc ) {
+    train=caret::createDataPartition( x, p=perc )$Resample1
+    test = c(1:length(x))
+    test = test[ ! ( test %in% train) ]
+    return( list( train=train, test=test ) )
+}
 
 
-#' mlr3classification
+#' mlr3classifiers
+#' 
+#' good classification learners from mlr3 (in my experience)
+#' 
+#' @param twoclass boolean
+#' 
+#' @return vector of strings
+#' @author Avants BB
+#' @export
+mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
+    if ( all ) {
+      myl = list_mlr3learners(select = c("id", "required_packages"))
+      myl = myl[ -grep("RWeka",myl$required_packages), ]
+      myl2 = as.data.table(mlr_learners)
+      myl2 = myl2[ -grep("RWeka",myl2$packages), ]
+      return( myl2 )
+    }
+    mylearners =  paste0( "classif.", 
+        c("gbm","glmnet","kknn", 'ranger', 'ksvm',# 'mob',
+        # "lssvm", 
+        "rpart", "xgboost", #"e1071",
+         "randomForest", "fnn",
+        # 'liblinear', 
+        'naive_bayes' ) )
+    twoclassers=c('classif.imbalanced_rfsrc')
+    if ( twoclass ) mylearners = c( mylearners, twoclassers )
+    return( mylearners )
+}
+
+#' mlr3classifier
+#' 
+#' cross-validate a mlr3 classification model
+#'
+#' @param dfin dataframe input
+#' @param tcols columns for the prediction task - first is the target outcome
+#' @param learnerName which mlr3 learner to instantiate
+#' @param partrate partition ratio for the training 0.8 equals 80 percent train 20 test
+#' @param dup_size integer for over/under/smote sampling
+#' @param balancing string over, under, smote, none are the options
+#' @param verbose boolean
+#' @return dataframe with task, learner, accuracy and balanced accuracy
+#' @author Avants BB
+#' @export
+mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_size=0, balancing="smote", verbose=TRUE ) {
+    tarzan = tcols[1]
+    if ( ! ( balancing %in% c("none","over","under","smote" ) ) )
+        stop("balancing must be one of none, over, under, smote")
+    if ( sum( table( dfin[,tarzan] ) > 0 ) == 2 ) {
+        twoclass=TRUE 
+        dfin[,tarzan]=as.factor(as.character(dfin[,tarzan]))
+        } else twoclass=FALSE
+    selectviz = subtyper::fs( !is.na( dfin[,tarzan])  )
+    trainppmi = dfin[ selectviz, tcols ]
+    task_penguins_full = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmi)
+    subjdx = data.frame( 
+        id=dfin$PTID[selectviz], 
+        row_ids=1:nrow(trainppmi),
+        truth = dfin[selectviz,tarzan],
+        DX = dfin$pdNeg[selectviz])
+    split = dataPartition(trainppmi[,tarzan], partrate )
+    trainppmisplit = dfin[ 
+            subtyper::fs( !is.na( dfin[,tarzan]) ), tcols ]
+    task_penguins = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmisplit)
+
+    # SMOTE enriches the minority class with synthetic data
+    if ( balancing == 'smote' )
+        gr_smote =
+            po("colapply", id = "int_to_num",
+                applicator = as.numeric, 
+                affect_columns = selector_type("integer")) %>>%
+            po("smote", dup_size = dup_size) %>>%
+            po("colapply", id = "num_to_int",
+                applicator = function(x) as.integer(round(x, 0L)), 
+                affect_columns = selector_type("numeric"))
+            # enrich minority class by factor (dup_size + 1)
+
+    # oversample majority class (relative to majority class)
+    if ( balancing == 'over' )
+        gr_smote = po("classbalancing",
+            id = "oversample", adjust = "minor",
+            reference = "minor", shuffle = FALSE, ratio = dup_size)
+            # enrich minority class by factor 'ratio'
+
+    if ( balancing == 'under' )
+        gr_smote = po("classbalancing",
+            id = "undersample", adjust = "major",
+            reference = "major", shuffle = FALSE, ratio = 1 / dup_size )
+
+    jj = learnerName
+    learner = lrn( jj )
+    if ( dup_size > 0 & jj != "classif.imbalanced_rfsrc" & balancing != 'none')
+      learner = as_learner(gr_smote %>>% learner)
+    learner$train(task_penguins, split$train)
+    prediction = learner$predict( task_penguins, split$test )
+    measure = msr("classif.bacc")
+    bacc=prediction$score(measure)
+    measure = msr("classif.acc")
+    acc=prediction$score(measure)
+       
+    return( list( task=task_penguins, split=split, learner=learner, acc=acc, bacc=bacc ) )
+}
+
+
+#' mlr3classifiercv
 #' 
 #' cross-validate a mlr3 classification model
 #'
@@ -2181,11 +2300,12 @@ prplot  <- function(
 #' @param partrate partition ratio for the training 0.8 equals 80 percent train 20 test
 #' @param dup_size integer for over/under/smote sampling
 #' @param balancing string over, under, smote, none are the options
+#' @param mylearners the mlr3 learners over which to search ; defaults to those that support multiclass
 #' @param verbose boolean
 #' @return dataframe quantifying performance
 #' @author Avants BB
 #' @export
-mlr3classification <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=0, balancing="smote", verbose=TRUE ) {
+mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=0, balancing="smote", mylearners = mlr3classifiers(), verbose=TRUE ) {
     tarzan = tcols[1]
     if ( ! ( balancing %in% c("none","over","under","smote" ) ) )
         stop("balancing must be one of none, over, under, smote")
@@ -2197,17 +2317,6 @@ mlr3classification <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_siz
     trainppmi = dfin[ selectviz, tcols ]
     print( table( trainppmi[,tarzan] ))
     task_penguins_full = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmi)
-    mylcl = myl2$key[ grep("multiclass", myl2$properties)]
-    mylearners =  paste0( "classif.", 
-        c("gbm","glmnet","kknn", 'ranger', 'ksvm',# 'mob',
-        # "lssvm", 
-        "rpart", "xgboost", #"e1071",
-         "randomForest", "fnn",
-        # 'liblinear', 
-        'naive_bayes' ) )
-    twoclassers=c('classif.imbalanced_rfsrc')
-    if ( twoclass ) mylearners = c( mylearners, twoclassers )
-    if ( verbose ) print( paste("is twoclass",twoclass) )
     ####################
     subjdx = data.frame( 
         id=dfin$PTID[selectviz], 
@@ -2218,7 +2327,7 @@ mlr3classification <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_siz
     clsdf = data.frame()
     for ( r in 1:nrepeats ) {
         if ( verbose ) print(paste("repeat",r))
-        split = mypartition(trainppmi[,tarzan], partrate )
+        split = dataPartition(trainppmi[,tarzan], partrate )
         trainppmisplit = dfin[ 
             subtyper::fs( !is.na( dfin[,tarzan]) ), tcols ]
         task_penguins = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmisplit)
