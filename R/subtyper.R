@@ -2225,31 +2225,39 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
 #' @param learnerName which mlr3 learner to instantiate
 #' @param partrate partition ratio for the training 0.8 equals 80 percent train 20 test
 #' @param dup_size integer for over/under/smote sampling
-#' @param balancing string over, under, smote, none are the options
+#' @param balancing string over, under, smote, rwo, mwmote, racog, none are the options
 #' @param verbose boolean
 #' @return dataframe with task, learner, accuracy and balanced accuracy
 #' @author Avants BB
 #' @export
 mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_size=0, balancing="smote", verbose=TRUE ) {
     tarzan = tcols[1]
-    if ( ! ( balancing %in% c("none","over","under","smote" ) ) )
-        stop("balancing must be one of none, over, under, smote")
+    library(imbalance)
+    valbal = c("none","over","under","smote", "rwo", "racog", "mwmote" )
+    if ( ! ( balancing %in% valbal ) )
+        stop(paste("balancing must be one of ", paste(valbal, collapse=" / ")))
     if ( sum( table( dfin[,tarzan] ) > 0 ) == 2 ) {
         twoclass=TRUE 
         dfin[,tarzan]=as.factor(as.character(dfin[,tarzan]))
         } else twoclass=FALSE
     selectviz = subtyper::fs( !is.na( dfin[,tarzan])  )
-    trainppmi = dfin[ selectviz, tcols ]
-    task_penguins_full = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmi)
-    subjdx = data.frame( 
-        id=dfin$PTID[selectviz], 
-        row_ids=1:nrow(trainppmi),
-        truth = dfin[selectviz,tarzan],
-        DX = dfin$pdNeg[selectviz])
-    split = dataPartition(trainppmi[,tarzan], partrate )
-    trainppmisplit = dfin[ 
-            subtyper::fs( !is.na( dfin[,tarzan]) ), tcols ]
+    trainppmisplit = dfin[ selectviz, tcols ]
+    split = dataPartition(trainppmisplit[,tarzan], partrate )
     task_penguins = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmisplit)
+
+    if ( balancing %in% c( "rwo", "racog", "mwmote" ) & dup_size > 1 ) {
+      temptbl = table( trainppmisplit[,tarzan] )
+      myinstsize = min( temptbl ) * ( dup_size - 1 )
+      if ( balancing == 'mwmote')
+        balDF = mwmote( dataset = trainppmisplit, numInstances = myinstsize, classAttr = tarzan)
+      if ( balancing == 'rwo')
+        balDF = rwo( dataset = trainppmisplit, numInstances = myinstsize, classAttr = tarzan)
+      if ( balancing == 'racog')
+        balDF = racog( dataset = trainppmisplit, numInstances = myinstsize, classAttr = tarzan)
+      newrownum=(nrow(trainppmisplit)+1)
+      trainppmisplit = rbind( trainppmisplit, balDF )
+      split$train = c( split$train, newrownum:nrow(trainppmisplit) )
+    }
 
     # SMOTE enriches the minority class with synthetic data
     if ( balancing == 'smote' )
@@ -2277,8 +2285,10 @@ mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_siz
 
     jj = learnerName
     learner = lrn( jj )
-    if ( dup_size > 0 & jj != "classif.imbalanced_rfsrc" & balancing != 'none')
-      learner = as_learner(gr_smote %>>% learner)
+    if ( dup_size > 0 & jj != "classif.imbalanced_rfsrc" & 
+      balancing %in% c('smote','over','under') ) {
+        learner = as_learner(gr_smote %>>% learner)
+      } 
     learner$train(task_penguins, split$train)
     prediction = learner$predict( task_penguins, split$test )
     measure = msr("classif.bacc")
@@ -2307,8 +2317,10 @@ mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_siz
 #' @export
 mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=0, balancing="smote", mylearners = mlr3classifiers(), verbose=TRUE ) {
     tarzan = tcols[1]
-    if ( ! ( balancing %in% c("none","over","under","smote" ) ) )
-        stop("balancing must be one of none, over, under, smote")
+    library(imbalance)
+    valbal = c("none","over","under","smote", "rwo", "racog", "mwmote" )
+    if ( ! ( balancing %in% valbal ) )
+        stop(paste("balancing must be one of ", paste(valbal, collapse=" / ")))
     if ( sum( table( dfin[,tarzan] ) > 0 ) == 2 ) {
         twoclass=TRUE 
         dfin[,tarzan]=as.factor(as.character(dfin[,tarzan]))
@@ -2316,20 +2328,26 @@ mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=
     selectviz = subtyper::fs( !is.na( dfin[,tarzan])  )
     trainppmi = dfin[ selectviz, tcols ]
     print( table( trainppmi[,tarzan] ))
-    task_penguins_full = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmi)
-    ####################
-    subjdx = data.frame( 
-        id=dfin$PTID[selectviz], 
-        row_ids=1:nrow(trainppmi),
-        truth = dfin[selectviz,tarzan],
-        DX = dfin$pdNeg[selectviz])
-    subjdx = cbind( subjdx, matrix("",nrow=1,ncol=nrepeats))
     clsdf = data.frame()
     for ( r in 1:nrepeats ) {
         if ( verbose ) print(paste("repeat",r))
         split = dataPartition(trainppmi[,tarzan], partrate )
-        trainppmisplit = dfin[ 
-            subtyper::fs( !is.na( dfin[,tarzan]) ), tcols ]
+        trainppmisplit = trainppmi
+        if ( balancing %in% c( "rwo", "racog", "mwmote" )  ) {
+          temptbl = table( trainppmisplit[,tarzan] )
+          myinstsize = max( temptbl ) - min( temptbl )
+          if ( balancing == 'mwmote')
+            balDF = mwmote( dataset = trainppmisplit[split$train,], numInstances = myinstsize, classAttr = tarzan)
+          if ( balancing == 'rwo')
+            balDF = rwo( dataset = trainppmisplit[split$train,], numInstances = myinstsize, classAttr = tarzan)
+          if ( balancing == 'racog')
+            balDF = racog( dataset = trainppmisplit[split$train,], numInstances = myinstsize, classAttr = tarzan)
+          newrownum=(nrow(trainppmisplit)+1)
+          print( paste("adding",nrow(balDF),"extrapolated data via", balancing) )
+          trainppmisplit = rbind( trainppmisplit, balDF )
+          split$train = c( split$train, newrownum:nrow(trainppmisplit) )
+        }
+
         task_penguins = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmisplit)
 
         # SMOTE enriches the minority class with synthetic data
@@ -2360,11 +2378,8 @@ mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=
             if ( verbose ) print(paste("mylearners",jj))
             learner = lrn( jj )
             if ( dup_size > 0 & jj != "classif.imbalanced_rfsrc" & 
-                balancing != 'none')
+                balancing %in% c('smote','over','under') )
                 learner = as_learner(gr_smote %>>% learner)
-#            if ( jj == 'classif.gbm')
- #               learner$distribution='adaboost'
-    #        learner$predict_type = "prob"
             learner$train(task_penguins, split$train)
             prediction = learner$predict( task_penguins, split$test )
             if ( verbose )

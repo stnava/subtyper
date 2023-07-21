@@ -25,7 +25,7 @@ mlr3classification(
 
 \item{dup_size}{integer for over/under/smote sampling}
 
-\item{balancing}{string over, under, smote, none are the options}
+\item{balancing}{string over, under, smote, rwo, mwmote, racog, none are the options}
 
 \item{verbose}{boolean}
 }
