@@ -4,12 +4,15 @@
 \alias{dataPartition}
 \title{balanced data partition}
 \usage{
-dataPartition(x, perc)
+dataPartition(x, perc, subjectIDs = NULL)
 }
 \arguments{
 \item{x}{target vector to split to train test}
 
 \item{perc}{percentage ( 0 to 1 ) to place in training partition}
+
+\item{subjectIDs}{unique IDs per subject; aids with repeated measurement data
+by ensuring subjects exist in uniquely in either train or test}
 }
 \value{
 vector of strings

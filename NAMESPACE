@@ -3,6 +3,7 @@
 export(adjustByCovariates)
 export(assembleTestRetest)
 export(averageRepeats)
+export(balancedDataframe)
 export(biclusterMatrixFactorization)
 export(dataPartition)
 export(featureImportanceForSubtypes)

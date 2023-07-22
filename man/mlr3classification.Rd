@@ -11,6 +11,7 @@ mlr3classification(
   partrate = 0.8,
   dup_size = 0,
   balancing = "smote",
+  subjectIDs = NULL,
   verbose = TRUE
 )
 }
@@ -26,6 +27,9 @@ mlr3classification(
 \item{dup_size}{integer for over/under/smote sampling}
 
 \item{balancing}{string over, under, smote, rwo, mwmote, racog, none are the options}
+
+\item{subjectIDs}{unique IDs per subject; aids with repeated measurement data
+by ensuring subjects exist in uniquely in either train or test}
 
 \item{verbose}{boolean}
 }

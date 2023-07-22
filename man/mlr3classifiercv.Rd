@@ -12,6 +12,7 @@ mlr3classifiercv(
   dup_size = 0,
   balancing = "smote",
   mylearners = mlr3classifiers(),
+  subjectIDs = NULL,
   verbose = TRUE
 )
 }
@@ -29,6 +30,9 @@ mlr3classifiercv(
 \item{balancing}{string over, under, smote, none are the options}
 
 \item{mylearners}{the mlr3 learners over which to search ; defaults to those that support multiclass}
+
+\item{subjectIDs}{unique IDs per subject; aids with repeated measurement data
+by ensuring subjects exist in uniquely in either train or test}
 
 \item{verbose}{boolean}
 }

@@ -2169,21 +2169,67 @@ prplot  <- function(
   }
 
 
+#' balanced sampling of a variable
+#' 
+#' resample a dataframe to counteract variable imbalance
+#' 
+#' @param x data frame to extend
+#' @param variable column name
+#' @param method one of 
+#' 
+#' @return new data frame
+#' @author Avants BB
+#' @export
+balancedDataframe <- function( x, variable, method ) {
+  library(imbalance)
+    valbal = c("none", "rwo", "racog", "mwmote" )
+    if ( ! ( method %in% valbal ) )
+        stop(paste("method must be one of ", paste(valbal, collapse=" / ")))
+    if ( method == 'none' ) return( x )
+    temptbl = table( x[,variable] )
+    myinstsize = max( temptbl ) - min( temptbl )
+    if ( method == 'mwmote')
+        balDF = mwmote( dataset = x, numInstances = myinstsize, classAttr = variable)
+    if ( method == 'rwo')
+        balDF = rwo( dataset = x, numInstances = myinstsize, classAttr = variable)
+    if ( method == 'racog')
+        balDF = racog( dataset = x, numInstances = myinstsize, classAttr = variable)
+    x = rbind( x, balDF )
+    return(x)
+    }
+
+
 #' balanced data partition
 #' 
 #' caret-based data train-test data partition function compatible with mlr3
 #' 
 #' @param x target vector to split to train test
 #' @param perc percentage ( 0 to 1 ) to place in training partition
+#' @param subjectIDs unique IDs per subject; aids with repeated measurement data
+#' by ensuring subjects exist in uniquely in either train or test
 #' 
 #' @return vector of strings
 #' @author Avants BB
 #' @export
-dataPartition <- function( x, perc ) {
+dataPartition <- function( x, perc, subjectIDs=NULL ) {
+  if ( is.null( subjectIDs ) ) {
     train=caret::createDataPartition( x, p=perc )$Resample1
     test = c(1:length(x))
     test = test[ ! ( test %in% train) ]
     return( list( train=train, test=test ) )
+  } else {
+    if ( class( x ) != 'numeric'  ) {
+      xuse = as.numeric( as.factor(x) )
+    } else xuse = x
+    xdf=data.frame( x=xuse, sid=subjectIDs )
+    xdf=aggregate( x ~ sid, data=xdf, median )
+    train=caret::createDataPartition( xdf$x, p=perc )$Resample1
+    trainIDs = xdf$sid[train]
+    testIDs = xdf$sid[-train]
+    test = which( subjectIDs %in% testIDs )
+    train = which( subjectIDs %in% trainIDs )
+    return( list( train=train, test=test ) )
+  }
 }
 
 
@@ -2226,11 +2272,13 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
 #' @param partrate partition ratio for the training 0.8 equals 80 percent train 20 test
 #' @param dup_size integer for over/under/smote sampling
 #' @param balancing string over, under, smote, rwo, mwmote, racog, none are the options
+#' @param subjectIDs unique IDs per subject; aids with repeated measurement data
+#' by ensuring subjects exist in uniquely in either train or test
 #' @param verbose boolean
 #' @return dataframe with task, learner, accuracy and balanced accuracy
 #' @author Avants BB
 #' @export
-mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_size=0, balancing="smote", verbose=TRUE ) {
+mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_size=0, balancing="smote", subjectIDs=NULL, verbose=TRUE ) {
     tarzan = tcols[1]
     library(imbalance)
     valbal = c("none","over","under","smote", "rwo", "racog", "mwmote" )
@@ -2242,7 +2290,7 @@ mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_siz
         } else twoclass=FALSE
     selectviz = subtyper::fs( !is.na( dfin[,tarzan])  )
     trainppmisplit = dfin[ selectviz, tcols ]
-    split = dataPartition(trainppmisplit[,tarzan], partrate )
+    split = dataPartition(trainppmisplit[,tarzan], partrate, subjectIDs )
     task_penguins = as_task_classif( formula(paste(tarzan, " ~ .")), data = trainppmisplit)
 
     if ( balancing %in% c( "rwo", "racog", "mwmote" ) & dup_size > 1 ) {
@@ -2311,11 +2359,13 @@ mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_siz
 #' @param dup_size integer for over/under/smote sampling
 #' @param balancing string over, under, smote, none are the options
 #' @param mylearners the mlr3 learners over which to search ; defaults to those that support multiclass
+#' @param subjectIDs unique IDs per subject; aids with repeated measurement data
+#' by ensuring subjects exist in uniquely in either train or test
 #' @param verbose boolean
 #' @return dataframe quantifying performance
 #' @author Avants BB
 #' @export
-mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=0, balancing="smote", mylearners = mlr3classifiers(), verbose=TRUE ) {
+mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=0, balancing="smote", mylearners = mlr3classifiers(), subjectIDs=NULL, verbose=TRUE ) {
     tarzan = tcols[1]
     library(imbalance)
     valbal = c("none","over","under","smote", "rwo", "racog", "mwmote" )
@@ -2331,7 +2381,7 @@ mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=
     clsdf = data.frame()
     for ( r in 1:nrepeats ) {
         if ( verbose ) print(paste("repeat",r))
-        split = dataPartition(trainppmi[,tarzan], partrate )
+        split = dataPartition(trainppmi[,tarzan], partrate, subjectIDs )
         trainppmisplit = trainppmi
         if ( balancing %in% c( "rwo", "racog", "mwmote" )  ) {
           temptbl = table( trainppmisplit[,tarzan] )
