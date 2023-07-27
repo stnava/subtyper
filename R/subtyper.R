@@ -805,6 +805,7 @@ fillBaselineColumn <- function(
       }
     inmcols = colnames( bldf ) %in% columnName
     colnames( bldf )[ inmcols ] = newcolname
+    mxdfin = mxdfin[ mxdfin[,subjectID] %in% bldf[,subjectID], ]
     sidfreq = sidfreq[ names(sidfreq) %in% bldf[,subjectID] ]
     sidfreq = sidfreq[ bldf[,subjectID] ]
     rownames(bldf)=bldf[,subjectID]
@@ -816,16 +817,18 @@ fillBaselineColumn <- function(
       print(dim(bldf))
       print(dim(mxdfin))
     }
-    selector = mxdfin[,subjectID] %in% bldf[,subjectID]
     if ( verbose ) {
-      print("selector done")
-      print(table(selector))
-    }
-    if ( verbose )
       print("selection done")
+      print(dim(mxdfin))
+      print(dim(bldf))
+    }
     if ( identical( mxdfin[,subjectID], bldf[,subjectID] ) ) {
       mxdfin[,newcolname]=bldf[,newcolname]
-    } else stop("Subject IDs are not identical")
+    } else {
+      print("Subject IDs are not identical")
+      print(table( mxdfin[,subjectID]!=bldf[,subjectID]  ))
+      stop("Subject IDs are not identical")
+    }
     if ( verbose )
       print("end fill")
 #    filldf = dplyr::bind_rows( mxdfin, bldf, .id=subjectID )
