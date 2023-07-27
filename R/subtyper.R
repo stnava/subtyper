@@ -787,7 +787,7 @@ fillBaselineColumn <- function(
     colnames( bldf )[ inmcols ] = newcolname
     sidfreq = sidfreq[ names(sidfreq) %in% bldf[,subjectID] ]
     sidfreq = sidfreq[ bldf[,subjectID] ]
-    rownames(bldf)=bldf[,subjectID]
+#    rownames(bldf)=bldf[,subjectID]
     bldf = bldf[rep.int( bldf[,subjectID] , as.integer(sidfreq)), ]
     filldf = mxdfin[ mxdfin[,subjectID] %in% bldf[,subjectID], ]
     filldf[,newcolname]=bldf[,newcolname]
