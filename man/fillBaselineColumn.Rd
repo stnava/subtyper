@@ -12,7 +12,8 @@ fillBaselineColumn(
   baselineVisitValue,
   baselineExt = "_BL",
   deltaExt = "_delta",
-  fast = TRUE
+  fast = TRUE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -31,7 +32,10 @@ baseline-ness. e.g. \code{isBaseline}}
 
 \item{deltaExt}{string appended to column name defining the change variable}
 
-\item{fast}{boolean; will only return subjects with baseline values}
+\item{fast}{boolean; will only return subjects with baseline values; if there
+are several baseline entries, these will be averaged. only works with numeric data.}
+
+\item{verbose}{boolean}
 }
 \value{
 data frame with new columns
