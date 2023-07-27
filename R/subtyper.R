@@ -753,6 +753,7 @@ filterForGoodData <- function( dataIn,
 #' @param deltaExt string appended to column name defining the change variable
 #' @param fast boolean; will only return subjects with baseline values; if there 
 #' are several baseline entries, these will be averaged. only works with numeric data.
+#' @param verbose boolean
 #' @return data frame with new columns
 #' @author Avants BB
 #' @examples
@@ -767,7 +768,8 @@ fillBaselineColumn <- function(
    baselineVisitValue,
    baselineExt = "_BL",
    deltaExt = "_delta",
-   fast = TRUE
+   fast = TRUE,
+   verbose=TRUE
 ) {
   if ( ! ( subjectID %in% names( mxdfin ) ) )
     stop("subjectID not in data frame's columns")
@@ -784,23 +786,54 @@ fillBaselineColumn <- function(
     mxdfin = mxdfin[ order( mxdfin[,subjectID] ), ]
     sidfreq = table( mxdfin[,subjectID])
     bldf = mxdfin[ fs(mxdfin[,visitID] == baselineVisitValue),  c(subjectID,columnName) ]
-    if ( max( table( bldf[,subjectID]) ) > 1 ) {
-      bldf = aggregate( as.formula(paste( " . ~ ", subjectID)), data = bldf, FUN=mean )
+    sidtblbl = table( bldf[,subjectID]) 
+    maxbln = max( sidtblbl )
+    if ( maxbln > 1 ) {
+      onlyones = names( sidtblbl )[ sidtblbl == 1 ]
+      morethanones = names( sidtblbl )[ sidtblbl > 1 ]
+      bldf1 = bldf[ bldf[,subjectID] %in% onlyones, ]
+      sel2 = bldf[,subjectID] %in% morethanones
+      if ( verbose )
+        print( paste( "aggregate ", sum(sel2), "subjects with > 1 row ... these subjects have as many as", maxbln, "entries" ) )
+      multisubs=bldf[sel2,subjectID]
+      bldf2 = aggregate( bldf[sel2,c(subjectID,columnName)], list(multisubs), mean)
+      bldf2[,subjectID]=unique( multisubs )
+      bldf = base::rbind( bldf1[,c(subjectID,columnName)], bldf2[,c(subjectID,columnName)] )
+      bldf = bldf[ order( bldf[,subjectID] ), ]
+      if ( verbose )
+        print("aggregation done")
       }
     inmcols = colnames( bldf ) %in% columnName
     colnames( bldf )[ inmcols ] = newcolname
     sidfreq = sidfreq[ names(sidfreq) %in% bldf[,subjectID] ]
     sidfreq = sidfreq[ bldf[,subjectID] ]
     rownames(bldf)=bldf[,subjectID]
+    if ( verbose )
+      print("begin repeat")
     bldf = bldf[rep.int( bldf[,subjectID] , as.integer(sidfreq)), ]
-    filldf = mxdfin[ mxdfin[,subjectID] %in% bldf[,subjectID], ]
-    filldf[,newcolname]=bldf[,newcolname]
+    if ( verbose ) {
+      print("end repeat/begin fill")
+      print(dim(bldf))
+      print(dim(mxdfin))
+    }
+    selector = mxdfin[,subjectID] %in% bldf[,subjectID]
+    if ( verbose ) {
+      print("selector done")
+      print(table(selector))
+    }
+    if ( verbose )
+      print("selection done")
+    if ( identical( mxdfin[,subjectID], bldf[,subjectID] ) ) {
+      mxdfin[,newcolname]=bldf[,newcolname]
+    } else stop("Subject IDs are not identical")
+    if ( verbose )
+      print("end fill")
 #    filldf = dplyr::bind_rows( mxdfin, bldf, .id=subjectID )
 #    filldf = data.table(mxdfin)[bldf, on = subjectID, allow.cartesian=FALSE] # data.table
     if ( ! is.na( deltaExt ) ) {
-      filldf[,newcolnamed] = filldf[,columnName] - filldf[,newcolname]
+      mxdfin[,newcolnamed] = mxdfin[,columnName] - mxdfin[,newcolname]
     }
-    return( list(filldf, newcolname, newcolnamed ) )
+    return( list(mxdfin, newcolname, newcolnamed ) )
   }
   mxdfin[,newcolname]=NA
   mxdfin[,newcolnamed]=NA
