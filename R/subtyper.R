@@ -751,7 +751,8 @@ filterForGoodData <- function( dataIn,
 #' @param baselineVisitValue the value defining baseline e.g. \code{TRUE}
 #' @param baselineExt string appended to column name defining the baseline variable
 #' @param deltaExt string appended to column name defining the change variable
-#' @param fast boolean; will only return subjects with baseline values
+#' @param fast boolean; will only return subjects with baseline values; if there 
+#' are several baseline entries, these will be averaged. only works with numeric data.
 #' @return data frame with new columns
 #' @author Avants BB
 #' @examples
@@ -783,11 +784,14 @@ fillBaselineColumn <- function(
     mxdfin = mxdfin[ order( mxdfin[,subjectID] ), ]
     sidfreq = table( mxdfin[,subjectID])
     bldf = mxdfin[ fs(mxdfin[,visitID] == baselineVisitValue),  c(subjectID,columnName) ]
+    if ( max( table( bldf[,subjectID]) ) > 1 ) {
+      bldf = aggregate( as.formula(paste( " . ~ ", subjectID)), data = bldf, FUN=mean )
+      }
     inmcols = colnames( bldf ) %in% columnName
     colnames( bldf )[ inmcols ] = newcolname
     sidfreq = sidfreq[ names(sidfreq) %in% bldf[,subjectID] ]
     sidfreq = sidfreq[ bldf[,subjectID] ]
-#    rownames(bldf)=bldf[,subjectID]
+    rownames(bldf)=bldf[,subjectID]
     bldf = bldf[rep.int( bldf[,subjectID] , as.integer(sidfreq)), ]
     filldf = mxdfin[ mxdfin[,subjectID] %in% bldf[,subjectID], ]
     filldf[,newcolname]=bldf[,newcolname]
