@@ -11,7 +11,7 @@ balancedDataframe(x, variable, method)
 
 \item{variable}{column name}
 
-\item{method}{one of}
+\item{method}{one of permissible methods listed in function (will print if wrong method passed)}
 }
 \value{
 new data frame

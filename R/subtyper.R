@@ -2215,19 +2215,25 @@ prplot  <- function(
 #' 
 #' @param x data frame to extend
 #' @param variable column name
-#' @param method one of 
+#' @param method one of permissible methods listed in function (will print if wrong method passed)
 #' 
 #' @return new data frame
 #' @author Avants BB
 #' @export
 balancedDataframe <- function( x, variable, method ) {
   library(imbalance)
-    valbal = c("none", "rwo", "racog", "mwmote" )
+    valbal = c("none", "rwo", "racog", "mwmote", "over", "under" )
     if ( ! ( method %in% valbal ) )
         stop(paste("method must be one of ", paste(valbal, collapse=" / ")))
     if ( method == 'none' ) return( x )
     temptbl = table( x[,variable] )
     myinstsize = max( temptbl ) - min( temptbl )
+    if ( method == 'over') {
+        balDF = ModTools::OverSample( x, variable )
+    }
+    if ( method == 'under') {
+        balDF = ModTools::UnderSample( x, variable )
+    }
     if ( method == 'mwmote')
         balDF = mwmote( dataset = x, numInstances = myinstsize, classAttr = variable)
     if ( method == 'rwo')
