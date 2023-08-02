@@ -2229,10 +2229,10 @@ balancedDataframe <- function( x, variable, method ) {
     temptbl = table( x[,variable] )
     myinstsize = max( temptbl ) - min( temptbl )
     if ( method == 'over') {
-        balDF = ModTools::OverSample( x, variable )
+        return( ModTools::OverSample( x, variable ) )
     }
     if ( method == 'under') {
-        balDF = ModTools::UnderSample( x, variable )
+        return( ModTools::UnderSample( x, variable ) )
     }
     if ( method == 'mwmote')
         balDF = mwmote( dataset = x, numInstances = myinstsize, classAttr = variable)
