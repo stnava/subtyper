@@ -2494,3 +2494,36 @@ mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=
        
     return( clsdf )
 }
+
+
+#' dcurvarsel
+#' 
+#' variable selection with CUR - using default parameters from package example
+#'
+#' @param curdf dataframe input
+#' @param variablenames columns for the task
+#' @param fraction scalar between zero and one
+#' @return vector of selected variables
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' vtosel = getNamesFromDataframe("Random",mydf)
+#' vimp = dcurvarsel( mydf, vtosel, 0.5 )
+#' @export
+dcurvarsel <- function( curdf, variablenames, fraction ) {
+  curEnv=environment()
+  library(MASS)
+  library(mclust)
+  library( dCUR )
+  library( dplyr )
+  myk = min(c(20, dim(curdf[,variablenames])))-1
+  loccur = dCUR::CUR
+  environment(loccur) <- curEnv
+  result = loccur( 
+            data=curdf, 
+            variables=variablenames,
+            k=myk, rows = 1, columns = .2, standardize = TRUE,
+            cur_method = "mixture" )
+  return( head( result$leverage_columns_sorted$var_names, 
+    round(length(variablenames)*fraction) ) )
+  }
