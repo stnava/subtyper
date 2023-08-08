@@ -2519,11 +2519,13 @@ dcurvarsel <- function( curdf, variablenames, fraction ) {
   myk = min(c(20, dim(curdf[,variablenames])))-1
   loccur = dCUR::CUR
   environment(loccur) <- curEnv
+  pdf(file="/dev/null")
   result = loccur( 
-            data=curdf, 
-            variables=variablenames,
-            k=myk, rows = 1, columns = .2, standardize = TRUE,
-            cur_method = "mixture" )
+              data=curdf, 
+              variables=variablenames,
+              k=myk, rows = 1, columns = .2, standardize = TRUE,
+              cur_method = "mixture" )
+  temp=capture.output(dev.off())
   return( head( result$leverage_columns_sorted$var_names, 
     round(length(variablenames)*fraction) ) )
   }
