@@ -783,6 +783,7 @@ fillBaselineColumn <- function(
   newcolnamed = paste0( columnName, deltaExt )
   if ( fast ) { # use columnful merge (was use_data.table)
     # get the sid freq
+    mxdfin[,subjectID]=as.character(mxdfin[,subjectID])
     mxdfin = mxdfin[ order( mxdfin[,subjectID] ), ]
     sidfreq = table( mxdfin[,subjectID])
     bldf = mxdfin[ fs(mxdfin[,visitID] == baselineVisitValue),  c(subjectID,columnName) ]
@@ -807,10 +808,12 @@ fillBaselineColumn <- function(
     colnames( bldf )[ inmcols ] = newcolname
     mxdfin = mxdfin[ mxdfin[,subjectID] %in% bldf[,subjectID], ]
     sidfreq = sidfreq[ names(sidfreq) %in% bldf[,subjectID] ]
-    sidfreq = sidfreq[ bldf[,subjectID] ]
+    sidfreq = sidfreq[ as.character(bldf[,subjectID]) ]
     rownames(bldf)=bldf[,subjectID]
-    if ( verbose )
-      print("begin repeat")
+    if ( verbose ) {
+      print( "begin repeat")
+      print( as.integer(sidfreq) )
+    }
     bldf = bldf[rep.int( bldf[,subjectID] , as.integer(sidfreq)), ]
     if ( verbose ) {
       print("end repeat/begin fill")
@@ -822,10 +825,12 @@ fillBaselineColumn <- function(
       print(dim(mxdfin))
       print(dim(bldf))
     }
-    if ( identical( mxdfin[,subjectID], bldf[,subjectID] ) ) {
+    if ( identical( as.character(mxdfin[,subjectID]), as.character(bldf[,subjectID]) ) ) {
       mxdfin[,newcolname]=bldf[,newcolname]
     } else {
       print("Subject IDs are not identical")
+      print(head(mxdfin[,subjectID]))
+      print(head(bldf[,subjectID]))
       print(table( mxdfin[,subjectID]!=bldf[,subjectID]  ))
       stop("Subject IDs are not identical")
     }
