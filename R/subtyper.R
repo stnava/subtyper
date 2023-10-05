@@ -260,6 +260,10 @@ plotSubtypeChange <-function( mxdfin,
                            ylab = ''
                           )
     {
+      stopifnot( idvar %in% colnames(mxdfin) )
+      stopifnot( measurement %in% colnames(mxdfin) )
+      stopifnot( subtype %in% colnames(mxdfin) )
+      stopifnot( vizname %in% colnames(mxdfin) )
 
       if ( ! all( whiskervar %in% c("ci","se") ) )
         stop("Must choose ci or se as a string for whiskervar")
@@ -1102,7 +1106,7 @@ trainSubtypeClusterMulti  <- function(
 ) {
 
   ktypes = c( "kmeans", 'kmeansflex', "GMM", "mclust", "pamCluster", 
-    "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr",
+    "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr", "cckmeans",
     "hardcl","neuralgas", "hierarchicalCluster", "jaccard", mlr_learners$keys("clust") )
 
   if ( ! (method %in% ktypes ) ) {
@@ -1237,7 +1241,7 @@ trainSubtypeClusterMulti  <- function(
   if ( method == "FuzzyCluster" ) return( FuzzyCluster(subdf,desiredk) )
   flexmeth = c("kmeansflex", "flexkmeans", "kmedians", 
     "angle", "jaccard", "ejaccard","bootclust",
-    "hardcl","neuralgas", "flexcorr")
+    "hardcl","neuralgas", "flexcorr","cckmeans")
   if ( method %in% flexmeth ) {
     initk = ClusterR::KMeans_rcpp(subdf,
         clusters = desiredk, num_init = 5, max_iters = 100,
@@ -1251,9 +1255,12 @@ trainSubtypeClusterMulti  <- function(
         family = ejacFam )
       return( mycl )
     }
-    if ( method %in% c("hardcl","neuralgas"))
-      return( 
-        cclust(subdf, k=initk, weights=flexweights, group=flexgroup ) )
+    if ( method %in% c("hardcl","neuralgas","cckmeans"))
+      if ( method == 'cckmeans' ) {
+        return(
+          cclust(subdf, k=initk, weights=flexweights, group=flexgroup, method='kmeans' ) )
+      } else return(
+        cclust(subdf, k=initk, weights=flexweights, group=flexgroup, method=method ) )
     if ( method == "bootclust ")
       return( 
         bootFlexclust(subdf, k=2:desiredk, nboot=100, FUN=cclust) )
