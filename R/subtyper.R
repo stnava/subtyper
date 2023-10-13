@@ -1105,7 +1105,8 @@ trainSubtypeClusterMulti  <- function(
   groupFun = NULL
 ) {
 
-  ktypes = c( "kmeans", 'kmeansflex', "GMM", "mclust", "pamCluster", 
+  clustermeth = c("clara","fanny","pam")
+  ktypes = c( clustermeth, "kmeans", 'kmeansflex', "GMM", "mclust", "pamCluster", 
     "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr", "cckmeans",
     "hardcl","neuralgas", "hierarchicalCluster", "jaccard", mlr_learners$keys("clust") )
 
@@ -1128,16 +1129,21 @@ trainSubtypeClusterMulti  <- function(
     subdf = mxdfin[ , measureColumns ]
     group=NA
   }
-  subdf = data.matrix( subdf )
 
   if ( ismlr3 ) {
     task = as_task_clust(subdf)
     learner = mlr_learners$get(method)
-    learner$param_set$values = list(centers = 3L)
+    myparams = learner$param_set$ids()
+    plist = list()
+    if ( "k" %in% myparams  ) plist[["k"]]=desiredk
+    if ( "num_clusters" %in% myparams  ) plist[["num_clusters"]]=desiredk
+    if ( "centers" %in% myparams  ) plist[["centers"]]=desiredk
+    learner$param_set$values = plist
     myp = learner$train(task)
     predict(myp,newdata=subdf)
     return( myp )
   }
+  subdf = data.matrix( subdf )
 
   if ( method == "GMM" ) {
     if ( missing( desiredk ) ) {
@@ -1242,6 +1248,11 @@ trainSubtypeClusterMulti  <- function(
   flexmeth = c("kmeansflex", "flexkmeans", "kmedians", 
     "angle", "jaccard", "ejaccard","bootclust",
     "hardcl","neuralgas", "flexcorr","cckmeans")
+  if ( method %in% clustermeth ) {
+    if ( method == "clara" ) return( clara(subdf, desiredk ))
+    if ( method == "fanny" ) return( fanny(subdf, desiredk ))
+    if ( method == "pam" ) return( pam(subdf, desiredk ))
+  }
   if ( method %in% flexmeth ) {
     initk = ClusterR::KMeans_rcpp(subdf,
         clusters = desiredk, num_init = 5, max_iters = 100,
@@ -1321,6 +1332,11 @@ predictSubtypeClusterMulti  <- function(
     myclustclass=c(myclustclass,'other')
   subdf = mxdfin[ , measureColumns ]
   subdf = data.matrix( subdf )
+  clustermeth = c("clara","fanny","pam")
+  if ( myclustclass[1] %in% clustermeth ) {
+    stop(paste("Prediction is not defined for ",myclustclass[1]))
+  }
+
   if ( myclustclass[2] == "Gaussian Mixture Models" ) {
     pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
       clusteringObject$covariance_matrices, clusteringObject$weights )
@@ -1384,6 +1400,10 @@ predictSubtypeClusterMulti  <- function(
   } else if ( myclustclass[1] %in% c("FuzzyCluster","pamCluster","EMCluster","hierarchicalCluster","nmfCluster") ) {
     mypr = predict( clusteringObject, newdata=subdf )
     cluster_labels = mypr$classification
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+  } else if ( length(grep("Learner",myclustclass[1]))==1  ) {
+    cluster_labels = predict( clusteringObject, newdata=data.frame(subdf) )
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else stop("Unknown class of clustering object.")
