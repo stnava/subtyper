@@ -1107,7 +1107,7 @@ trainSubtypeClusterMulti  <- function(
 
   clustermeth = c("clara","fanny","pam")
   ktypes = c( clustermeth, "kmeans", 'kmeansflex', "GMM", "mclust", "pamCluster", 
-    "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr", "cckmeans",
+    "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr", "cckmeans", "VarSelCluster",
     "hardcl","neuralgas", "hierarchicalCluster", "jaccard", mlr_learners$keys("clust") )
 
   if ( ! (method %in% ktypes ) ) {
@@ -1206,6 +1206,10 @@ trainSubtypeClusterMulti  <- function(
         initializer = 'optimal_init', verbose = F, fuzzy=TRUE)
     return( km_rc )
   }
+  if ( method == "VarSelCluster" ) { 
+    # res_with <- VarSelCluster(x, 2, nbcores = 2, initModel=40, crit.varsel = "BIC")
+    return( VarSelLCM::VarSelCluster(  subdf, desiredk, nbcores = 4, initModel=50, crit.varsel = "BIC" ) )
+  }
   if ( method == "mclust" ) { 
     return( mclust::Mclust(  subdf, desiredk ) )
   }
@@ -1294,6 +1298,33 @@ trainSubtypeClusterMulti  <- function(
 
 
 
+#' Bug fix to predict function in the VarSelLCM package
+#'
+#' @export
+VarSelLCMproba.post <- function(object, newdata){
+
+  logprob <- matrix(object@param@pi, nrow(newdata), object@model@g, byrow=TRUE)
+  for (nom in colnames(newdata)){
+    xnotna <- newdata[,which(colnames(newdata)==nom)]
+    where <- which(!is.na(xnotna))
+    xnotna <- xnotna[where]
+    if (nom %in% rownames(object@param@paramContinuous@mu)){
+      who <- which(nom == rownames(object@param@paramContinuous@mu))
+      for (k in 1:object@model@g) logprob[where,k] <- logprob[where,k] + dnorm(xnotna, object@param@paramContinuous@mu[who,k], object@param@paramContinuous@sd[who,k], log=TRUE)
+    }else if (nom %in% rownames(object@param@paramInteger@lambda)){
+      who <- which(nom == rownames(object@param@paramInteger@lambda))
+      for (k in 1:object@model@g) logprob[where,k] <- logprob[where,k] + dpois(xnotna, object@param@paramInteger@lambda[who,k], log=TRUE)
+    }else if (nom %in% names(object@param@paramCategorical@alpha))
+      who <- which(nom ==  names(object@param@paramCategorical@alpha))
+      if ( length(object@param@paramCategorical@alpha ) > 0 )
+        for (k in 1:object@model@g){
+          for (h in 1:ncol(object@param@paramCategorical@alpha[[who]]))
+            logprob[where,k] <- logprob[where,k] + log(object@param@paramCategorical@alpha[[who]][k,h] ** (xnotna == colnames(object@param@paramCategorical@alpha[[who]])[h]))
+      }
+  }
+  prob <- exp(logprob - apply(logprob, 1, max))
+  prob/rowSums(prob)
+}
 
 #' Predict subtype from multivariate data
 #'
@@ -1336,8 +1367,16 @@ predictSubtypeClusterMulti  <- function(
   if ( myclustclass[1] %in% clustermeth ) {
     stop(paste("Prediction is not defined for ",myclustclass[1]))
   }
-
-  if ( myclustclass[2] == "Gaussian Mixture Models" ) {
+  if ( myclustclass[1] == "VSLCMresults" ) {
+    knownnames = clusteringObject@data@var.names
+    mypred = VarSelLCMproba.post( clusteringObject, subdf )
+    classesare = apply( mypred, which.max, MARGIN=1 )
+    mxdfin = cbind( mxdfin, factor( paste0(clustername,classesare ) ))
+    colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
+    cluster_memberships = data.frame(mypred)
+    colnames(cluster_memberships) = paste0(clustername,"_mem_",1:desiredk)
+    mxdfin = cbind( mxdfin, cluster_memberships ) 
+  } else if ( myclustclass[2] == "Gaussian Mixture Models" ) {
     pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
       clusteringObject$covariance_matrices, clusteringObject$weights )
     mxdfin = cbind( mxdfin, factor( paste0(clustername,pr$cluster_labels ) ))
@@ -1407,6 +1446,7 @@ predictSubtypeClusterMulti  <- function(
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else stop("Unknown class of clustering object.")
+
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
 
@@ -1424,7 +1464,6 @@ predictSubtypeClusterMulti  <- function(
       mxdfin[usel,clustername] = mostcommon
     }
   }
-
   return( data.frame( mxdfin ) )
 }
 
@@ -1451,6 +1490,7 @@ predictSubtypeClusterMulti  <- function(
 #' @importFrom fpc pamk
 #' @importFrom flexclust kccaFamily kcca bootFlexclust cclust
 #' @importFrom Evacluster pamCluster nmfCluster kmeansCluster hierarchicalCluster FuzzyCluster EMCluster 
+#' @importFrom VarSelLCM VarSelCluster 
 #' @importFrom Evacluster predict.pamCluster predict.nmfCluster predict.kmeansCluster predict.hierarchicalCluster predict.FuzzyCluster predict.EMCluster 
 #' @export
 biclusterMatrixFactorization  <- function(

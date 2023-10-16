@@ -42,7 +42,8 @@ Imports:
   magrittr,
   fastICA,
   pgenlibr,
-  grDevices
+  grDevices,
+  VarSelLCM
 Suggests:
     covr,
     knitr,
