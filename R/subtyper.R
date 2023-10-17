@@ -1107,7 +1107,7 @@ trainSubtypeClusterMulti  <- function(
 
   clustermeth = c("clara","fanny","pam")
   ktypes = c( clustermeth, "kmeans", 'kmeansflex', "GMM", "mclust", "pamCluster", 
-    "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr", "cckmeans", "VarSelCluster",
+    "kmeansflex","kmedians",  "angle",  "ejaccard", "flexcorr","flexcanb","flexmink", "cckmeans", "VarSelCluster",
     "hardcl","neuralgas", "hierarchicalCluster", "jaccard", mlr_learners$keys("clust") )
 
   if ( ! (method %in% ktypes ) ) {
@@ -1208,7 +1208,7 @@ trainSubtypeClusterMulti  <- function(
   }
   if ( method == "VarSelCluster" ) { 
     # res_with <- VarSelCluster(x, 2, nbcores = 2, initModel=40, crit.varsel = "BIC")
-    return( VarSelLCM::VarSelCluster(  subdf, desiredk, nbcores = 4, initModel=50, crit.varsel = "BIC" ) )
+    return( VarSelLCM::VarSelCluster(  subdf, desiredk, nbcores = 4, initModel=50, crit.varsel = "AIC", vbleSelec=FALSE ) )
   }
   if ( method == "mclust" ) { 
     return( mclust::Mclust(  subdf, desiredk ) )
@@ -1251,7 +1251,7 @@ trainSubtypeClusterMulti  <- function(
   if ( method == "FuzzyCluster" ) return( FuzzyCluster(subdf,desiredk) )
   flexmeth = c("kmeansflex", "flexkmeans", "kmedians", 
     "angle", "jaccard", "ejaccard","bootclust",
-    "hardcl","neuralgas", "flexcorr","cckmeans")
+    "hardcl","neuralgas", "flexcorr","cckmeans",'flexmink','flexcanb')
   if ( method %in% clustermeth ) {
     if ( method == "clara" ) return( clara(subdf, desiredk ))
     if ( method == "fanny" ) return( fanny(subdf, desiredk ))
@@ -1261,8 +1261,10 @@ trainSubtypeClusterMulti  <- function(
     initk = ClusterR::KMeans_rcpp(subdf,
         clusters = desiredk, num_init = 5, max_iters = 100,
         initializer = 'optimal_init', verbose = F, fuzzy=TRUE)$clusters
-    if ( method == 'flexcorr') {
-      ejacFam <- flexclust::kccaFamily(dist=distCor,cent=centMean)
+    if ( method %in% c('flexcorr','flexcanb','flexmink' ) ) {
+      if ( method == 'flexcorr' ) ejacFam <- flexclust::kccaFamily(dist=distCor,cent=centMean)
+      if ( method == 'flexcanb' ) ejacFam <- flexclust::kccaFamily(dist=distCanberra,cent=centMean)
+      if ( method == 'flexmink' ) ejacFam <- flexclust::kccaFamily(dist=distMinkowski,cent=centMean)
       mycl = flexclust::kcca(
           subdf,
           k = initk,
@@ -1488,7 +1490,7 @@ predictSubtypeClusterMulti  <- function(
 #' @importFrom fastICA fastICA
 #' @importFrom mclust Mclust predict.Mclust mclustBIC
 #' @importFrom fpc pamk
-#' @importFrom flexclust kccaFamily kcca bootFlexclust cclust
+#' @importFrom flexclust kccaFamily kcca bootFlexclust cclust distCor centMean centAngle centMedian centOptim distJaccard distCanberra distAngle distEuclidean distManhattan distMax distMinkowski
 #' @importFrom Evacluster pamCluster nmfCluster kmeansCluster hierarchicalCluster FuzzyCluster EMCluster 
 #' @importFrom VarSelLCM VarSelCluster 
 #' @importFrom Evacluster predict.pamCluster predict.nmfCluster predict.kmeansCluster predict.hierarchicalCluster predict.FuzzyCluster predict.EMCluster 
