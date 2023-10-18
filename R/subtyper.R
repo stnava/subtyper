@@ -1328,6 +1328,21 @@ VarSelLCMproba.post <- function(object, newdata){
   prob/rowSums(prob)
 }
 
+#' Reorder a subtype variable based on an external reference vector
+#'
+#' @param mxdfin Input data frame
+#' @param clustername column name for the identified clusters
+#' @param reorderingVariable reorder the cluster names based on this variable
+#' @return the new dataframe and (if present) membership variables
+#' @author Avants BB
+#' @export
+reorderingDataframe <- function( mxdfin, clustername, reorderingVariable ) {
+  xdf=aggregate( mxdfin[,reorderingVariable], list(mxdfin[,clustername]), mean, na.rm=TRUE )
+  names(xdf)=c('originalname', reorderingVariable)
+  xdf['newname']=xdf[order(xdf[,reorderingVariable],decreasing=FALSE),'originalname']
+  return(xdf)
+}
+
 #' Predict subtype from multivariate data
 #'
 #' This is the inference module for subtype definition based on a matrix.
@@ -1341,7 +1356,7 @@ VarSelLCMproba.post <- function(object, newdata){
 #' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
-#' @param reorderingVariable reorder the cluster names based on this variable (lower to higher)
+#' @param reorderingDataframe reorder the cluster names based on this dataframe mapping of original to new variable names
 #' @param distance_metric see medoid methods in ClusterR
 #' @return the clusters attached to the data frame; also returns membership probabilities
 #' @author Avants BB
@@ -1359,7 +1374,7 @@ predictSubtypeClusterMulti  <- function(
   idvar,
   visitName,
   baselineVisit,
-  reorderingVariable,
+  reorderingDataframe,
   distance_metric = 'pearson_correlation'
 ) {
   myclustclass = class(clusteringObject)
@@ -1451,22 +1466,12 @@ predictSubtypeClusterMulti  <- function(
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else stop("Unknown class of clustering object.")
 
-
-  if ( ! missing( reorderingVariable ) ) {
+  if ( ! missing( reorderingDataframe ) ) {
     # identify the mean value of the reo variable per class
-    reomeans = aggregate( as.numeric(mxdfin[,reorderingVariable]), 
-      by=list(mxdfin[,clustername]), FUN=mean, na.rm=T )
-    reordering = order(as.numeric(reomeans$x))
-    reomeansfix = reomeans[reordering,]
-    newclustername = rep(NA,nrow(mxdfin))
-    for ( zz in 1:nrow(reomeans) ) {
-#      print( paste("Map", reomeans[zz,'Group.1'], "to", reomeansfix[zz,'Group.1'],reomeansfix[zz,'x']  ))
-      newclustername[  mxdfin[,clustername] == reomeansfix[zz,'Group.1'] ]=reomeans[zz,'Group.1']
+    for ( zz in 1:nrow(reorderingDataframe) ) {
+      newclustername[  mxdfin[,clustername] == reorderingDataframe[zz,'originalname'] ]=reorderingDataframe[zz,'newname']
     }
-#    reomeansfix = aggregate( as.numeric(mxdfin[,reorderingVariable]), 
-#      by=list(newclustername), FUN=mean, na.rm=T )
     mxdfin[,clustername]=newclustername
-#    mxdfin[,clustername]=factor(newclustername,levels=reomeans[zz,'newnames'])
   }
 
   if ( missing( visitName ) | missing( baselineVisit ) )

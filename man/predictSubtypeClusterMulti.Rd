@@ -12,7 +12,7 @@ predictSubtypeClusterMulti(
   idvar,
   visitName,
   baselineVisit,
-  reorderingVariable,
+  reorderingDataframe,
   distance_metric = "pearson_correlation"
 )
 }
@@ -31,7 +31,7 @@ predictSubtypeClusterMulti(
 
 \item{baselineVisit}{the string naming the baseline visit}
 
-\item{reorderingVariable}{reorder the cluster names based on this variable (lower to higher)}
+\item{reorderingDataframe}{reorder the cluster names based on this dataframe mapping of original to new variable names}
 
 \item{distance_metric}{see medoid methods in ClusterR}
 }
