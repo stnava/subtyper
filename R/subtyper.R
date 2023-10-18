@@ -1471,6 +1471,7 @@ predictSubtypeClusterMulti  <- function(
 
   if ( ! missing( reorderingDataframe ) ) {
     # identify the mean value of the reo variable per class
+    newclustername = rep(NA,nrow(mxdfin))
     for ( zz in 1:nrow(reorderingDataframe) ) {
       newclustername[  as.character(mxdfin[,clustername]) == as.character(reorderingDataframe[zz,'originalname']) ]=reorderingDataframe[zz,'newname']
     }
@@ -1478,6 +1479,7 @@ predictSubtypeClusterMulti  <- function(
 #    mxdfin[,clustername]=factor(as.character(newclustername),levels=newclustername)
     mxdfin[,clustername]=newclustername
   }
+
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
 
