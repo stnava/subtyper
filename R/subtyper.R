@@ -1618,15 +1618,22 @@ featureImportanceForSubtypes <- function(
   if ( associationType[1] == "features2subtypes" ) {
     # converts cluster labels to one-hot coding
     for ( j in 1:mync ) {
-      c1reg = glm( factor( clustmat[,j]) ~ data.matrix(featureMatrix), family='binomial' )
-      mycoffs = coefficients(summary(c1reg))
-      sigthresh = rep( 0, ncol(featureMatrix))
-      sigthresh[ mycoffs[-1,"Pr(>|z|)"] <= significance_level ] = 1
-      myz = mycoffs[-1,"z value"]
-      if ( transform == 'effect_sizes' ) 
+      # return( list(clustmat,featureMatrix))
+      mygt = gt( clustmat[,j],data.matrix(featureMatrix), 
+        perm=round(1.0/significance_level), standardize=TRUE, model='logistic' )
+      mycov = covariates( mygt, what="z-score", zoom=TRUE, cluster=FALSE )
+      mycov = extract( mycov )
+      mycoffs = data.frame( cbind( mycov@result, mycov@extra ) )
+      mycoffssub=mycoffs[ mycoffs$direction == "assoc. with clustmat[, j] = 1" & 
+        mycoffs$holm <= 0.05, ]
+      myz = mycoffs[,"Statistic"]
+      myzsub = mycoffssub[,"Statistic"]
+      if ( transform == 'effect_sizes' ) {
         myz = as.numeric( effectsize::z_to_d( myz, nrow(featureMatrix) ) )
-      clustzdescribe[j,]=myz
-      clustsigdescribe[j,]=myz * sigthresh
+        myzsub = as.numeric( effectsize::z_to_d( myzsub, nrow(featureMatrix) ) )
+        }
+      clustzdescribe[j,rownames(mycoffs)]=myz
+      clustsigdescribe[j,rownames(mycoffssub)]=myzsub
     }
     if ( visualize ) pheatmap::pheatmap(abs(clustzdescribe),cluster_rows=F,cluster_cols=F)
     # get the max for each column
@@ -1756,6 +1763,7 @@ regressionBasedFeatureSelection <- function(
 #' hierarchicalSubtypePlots( qdf, "cognition", c("DX", "subtype" ),
 #'  "Id", "visit", outputPrefix='/tmp/X' )
 #' }
+#' @importFrom globaltest gt covariates
 #' @importFrom ggstatsplot ggbetweenstats
 #' @importFrom wesanderson wes_palette wes_palettes
 #' @importFrom ggthemes theme_tufte
