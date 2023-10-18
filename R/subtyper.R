@@ -1338,7 +1338,7 @@ VarSelLCMproba.post <- function(object, newdata){
 #' @export
 reorderingDataframe <- function( mxdfin, clustername, reorderingVariable ) {
   xdf=aggregate( mxdfin[,reorderingVariable], list(mxdfin[,clustername]), mean, na.rm=TRUE )
-  names(xdf)=c('originalname', reorderingVariable)
+  names(xdf)[1]=c('originalname')
   neword = order(xdf[,reorderingVariable],decreasing=FALSE)
   newname = as.character( xdf[neword,'originalname'] )
 #  newname = paste0( clustername, neword )
@@ -1474,7 +1474,6 @@ predictSubtypeClusterMulti  <- function(
   if ( ! missing( reorderingDataframe ) ) {
     # identify the mean value of the reo variable per class
     for ( zz in 1:nrow(reorderingDataframe) ) {
-#      print(paste("old",reorderingDataframe[zz,'originalname'],"new",reorderingDataframe[zz,'newname']))
       newclustername[  as.character(mxdfin[,clustername]) == as.character(reorderingDataframe[zz,'originalname']) ]=reorderingDataframe[zz,'newname']
     }
     mxdfin[,clustername]=as.character(mxdfin[,clustername])
