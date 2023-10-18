@@ -1454,13 +1454,19 @@ predictSubtypeClusterMulti  <- function(
 
   if ( ! missing( reorderingVariable ) ) {
     # identify the mean value of the reo variable per class
-    reomeans = aggregate( mxdfin[,reorderingVariable], 
+    reomeans = aggregate( as.numeric(mxdfin[,reorderingVariable]), 
       by=list(mxdfin[,clustername]), FUN=mean, na.rm=T )
-    reomeans[,'newnames']=reomeans[order(reomeans$x),'Group.1']
+    reordering = order(as.numeric(reomeans$x))
+    reomeansfix = reomeans[reordering,]
     newclustername = rep(NA,nrow(mxdfin))
-    for ( zz in 1:nrow(reomeans))
-      newclustername[  mxdfin[,clustername] == reomeans[zz,'Group.1'] ]=reomeans[zz,'newnames']
-    mxdfin[,clustername]=factor(newclustername,levels=reomeans[zz,'newnames'])
+    for ( zz in 1:nrow(reomeans) ) {
+#      print( paste("Map", reomeans[zz,'Group.1'], "to", reomeansfix[zz,'Group.1'],reomeansfix[zz,'x']  ))
+      newclustername[  mxdfin[,clustername] == reomeansfix[zz,'Group.1'] ]=reomeans[zz,'Group.1']
+    }
+#    reomeansfix = aggregate( as.numeric(mxdfin[,reorderingVariable]), 
+#      by=list(newclustername), FUN=mean, na.rm=T )
+    mxdfin[,clustername]=newclustername
+#    mxdfin[,clustername]=factor(newclustername,levels=reomeans[zz,'newnames'])
   }
 
   if ( missing( visitName ) | missing( baselineVisit ) )
