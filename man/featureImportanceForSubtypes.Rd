@@ -8,7 +8,7 @@ featureImportanceForSubtypes(
   dataframein,
   subtypeLabels,
   featureMatrix,
-  associationType = c("features2subtypes", "subtypes2features"),
+  associationType = c("features2subtypes", "subtypes2features", "subjects"),
   covariates = "1",
   transform = "effect_sizes",
   significance_level = 0.001,
@@ -24,7 +24,9 @@ featureImportanceForSubtypes(
 
 \item{associationType}{either predictor features from subtypes or predict
 subtypes from features.  will produce related but complementary results. in
-some cases, depending on subtypes/degrees of freedom, only one will work.}
+some cases, depending on subtypes/degrees of freedom, only one will be appropriate.
+the third option (subjects) reports rownames of the dataframe that best fit the
+related subtype.}
 
 \item{covariates}{optional string of covariates}
 

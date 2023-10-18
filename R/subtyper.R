@@ -1341,6 +1341,7 @@ VarSelLCMproba.post <- function(object, newdata){
 #' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
+#' @param reorderingVariable reorder the cluster names based on this variable (lower to higher)
 #' @param distance_metric see medoid methods in ClusterR
 #' @return the clusters attached to the data frame; also returns membership probabilities
 #' @author Avants BB
@@ -1358,6 +1359,7 @@ predictSubtypeClusterMulti  <- function(
   idvar,
   visitName,
   baselineVisit,
+  reorderingVariable,
   distance_metric = 'pearson_correlation'
 ) {
   myclustclass = class(clusteringObject)
@@ -1448,6 +1450,18 @@ predictSubtypeClusterMulti  <- function(
     mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else stop("Unknown class of clustering object.")
+
+
+  if ( ! missing( reorderingVariable ) ) {
+    # identify the mean value of the reo variable per class
+    reomeans = aggregate( mxdfin[,reorderingVariable], 
+      by=list(mxdfin[,clustername]), FUN=mean, na.rm=T )
+    reomeans[,'newnames']=reomeans[order(reomeans$x),'Group.1']
+    newclustername = rep(NA,nrow(mxdfin))
+    for ( zz in 1:nrow(reomeans))
+      newclustername[  mxdfin[,clustername] == reomeans[zz,'Group.1'] ]=reomeans[zz,'newnames']
+    mxdfin[,clustername]=factor(newclustername,levels=reomeans[zz,'newnames'])
+  }
 
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
@@ -1559,7 +1573,9 @@ biclusterMatrixFactorization  <- function(
 #' @param featureMatrix matrix/dataframe defining the data columns as features.
 #' @param associationType either predictor features from subtypes or predict
 #' subtypes from features.  will produce related but complementary results. in
-#' some cases, depending on subtypes/degrees of freedom, only one will work.
+#' some cases, depending on subtypes/degrees of freedom, only one will be appropriate.
+#' the third option (subjects) reports rownames of the dataframe that best fit the 
+#' related subtype.
 #' @param covariates optional string of covariates
 #' @param transform optional effect_size
 #' @param significance_level to threshold effects
@@ -1578,12 +1594,12 @@ featureImportanceForSubtypes <- function(
     dataframein,
     subtypeLabels,   # cluster
     featureMatrix,   # featureColumns
-    associationType = c( "features2subtypes", "subtypes2features" ),
+    associationType = c( "features2subtypes", "subtypes2features", "subjects" ),
     covariates = "1",
     transform = 'effect_sizes',
     significance_level = 0.001,
     visualize = FALSE ) {
-
+  stopifnot( associationType %in% c( "features2subtypes", "subtypes2features", "subjects" ) )
   form_pred<-function (object, ...)
   {
       if ( is.character(object)) object = as.formula(object)
@@ -1608,6 +1624,7 @@ featureImportanceForSubtypes <- function(
   clustsigdescribe = data.frame( matrix( nrow = mync, ncol = ncol( featureMatrix ) ) )
   colnames( clustsigdescribe ) = colnames( featureMatrix )
   rownames( clustsigdescribe ) = uniqClusts
+  colnames(clustzdescribe) = colnames( featureMatrix )
   clustmat = matrix( 0, nrow = length( subtypeLabels ), ncol=mync )
   colnames(clustmat) = as.character( uniqClusts )
   for ( j in 1:mync ) {
@@ -1615,22 +1632,40 @@ featureImportanceForSubtypes <- function(
     if ( sum(losel) > 0 )
       clustmat[ losel , j] = 1
     }
-  if ( associationType[1] == "features2subtypes" ) {
+  if ( associationType[1] == "subjects" ) {
+    bestSubjectList = list()
+    for ( j in 1:mync ) {
+        mygt = gt( clustmat[,j],data.matrix(featureMatrix), 
+          perm=round(1.0/significance_level), standardize=TRUE, 
+          model='logistic' )
+        mysub = data.frame( subjects( mygt, what="z-score", sort=TRUE, cluster=FALSE ) )
+        mysub[,'zscore']=( mysub[,'Residual'] ) / mysub[,'Std.dev']
+        bestSubjectList[[j]]=mysub
+        }
+    return( bestSubjectList )
+  } else if ( associationType[1] == "features2subtypes" ) {
     # converts cluster labels to one-hot coding
     for ( j in 1:mync ) {
       # return( list(clustmat,featureMatrix))
-      mygt = gt( clustmat[,j],data.matrix(featureMatrix), 
-        perm=round(1.0/significance_level), standardize=TRUE, model='logistic' )
-      mycov = covariates( mygt, what="z-score", zoom=TRUE, cluster=FALSE )
+      myrform = paste(" temp ~ ", covariates )
+      featureMatrixResid=featureMatrix
+      for ( kk in 1:ncol(featureMatrix) ) {
+        dataframein$temp = featureMatrix[,kk]
+        featureMatrixResid[,kk] = residuals( lm( myrform, data=dataframein ) )
+      }
+      mygt = gt( clustmat[,j],data.matrix(featureMatrixResid), 
+        perm=round(1.0/significance_level), standardize=TRUE, 
+        model='logistic'  )
+      mycov = covariates( mygt, what="z-score", zoom=TRUE, cluster=FALSE, plot=FALSE )
       mycov = extract( mycov )
       mycoffs = data.frame( cbind( mycov@result, mycov@extra ) )
       mycoffssub=mycoffs[ mycoffs$direction == "assoc. with clustmat[, j] = 1" & 
-        mycoffs$holm <= 0.05, ]
+        mycoffs$p.value <= 0.05, ]
       myz = mycoffs[,"Statistic"]
       myzsub = mycoffssub[,"Statistic"]
       if ( transform == 'effect_sizes' ) {
-        myz = as.numeric( effectsize::z_to_d( myz, nrow(featureMatrix) ) )
-        myzsub = as.numeric( effectsize::z_to_d( myzsub, nrow(featureMatrix) ) )
+        myz = as.numeric( effectsize::z_to_d( myz, nrow(featureMatrix) )$d )
+        myzsub = as.numeric( effectsize::z_to_d( myzsub, nrow(featureMatrix))$d  )
         }
       clustzdescribe[j,rownames(mycoffs)]=myz
       clustsigdescribe[j,rownames(mycoffssub)]=myzsub
