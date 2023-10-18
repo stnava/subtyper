@@ -1339,7 +1339,12 @@ VarSelLCMproba.post <- function(object, newdata){
 reorderingDataframe <- function( mxdfin, clustername, reorderingVariable ) {
   xdf=aggregate( mxdfin[,reorderingVariable], list(mxdfin[,clustername]), mean, na.rm=TRUE )
   names(xdf)=c('originalname', reorderingVariable)
-  xdf['newname']=xdf[order(xdf[,reorderingVariable],decreasing=FALSE),'originalname']
+  neword = order(xdf[,reorderingVariable],decreasing=FALSE)
+  newname = as.character( xdf[neword,'originalname'] )
+#  newname = paste0( clustername, neword )
+  newvarval = xdf[neword,reorderingVariable]
+  xdf = cbind( xdf, newname, newvarval )
+  names(xdf)[3:4]=c('newname',paste0("ord_",reorderingVariable))
   return(xdf)
 }
 
@@ -1457,8 +1462,8 @@ predictSubtypeClusterMulti  <- function(
     mxdfin = cbind( mxdfin, cluster_memberships )
   } else if ( myclustclass[1] %in% c("FuzzyCluster","pamCluster","EMCluster","hierarchicalCluster","nmfCluster") ) {
     mypr = predict( clusteringObject, newdata=subdf )
-    cluster_labels = mypr$classification
-    mxdfin = cbind( mxdfin, factor( paste0(clustername,cluster_labels) ) )
+    cluster_labels =  paste0(clustername,as.character(mypr$classification))
+    mxdfin = cbind( mxdfin, factor( cluster_labels ) )
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
   } else if ( length(grep("Learner",myclustclass[1]))==1  ) {
     cluster_labels = predict( clusteringObject, newdata=data.frame(subdf) )
@@ -1469,11 +1474,13 @@ predictSubtypeClusterMulti  <- function(
   if ( ! missing( reorderingDataframe ) ) {
     # identify the mean value of the reo variable per class
     for ( zz in 1:nrow(reorderingDataframe) ) {
-      newclustername[  mxdfin[,clustername] == reorderingDataframe[zz,'originalname'] ]=reorderingDataframe[zz,'newname']
+#      print(paste("old",reorderingDataframe[zz,'originalname'],"new",reorderingDataframe[zz,'newname']))
+      newclustername[  as.character(mxdfin[,clustername]) == as.character(reorderingDataframe[zz,'originalname']) ]=reorderingDataframe[zz,'newname']
     }
+    mxdfin[,clustername]=as.character(mxdfin[,clustername])
+#    mxdfin[,clustername]=factor(as.character(newclustername),levels=newclustername)
     mxdfin[,clustername]=newclustername
   }
-
   if ( missing( visitName ) | missing( baselineVisit ) )
     return( data.frame( mxdfin ) )
 
