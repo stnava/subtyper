@@ -1338,13 +1338,11 @@ VarSelLCMproba.post <- function(object, newdata){
 #' @export
 reorderingDataframe <- function( mxdfin, clustername, reorderingVariable ) {
   xdf=aggregate( mxdfin[,reorderingVariable], list(mxdfin[,clustername]), mean, na.rm=TRUE )
-  names(xdf)[1]=c('originalname')
-  neword = order(xdf[,reorderingVariable],decreasing=FALSE)
-  newname = as.character( xdf[neword,'originalname'] )
-#  newname = paste0( clustername, neword )
-  newvarval = xdf[neword,reorderingVariable]
+  neword = order(xdf[,'x'],decreasing=FALSE)
+  newname = as.character( xdf[neword,'Group.1'] )
+  newvarval = xdf[neword,'x']
   xdf = cbind( xdf, newname, newvarval )
-  names(xdf)[3:4]=c('newname',paste0("ord_",reorderingVariable))
+  names(xdf)=c('originalname','x', 'newname', paste0("ord_x"))
   return(xdf)
 }
 
