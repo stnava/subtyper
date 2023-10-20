@@ -22,7 +22,7 @@ variable selection with CUR - using default parameters from package example
 \examples{
 mydf = generateSubtyperData( 100 )
 vtosel = getNamesFromDataframe("Random",mydf)
-vimp = dcurvarsel( mydf, vtosel, 0.5 )
+# vimp = dcurvarsel( mydf, vtosel, 0.5 )
 }
 \author{
 Avants BB

@@ -858,7 +858,7 @@ fillBaselineColumn <- function(
   }
   mxdfin[,newcolname]=NA
   mxdfin[,newcolnamed]=NA
-  visitidisnumeric = class(mxdfin[,visitID]) == "numeric"
+  visitidisnumeric = is.numeric(mxdfin[,visitID])
   usubs = unique( mxdfin[,subjectID] )
   nsubs = length( usubs )
   ct=0
@@ -2324,7 +2324,7 @@ prplot  <- function(
   if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
-    if ( class(vv$res[,xvariable] ) %in% c("character","factor") ) {
+    if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
       return( ggdotplot(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
                     conf.int=T,
@@ -2343,7 +2343,7 @@ prplot  <- function(
   }
   if ( missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, plot=FALSE)
-     if ( class(vv$res[,xvariable] ) %in% c("character","factor") ) {
+     if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
       return( ggboxplot(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
                     conf.int=T,
