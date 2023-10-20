@@ -1408,7 +1408,7 @@ predictSubtypeClusterMulti  <- function(
     mxdfin = cbind( mxdfin, factor( paste0(clustername,classesare ) ))
     colnames( mxdfin )[ ncol( mxdfin ) ] = clustername
     cluster_memberships = data.frame(mypred)
-    colnames(cluster_memberships) = paste0(clustername,"_mem_",1:desiredk)
+    colnames(cluster_memberships) = paste0(clustername,"_mem_",1:ncol(cluster_memberships))
     mxdfin = cbind( mxdfin, cluster_memberships ) 
   } else if ( myclustclass[2] == "Gaussian Mixture Models" ) {
     pr = ClusterR::predict_GMM( subdf, clusteringObject$centroids,
