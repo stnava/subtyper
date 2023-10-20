@@ -49,7 +49,7 @@ boostrapping to give distributional visualizations.
 \examples{
 mydf = generateSubtyperData( 100 )
 rbfnames = names(mydf)[grep("Random",names(mydf))]
-fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames], "subtypes2features" )
+fimp = featureImportanceForSubtypes( mydf, mydf$DX, mydf[,rbfnames], "subtypes2features" )
 }
 \author{
 Avants BB

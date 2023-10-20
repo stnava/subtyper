@@ -1615,7 +1615,7 @@ biclusterMatrixFactorization  <- function(
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
-#' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames], "subtypes2features" )
+#' fimp = featureImportanceForSubtypes( mydf, mydf$DX, mydf[,rbfnames], "subtypes2features" )
 #' @importFrom fastICA fastICA
 #' @importFrom coca coca
 #' @importFrom cluster fanny pam clara
