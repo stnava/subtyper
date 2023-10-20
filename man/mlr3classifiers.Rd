@@ -8,6 +8,8 @@ mlr3classifiers(twoclass = TRUE, all = FALSE)
 }
 \arguments{
 \item{twoclass}{boolean}
+
+\item{all}{boolean}
 }
 \value{
 vector of strings

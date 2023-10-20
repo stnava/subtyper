@@ -1784,7 +1784,7 @@ featureImportanceForSubtypes <- function(
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
-#' fimp = regressionBasedFeatureSelection( mydf$DX, mydf[,rbfnames] )
+#' fimp = regressionBasedFeatureSelection( mydf, mydf$DX, mydf[,rbfnames] )
 #' @export
 regressionBasedFeatureSelection <- function( 
     dataframein, subtypeLabels, featureMatrix, covariates="1", n_features=25 ) {
@@ -2437,6 +2437,7 @@ dataPartition <- function( x, perc, subjectIDs=NULL ) {
 #' good classification learners from mlr3 (in my experience)
 #' 
 #' @param twoclass boolean
+#' @param all boolean
 #' 
 #' @return vector of strings
 #' @author Avants BB

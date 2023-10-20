@@ -32,7 +32,7 @@ select top features via linear regression on an outcome
 \examples{
 mydf = generateSubtyperData( 100 )
 rbfnames = names(mydf)[grep("Random",names(mydf))]
-fimp = regressionBasedFeatureSelection( mydf$DX, mydf[,rbfnames] )
+fimp = regressionBasedFeatureSelection( mydf, mydf$DX, mydf[,rbfnames] )
 }
 \author{
 Avants BB
