@@ -2659,7 +2659,7 @@ mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' vtosel = getNamesFromDataframe("Random",mydf)
-#' vimp = dcurvarsel( mydf, vtosel, 0.5 )
+#' # vimp = dcurvarsel( mydf, vtosel, 0.5 )
 #' @export
 dcurvarsel <- function( curdf, variablenames, fraction ) {
   curEnv=environment()
@@ -2671,7 +2671,7 @@ dcurvarsel <- function( curdf, variablenames, fraction ) {
               data=curdf, 
               variables=variablenames,
               k=myk, rows = 1, columns = .2, standardize = TRUE,
-              cur_method = "mixture" )
+              cur_method = "mixture" ) )
   temp=capture.output(dev.off())
   return( head( result$leverage_columns_sorted$var_names, 
     round(length(variablenames)*fraction) ) )
