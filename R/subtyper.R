@@ -1530,10 +1530,11 @@ predictSubtypeClusterMulti  <- function(
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
+#' @importFrom magrittr %>%
 #' @importFrom ggpubr ggboxplot ggdotplot
 #' @importFrom mlr3extralearners list_mlr3learners
 #' @importFrom mlr3 lrn msr as_task_classif as_learner
-#' @importFrom mlr3pipelines po
+#' @importFrom mlr3pipelines po selector_type %>>%
 #' @importFrom fastICA fastICA
 #' @importFrom data.table as.data.table
 #' @importFrom mclust Mclust predict.Mclust mclustBIC
@@ -1621,6 +1622,7 @@ biclusterMatrixFactorization  <- function(
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' fimp = featureImportanceForSubtypes( mydf, mydf$DX, mydf[,rbfnames], "subtypes2features" )
 #' @importFrom fastICA fastICA
+#' @importFrom mclust quantileMclust
 #' @importFrom coca coca
 #' @importFrom cluster fanny pam clara
 #' @importFrom cluster fanny pam clara
@@ -2121,8 +2123,7 @@ plinkVariantsDataFrame <- function( rootFileName, targetSNPs,  verbose=FALSE ) {
     outdf = data.frame( subjectIDs = subjectIDs$IID, snpdf )
     return( outdf )
   } else {
-    library(gaston)
-    gwas=read.bed.matrix( rootFileName )
+    gwas=gaston::read.bed.matrix( rootFileName )
     ww=which( gwas@snps$id %in% targetSNPs )
     if ( length( ww ) == 0 ) {
       mymsg = paste("No target SNPs are present ")
@@ -2374,7 +2375,6 @@ prplot  <- function(
 #' @author Avants BB
 #' @export
 balancedDataframe <- function( x, variable, method ) {
-  library(imbalance)
     valbal = c("none", "rwo", "racog", "mwmote", "over", "under" )
     if ( ! ( method %in% valbal ) )
         stop(paste("method must be one of ", paste(valbal, collapse=" / ")))
@@ -2479,7 +2479,6 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
 #' @export
 mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_size=0, balancing="smote", subjectIDs=NULL, verbose=TRUE ) {
     tarzan = tcols[1]
-    library(imbalance)
     valbal = c("none","over","under","smote", "rwo", "racog", "mwmote" )
     if ( ! ( balancing %in% valbal ) )
         stop(paste("balancing must be one of ", paste(valbal, collapse=" / ")))
@@ -2566,7 +2565,6 @@ mlr3classification <- function( dfin, tcols, learnerName, partrate=0.80, dup_siz
 #' @export
 mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=0, balancing="smote", mylearners = mlr3classifiers(), subjectIDs=NULL, verbose=TRUE ) {
     tarzan = tcols[1]
-    library(imbalance)
     valbal = c("none","over","under","smote", "rwo", "racog", "mwmote" )
     if ( ! ( balancing %in% valbal ) )
         stop(paste("balancing must be one of ", paste(valbal, collapse=" / ")))
