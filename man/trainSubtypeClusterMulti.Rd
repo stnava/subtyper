@@ -51,6 +51,8 @@ will compute reconstruction error in test data only.}
 \item{flexweights}{optional weights}
 
 \item{flexgroup}{optional group}
+
+\item{groupFun}{optional function name to use in group-guided clustering e.g. minSumClusters}
 }
 \value{
 the clustering object

@@ -278,14 +278,14 @@ image(t(myspbc$mus),main="sparseBC")
 
 ## make a heat map of the brain areas associated with SNPs
 
-```{r brainmap}
+```{r brainmap,echo=FALSE,eval=FALSE}
 
-citfn="/Users/stnava/.antspyt1w/CIT168_Reinf_Learn_v1_label_descriptions_pad.csv"
-dktfn = "/Users/stnava/.antspyt1w/dkt.csv"
+citfn=path.expand("~/.antspyt1w/CIT168_Reinf_Learn_v1_label_descriptions_pad.csv")
+dktfn = path.expand("~/.antspyt1w/dkt.csv")
 dkt = read.csv( dktfn )
 dkt$Description = gsub(" ","_", dkt$Description)
 cit = read.csv( citfn )
-mediaDF = read.csv("/Users/stnava/Downloads/temp/debug_NBM/nihcardassembly/ppmi/csvs/mediaDF.csv")
+mediaDF = read.csv(path.expand("~/Downloads/temp/debug_NBM/nihcardassembly/ppmi/csvs/mediaDF.csv"))
 
 sel1a = mediaDF$mediation &
   mediaDF$outcome == "UPDRS.Part1.Patient.Completed.Total.UPDRS1.Num"
@@ -304,17 +304,17 @@ s3 = intersect( s1b, s2 )
 # table( s1 %in% s2 )
 
 library(ANTsR)
-ifn = "/Users/stnava/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_brain_n4_dnz.nii.gz"
+ifn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_brain_n4_dnz.nii.gz")
 img=antsImageRead( ifn )
-sfn = "/Users/stnava/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_dkt_cortex.nii.gz"
+sfn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_dkt_cortex.nii.gz")
 seg=antsImageRead( sfn )
 
-ifn = "/Users/stnava/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_brain_n4_dnz.nii.gz"
+ifn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_brain_n4_dnz.nii.gz")
 img=antsImageRead( ifn )
-sfn = "/Users/stnava/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_dkt_cortex.nii.gz"
+sfn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_dkt_cortex.nii.gz")
 seg=antsImageRead( sfn )
 
-sfn = "/Users/stnava/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_tissue_segmentation.nii.gz"
+sfn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_tissue_segmentation.nii.gz")
 tseg=antsImageRead( sfn )
 
  wm = thresholdImage( tseg, 3, 4) %>% iMath("FillHoles")

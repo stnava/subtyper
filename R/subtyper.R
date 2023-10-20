@@ -473,7 +473,7 @@ rejectLowestQualityRepeat <-function(
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
-#' mydfhq = averageRepeats( mydf, "Id", "visit", "quality")
+#' mydfhq = averageRepeats( mydf, "Id", "visit")
 #' @export
 averageRepeats  <-function(
   mxdfin,
@@ -1079,6 +1079,7 @@ predictSubtypeUni  <- function(
 #' @param distance_metric see medoid methods in ClusterR
 #' @param flexweights optional weights
 #' @param flexgroup optional group
+#' @param groupFun optional function name to use in group-guided clustering e.g. minSumClusters
 #' @return the clustering object
 #' @author Avants BB
 #' @examples
@@ -1654,7 +1655,7 @@ featureImportanceForSubtypes <- function(
     bestSubjectList = list()
     for ( j in 1:mync ) {
         mygt = gt( clustmat[,j],data.matrix(featureMatrix), 
-          perm=round(1.0/significance_level), standardize=TRUE, 
+          permutations=round(1.0/significance_level), standardize=TRUE, 
           model='logistic' )
         mysub = data.frame( subjects( mygt, what="z-score", sort=TRUE, cluster=FALSE ) )
         mysub[,'zscore']=( mysub[,'Residual'] ) / mysub[,'Std.dev']
@@ -1672,7 +1673,7 @@ featureImportanceForSubtypes <- function(
         featureMatrixResid[,kk] = residuals( lm( myrform, data=dataframein ) )
       }
       mygt = gt( clustmat[,j],data.matrix(featureMatrixResid), 
-        perm=round(1.0/significance_level), standardize=TRUE, 
+        permutations=round(1.0/significance_level), standardize=TRUE, 
         model='logistic'  )
       mycov = covariates( mygt, what="z-score", zoom=TRUE, cluster=FALSE, plot=FALSE )
       mycov = extract( mycov )

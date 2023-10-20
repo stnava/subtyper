@@ -21,7 +21,7 @@ Average repeat data
 }
 \examples{
 mydf = generateSubtyperData( 100 )
-mydfhq = averageRepeats( mydf, "Id", "visit", "quality")
+mydfhq = averageRepeats( mydf, "Id", "visit")
 }
 \author{
 Avants BB
