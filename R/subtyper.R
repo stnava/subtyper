@@ -1532,7 +1532,6 @@ predictSubtypeClusterMulti  <- function(
 #' mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
 #' @importFrom magrittr %>%
 #' @importFrom ggpubr ggboxplot ggdotplot
-#' @importFrom mlr3extralearners list_mlr3learners
 #' @importFrom mlr3 lrn msr as_task_classif as_learner
 #' @importFrom mlr3pipelines po selector_type %>>%
 #' @importFrom fastICA fastICA
@@ -2444,11 +2443,13 @@ dataPartition <- function( x, perc, subjectIDs=NULL ) {
 #' @export
 mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
     if ( all ) {
-      myl = list_mlr3learners(select = c("id", "required_packages"))
-      myl = myl[ -grep("RWeka",myl$required_packages), ]
-      myl2 = as.data.table(mlr_learners)
-      myl2 = myl2[ -grep("RWeka",myl2$packages), ]
-      return( myl2 )
+      mymsg = 'Use \n mlr3extralearners::list_mlr3learners(select = c("id", "required_packages")) '
+      message(mymsg)
+      # myl = mlr3extralearners::list_mlr3learners(select = c("id", "required_packages"))
+      # myl = myl[ -grep("RWeka",myl$required_packages), ]
+      # myl2 = as.data.table(mlr_learners)
+      # myl2 = myl2[ -grep("RWeka",myl2$packages), ]
+      return( mymsg )
     }
     mylearners =  paste0( "classif.", 
         c("gbm","glmnet","kknn", 'ranger', 'ksvm',# 'mob',

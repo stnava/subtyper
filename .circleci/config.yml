@@ -10,9 +10,9 @@ steps: &steps
 #    - run:
 #        name: Install package dependencies env
 #        command: sudo apt-get update && sudo apt install jags && sudo apt-get install -y r-cran-rgl
-    - run:
-        name: extralearners
-        command: R -e "remotes::install_github('mlr-org/mlr3extralearners')"
+#    - run:
+#        name: extralearners
+#        command: R -e "remotes::install_github('mlr-org/mlr3extralearners')"
     - run:
         name: Install Biobase
         command: R -e "install.packages('BiocManager'); BiocManager::install('Biobase'); BiocManager::install('globaltest')"
