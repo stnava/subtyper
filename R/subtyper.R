@@ -2671,7 +2671,7 @@ dcurvarsel <- function( curdf, variablenames, fraction ) {
               data=curdf, 
               variables=variablenames,
               k=myk, rows = 1, columns = .2, standardize = TRUE,
-              cur_method = "mixture" ) )
+              cur_method = "mixture" )
   temp=capture.output(dev.off())
   return( head( result$leverage_columns_sorted$var_names, 
     round(length(variablenames)*fraction) ) )
