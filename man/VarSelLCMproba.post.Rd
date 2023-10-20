@@ -6,6 +6,11 @@
 \usage{
 VarSelLCMproba.post(object, newdata)
 }
+\arguments{
+\item{object}{varselobject}
+
+\item{newdata}{newdata for prediction}
+}
 \description{
 Bug fix to predict function in the VarSelLCM package
 }

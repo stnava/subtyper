@@ -242,7 +242,9 @@ generateSubtyperData <-function( n = 100,
 #' @export
 #' @importFrom imbalance mwmote oversample racog rwo
 #' @importFrom dCUR CUR
-#' @importFrom mclust Mclust predict.Mclust
+#' @importFrom MASS ginv
+#' @importFrom dplyr arrange
+#' @importFrom mclust Mclust predict.Mclust densityMclust
 #' @importFrom visreg visreg
 #' @importFrom dplyr sym bind_rows
 #' @importFrom caret createDataPartition 
@@ -1310,6 +1312,8 @@ trainSubtypeClusterMulti  <- function(
 
 #' Bug fix to predict function in the VarSelLCM package
 #'
+#' @param object varselobject
+#' @param newdata newdata for prediction
 #' @export
 VarSelLCMproba.post <- function(object, newdata){
 
@@ -2661,10 +2665,6 @@ mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=
 #' @export
 dcurvarsel <- function( curdf, variablenames, fraction ) {
   curEnv=environment()
-  library(MASS)
-  library(mclust)
-  library( dCUR )
-  library( dplyr )
   myk = min(c(20, dim(curdf[,variablenames])))-1
   loccur = dCUR::CUR
   environment(loccur) <- curEnv

@@ -37,6 +37,7 @@ Imports:
   globaltest,
   gridExtra,
   imbalance,
+  MASS,
   mlr3,
   mlr3cluster,
   mlr3extralearners,
