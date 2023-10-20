@@ -14,6 +14,9 @@ steps: &steps
         name: Install Biobase
         command: R -e "install.packages('BiocManager'); BiocManager::install('Biobase'); BiocManager::install('globaltest')"
     - run:
+        name: extralearners
+        command: R -e "devtools::install_github('mlr-org/mlr3extralearners')"
+    - run:
         name: Install package dependencies
         command: R -e "devtools::install_deps(dep = TRUE)"
     - run:
