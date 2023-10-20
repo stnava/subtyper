@@ -240,6 +240,13 @@ generateSubtyperData <-function( n = 100,
 #' mydf = generateSubtyperData( 100 )
 #' summ = plotSubtypeChange( mydf, "Id", "cognition", "DX", "visit" )
 #' @export
+#' @importFrom imbalance mwmote oversample racog rwo
+#' @importFrom dCUR CUR
+#' @importFrom mclust Mclust predict.Mclust
+#' @importFrom visreg visreg
+#' @importFrom dplyr sym bind_rows
+#' @importFrom caret createDataPartition 
+#' @importFrom ModTools OverSample UnderSample
 #' @importFrom pheatmap pheatmap
 #' @importFrom gprofiler2 gost gsnpense
 #' @importFrom NMF nmf basismap
@@ -2082,7 +2089,7 @@ hierarchicalSubtypePlots <- function(
 #' # mydf = plinkVariantsDataFrame( fn, c( 'rs6469804', 'rs6859' ) )
 #' @importFrom pgenlibr NewPvar NewPgen ReadList
 #' @importFrom data.table fread
-#' @importFrom gaston as.matrix
+#' @importFrom gaston as.matrix read.bed.matrix
 #' @export
 plinkVariantsDataFrame <- function( rootFileName, targetSNPs,  verbose=FALSE ) {
   type=getExt(rootFileName)

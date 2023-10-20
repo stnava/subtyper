@@ -19,8 +19,10 @@ Depends:
     R (>= 3.0.0)
 Imports:
   ggplot2,
+  caret,
   ClusterR,
   coca,
+  dCUR,
   dplyr,
   effectsize,
   Evacluster,
@@ -33,6 +35,7 @@ Imports:
   ggbeeswarm,
   globaltest,
   gridExtra,
+  imbalance,
   mlr3,
   mlr3cluster,
   wesanderson,
@@ -45,10 +48,12 @@ Imports:
   pheatmap,
   gprofiler2,
   magrittr,
+  ModTools,
   fastICA,
   pgenlibr,
   grDevices,
-  VarSelLCM
+  VarSelLCM,
+  visreg
 Suggests:
     covr,
     knitr,
