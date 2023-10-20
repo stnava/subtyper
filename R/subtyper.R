@@ -1526,7 +1526,12 @@ predictSubtypeClusterMulti  <- function(
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
+#' @importFrom ggpubr ggboxplot ggdotplot
+#' @importFrom mlr3extralearners list_mlr3learners
+#' @importFrom mlr3 lrn msr as_task_classif as_learner
+#' @importFrom mlr3pipelines po
 #' @importFrom fastICA fastICA
+#' @importFrom data.table as.data.table
 #' @importFrom mclust Mclust predict.Mclust mclustBIC
 #' @importFrom fpc pamk
 #' @importFrom flexclust kccaFamily kcca bootFlexclust cclust distCor centMean centAngle centMedian centOptim distJaccard distCanberra distAngle distEuclidean distManhattan distMax distMinkowski
@@ -1610,10 +1615,11 @@ biclusterMatrixFactorization  <- function(
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
-#' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames] )
 #' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames], "subtypes2features" )
 #' @importFrom fastICA fastICA
 #' @importFrom coca coca
+#' @importFrom cluster fanny pam clara
+#' @importFrom cluster fanny pam clara
 #' @importFrom effectsize t_to_d z_to_d
 #' @export
 featureImportanceForSubtypes <- function(
