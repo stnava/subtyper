@@ -1651,7 +1651,7 @@ featureImportanceForSubtypes <- function(
       }
       all.vars(object, ...)
   }
-  if ( class(subtypeLabels) != 'factor' )
+  if ( !is.factor(subtypeLabels)  )
     subtypeLabels=factor(subtypeLabels)
   if ( length( subtypeLabels ) != nrow( featureMatrix ) )
     stop("length( subtypeLabels ) != nrow( featureMatrix )")
@@ -2417,7 +2417,7 @@ dataPartition <- function( x, perc, subjectIDs=NULL ) {
     test = test[ ! ( test %in% train) ]
     return( list( train=train, test=test ) )
   } else {
-    if ( class( x ) != 'numeric'  ) {
+    if ( ! is.numeric( x ) ) {
       xuse = as.numeric( as.factor(x) )
     } else xuse = x
     xdf=data.frame( x=xuse, sid=subjectIDs )
