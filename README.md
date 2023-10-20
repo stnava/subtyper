@@ -23,6 +23,8 @@ The pre-release version of the package can be pulled from GitHub using the [devt
     devtools::install_github("stnava/subtyper", build_vignettes=TRUE)
 ```
 
+See the file `.circleci/config.yml` for hints about installing the many dependencies.  A few other hints below.
+
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
