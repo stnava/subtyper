@@ -1605,6 +1605,7 @@ biclusterMatrixFactorization  <- function(
 #' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames] )
 #' fimp = featureImportanceForSubtypes( mydf$DX, mydf[,rbfnames], "subtypes2features" )
 #' @importFrom fastICA fastICA
+#' @importFrom coca coca
 #' @importFrom effectsize t_to_d z_to_d
 #' @export
 featureImportanceForSubtypes <- function(
@@ -1815,7 +1816,7 @@ regressionBasedFeatureSelection <- function(
 #' hierarchicalSubtypePlots( qdf, "cognition", c("DX", "subtype" ),
 #'  "Id", "visit", outputPrefix='/tmp/X' )
 #' }
-#' @importFrom globaltest gt covariates
+#' @importFrom globaltest gt covariates extract subjects
 #' @importFrom ggstatsplot ggbetweenstats
 #' @importFrom wesanderson wes_palette wes_palettes
 #' @importFrom ggthemes theme_tufte

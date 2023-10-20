@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">subtyper</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/subtyper.html">Get started</a>
 </li>
@@ -50,7 +46,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -58,6 +54,9 @@
   <ul class="dropdown-menu" role="menu">
 <li>
       <a href="../articles/nalls_pd_genetics.html">subtyper: subtyping with functional enrichment via SNPs</a>
+    </li>
+    <li>
+      <a href="../articles/pd_imaging_genetics.html">subtyper: subtyping with functional enrichment via SNPs</a>
     </li>
   </ul>
 </li>
@@ -67,7 +66,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/stnava/subtyper/">
+  <a href="https://github.com/stnava/subtyper/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -85,28 +84,40 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>subtyper: subtyping with functional enrichment via SNPs</h1>
+      <h1 data-toc-skip>subtyper: subtyping with functional enrichment
+via SNPs</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/stnava/subtyper/blob/master/vignettes/nalls_pd_genetics.Rmd"><code>vignettes/nalls_pd_genetics.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/stnava/subtyper/blob/HEAD/vignettes/nalls_pd_genetics.Rmd" class="external-link"><code>vignettes/nalls_pd_genetics.Rmd</code></a></small>
       <div class="hidden name"><code>nalls_pd_genetics.Rmd</code></div>
 
     </div>
 
     
     
-<div id="functional-enrichment" class="section level1">
-<h1 class="hasAnchor">
-<a href="#functional-enrichment" class="anchor"></a>Functional enrichment</h1>
-<p>Single nucleotide polymorphisms (SNPs) are the most common type of genetic variation among people and represent a difference, within or between genes, in a sigle base pair. SNPs are a “digital code” for genetic patterns. Consequently, they are a very fine-grained, noisy measurement of genetic variability.</p>
-<p>Functional enrichment analysis uses meta-analysis to associate high-level properties such as disease risk, high expression within given cell types or other phenotypes with genes or SNPs. This vignette uses an open dataset <a href="https://pubmed.ncbi.nlm.nih.gov/31701892/">Nalls 2019</a> and gene ontology query tool (<code>ggprofiler</code>) to identify clusters of SNPs associated with pleiotropic properties. See <a href="https://www.frontiersin.org/articles/10.3389/fgene.2020.00424/full">this review</a> for conceptual background on functional genomics.</p>
+<div class="section level2">
+<h2 id="functional-enrichment">Functional enrichment<a class="anchor" aria-label="anchor" href="#functional-enrichment"></a>
+</h2>
+<p>Single nucleotide polymorphisms (SNPs) are the most common type of
+genetic variation among people and represent a difference, within or
+between genes, in a sigle base pair. SNPs are a “digital code” for
+genetic patterns. Consequently, they are a very fine-grained, noisy
+measurement of genetic variability.</p>
+<p>Functional enrichment analysis uses meta-analysis to associate
+high-level properties such as disease risk, high expression within given
+cell types or other phenotypes with genes or SNPs. This vignette uses an
+open dataset <a href="https://pubmed.ncbi.nlm.nih.gov/31701892/" class="external-link">Nalls
+2019</a> and gene ontology query tool (<code>ggprofiler</code>) to
+identify clusters of SNPs associated with pleiotropic properties. See <a href="https://www.frontiersin.org/articles/10.3389/fgene.2020.00424/full" class="external-link">this
+review</a> for conceptual background on functional genomics.</p>
 <p>First, we generate the association data.</p>
 <p><img src="nalls_pd_genetics_files/figure-html/functionalenrichment-1.png" width="2304"></p>
-<p>Next, we explicitly perform clustering. First, cluster based on SNPs.</p>
+<p>Next, we explicitly perform clustering. First, cluster based on
+SNPs.</p>
 <p>Second, cluster based on function.</p>
-<div id="bi-clustering-via-joint-clustering-and-via-nmf" class="section level2">
-<h2 class="hasAnchor">
-<a href="#bi-clustering-via-joint-clustering-and-via-nmf" class="anchor"></a>bi-clustering via joint clustering and via NMF</h2>
+<div class="section level3">
+<h3 id="bi-clustering-via-joint-clustering-and-via-nmf">bi-clustering via joint clustering and via NMF<a class="anchor" aria-label="anchor" href="#bi-clustering-via-joint-clustering-and-via-nmf"></a>
+</h3>
 <ul>
 <li><p>tabulate the pairs of clusters that exist</p></li>
 <li><p>provide evidence that joint clusters are valid (TODO)</p></li>
@@ -120,39 +131,39 @@
 <tbody>
 <tr class="odd">
 <td align="left">1-1</td>
-<td align="right">360</td>
+<td align="right">303</td>
 </tr>
 <tr class="even">
 <td align="left">1-2</td>
-<td align="right">760</td>
+<td align="right">252</td>
 </tr>
 <tr class="odd">
 <td align="left">1-3</td>
-<td align="right">360</td>
+<td align="right">849</td>
 </tr>
 <tr class="even">
 <td align="left">2-1</td>
-<td align="right">432</td>
+<td align="right">606</td>
 </tr>
 <tr class="odd">
 <td align="left">2-2</td>
-<td align="right">912</td>
+<td align="right">504</td>
 </tr>
 <tr class="even">
 <td align="left">2-3</td>
-<td align="right">432</td>
+<td align="right">1698</td>
 </tr>
 <tr class="odd">
 <td align="left">3-1</td>
-<td align="right">7344</td>
+<td align="right">10504</td>
 </tr>
 <tr class="even">
 <td align="left">3-2</td>
-<td align="right">15504</td>
+<td align="right">8736</td>
 </tr>
 <tr class="odd">
 <td align="left">3-3</td>
-<td align="right">7344</td>
+<td align="right">29432</td>
 </tr>
 </tbody>
 </table>
@@ -173,11 +184,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Brian B. Avants.</p>
+  <p></p>
+<p>Developed by Brian Avants.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
@@ -185,6 +198,8 @@
 
   
 
+
+  
 
   </body>
 </html>

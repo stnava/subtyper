@@ -18,7 +18,7 @@ steps: &steps
         command: R -e "devtools::install_deps(dep = TRUE)"
     - run:
         name: Install package dependencies manually
-        command: Rscript -e "install.packages(c('NMF','wesanderson','ggthemes','ggstatsplot'))"
+        command: Rscript -e "install.packages(c( 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot'))"
     - run:
         name: Build package
         command: R CMD build .
@@ -35,11 +35,11 @@ steps: &steps
 jobs:
   release:
     docker:
-      - image: rocker/binder:latest
+      - image: rocker/verse:latest
     <<: *steps
   oldrel:
     docker:
-      - image: rocker/verse:3.5.3
+      - image: rocker/verse:4.2
     <<: *steps
   devel:
     docker:
@@ -52,4 +52,4 @@ workflows:
     jobs:
       - release
 #      - oldrel
-#      - devel
+      - devel

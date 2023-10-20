@@ -26,6 +26,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -38,18 +40,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">subtyper</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.1.0</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="articles/subtyper.html">Get started</a>
 </li>
@@ -57,7 +53,7 @@
   <a href="reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -65,6 +61,9 @@
   <ul class="dropdown-menu" role="menu">
 <li>
       <a href="articles/nalls_pd_genetics.html">subtyper: subtyping with functional enrichment via SNPs</a>
+    </li>
+    <li>
+      <a href="articles/pd_imaging_genetics.html">subtyper: subtyping with functional enrichment via SNPs</a>
     </li>
   </ul>
 </li>
@@ -74,7 +73,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/stnava/subtyper/">
+  <a href="https://github.com/stnava/subtyper/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -91,37 +90,54 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<div id="subtyper" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#subtyper" class="anchor"></a>subtyper</h1></div>
-
-<p>documentation page <a href="https://stnava.github.io/subtyper/">here</a></p>
-<div id="subtype-and-staging-analyses-in-disease-modeling" class="section level2">
-<h2 class="hasAnchor">
-<a href="#subtype-and-staging-analyses-in-disease-modeling" class="anchor"></a>Subtype and staging analyses in disease modeling</h2>
+<div class="section level1">
+<div class="page-header"><h1 id="subtyper">subtyper<a class="anchor" aria-label="anchor" href="#subtyper"></a>
+</h1></div>
+<p><a href="https://circleci.com/gh/stnava/subtyper/tree/master" class="external-link"><img src="https://circleci.com/gh/stnava/subtyper/tree/master.svg?style=svg" alt="CircleCI"></a></p>
+<p>documentation page <a href="https://stnava.github.io/subtyper/" class="external-link">here</a></p>
+<div class="section level2">
+<h2 id="subtype-and-staging-analyses-in-disease-modeling">Subtype and staging analyses in disease modeling<a class="anchor" aria-label="anchor" href="#subtype-and-staging-analyses-in-disease-modeling"></a>
+</h2>
 <p>Common tasks for subtyping include making measurements of data consistency, filtering for subjects with good/high quality data, training the subtyping algorithm, predicting the subtypes in new data and visualizing results, often over time.</p>
 <p>This package expects population-level data frames with longitudinal data.</p>
 </div>
-<div id="installing" class="section level2">
-<h2 class="hasAnchor">
-<a href="#installing" class="anchor"></a>Installing</h2>
-<p>The pre-release version of the package can be pulled from GitHub using the <a href="https://github.com/r-lib/devtools">devtools</a> package:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># install.packages("devtools")</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">"stnava/subtyper"</span>, <span class="dt">build_vignettes=</span><span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="section level2">
+<h2 id="installing">Installing<a class="anchor" aria-label="anchor" href="#installing"></a>
+</h2>
+<p>The pre-release version of the package can be pulled from GitHub using the <a href="https://github.com/r-lib/devtools" class="external-link">devtools</a> package:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span>    <span class="co"># install.packages("devtools")</span></span>
+<span>    <span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"stnava/subtyper"</span>, build_vignettes<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"Biobase"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"Biobase"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"NMF"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>sudo apt install libgmp<span class="sc">-</span>dev</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co"># then install ClusterR</span></span></code></pre></div>
+<p><code>pgenlibr</code></p>
+<pre><code># brew install libsm
+gh repo clone chrchang/plink-ng
+cd plink-ng/2.0/pgenlibr/
+# edit src/Makevars to include  -I/System/Volumes/Data/Users/stnava/code/extern/plink-ng/2.0/simde
+R CMD INSTALL . # FIXME not on arm64 yet</code></pre>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ClusterR"</span>, <span class="st">"effectsize"</span>, <span class="st">"Evacluster"</span>, <span class="st">"flexclust"</span>, <span class="st">"ggthemes"</span>, <span class="st">"ggstatsplot"</span>, <span class="st">"ggbeeswarm"</span>, <span class="st">"wesanderson"</span>, <span class="st">"Hmisc"</span>, <span class="st">"DDoutlier"</span>, <span class="st">"NMF"</span>, <span class="st">"pheatmap"</span>, <span class="st">"gprofiler2"</span>, <span class="st">"pgenlibr"</span>,<span class="st">"gaston"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div id="for-developers" class="section level2">
-<h2 class="hasAnchor">
-<a href="#for-developers" class="anchor"></a>For developers</h2>
+<div class="section level2">
+<h2 id="for-developers">For developers<a class="anchor" aria-label="anchor" href="#for-developers"></a>
+</h2>
 <p>The repository includes a Makefile to facilitate some common tasks.</p>
-<div id="running-tests" class="section level3">
-<h3 class="hasAnchor">
-<a href="#running-tests" class="anchor"></a>Running tests</h3>
-<p><code>$ make test</code>. Requires the <a href="http://testthat.r-lib.org/">testthat</a> package. You can also specify a specific test file or files to run by adding a “file=” argument, like <code>$ make test file=logging</code>. <code><a href="https://testthat.r-lib.org/reference/test_package.html">testthat::test_package()</a></code> will do a regular-expression pattern match within the file names (ignoring the <code>test-</code> prefix and the <code>.R</code> file extension).</p>
+<div class="section level3">
+<h3 id="running-tests">Running tests<a class="anchor" aria-label="anchor" href="#running-tests"></a>
+</h3>
+<p><code>$ make test</code>. Requires the <a href="http://testthat.r-lib.org/" class="external-link">testthat</a> package. You can also specify a specific test file or files to run by adding a “file=” argument, like <code>$ make test file=logging</code>. <code><a href="https://testthat.r-lib.org/reference/test_package.html" class="external-link">testthat::test_package()</a></code> will do a regular-expression pattern match within the file names (ignoring the <code>test-</code> prefix and the <code>.R</code> file extension).</p>
 </div>
-<div id="updating-documentation" class="section level3">
-<h3 class="hasAnchor">
-<a href="#updating-documentation" class="anchor"></a>Updating documentation</h3>
-<p><code>$ make doc</code>. Requires the <a href="https://github.com/klutometis/roxygen">roxygen2</a> package.</p>
+<div class="section level3">
+<h3 id="updating-documentation">Updating documentation<a class="anchor" aria-label="anchor" href="#updating-documentation"></a>
+</h3>
+<p><code>$ make doc</code>. Requires the <a href="https://github.com/klutometis/roxygen" class="external-link">roxygen2</a> package.</p>
 </div>
 </div>
 </div>
@@ -129,43 +145,49 @@
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <div class="links">
-<h2>Links</h2>
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Browse source code at <br><a href="https://github.com/stnava/subtyper/">https://​github.com/​stnava/​subtyper/​</a>
-</li>
-<li>Report a bug at <br><a href="https://github.com/stnava/subtyper/issues">https://​github.com/​stnava/​subtyper/​issues</a>
-</li>
-</ul>
-</div>
-<div class="license">
-<h2>License</h2>
-<ul class="list-unstyled">
-<li><a href="https://www.r-project.org/Licenses/GPL-3">GPL-3</a></li>
-</ul>
-</div>
-<div class="developers">
-<h2>Developers</h2>
-<ul class="list-unstyled">
-<li>Brian B. Avants <br><small class="roles"> Author, maintainer </small>  </li>
+<li><a href="https://github.com/stnava/subtyper/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/stnava/subtyper/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
+<div class="license">
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li><a href="https://circleci.com/gh/stnava/subtyper/tree/master"><img src="https://circleci.com/gh/stnava/subtyper/tree/master.svg?style=svg" alt="CircleCI"></a></li>
+<li><a href="https://www.r-project.org/Licenses/GPL-3" class="external-link">GPL-3</a></li>
 </ul>
 </div>
+
+
+<div class="citation">
+<h2 data-toc-skip>Citation</h2>
+<ul class="list-unstyled">
+<li><a href="authors.html#citation">Citing subtyper</a></li>
+</ul>
 </div>
+
+<div class="developers">
+<h2 data-toc-skip>Developers</h2>
+<ul class="list-unstyled">
+<li>Brian Avants <br><small class="roles"> Maintainer </small>  </li>
+</ul>
+</div>
+
+
+
+  </div>
 </div>
 
 
       <footer><div class="copyright">
-  <p>Developed by Brian B. Avants.</p>
+  <p></p>
+<p>Developed by Brian Avants.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
@@ -173,6 +195,8 @@
 
   
 
+
+  
 
   </body>
 </html>
