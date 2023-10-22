@@ -9,7 +9,8 @@ regressionBasedFeatureSelection(
   subtypeLabels,
   featureMatrix,
   covariates = "1",
-  n_features = 25
+  n_features = 25,
+  associationType = "features2subtypes"
 )
 }
 \arguments{
@@ -22,6 +23,10 @@ regressionBasedFeatureSelection(
 \item{covariates}{optional string of covariates}
 
 \item{n_features}{select this many features per level}
+
+\item{associationType}{either predictor features from subtypes or predict
+subtypes from features.  will produce related but complementary results. in
+some cases, depending on subtypes/degrees of freedom, only one will be appropriate.}
 }
 \value{
 vector of feature names
@@ -32,7 +37,8 @@ select top features via linear regression on an outcome
 \examples{
 mydf = generateSubtyperData( 100 )
 rbfnames = names(mydf)[grep("Random",names(mydf))]
-fimp = regressionBasedFeatureSelection( mydf, mydf$DX, mydf[,rbfnames] )
+fimp = regressionBasedFeatureSelection( mydf, mydf$DX, mydf[,rbfnames], 
+   associationType ="subtypes2features" )
 }
 \author{
 Avants BB

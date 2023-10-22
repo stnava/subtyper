@@ -74,7 +74,8 @@
 <span>  <span class="va">subtypeLabels</span>,</span>
 <span>  <span class="va">featureMatrix</span>,</span>
 <span>  covariates <span class="op">=</span> <span class="st">"1"</span>,</span>
-<span>  n_features <span class="op">=</span> <span class="fl">25</span></span>
+<span>  n_features <span class="op">=</span> <span class="fl">25</span>,</span>
+<span>  associationType <span class="op">=</span> <span class="st">"features2subtypes"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,6 +100,12 @@
 <dt>n_features</dt>
 <dd><p>select this many features per level</p></dd>
 
+
+<dt>associationType</dt>
+<dd><p>either predictor features from subtypes or predict
+subtypes from features.  will produce related but complementary results. in
+some cases, depending on subtypes/degrees of freedom, only one will be appropriate.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -115,7 +122,8 @@
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="generateSubtyperData.html">generateSubtyperData</a></span><span class="op">(</span> <span class="fl">100</span> <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">rbfnames</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"Random"</span>,<span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span></span>
-<span class="r-in"><span><span class="va">fimp</span> <span class="op">=</span> <span class="fu">regressionBasedFeatureSelection</span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">mydf</span><span class="op">$</span><span class="va">DX</span>, <span class="va">mydf</span><span class="op">[</span>,<span class="va">rbfnames</span><span class="op">]</span> <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fimp</span> <span class="op">=</span> <span class="fu">regressionBasedFeatureSelection</span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">mydf</span><span class="op">$</span><span class="va">DX</span>, <span class="va">mydf</span><span class="op">[</span>,<span class="va">rbfnames</span><span class="op">]</span>, </span></span>
+<span class="r-in"><span>   associationType <span class="op">=</span><span class="st">"subtypes2features"</span> <span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </div>

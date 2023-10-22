@@ -1778,24 +1778,33 @@ featureImportanceForSubtypes <- function(
 #' @param featureMatrix matrix/dataframe defining the data columns as features.
 #' @param covariates optional string of covariates
 #' @param n_features select this many features per level
+#' @param associationType either predictor features from subtypes or predict
+#' subtypes from features.  will produce related but complementary results. in
+#' some cases, depending on subtypes/degrees of freedom, only one will be appropriate.
 #' @return vector of feature names
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
-#' fimp = regressionBasedFeatureSelection( mydf, mydf$DX, mydf[,rbfnames] )
+#' fimp = regressionBasedFeatureSelection( mydf, mydf$DX, mydf[,rbfnames], 
+#'    associationType ="subtypes2features" )
 #' @export
 regressionBasedFeatureSelection <- function( 
-    dataframein, subtypeLabels, featureMatrix, covariates="1", n_features=25 ) {
+    dataframein, subtypeLabels, featureMatrix, covariates="1", n_features=25, associationType ="features2subtypes" ) {
     fimp = featureImportanceForSubtypes(
         dataframein,
         subtypeLabels, 
         featureMatrix, 
-        "subtypes2features", 
+        associationType[1], 
         covariates=covariates )
+    if ( "subtypeFeatureTScoresSignificant" %in% names(fimp) ) {
+      fimpname = "subtypeFeatureTScoresSignificant"
+    } else if ( "subtypeFeatureZScoresSignificant" %in% names(fimp) ) {
+      fimpname = "subtypeFeatureZScoresSignificant"
+    }
     thefeats = c()
-    myfimp = fimp$subtypeFeatureTScoresSignificant
-    for ( k in 1:nrow( fimp$subtypeFeatureTScores )) {
+    myfimp = fimp[[fimpname]]
+    for ( k in 1:nrow( myfimp )) {
         mm = abs(myfimp[k,])
         myor = order( as.numeric(mm[1,]), decreasing=TRUE )
         thefeats = c( thefeats, colnames( mm )[ head(myor,n_features) ] )
@@ -2678,3 +2687,202 @@ dcurvarsel <- function( curdf, variablenames, fraction ) {
   return( head( result$leverage_columns_sorted$var_names, 
     round(length(variablenames)*fraction) ) )
   }
+
+
+#' clearcolname
+#' 
+#' remove a column from a dataframe
+#'
+#' @param mydf dataframe input
+#' @param mycolname columns for the task
+#' @return trimmed dataframe
+#' @author Avants BB
+#' @export
+clearcolname = function( mydf, mycolname ) {
+    if ( mycolname %in% colnames( mydf ) ) {
+        mydf=mydf[,-grep(mycolname,colnames( mydf))]
+    }
+    return( mydf )
+}
+
+
+
+#' consensusSubtypingTrain
+#' 
+#' apply several clustering methods and append results to a dataframe;
+#' usually will include one subject per row
+#'
+#' @param dataToClust dataframe input that contains the relevant variables (may have others as well)
+#' @param clustVec names of the clustering methods to use
+#' @param ktrain the number of clusters
+#' @param reorderingVariable the name of the column to use to reorder the cluster names
+#' @param mvcl character prefix for the new cluster column names
+#' @param verbose boolean
+#' @return a list with newdata: dataframe with new variables attached; models contains the trained models; reorderers contains a dataframe for reordering cluster levels
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' @export
+consensusSubtypingTrain = function( dataToClust, clustVec, ktrain, reorderingVariable,mvcl='MVST', verbose=FALSE ) {
+    stopifnot( reorderingVariable %in% colnames(dataToClust) )
+    clustmodels = list()
+    reoModels = list()
+    for ( myclust in clustVec ) {
+        mvclLocal = paste0(mvcl,"_",myclust)
+        clustmodels[[ myclust ]] =
+            trainSubtypeClusterMulti( dataToClust, 
+                mcnames, myclust, desiredk=ktrain )
+        turkeyshoot = predictSubtypeClusterMulti( dataToClust, 
+            mcnames, clustmodels[[ myclust ]], mvclLocal )
+        if ( length(table(turkeyshoot[,mvclLocal])) == ktrain ) {
+            reodf = reorderingDataframe( turkeyshoot, mvclLocal, reorderingVariable )
+            reodfCheck = reodf
+            ct = 0
+            if ( verbose )
+              print(paste("st:",mvclLocal))
+            while ( ! all( reodfCheck$x == reodfCheck$ord_x ) & ct < 3 ) {
+                temp = predictSubtypeClusterMulti( dataToClust, 
+                    mcnames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
+                reodfCheck = reorderingDataframe( temp, mvclLocal, reorderingVariable )
+                if (  ! all( reodfCheck$x == reodfCheck$ord_x )  ) reodf=reodfCheck
+                ct = ct + 1
+                }
+            reodf$method=myclust
+            reoModels[[myclust]]=reodf
+            dataToClust = clearcolname(dataToClust, mvclLocal )
+            dataToClust = predictSubtypeClusterMulti( dataToClust, 
+                    mcnames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
+            reodfCheck = reorderingDataframe( 
+                dataToClust[dataToClust$yearsbl==0,], mvclLocal, reorderingVariable )
+            if ( ! all( reodfCheck$originalname == reodfCheck$newname ) ) {
+                print( reodfCheck )
+                message(paste0("Check consensus ordering does not pass ", myclust ) )
+                }
+            }
+        }
+
+    return( list( 
+            newdata = dataToClust,
+            models = clustmodels,
+            reorderers = reoModels
+            )
+        )
+
+    }
+
+#' consensusSubtypingPredict
+#' 
+#' apply several clustering methods and append results to a dataframe;
+#' assumes trained models already exist.
+#'
+#' @param dataToClust dataframe input that contains the relevant variables (may have others as well)
+#' @param clustVec names of the clustering methods to use
+#' @param clustmodels the trained models
+#' @param reorderers the reordering data frames
+#' @param mvcl character prefix for the new cluster column names
+#' @param idvar variable name for unique subject identifier column
+#' @param visitName the column name defining the visit variables
+#' @param baselineVisit the string naming the baseline visit
+#' @return new dataframe with new variables attached
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' @export
+consensusSubtypingPredict = function( dataToClust, clustVec, clustmodels, 
+  reorderers, mvcl, idvar, visitName, baselineVisit  ) {
+    namestoclear = getNamesFromDataframe(mvcl,dataToClust)
+    for ( nm in namestoclear )
+        dataToClust = clearcolname(dataToClust, nm )
+    for ( myclust in clustVec ) {
+        mvclLocal = paste0(mvcl,"_",myclust)
+        if ( myclust %in% names(reorderers) & myclust %in% names(clustmodels) ) {
+          if ( ! missing(idvar) & ! missing(visitName) & ! missing( baselineVisit ) ) {
+            dataToClust = predictSubtypeClusterMulti( dataToClust, 
+                    mcnames, clustmodels[[ myclust ]], mvclLocal, 
+                    'PATNO', 'imaging_EVENT_ID', 'V0', 
+                    reorderingDataframe=reorderers[[myclust]] )
+          } else {
+            dataToClust = predictSubtypeClusterMulti( dataToClust, 
+                    mcnames, clustmodels[[ myclust ]], mvclLocal, 
+                    reorderingDataframe=reorderers[[myclust]] )
+          }
+        }
+      }
+    return( dataToClust )
+    }
+
+
+#' consensusSubtypingCOCA
+#' 
+#' apply consensus clustering give several clustering solutions
+#'
+#' @param dataToClust dataframe input that contains the relevant variables (may have others as well)
+#' @param targetk the desired number of classes
+#' @param cocanames names of columns to use for the consensus
+#' @param newclustername the column name for the consensus clustering
+#' @param reorderingVariable the name of the column to use to reorder the cluster names
+#' @param idvar variable name for unique subject identifier column
+#' @param visitName the column name defining the visit variables
+#' @param baselineVisit the string naming the baseline visit
+#' @param verbose boolean
+#' @return new dataframe with new variables attached
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' @importFrom caret dummyVars
+#' @export
+consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, verbose=TRUE ) {
+    # assume we already ran consensuscluster
+    if ( !missing(idvar) )
+      stopifnot( idvar %in% colnames(dataToClust) )
+    if ( !missing(visitName) )
+      stopifnot( visitName %in% colnames(dataToClust) )
+    if ( !missing(reorderingVariable) )
+      stopifnot( reorderingVariable %in% colnames(dataToClust) )
+    if ( !missing(baselineVisit) )
+      stopifnot( baselineVisit %in% dataToClust[,visitName] )
+    stopifnot( all( cocanames %in% colnames(dataToClust) ) )
+    if ( !missing(idvar) & !missing(visitName) & !missing(baselineVisit) )
+      usebaseline=TRUE
+    dataToClust = clearcolname(dataToClust, newclustername )
+    isbl = rep(TRUE,nrow(dataToClust))
+    if ( usebaseline )
+      isbl = dataToClust[,visitName] == baselineVisit
+    cocoform = paste("~", paste( cocanames, collapse="+" ))
+    if ( verbose ) {
+        for ( x in cocanames ) {
+            print(table(dataToClust[isbl,x] ))
+        }
+    }
+    dmy = dummyVars(cocoform, data = dataToClust[,cocanames])
+    dmytx = data.frame(predict(dmy, newdata = dataToClust[isbl,cocanames]))
+    cocatx = coca::coca(dmytx, K = targetk, B=1000, maxIterKM=5000 )
+#    cocatx = coca::coca(dmytx, maxK = 6, B=5000 )
+#    coca = coca::coca( dmytx, maxK = 10, hclustMethod = "average")
+    cocatxlab = cocatx$clusterLabels
+    if ( verbose )
+      print( table( cocatxlab ) )
+    dataToClust[,newclustername]=NA
+    dataToClust[isbl,newclustername]=cocatxlab
+    if ( usebaseline ) {
+        temp = fillBaselineColumn( dataToClust,
+            newclustername, 
+            idvar, visitName, baselineVisit, 
+            fast=T, verbose=F )[[1]]
+        temp[,newclustername]=temp[,paste0(newclustername,'_BL')]
+    }
+    # now reorder 
+    xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]),  
+      mean, na.rm=TRUE )
+    newreo=order(xdf[,2])
+    olabels = temp[,newclustername]
+    placeholder = olabels
+    for ( jj in 1:nrow(xdf) ) placeholder[ olabels == newreo[jj] ] = xdf[jj,1]
+    temp[,newclustername] = placeholder
+    xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]), mean, na.rm=TRUE )
+    if ( verbose ) print(xdf)
+    dataToClust[,newclustername] = paste0(newclustername,temp[,newclustername])
+    return( dataToClust )
+    }
+
+

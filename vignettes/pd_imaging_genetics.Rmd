@@ -304,17 +304,12 @@ s3 = intersect( s1b, s2 )
 # table( s1 %in% s2 )
 
 library(ANTsR)
-ifn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_brain_n4_dnz.nii.gz")
+ifn = path.expand("/Users/stnava/data/UKBB/example_data/processed/UKBB/1619189/2/T1wHierarchical/20252/UKBB_1619189_2_T1wHierarchical_20252_brain_n4_dnz.nii.gz")
 img=antsImageRead( ifn )
-sfn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_dkt_cortex.nii.gz")
+sfn = path.expand("/Users/stnava/data/UKBB/example_data/processed/UKBB/1619189/2/T1wHierarchical/20252/UKBB_1619189_2_T1wHierarchical_20252_dkt_cortex.nii.gz")
 seg=antsImageRead( sfn )
 
-ifn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_brain_n4_dnz.nii.gz")
-img=antsImageRead( ifn )
-sfn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_dkt_cortex.nii.gz")
-seg=antsImageRead( sfn )
-
-sfn = path.expand("~/Downloads/temp/1000051_20252_2_0/UKBB-1000051-20181004-T1wHierarchical-1000051_20252_2_0-SR_dkt_parc_tissue_segmentation.nii.gz")
+sfn = path.expand("/Users/stnava/data/UKBB/example_data/processed/UKBB/1619189/2/T1wHierarchical/20252/UKBB_1619189_2_T1wHierarchical_20252_tissue_segmentation.nii.gz")
 tseg=antsImageRead( sfn )
 
  wm = thresholdImage( tseg, 3, 4) %>% iMath("FillHoles")
