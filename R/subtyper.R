@@ -2713,6 +2713,7 @@ clearcolname = function( mydf, mycolname ) {
 #' usually will include one subject per row
 #'
 #' @param dataToClust dataframe input that contains the relevant variables (may have others as well)
+#' @param featureNames names to use in the clustering
 #' @param clustVec names of the clustering methods to use
 #' @param ktrain the number of clusters
 #' @param reorderingVariable the name of the column to use to reorder the cluster names
@@ -2723,7 +2724,7 @@ clearcolname = function( mydf, mycolname ) {
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' @export
-consensusSubtypingTrain = function( dataToClust, clustVec, ktrain, reorderingVariable,mvcl='MVST', verbose=FALSE ) {
+consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain, reorderingVariable,mvcl='MVST', verbose=FALSE ) {
     stopifnot( reorderingVariable %in% colnames(dataToClust) )
     clustmodels = list()
     reoModels = list()
@@ -2731,9 +2732,9 @@ consensusSubtypingTrain = function( dataToClust, clustVec, ktrain, reorderingVar
         mvclLocal = paste0(mvcl,"_",myclust)
         clustmodels[[ myclust ]] =
             trainSubtypeClusterMulti( dataToClust, 
-                mcnames, myclust, desiredk=ktrain )
+                featureNames, myclust, desiredk=ktrain )
         turkeyshoot = predictSubtypeClusterMulti( dataToClust, 
-            mcnames, clustmodels[[ myclust ]], mvclLocal )
+            featureNames, clustmodels[[ myclust ]], mvclLocal )
         if ( length(table(turkeyshoot[,mvclLocal])) == ktrain ) {
             reodf = reorderingDataframe( turkeyshoot, mvclLocal, reorderingVariable )
             reodfCheck = reodf
@@ -2742,7 +2743,7 @@ consensusSubtypingTrain = function( dataToClust, clustVec, ktrain, reorderingVar
               print(paste("st:",mvclLocal))
             while ( ! all( reodfCheck$x == reodfCheck$ord_x ) & ct < 3 ) {
                 temp = predictSubtypeClusterMulti( dataToClust, 
-                    mcnames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
+                    featureNames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
                 reodfCheck = reorderingDataframe( temp, mvclLocal, reorderingVariable )
                 if (  ! all( reodfCheck$x == reodfCheck$ord_x )  ) reodf=reodfCheck
                 ct = ct + 1
@@ -2751,7 +2752,7 @@ consensusSubtypingTrain = function( dataToClust, clustVec, ktrain, reorderingVar
             reoModels[[myclust]]=reodf
             dataToClust = clearcolname(dataToClust, mvclLocal )
             dataToClust = predictSubtypeClusterMulti( dataToClust, 
-                    mcnames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
+                    featureNames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
             reodfCheck = reorderingDataframe( 
                 dataToClust[dataToClust$yearsbl==0,], mvclLocal, reorderingVariable )
             if ( ! all( reodfCheck$originalname == reodfCheck$newname ) ) {
@@ -2776,6 +2777,7 @@ consensusSubtypingTrain = function( dataToClust, clustVec, ktrain, reorderingVar
 #' assumes trained models already exist.
 #'
 #' @param dataToClust dataframe input that contains the relevant variables (may have others as well)
+#' @param featureNames names to use in the clustering
 #' @param clustVec names of the clustering methods to use
 #' @param clustmodels the trained models
 #' @param reorderers the reordering data frames
@@ -2788,7 +2790,7 @@ consensusSubtypingTrain = function( dataToClust, clustVec, ktrain, reorderingVar
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' @export
-consensusSubtypingPredict = function( dataToClust, clustVec, clustmodels, 
+consensusSubtypingPredict = function( dataToClust, featureNames, clustVec, clustmodels, 
   reorderers, mvcl, idvar, visitName, baselineVisit  ) {
     namestoclear = getNamesFromDataframe(mvcl,dataToClust)
     for ( nm in namestoclear )
@@ -2798,12 +2800,12 @@ consensusSubtypingPredict = function( dataToClust, clustVec, clustmodels,
         if ( myclust %in% names(reorderers) & myclust %in% names(clustmodels) ) {
           if ( ! missing(idvar) & ! missing(visitName) & ! missing( baselineVisit ) ) {
             dataToClust = predictSubtypeClusterMulti( dataToClust, 
-                    mcnames, clustmodels[[ myclust ]], mvclLocal, 
+                    featureNames, clustmodels[[ myclust ]], mvclLocal, 
                     'PATNO', 'imaging_EVENT_ID', 'V0', 
                     reorderingDataframe=reorderers[[myclust]] )
           } else {
             dataToClust = predictSubtypeClusterMulti( dataToClust, 
-                    mcnames, clustmodels[[ myclust ]], mvclLocal, 
+                    featureNames, clustmodels[[ myclust ]], mvclLocal, 
                     reorderingDataframe=reorderers[[myclust]] )
           }
         }
@@ -2871,17 +2873,19 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
             fast=T, verbose=F )[[1]]
         temp[,newclustername]=temp[,paste0(newclustername,'_BL')]
     }
-    # now reorder 
-    xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]),  
-      mean, na.rm=TRUE )
-    newreo=order(xdf[,2])
-    olabels = temp[,newclustername]
-    placeholder = olabels
-    for ( jj in 1:nrow(xdf) ) placeholder[ olabels == newreo[jj] ] = xdf[jj,1]
-    temp[,newclustername] = placeholder
-    xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]), mean, na.rm=TRUE )
-    if ( verbose ) print(xdf)
-    dataToClust[,newclustername] = paste0(newclustername,temp[,newclustername])
+    if ( !missing(reorderingVariable) ) {
+      # now reorder 
+      xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]),  
+        mean, na.rm=TRUE )
+      newreo=order(xdf[,2])
+      olabels = temp[,newclustername]
+      placeholder = olabels
+      for ( jj in 1:nrow(xdf) ) placeholder[ olabels == newreo[jj] ] = xdf[jj,1]
+      temp[,newclustername] = placeholder
+      xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]), mean, na.rm=TRUE )
+      if ( verbose ) print(xdf)
+      }
+    dataToClust[,newclustername] = paste0(newclustername, temp[,newclustername] )
     return( dataToClust )
     }
 

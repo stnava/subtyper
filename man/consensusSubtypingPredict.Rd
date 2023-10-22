@@ -6,6 +6,7 @@
 \usage{
 consensusSubtypingPredict(
   dataToClust,
+  featureNames,
   clustVec,
   clustmodels,
   reorderers,
@@ -17,6 +18,8 @@ consensusSubtypingPredict(
 }
 \arguments{
 \item{dataToClust}{dataframe input that contains the relevant variables (may have others as well)}
+
+\item{featureNames}{names to use in the clustering}
 
 \item{clustVec}{names of the clustering methods to use}
 

@@ -6,6 +6,7 @@
 \usage{
 consensusSubtypingTrain(
   dataToClust,
+  featureNames,
   clustVec,
   ktrain,
   reorderingVariable,
@@ -15,6 +16,8 @@ consensusSubtypingTrain(
 }
 \arguments{
 \item{dataToClust}{dataframe input that contains the relevant variables (may have others as well)}
+
+\item{featureNames}{names to use in the clustering}
 
 \item{clustVec}{names of the clustering methods to use}
 
