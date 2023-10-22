@@ -46,6 +46,18 @@
     <loc>/reference/biclusterMatrixFactorization.html</loc>
   </url>
   <url>
+    <loc>/reference/clearcolname.html</loc>
+  </url>
+  <url>
+    <loc>/reference/consensusSubtypingCOCA.html</loc>
+  </url>
+  <url>
+    <loc>/reference/consensusSubtypingPredict.html</loc>
+  </url>
+  <url>
+    <loc>/reference/consensusSubtypingTrain.html</loc>
+  </url>
+  <url>
     <loc>/reference/dataPartition.html</loc>
   </url>
   <url>
