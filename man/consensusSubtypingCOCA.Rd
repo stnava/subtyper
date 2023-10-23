@@ -13,6 +13,7 @@ consensusSubtypingCOCA(
   idvar,
   visitName,
   baselineVisit,
+  consensusmethod = "kmeans",
   verbose = TRUE
 )
 }
@@ -32,6 +33,8 @@ consensusSubtypingCOCA(
 \item{visitName}{the column name defining the visit variables}
 
 \item{baselineVisit}{the string naming the baseline visit}
+
+\item{consensusmethod}{either kmeans or hclust}
 
 \item{verbose}{boolean}
 }

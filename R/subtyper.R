@@ -2825,6 +2825,7 @@ consensusSubtypingPredict = function( dataToClust, featureNames, clustVec, clust
 #' @param idvar variable name for unique subject identifier column
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
+#' @param consensusmethod either kmeans or hclust
 #' @param verbose boolean
 #' @return new dataframe with new variables attached
 #' @author Avants BB
@@ -2832,7 +2833,7 @@ consensusSubtypingPredict = function( dataToClust, featureNames, clustVec, clust
 #' mydf = generateSubtyperData( 100 )
 #' @importFrom caret dummyVars contr.ltfr
 #' @export
-consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, verbose=TRUE ) {
+consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, consensusmethod='kmeans',verbose=TRUE ) {
     # assume we already ran consensuscluster
     if ( !missing(idvar) )
       stopifnot( idvar %in% colnames(dataToClust) )
@@ -2857,7 +2858,7 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     }
     dmy = dummyVars(cocoform, data = dataToClust[,cocanames])
     dmytx = data.frame(predict(dmy, newdata = dataToClust[isbl,cocanames]))
-    cocatx = coca::coca(dmytx, K = targetk, B=1000, maxIterKM=5000 )
+    cocatx = coca::coca(dmytx, K = targetk, B=1000, maxIterKM=5000, ccClMethod=consensusmethod )
 #    cocatx = coca::coca(dmytx, maxK = 6, B=5000 )
 #    coca = coca::coca( dmytx, maxK = 10, hclustMethod = "average")
     cocatxlab = cocatx$clusterLabels
