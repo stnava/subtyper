@@ -1,5 +1,5 @@
 ---
-title: "subtyper: subtyping with functional enrichment via SNPs"
+title: "subtyper: ppmi subtyping with functional enrichment via SNPs"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{subtyper: subtyping with functional enrichment via SNPs}

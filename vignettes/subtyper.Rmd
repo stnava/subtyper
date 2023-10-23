@@ -206,6 +206,45 @@ mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 3 )
 pheatmap::pheatmap( mybic$jointClusters )
 ```
 
+## consensus clustering example 
+
+Generate some data, as above. Define the feature columns and the clustering methods to test. 
+```{r getdata, fig.show='hold', message=FALSE, warning=FALSE, cache=TRUE}
+library(subtyper)
+### generate data
+n = 1250 # number of subjects
+mydf = generateSubtyperData( n )
+clustlist = c( 
+    "clust.cmeans", "flexcorr", "flexcanb", "flexmink", "GMM",  "pamCluster", 
+    "VarSelCluster",  "kmedians", "angle", "ejaccard", "hardcl",  "cckmeans" )
+fnames = getNamesFromDataframe( "Random", mydf )
+```
+
+
+Next, we use subtyper methods to generate clustering solutions.
+We train from the baseline visit.
+
+```{r trainclustermodels}
+cohortbl = mydf[ mydf$visit == 'V0', ]
+mvcl='MVST' # default prefix - can be changed
+cclusterobj = consensusSubtypingTrain( cohortbl, fnames, clustlist, 2, verbose=TRUE )
+clustmodels = cclusterobj[["models"]]
+reoModels = cclusterobj[["reorderers"]]
+```
+
+
+Predict the subtypes (clusters) on all time points.
+```{r predictclustermodels}
+clustdata = consensusSubtypingPredict( mydf, fnames, clustlist, clustmodels,
+  reorderers = reoModels, mvcl=mvcl, 
+  idvar='Id', visitName='visit', baselineVisit='V0')
+cocanames = getNamesFromDataframe( mvcl, clustdata, exclusions="_mem")
+cocanames=cocanames[ cocanames != mvcl ]
+```
+
+```{r consensusclustermodel}
+```
+
 
 ## Future work
 

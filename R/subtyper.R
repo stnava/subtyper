@@ -2725,7 +2725,9 @@ clearcolname = function( mydf, mycolname ) {
 #' mydf = generateSubtyperData( 100 )
 #' @export
 consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain, reorderingVariable,mvcl='MVST', verbose=FALSE ) {
+    if ( missing( reorderingVariable ) ) reorderingVariable = featureNames[1]
     stopifnot( reorderingVariable %in% colnames(dataToClust) )
+    stopifnot( all( featureNames %in% colnames(dataToClust) ) )
     clustmodels = list()
     reoModels = list()
     for ( myclust in clustVec ) {
@@ -2753,12 +2755,6 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
             dataToClust = clearcolname(dataToClust, mvclLocal )
             dataToClust = predictSubtypeClusterMulti( dataToClust, 
                     featureNames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
-            reodfCheck = reorderingDataframe( 
-                dataToClust[dataToClust$yearsbl==0,], mvclLocal, reorderingVariable )
-            if ( ! all( reodfCheck$originalname == reodfCheck$newname ) ) {
-                print( reodfCheck )
-                message(paste0("Check consensus ordering does not pass ", myclust ) )
-                }
             }
         }
 
@@ -2792,6 +2788,7 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
 #' @export
 consensusSubtypingPredict = function( dataToClust, featureNames, clustVec, clustmodels, 
   reorderers, mvcl, idvar, visitName, baselineVisit  ) {
+    stopifnot( all(featureNames %in% colnames(dataToClust)))
     namestoclear = getNamesFromDataframe(mvcl,dataToClust)
     for ( nm in namestoclear )
         dataToClust = clearcolname(dataToClust, nm )
@@ -2799,9 +2796,11 @@ consensusSubtypingPredict = function( dataToClust, featureNames, clustVec, clust
         mvclLocal = paste0(mvcl,"_",myclust)
         if ( myclust %in% names(reorderers) & myclust %in% names(clustmodels) ) {
           if ( ! missing(idvar) & ! missing(visitName) & ! missing( baselineVisit ) ) {
+            stopifnot( all(c(idvar,visitName) %in% colnames(dataToClust)))
+            stopifnot( any( baselineVisit %in% dataToClust[,visitName] ) )
             dataToClust = predictSubtypeClusterMulti( dataToClust, 
                     featureNames, clustmodels[[ myclust ]], mvclLocal, 
-                    'PATNO', 'imaging_EVENT_ID', 'V0', 
+                    idvar, visitName, baselineVisit, 
                     reorderingDataframe=reorderers[[myclust]] )
           } else {
             dataToClust = predictSubtypeClusterMulti( dataToClust, 
@@ -2831,7 +2830,7 @@ consensusSubtypingPredict = function( dataToClust, featureNames, clustVec, clust
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
-#' @importFrom caret dummyVars
+#' @importFrom caret dummyVars contr.ltfr
 #' @export
 consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, verbose=TRUE ) {
     # assume we already ran consensuscluster
