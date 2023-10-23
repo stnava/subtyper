@@ -211,13 +211,27 @@ pheatmap::pheatmap( mybic$jointClusters )
 Generate some data, as above. Define the feature columns and the clustering methods to test. 
 ```{r getdata, fig.show='hold', message=FALSE, warning=FALSE, cache=TRUE}
 library(subtyper)
+library( coca )
+data <- list()
+data[[1]] <- as.matrix(read.csv(system.file("extdata",
+                      "dataset1.csv", package = "coca"), row.names = 1))
+data[[2]] <- as.matrix(read.csv(system.file("extdata",
+                      "dataset2.csv", package = "coca"), row.names = 1))
+data[[3]] <- as.matrix(read.csv(system.file("extdata",
+                      "dataset3.csv", package = "coca"), row.names = 1))
+bounded = data.frame( cbind( data[[1]], data[[2]], data[[3]] ) )
+colnames( bounded )=paste0("XDAT",1:ncol(bounded))
 ### generate data
-n = 1250 # number of subjects
-mydf = generateSubtyperData( n )
+mydf = generateSubtyperData( nrow(bounded) )
+mydf$Id = 1:nrow(mydf)
+mydf$visit=rep("V0",nrow(mydf))
+mydf$repeater=rep("V0",nrow(mydf))
+mydf = cbind( mydf, bounded )
 clustlist = c( 
     "clust.cmeans", "flexcorr", "flexcanb", "flexmink", "GMM",  "pamCluster", 
-    "VarSelCluster",  "kmedians", "angle", "ejaccard", "hardcl",  "cckmeans" )
-fnames = getNamesFromDataframe( "Random", mydf )
+    "kmedians", "angle", "ejaccard", "hardcl",  "cckmeans" )
+fnames = getNamesFromDataframe( "XDAT", mydf )
+# induce some clustering structure
 ```
 
 
@@ -227,7 +241,8 @@ We train from the baseline visit.
 ```{r trainclustermodels}
 cohortbl = mydf[ mydf$visit == 'V0', ]
 mvcl='MVST' # default prefix - can be changed
-cclusterobj = consensusSubtypingTrain( cohortbl, fnames, clustlist, 2, verbose=TRUE )
+cclusterobj = consensusSubtypingTrain( cohortbl, fnames, clustlist, 2,
+  mvcl=mvcl, verbose=TRUE )
 clustmodels = cclusterobj[["models"]]
 reoModels = cclusterobj[["reorderers"]]
 ```
@@ -235,16 +250,36 @@ reoModels = cclusterobj[["reorderers"]]
 
 Predict the subtypes (clusters) on all time points.
 ```{r predictclustermodels}
-clustdata = consensusSubtypingPredict( mydf, fnames, clustlist, clustmodels,
-  reorderers = reoModels, mvcl=mvcl, 
-  idvar='Id', visitName='visit', baselineVisit='V0')
-cocanames = getNamesFromDataframe( mvcl, clustdata, exclusions="_mem")
+mydf = consensusSubtypingPredict( mydf, fnames, clustlist, 
+  clustmodels, reorderers = reoModels, 
+  mvcl=mvcl, idvar='Id', visitName='visit', baselineVisit='V0')
+cocanames = getNamesFromDataframe( mvcl, mydf, exclusions="_mem")
 cocanames=cocanames[ cocanames != mvcl ]
 ```
 
+Given the full output, run a consensus method.
+
 ```{r consensusclustermodel}
+# some hidden function cannot be found if we dont explicitly load caret
+library( caret ) 
+ccname = paste0(mvcl,"_CC")
+clustdata = consensusSubtypingCOCA( mydf, 2, cocanames,
+    newclustername=ccname, 
+    idvar='Id', visitName='visit', baselineVisit='V0', verbose=TRUE )
 ```
 
+Compare the new clustering to the originals.
+
+```{r ccomp,echo=TRUE,eval=TRUE}
+for ( k in 1:length(cocanames)) {
+  print( paste( cocanames[k], 
+    mclust::adjustedRandIndex(clustdata[,cocanames[k]], clustdata[,ccname]) ))
+}
+table( clustdata[,cocanames[k]], clustdata[,cocanames[3]])
+table( clustdata[,cocanames[k]], clustdata[,ccname])
+```
+
+There you have it.
 
 ## Future work
 

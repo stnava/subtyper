@@ -39,7 +39,7 @@ usually will include one subject per row"><!-- mathjax --><script src="https://c
       <a href="../articles/nalls_pd_genetics.html">subtyper: subtyping with functional enrichment via SNPs</a>
     </li>
     <li>
-      <a href="../articles/pd_imaging_genetics.html">subtyper: subtyping with functional enrichment via SNPs</a>
+      <a href="../articles/pd_imaging_genetics.html">subtyper: ppmi subtyping with functional enrichment via SNPs</a>
     </li>
   </ul></li>
 <li>
@@ -73,6 +73,7 @@ usually will include one subject per row</p>
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">consensusSubtypingTrain</span><span class="op">(</span></span>
 <span>  <span class="va">dataToClust</span>,</span>
+<span>  <span class="va">featureNames</span>,</span>
 <span>  <span class="va">clustVec</span>,</span>
 <span>  <span class="va">ktrain</span>,</span>
 <span>  <span class="va">reorderingVariable</span>,</span>
@@ -85,6 +86,10 @@ usually will include one subject per row</p>
     <h2>Arguments</h2>
     <dl><dt>dataToClust</dt>
 <dd><p>dataframe input that contains the relevant variables (may have others as well)</p></dd>
+
+
+<dt>featureNames</dt>
+<dd><p>names to use in the clustering</p></dd>
 
 
 <dt>clustVec</dt>
