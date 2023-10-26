@@ -2731,6 +2731,7 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
     clustmodels = list()
     reoModels = list()
     for ( myclust in clustVec ) {
+        if ( verbose ) print(paste("Train:",mvcl,myclust))
         mvclLocal = paste0(mvcl,"_",myclust)
         clustmodels[[ myclust ]] =
             trainSubtypeClusterMulti( dataToClust, 
