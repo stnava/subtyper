@@ -2,6 +2,7 @@
 
 export(VarSelLCMproba.post)
 export(adjustByCovariates)
+export(adjustByCovariatesUni)
 export(assembleTestRetest)
 export(averageRepeats)
 export(balancedDataframe)

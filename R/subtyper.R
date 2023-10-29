@@ -932,6 +932,59 @@ adjustByCovariates  <- function(
 }
 
 
+#' Covariate adjustment for many variables based on a single variable
+#'
+#' Adjust a training vector value by nuisance variables eg field strength etc.
+#' One may want to use a specific sub-group for this, e.g. controls.
+#'
+#' @param mxdfin Input data frame with repeated measurements and a grouped time variable
+#' @param adjustmentFormula string defining a valid formula to be used in \code{lm}.
+#' @param columnstoadjust a vector of strings
+#' @param groupVariable names of the column that defines the group to use for training.
+#' @param group string defining a subgroup on which to train
+#' @return data frame with adjusted measurement variable as defined in formula
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' myform = "cognition ~ RandomBasisProjection01 "
+#' mydf = adjustByCovariates(mydf,myform,"DX","G0")
+#' @export
+adjustByCovariatesUni  <- function(
+  mxdfin,
+  adjustmentFormula,
+  columnstoadjust,
+  groupVariable,
+  group
+) {
+  ##############################################
+  cstrained <- function( x, csnames, istrain ) {
+    scaledTrainData = scale(x[istrain,csnames])
+    x[istrain,csnames] = scaledTrainData
+    x[!istrain,csnames] = scale(x[!istrain,csnames], 
+        center=attr(scaledTrainData, "scaled:center"), 
+        scale=attr(scaledTrainData, "scaled:scale"))
+    return( x )
+  }
+
+  outcomevar = gsub( " ", "", unlist(strsplit( adjustmentFormula, "~" ))[[1]] )
+  if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
+  gsel = mxdfin[,groupVariable] %in% group
+  if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
+  subdf = mxdfin[ gsel, ]
+  subdf$adjustByCovariatesUniTempVar = scale( subdf[,outcomevar] )
+  adjustmentFormula2 = gsub(outcomevar, "adjustByCovariatesUniTempVar", adjustmentFormula )
+  ctlmodel = lm( adjustmentFormula2, data=subdf )
+  for ( zz in columnstoadjust ) {
+    tempdf = mxdfin
+    tempdf[,'adjustByCovariatesUniTempVar'] = cstrained( tempdf, zz, gsel )
+    predvol = predict( ctlmodel, newdata = tempdf )
+    adjustedoutcome = paste0( outcomevar, "_adjusted" )
+    mxdfin[ , adjustedoutcome ] = predvol
+    }
+  return( mxdfin )
+}
+
+
 #' Train subtype for univariate data
 #'
 #' This is the training module for subtype definition based on a vector.
