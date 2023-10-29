@@ -957,29 +957,29 @@ adjustByCovariatesUni  <- function(
   group
 ) {
   ##############################################
-  cstrained <- function( x, csnames, istrain ) {
-    scaledTrainData = scale(x[istrain,csnames])
-    x[istrain,csnames] = scaledTrainData
-    x[!istrain,csnames] = scale(x[!istrain,csnames], 
+  cstrained <- function( x, istrain ) {
+    xout = rep(NA,length(x))
+    scaledTrainData = scale(x[istrain])
+    xout[istrain] = scaledTrainData
+    xout[!istrain] = scale(x[!istrain], 
         center=attr(scaledTrainData, "scaled:center"), 
         scale=attr(scaledTrainData, "scaled:scale"))
-    return( x )
+    return( xout )
   }
-
   outcomevar = gsub( " ", "", unlist(strsplit( adjustmentFormula, "~" ))[[1]] )
   if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
   gsel = mxdfin[,groupVariable] %in% group
   if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
-  subdf = mxdfin[ gsel, ]
-  subdf$adjustByCovariatesUniTempVar = scale( subdf[,outcomevar] )
+  subdf = mxdfin
+  subdf$adjustByCovariatesUniTempVar = cstrained( 
+    subdf[,outcomevar], gsel )
   adjustmentFormula2 = gsub(outcomevar, "adjustByCovariatesUniTempVar", adjustmentFormula )
-  ctlmodel = lm( adjustmentFormula2, data=subdf )
+  ctlmodel = lm( adjustmentFormula2, data=subdf[gsel,] )
+  predvol = predict( ctlmodel, newdata = subdf )
   for ( zz in columnstoadjust ) {
-    tempdf = mxdfin
-    tempdf[,'adjustByCovariatesUniTempVar'] = cstrained( tempdf, zz, gsel )
-    predvol = predict( ctlmodel, newdata = tempdf )
-    adjustedoutcome = paste0( outcomevar, "_adjusted" )
-    mxdfin[ , adjustedoutcome ] = predvol
+    adjustedoutcome = paste0( zz, "_adjusted" )
+    myscld = cstrained( mxdfin[,zz], gsel )
+    mxdfin[ , adjustedoutcome ] = myscld - predvol
     }
   return( mxdfin )
 }
