@@ -21,7 +21,7 @@ steps: &steps
         command: R -e "devtools::install_deps(dep = TRUE)"
     - run:
         name: Install package dependencies manually
-        command: Rscript -e "install.packages(c( 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot'))"
+        command: Rscript -e "install.packages(c( 'FRESA.CAD', 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot'))"
     - run:
         name: Build package
         command: R CMD build .

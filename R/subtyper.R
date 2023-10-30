@@ -2803,6 +2803,8 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
     clustmodels = list()
     reoModels = list()
     newclustnames = paste0(mvcl,"_",clustVec)
+    successfulclust = rep( FALSE, length(clustVec) )
+    names(successfulclust)=clustVec
     for ( myclust in clustVec ) {
         if ( verbose ) print(paste("Train:",mvcl,myclust))
         mvclLocal = paste0(mvcl,"_",myclust)
@@ -2829,16 +2831,19 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
             dataToClust = clearcolname(dataToClust, mvclLocal )
             dataToClust = predictSubtypeClusterMulti( dataToClust, 
                     featureNames, clustmodels[[ myclust ]], mvclLocal,reorderingDataframe=reodf )
+            successfulclust[myclust]=TRUE
             }
         }
 
 
-  nn = length(clustVec)
+  clustVecGood=names(successfulclust[successfulclust])
+  nn = length(clustVec[successfulclust])
   mystat = matrix(nrow=nn,ncol=nn)
-  colnames(mystat)=rownames(mystat)=clustVec
+  colnames(mystat)=rownames(mystat)=clustVecGood
   for ( j in newclustnames ) {
+    if ( j %in% colnames(dataToClust) )
     for ( k in newclustnames ) {
-        if ( k != j ) {
+        if ( k != j & k %in% colnames(dataToClust)  ) {
             cl1 = dataToClust[,j]
             cl2 = dataToClust[,k]
             myari = adjustedrandindex(cl1,cl2)
@@ -2855,8 +2860,8 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
         }
     mymeans = apply( mystat, FUN=mean, MARGIN=2, na.rm=T)
     mymaxes = apply( mystat, FUN=max, MARGIN=2, na.rm=T)
-    mostdisagreeable = names(mymeans[mymeans==min(mymeans)])
-    mostagreeable = names(mymeans[mymeans==max(mymeans)])
+    mostdisagreeable = names(mymeans[fs(mymeans==min(mymeans,na.rm=T))])
+    mostagreeable = names(mymeans[fs(mymeans==max(mymeans,na.rm=T))])
     if ( verbose ) {
       message(paste("The most agreeable method is:",mostagreeable))
       print(paste("The most agreeable method is:",mostagreeable))
