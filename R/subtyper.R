@@ -20,6 +20,69 @@ nrgDateToRDate <- function( x ) {
 }
 
 
+#' Minimize the difference between two data frames based on t-statistic.
+#'
+#' This function generates random subsets of a data frame to minimize the difference with another data frame based on a specified set of columns, as measured by the t-statistic.  Authored by Avants and Chat-GPT 3.5.
+#'
+#' @param df1 Data frame to be subsetted.
+#' @param df2 Data frame used as a reference for comparison.
+#' @param cols Vector of column names used for matching.
+#' @param num_iterations Number of random subsets to generate.
+#' @param restrict_df1 float lower quantile to restrict df1 based on first col value to match range of df2
+#'
+#' @return rownames of a sub data frame that minimizes the difference with df2 in terms of t-statistic.
+#'
+#' @examples
+#' set.seed(123)
+#' df1 <- data.frame(A = rnorm(100), B = factor(sample(1:3, 100, replace = TRUE)), C = rnorm(100))
+#' df2 <- data.frame(A = rnorm(50), B = factor(sample(1:3, 50, replace = TRUE)), C = rnorm(50))
+#' matching_cols <- c("A", "B")
+#' matched_subset <- minimize_difference(df1, df2, matching_cols)
+#' print(matched_subset)
+#'
+#' @importFrom stats t.test
+#'
+match_cohort_pair <- function(df1, df2, cols, num_iterations = 1000, restrict_df1=0.05 ) {
+  best_subset <- NULL
+  min_t_statistic <- Inf
+  
+  # Convert factor columns to character for t-test
+  if ( restrict_df1 > 0) {
+    df1=df1[  
+        df1[,cols[1]] > quantile(df2[,cols[1]],restrict_df1,na.rm=T) &
+        df1[,cols[1]] < quantile(df2[,cols[1]],1.0-restrict_df1,na.rm=T),  ]
+  }
+  for (col in cols) {
+    if (!is.numeric(df1[,col])) {
+      df1[,col] <- as.numeric(as.factor(df1[,col]))
+    }
+    if (!is.numeric(df2[,col])) {
+      df2[,col] <- as.numeric(as.factor(df2[,col]))
+    }
+  }
+  t_statistic=rep(NA,length(cols))
+  names(t_statistic)=cols
+  min_t_statistic=rep(Inf,length(cols))
+  names(min_t_statistic)=cols
+  for (i in 1:num_iterations) {
+    # Randomly subset df1 based on the columns
+    subset_indices <- sample(1:nrow(df1), size = min( c(nrow(df2),nrow(df1))), replace = FALSE)
+    subset_df1 <- df1[subset_indices, cols]
+    # Calculate t-statistic for the subset
+    for (col in cols) {
+        t_statistic[col]=abs(t.test(subset_df1[,col], df2[,col])$statistic)
+        }
+    
+    # Check if the current subset has a smaller t-statistic
+    if ( mean(t_statistic) < mean(min_t_statistic) ) {
+      min_t_statistic <- t_statistic
+      best_subset <- subset_indices
+    }
+  }
+  print( paste( min_t_statistic ))
+  return( rownames(df1)[best_subset] )
+}
+
 
 #' Convert left/right variables to a measure of asymmetry
 #'
