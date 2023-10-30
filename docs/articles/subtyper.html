@@ -349,50 +349,92 @@ factorization.</p>
 clustering methods to test.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/stnava/subtyper" class="external-link">subtyper</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="http://github.com/acabassi/coca" class="external-link">coca</a></span> <span class="op">)</span></span>
+<span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">data</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
+<span>                      <span class="st">"dataset1.csv"</span>, package <span class="op">=</span> <span class="st">"coca"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">data</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
+<span>                      <span class="st">"dataset2.csv"</span>, package <span class="op">=</span> <span class="st">"coca"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">data</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,</span>
+<span>                      <span class="st">"dataset3.csv"</span>, package <span class="op">=</span> <span class="st">"coca"</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">bounded</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span> <span class="va">data</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, <span class="va">data</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, <span class="va">data</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span> <span class="op">)</span> <span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span> <span class="va">bounded</span> <span class="op">)</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"XDAT"</span>,<span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">bounded</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">### generate data</span></span>
-<span><span class="va">n</span> <span class="op">=</span> <span class="fl">1250</span> <span class="co"># number of subjects</span></span>
-<span><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/generateSubtyperData.html">generateSubtyperData</a></span><span class="op">(</span> <span class="va">n</span> <span class="op">)</span></span>
+<span><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/generateSubtyperData.html">generateSubtyperData</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">bounded</span><span class="op">)</span> <span class="op">)</span></span>
+<span><span class="va">mydf</span><span class="op">$</span><span class="va">Id</span> <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span></span>
+<span><span class="va">mydf</span><span class="op">$</span><span class="va">visit</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"V0"</span>,<span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mydf</span><span class="op">$</span><span class="va">repeater</span><span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="st">"V0"</span>,<span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">bounded</span> <span class="op">)</span></span>
 <span><span class="va">clustlist</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span> </span>
 <span>    <span class="st">"clust.cmeans"</span>, <span class="st">"flexcorr"</span>, <span class="st">"flexcanb"</span>, <span class="st">"flexmink"</span>, <span class="st">"GMM"</span>,  <span class="st">"pamCluster"</span>, </span>
 <span>    <span class="st">"kmedians"</span>, <span class="st">"angle"</span>, <span class="st">"ejaccard"</span>, <span class="st">"hardcl"</span>,  <span class="st">"cckmeans"</span> <span class="op">)</span></span>
-<span><span class="va">fnames</span> <span class="op">=</span> <span class="fu"><a href="../reference/getNamesFromDataframe.html">getNamesFromDataframe</a></span><span class="op">(</span> <span class="st">"Random"</span>, <span class="va">mydf</span> <span class="op">)</span></span>
-<span><span class="co"># induce some clustering structure</span></span>
-<span><span class="va">mytbl</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span> <span class="va">mydf</span><span class="op">$</span><span class="va">Id</span> <span class="op">)</span></span>
-<span><span class="va">highsubs</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span> <span class="va">mytbl</span> <span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">mytbl</span><span class="op">)</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">mydf</span><span class="op">[</span>  <span class="va">mydf</span><span class="op">$</span><span class="va">Id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">highsubs</span>, <span class="va">fnames</span> <span class="op">]</span> <span class="op">=</span> <span class="fl">0.25</span> <span class="op">*</span> <span class="va">mydf</span><span class="op">[</span>  <span class="va">mydf</span><span class="op">$</span><span class="va">Id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">highsubs</span> , <span class="va">fnames</span> <span class="op">]</span></span></code></pre></div>
+<span><span class="va">fnames</span> <span class="op">=</span> <span class="fu"><a href="../reference/getNamesFromDataframe.html">getNamesFromDataframe</a></span><span class="op">(</span> <span class="st">"XDAT"</span>, <span class="va">mydf</span> <span class="op">)</span></span>
+<span><span class="co"># induce some clustering structure</span></span></code></pre></div>
 <p>Next, we use subtyper methods to generate clustering solutions. We
 train from the baseline visit.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cohortbl</span> <span class="op">=</span> <span class="va">mydf</span><span class="op">[</span> <span class="va">mydf</span><span class="op">$</span><span class="va">visit</span> <span class="op">==</span> <span class="st">'V0'</span>, <span class="op">]</span></span>
 <span><span class="va">mvcl</span><span class="op">=</span><span class="st">'MVST'</span> <span class="co"># default prefix - can be changed</span></span>
 <span><span class="va">cclusterobj</span> <span class="op">=</span> <span class="fu"><a href="../reference/consensusSubtypingTrain.html">consensusSubtypingTrain</a></span><span class="op">(</span> <span class="va">cohortbl</span>, <span class="va">fnames</span>, <span class="va">clustlist</span>, <span class="fl">2</span>,</span>
-<span>  mvcl<span class="op">=</span><span class="va">mvcl</span>,verbose<span class="op">=</span><span class="cn">TRUE</span> <span class="op">)</span></span>
+<span>  mvcl<span class="op">=</span><span class="va">mvcl</span>, verbose<span class="op">=</span><span class="cn">TRUE</span> <span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST clust.cmeans"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_clust.cmeans"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST flexcorr"</span></span>
 <span><span class="co">#&gt; Found more than one class "kcca" in cache; using the first, from namespace 'flexclust'</span></span>
 <span><span class="co">#&gt; Also defined by 'kernlab'</span></span>
 <span><span class="co">#&gt; Found more than one class "kcca" in cache; using the first, from namespace 'flexclust'</span></span>
 <span><span class="co">#&gt; Also defined by 'kernlab'</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_flexcorr"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST flexcanb"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_flexcanb"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST flexmink"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_flexmink"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST GMM"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_GMM"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST pamCluster"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_pamCluster"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST kmedians"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_kmedians"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST angle"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_angle"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST ejaccard"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_ejaccard"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST hardcl"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_hardcl"</span></span>
+<span><span class="co">#&gt; [1] "Train: MVST cckmeans"</span></span>
 <span><span class="co">#&gt; [1] "st: MVST_cckmeans"</span></span>
+<span><span class="co">#&gt; The most agreeable method is: flexminkThe most agreeable method is: GMMThe most agreeable method is: pamClusterThe most agreeable method is: kmediansThe most agreeable method is: cckmeans</span></span>
+<span><span class="co">#&gt; [1] "The most agreeable method is: flexmink"  </span></span>
+<span><span class="co">#&gt; [2] "The most agreeable method is: GMM"       </span></span>
+<span><span class="co">#&gt; [3] "The most agreeable method is: pamCluster"</span></span>
+<span><span class="co">#&gt; [4] "The most agreeable method is: kmedians"  </span></span>
+<span><span class="co">#&gt; [5] "The most agreeable method is: cckmeans"</span></span>
+<span><span class="co">#&gt; The most disagreeable method is: flexcorr</span></span>
+<span><span class="co">#&gt; [1] "The most disagreeable method is: flexcorr"</span></span>
+<span><span class="co">#&gt; ClusterCluster</span></span>
+<span><span class="co">#&gt; [1] "ClusterCluster"</span></span>
+<span><span class="co">#&gt; clust.cmeans     flexcorr     flexcanb     flexmink          GMM   pamCluster </span></span>
+<span><span class="co">#&gt;            1            2            3            4            4            4 </span></span>
+<span><span class="co">#&gt;     kmedians        angle     ejaccard       hardcl     cckmeans </span></span>
+<span><span class="co">#&gt;            4            2            2            3            4 </span></span>
+<span><span class="co">#&gt; [1] "ClusterSimilarityScores"</span></span>
+<span><span class="co">#&gt; clust.cmeans     flexcorr       hardcl     cckmeans </span></span>
+<span><span class="co">#&gt;  0.486004077  0.006920787  0.356916373  0.550912601</span></span>
+<span><span class="co">#&gt; highestARIMethods</span></span></code></pre></div>
+<p><img src="subtyper_files/figure-html/trainclustermodels-1.png" width="700"></p>
+<pre><code><span><span class="co">#&gt; [1] "highestARIMethods"</span></span>
+<span><span class="co">#&gt; [1] "flexmink"   "GMM"        "pamCluster" "kmedians"   "cckmeans"</span></span>
 <span><span class="va">clustmodels</span> <span class="op">=</span> <span class="va">cclusterobj</span><span class="op">[[</span><span class="st">"models"</span><span class="op">]</span><span class="op">]</span></span>
-<span><span class="va">reoModels</span> <span class="op">=</span> <span class="va">cclusterobj</span><span class="op">[[</span><span class="st">"reorderers"</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
+<span><span class="va">reoModels</span> <span class="op">=</span> <span class="va">cclusterobj</span><span class="op">[[</span><span class="st">"reorderers"</span><span class="op">]</span><span class="op">]</span></span></code></pre>
 <p>Predict the subtypes (clusters) on all time points.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">clustdata</span> <span class="op">=</span> <span class="fu"><a href="../reference/consensusSubtypingPredict.html">consensusSubtypingPredict</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">fnames</span>, <span class="va">clustlist</span>, <span class="va">clustmodels</span>,</span>
-<span>  reorderers <span class="op">=</span> <span class="va">reoModels</span>, mvcl<span class="op">=</span><span class="va">mvcl</span>, </span>
-<span>  idvar<span class="op">=</span><span class="st">'Id'</span>, visitName<span class="op">=</span><span class="st">'visit'</span>, baselineVisit<span class="op">=</span><span class="st">'V0'</span><span class="op">)</span></span>
-<span><span class="va">cocanames</span> <span class="op">=</span> <span class="fu"><a href="../reference/getNamesFromDataframe.html">getNamesFromDataframe</a></span><span class="op">(</span> <span class="va">mvcl</span>, <span class="va">clustdata</span>, exclusions<span class="op">=</span><span class="st">"_mem"</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/consensusSubtypingPredict.html">consensusSubtypingPredict</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">fnames</span>, <span class="va">clustlist</span>, </span>
+<span>  <span class="va">clustmodels</span>, reorderers <span class="op">=</span> <span class="va">reoModels</span>, </span>
+<span>  mvcl<span class="op">=</span><span class="va">mvcl</span>, idvar<span class="op">=</span><span class="st">'Id'</span>, visitName<span class="op">=</span><span class="st">'visit'</span>, baselineVisit<span class="op">=</span><span class="st">'V0'</span><span class="op">)</span></span>
+<span><span class="va">cocanames</span> <span class="op">=</span> <span class="fu"><a href="../reference/getNamesFromDataframe.html">getNamesFromDataframe</a></span><span class="op">(</span> <span class="va">mvcl</span>, <span class="va">mydf</span>, exclusions<span class="op">=</span><span class="st">"_mem"</span><span class="op">)</span></span>
 <span><span class="va">cocanames</span><span class="op">=</span><span class="va">cocanames</span><span class="op">[</span> <span class="va">cocanames</span> <span class="op">!=</span> <span class="va">mvcl</span> <span class="op">]</span></span></code></pre></div>
 <p>Given the full output, run a consensus method.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># some hidden function cannot be found if we dont explicitly load caret</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span> <span class="va"><a href="https://github.com/topepo/caret/" class="external-link">caret</a></span> <span class="op">)</span> </span>
 <span><span class="co">#&gt; Loading required package: ggplot2</span></span>
@@ -400,108 +442,72 @@ train from the baseline visit.</p>
 <span><span class="co">#&gt; Loading required package: lattice</span></span>
 <span><span class="co">#&gt; Warning: package 'lattice' was built under R version 4.3.1</span></span>
 <span><span class="va">ccname</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">mvcl</span>,<span class="st">"_CC"</span><span class="op">)</span></span>
-<span><span class="va">clustdata</span> <span class="op">=</span> <span class="fu"><a href="../reference/consensusSubtypingCOCA.html">consensusSubtypingCOCA</a></span><span class="op">(</span> <span class="va">clustdata</span>, <span class="fl">2</span>, <span class="va">cocanames</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>,</span>
+<span><span class="va">clustdata</span> <span class="op">=</span> <span class="fu"><a href="../reference/consensusSubtypingCOCA.html">consensusSubtypingCOCA</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="fl">2</span>, <span class="va">cocanames</span>,</span>
 <span>    newclustername<span class="op">=</span><span class="va">ccname</span>, </span>
 <span>    idvar<span class="op">=</span><span class="st">'Id'</span>, visitName<span class="op">=</span><span class="st">'visit'</span>, baselineVisit<span class="op">=</span><span class="st">'V0'</span>, verbose<span class="op">=</span><span class="cn">TRUE</span> <span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; MVST_clust.cmeans1 MVST_clust.cmeans2 </span></span>
-<span><span class="co">#&gt;                149                260 </span></span>
+<span><span class="co">#&gt;                 66                 59 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; MVST_flexcorr1 MVST_flexcorr2 </span></span>
-<span><span class="co">#&gt;            205            204 </span></span>
+<span><span class="co">#&gt;             60             65 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; MVST_flexcanb1 MVST_flexcanb2 </span></span>
-<span><span class="co">#&gt;            313             96 </span></span>
+<span><span class="co">#&gt;             50             75 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_flexmink1 MVST_flexmink2 </span></span>
+<span><span class="co">#&gt;             75             50 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_GMM1 MVST_GMM2 </span></span>
+<span><span class="co">#&gt;        75        50 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_pamCluster1 MVST_pamCluster2 </span></span>
+<span><span class="co">#&gt;               75               50 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_kmedians1 MVST_kmedians2 </span></span>
+<span><span class="co">#&gt;             75             50 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_angle1 MVST_angle2 </span></span>
+<span><span class="co">#&gt;          27          98 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_ejaccard1 MVST_ejaccard2 </span></span>
+<span><span class="co">#&gt;             71             54 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_hardcl1 MVST_hardcl2 </span></span>
+<span><span class="co">#&gt;           51           74 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; MVST_cckmeans1 MVST_cckmeans2 </span></span>
+<span><span class="co">#&gt;             75             50 </span></span>
 <span><span class="co">#&gt; cocatxlab</span></span>
-<span><span class="co">#&gt;   1   2 </span></span>
-<span><span class="co">#&gt; 204 205</span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span>
-<span></span>
-<span><span class="co">#&gt; Warning in mean.default(X[[i]], ...): argument is not numeric or logical:</span></span>
-<span><span class="co">#&gt; returning NA</span></span></code></pre></div>
+<span><span class="co">#&gt;  1  2 </span></span>
+<span><span class="co">#&gt; 75 50</span></span></code></pre></div>
 <p>Compare the new clustering to the originals.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span> <span class="va">k</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">cocanames</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span> <span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span>, </span>
 <span>    <span class="fu">mclust</span><span class="fu">::</span><span class="fu"><a href="https://mclust-org.github.io/mclust/reference/adjustedRandIndex.html" class="external-link">adjustedRandIndex</a></span><span class="op">(</span><span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span>, <span class="va">clustdata</span><span class="op">[</span>,<span class="va">ccname</span><span class="op">]</span><span class="op">)</span> <span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; [1] "MVST_clust.cmeans 0.000189064331627386"</span></span>
-<span><span class="co">#&gt; [1] "MVST_flexcorr -0.000808968283835264"</span></span>
-<span><span class="co">#&gt; [1] "MVST_flexcanb -0.00144212454981858"</span></span>
-<span><span class="co">#&gt; [1] "MVST_flexmink -0.000593366221301791"</span></span>
-<span><span class="co">#&gt; [1] "MVST_GMM 0.00216304110971146"</span></span>
-<span><span class="co">#&gt; [1] "MVST_pamCluster -0.0019253018467203"</span></span>
-<span><span class="co">#&gt; [1] "MVST_kmedians 0"</span></span>
-<span><span class="co">#&gt; [1] "MVST_angle -0.000719980624441458"</span></span>
-<span><span class="co">#&gt; [1] "MVST_ejaccard -0.000929833344567495"</span></span>
-<span><span class="co">#&gt; [1] "MVST_hardcl -0.00141233979813845"</span></span>
-<span><span class="co">#&gt; [1] "MVST_cckmeans 0"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "MVST_clust.cmeans -0.00732454388067655"</span></span>
+<span><span class="co">#&gt; [1] "MVST_flexcorr 0.00665834373699547"</span></span>
+<span><span class="co">#&gt; [1] "MVST_flexcanb 0.0452"</span></span>
+<span><span class="co">#&gt; [1] "MVST_flexmink 0.0193666666666667"</span></span>
+<span><span class="co">#&gt; [1] "MVST_GMM 0.0193666666666667"</span></span>
+<span><span class="co">#&gt; [1] "MVST_pamCluster 0.0193666666666667"</span></span>
+<span><span class="co">#&gt; [1] "MVST_kmedians 0.0193666666666667"</span></span>
+<span><span class="co">#&gt; [1] "MVST_angle 0.0613645538958417"</span></span>
+<span><span class="co">#&gt; [1] "MVST_ejaccard -0.00782785383564842"</span></span>
+<span><span class="co">#&gt; [1] "MVST_hardcl 0.0381590348596948"</span></span>
+<span><span class="co">#&gt; [1] "MVST_cckmeans 0.0193666666666667"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span> <span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span>, <span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                 </span></span>
+<span><span class="co">#&gt;                  MVST_flexcanb1 MVST_flexcanb2</span></span>
+<span><span class="co">#&gt;   MVST_cckmeans1             50             25</span></span>
+<span><span class="co">#&gt;   MVST_cckmeans2              0             50</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span> <span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span>, <span class="va">clustdata</span><span class="op">[</span>,<span class="va">ccname</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                 </span></span>
+<span><span class="co">#&gt;                  MVST_CC1 MVST_CC2</span></span>
+<span><span class="co">#&gt;   MVST_cckmeans1       49       26</span></span>
+<span><span class="co">#&gt;   MVST_cckmeans2       26       24</span></span></code></pre></div>
 <p>There you have it.</p>
 </div>
 <div class="section level3">

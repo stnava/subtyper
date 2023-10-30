@@ -2772,17 +2772,37 @@ clearcolname = function( mydf, mycolname ) {
 #' @param reorderingVariable the name of the column to use to reorder the cluster names
 #' @param mvcl character prefix for the new cluster column names
 #' @param verbose boolean
-#' @return a list with newdata: dataframe with new variables attached; models contains the trained models; reorderers contains a dataframe for reordering cluster levels
+#' @return a list with newdata: dataframe with new variables attached; models contains the trained models; reorderers contains a dataframe for reordering cluster levels; quality measurements and clustering based on cluster concordance (adjusted rand index) are also returned.
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' @export
 consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain, reorderingVariable,mvcl='MVST', verbose=FALSE ) {
+
+    # from mclust - avoid import for this 1 function
+    adjustedrandindex = function( x, y ) { 
+        x <- as.vector(x)
+        y <- as.vector(y)
+        if (length(x) != length(y)) 
+            stop("arguments must be vectors of the same length")
+        tab <- table(x, y)
+        if (all(dim(tab) == c(1, 1))) 
+            return(1)
+        a <- sum(choose(tab, 2))
+        b <- sum(choose(rowSums(tab), 2)) - a
+        c <- sum(choose(colSums(tab), 2)) - a
+        d <- choose(sum(tab), 2) - a - b - c
+        ARI <- (a - (a + b) * (a + c)/(a + b + c + d))/((a + b + 
+            a + c)/2 - (a + b) * (a + c)/(a + b + c + d))
+        return(ARI)
+      }
+
     if ( missing( reorderingVariable ) ) reorderingVariable = featureNames[1]
     stopifnot( reorderingVariable %in% colnames(dataToClust) )
     stopifnot( all( featureNames %in% colnames(dataToClust) ) )
     clustmodels = list()
     reoModels = list()
+    newclustnames = paste0(mvcl,"_",clustVec)
     for ( myclust in clustVec ) {
         if ( verbose ) print(paste("Train:",mvcl,myclust))
         mvclLocal = paste0(mvcl,"_",myclust)
@@ -2812,10 +2832,66 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
             }
         }
 
+
+  nn = length(clustVec)
+  mystat = matrix(nrow=nn,ncol=nn)
+  colnames(mystat)=rownames(mystat)=clustVec
+  for ( j in newclustnames ) {
+    for ( k in newclustnames ) {
+        if ( k != j ) {
+            cl1 = dataToClust[,j]
+            cl2 = dataToClust[,k]
+            myari = adjustedrandindex(cl1,cl2)
+            # print(paste("j",j,"k",k,"ARI",myari))
+            mystat[gsub(paste0(mvcl,"_"),"",j),gsub(paste0(mvcl,"_"),"",k)]=myari
+#            else if ( agreestat == 'conf') {
+#                cm <- caret::confusionMatrix(factor(cl1), reference = factor(cl2))
+#                mystat[j,k]=cm$overall[1]
+#            } else if ( agreestat == 'kap' ) mystat[j,k]=psych::cohen.kappa(cbind(cl1,cl2))$kappa
+#            mystat[j,k]=chisq.test(cl1,cl2,simulate.p.value = TRUE)$statistic
+#            print(paste("chi statistic=",chisq.test(cl1,cl2)$statistic ))
+            }
+          }
+        }
+    mymeans = apply( mystat, FUN=mean, MARGIN=2, na.rm=T)
+    mymaxes = apply( mystat, FUN=max, MARGIN=2, na.rm=T)
+    mostdisagreeable = names(mymeans[mymeans==min(mymeans)])
+    mostagreeable = names(mymeans[mymeans==max(mymeans)])
+    if ( verbose ) {
+      message(paste("The most agreeable method is:",mostagreeable))
+      print(paste("The most agreeable method is:",mostagreeable))
+      message(paste("The most disagreeable method is:",mostdisagreeable))
+      print(paste("The most disagreeable method is:",mostdisagreeable))
+    }
+    mystat2=mystat
+    diag(mystat2)=NA
+    if ( verbose ) pheatmap::pheatmap( mystat2 )
+    maxk = round(nn/2)
+    mypam = fpc::pamk(mystat2,krange=2:maxk,criterion="asw", usepam=TRUE,
+        scaling=FALSE, alpha=0.001, critout=FALSE, ns=10 )
+    myClusterCluster = mypam$pamobject$clustering
+    myClusterScores = rowMeans(mypam$pamobject$medoids,na.rm=T)
+    clustind = which( myClusterScores == 
+        sort(myClusterScores)[length(myClusterScores) ] )# 2nd best
+    moreagreeable = names( myClusterCluster[ myClusterCluster == clustind ] )
+    if ( verbose ) {
+      message("ClusterCluster")
+      print("ClusterCluster")
+      print(myClusterCluster)
+      print("ClusterSimilarityScores")
+      print( myClusterScores )
+      message("highestARIMethods")
+      print("highestARIMethods")
+      print(moreagreeable)
+      } 
+
     return( list( 
             newdata = dataToClust,
             models = clustmodels,
-            reorderers = reoModels
+            reorderers = reoModels,
+            highestARIMethods = moreagreeable,
+            ClusterClusters = myClusterCluster,
+            ClusterSimilarityScores = myClusterScores
             )
         )
 
@@ -2900,6 +2976,11 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     stopifnot( all( cocanames %in% colnames(dataToClust) ) )
     if ( !missing(idvar) & !missing(visitName) & !missing(baselineVisit) )
       usebaseline=TRUE
+    if ( length(cocanames) == 1 ) {
+      dataToClust[,newclustername]=dataToClust[,cocanames]
+      message("COCA irrelevant - only a single clustering result is available.")
+      return( dataToClust )
+    }
     dataToClust = clearcolname(dataToClust, newclustername )
     isbl = rep(TRUE,nrow(dataToClust))
     if ( usebaseline )

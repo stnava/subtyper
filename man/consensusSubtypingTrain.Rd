@@ -30,7 +30,7 @@ consensusSubtypingTrain(
 \item{verbose}{boolean}
 }
 \value{
-a list with newdata: dataframe with new variables attached; models contains the trained models; reorderers contains a dataframe for reordering cluster levels
+a list with newdata: dataframe with new variables attached; models contains the trained models; reorderers contains a dataframe for reordering cluster levels; quality measurements and clustering based on cluster concordance (adjusted rand index) are also returned.
 }
 \description{
 apply several clustering methods and append results to a dataframe;
