@@ -41,7 +41,7 @@ nrgDateToRDate <- function( x ) {
 #' # print(matched_subset)
 #'
 #' @importFrom stats t.test
-#'
+#' @export
 match_cohort_pair <- function(df1, df2, cols, num_iterations = 1000, restrict_df1=0.05 ) {
   best_subset <- NULL
   min_t_statistic <- Inf
