@@ -37,8 +37,8 @@ nrgDateToRDate <- function( x ) {
 #' df1 <- data.frame(A = rnorm(100), B = factor(sample(1:3, 100, replace = TRUE)), C = rnorm(100))
 #' df2 <- data.frame(A = rnorm(50), B = factor(sample(1:3, 50, replace = TRUE)), C = rnorm(50))
 #' matching_cols <- c("A", "B")
-#' matched_subset <- minimize_difference(df1, df2, matching_cols)
-#' print(matched_subset)
+#' # matched_subset <- match_cohort_pair(df1, df2, matching_cols)
+#' # print(matched_subset)
 #'
 #' @importFrom stats t.test
 #'
