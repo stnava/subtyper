@@ -30,6 +30,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 if (!requireNamespace("Biobase", quietly = TRUE))
   BiocManager::install("Biobase")
+BiocManager::install("globaltest")
 install.packages("NMF")
 ```
 
