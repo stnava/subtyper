@@ -4,7 +4,16 @@
 \alias{match_cohort_pair}
 \title{Minimize the difference between two data frames based on t-statistic.}
 \usage{
-match_cohort_pair(df1, df2, cols, num_iterations = 1000, restrict_df1 = 0.05)
+match_cohort_pair(
+  df1,
+  df2,
+  cols,
+  sample_size,
+  num_iterations = 1000,
+  restrict_df1 = 0.05,
+  option = "optimal",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{df1}{Data frame to be subsetted.}
@@ -13,9 +22,15 @@ match_cohort_pair(df1, df2, cols, num_iterations = 1000, restrict_df1 = 0.05)
 
 \item{cols}{Vector of column names used for matching.}
 
+\item{sample_size}{the number to sample from df1}
+
 \item{num_iterations}{Number of random subsets to generate.}
 
 \item{restrict_df1}{float lower quantile to restrict df1 based on first col value to match range of df2}
+
+\item{option}{either random or optimal}
+
+\item{verbose}{boolean}
 }
 \value{
 rownames of a sub data frame that minimizes the difference with df2 in terms of t-statistic.

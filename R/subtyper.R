@@ -27,8 +27,11 @@ nrgDateToRDate <- function( x ) {
 #' @param df1 Data frame to be subsetted.
 #' @param df2 Data frame used as a reference for comparison.
 #' @param cols Vector of column names used for matching.
+#' @param sample_size the number to sample from df1
 #' @param num_iterations Number of random subsets to generate.
 #' @param restrict_df1 float lower quantile to restrict df1 based on first col value to match range of df2
+#' @param option either random or optimal
+#' @param verbose boolean
 #'
 #' @return rownames of a sub data frame that minimizes the difference with df2 in terms of t-statistic.
 #'
@@ -41,46 +44,72 @@ nrgDateToRDate <- function( x ) {
 #' # print(matched_subset)
 #'
 #' @importFrom stats t.test
+#' @importFrom optmatch pairmatch match_on
 #' @export
-match_cohort_pair <- function(df1, df2, cols, num_iterations = 1000, restrict_df1=0.05 ) {
-  best_subset <- NULL
-  min_t_statistic <- Inf
+match_cohort_pair <- function(df1, df2, cols, sample_size, num_iterations = 1000, restrict_df1=0.05, option='optimal', verbose=TRUE ) {
+
+  stopifnot(  all( cols %in% colnames(df1) ) )
+  stopifnot(  all( cols %in% colnames(df2) ) )
   
-  # Convert factor columns to character for t-test
   if ( restrict_df1 > 0) {
-    df1=df1[  
-        df1[,cols[1]] > quantile(df2[,cols[1]],restrict_df1,na.rm=T) &
-        df1[,cols[1]] < quantile(df2[,cols[1]],1.0-restrict_df1,na.rm=T),  ]
+      df1=df1[  
+          df1[,cols[1]] > quantile(df2[,cols[1]],restrict_df1,na.rm=T) &
+          df1[,cols[1]] < quantile(df2[,cols[1]],1.0-restrict_df1,na.rm=T),  ]
   }
-  for (col in cols) {
-    if (!is.numeric(df1[,col])) {
-      df1[,col] <- as.numeric(as.factor(df1[,col]))
-    }
-    if (!is.numeric(df2[,col])) {
-      df2[,col] <- as.numeric(as.factor(df2[,col]))
-    }
-  }
-  t_statistic=rep(NA,length(cols))
-  names(t_statistic)=cols
-  min_t_statistic=rep(Inf,length(cols))
-  names(min_t_statistic)=cols
-  for (i in 1:num_iterations) {
-    # Randomly subset df1 based on the columns
-    subset_indices <- sample(1:nrow(df1), size = min( c(nrow(df2),nrow(df1))), replace = FALSE)
-    subset_df1 <- df1[subset_indices, cols]
-    # Calculate t-statistic for the subset
-    for (col in cols) {
-        t_statistic[col]=abs(t.test(subset_df1[,col], df2[,col])$statistic)
-        }
+
+  if ( missing( sample_size ) ) sample_size = min( c(nrow(df2),nrow(df1)))
+
+  if ( option != 'optimal' ) {
+    best_subset <- NULL
+    min_t_statistic <- Inf
     
-    # Check if the current subset has a smaller t-statistic
-    if ( mean(t_statistic) < mean(min_t_statistic) ) {
-      min_t_statistic <- t_statistic
-      best_subset <- subset_indices
+    # Convert factor columns to character for t-test
+    for (col in cols) {
+      if (!is.numeric(df1[,col])) {
+        df1[,col] <- as.numeric(as.factor(df1[,col]))
+      }
+      if (!is.numeric(df2[,col])) {
+        df2[,col] <- as.numeric(as.factor(df2[,col]))
+      }
     }
+    t_statistic=rep(NA,length(cols))
+    names(t_statistic)=cols
+    min_t_statistic=rep(Inf,length(cols))
+    names(min_t_statistic)=cols
+    for (i in 1:num_iterations) {
+      # Randomly subset df1 based on the columns
+      subset_indices <- sample(1:nrow(df1), 
+        size = sample_size, replace = TRUE )
+      # print( head( subset_indices ) )
+      subset_df1 <- df1[subset_indices, cols]
+      # Calculate t-statistic for the subset
+      for (col in cols) {
+          t_statistic[col]=abs(t.test(subset_df1[,col], df2[,col])$statistic)
+          }
+      
+      # Check if the current subset has a smaller t-statistic
+      if ( mean(t_statistic) < mean(min_t_statistic) ) {
+        min_t_statistic <- t_statistic
+        best_subset <- subset_indices
+        if ( verbose ) print( paste( min_t_statistic ))
+      }
+    }
+    if ( verbose ) print( paste( min_t_statistic ))
+    return( rownames(df1)[best_subset] )
+  } else {
+    df1$my_match_cohort_pair_var = 0
+    df2$my_match_cohort_pair_var = 1
+    temp = rbind( df1, df2 )
+    distances <- list()
+    myform = paste0( "my_match_cohort_pair_var ~",  paste(cols,collapse="+") )
+    distances$mahal <- match_on( as.formula(myform), data = temp)
+    mahal.match <- pairmatch(distances$mahal, data = temp, remove.unmatchables = TRUE )
+    matchednames = names( mahal.match )
+    return( matchednames[ matchednames %in% rownames(df1) ] )
+    return(  list( 
+      df1=matchednames[ matchednames %in% rownames(df1) ], 
+      df2=matchednames[ matchednames %in% rownames(df2) ] ) )
   }
-  print( paste( min_t_statistic ))
-  return( rownames(df1)[best_subset] )
 }
 
 

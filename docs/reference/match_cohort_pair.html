@@ -69,7 +69,14 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">match_cohort_pair</span><span class="op">(</span><span class="va">df1</span>, <span class="va">df2</span>, <span class="va">cols</span>, num_iterations <span class="op">=</span> <span class="fl">1000</span>, restrict_df1 <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">match_cohort_pair</span><span class="op">(</span></span>
+<span>  <span class="va">df1</span>,</span>
+<span>  <span class="va">df2</span>,</span>
+<span>  <span class="va">cols</span>,</span>
+<span>  num_iterations <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  restrict_df1 <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  option <span class="op">=</span> <span class="st">"optimal"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -92,6 +99,10 @@
 
 <dt>restrict_df1</dt>
 <dd><p>float lower quantile to restrict df1 based on first col value to match range of df2</p></dd>
+
+
+<dt>option</dt>
+<dd><p>either random or optimal</p></dd>
 
 </dl></div>
     <div id="value">
