@@ -487,17 +487,17 @@ train from the baseline visit.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span> <span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span>, </span>
 <span>    <span class="fu">mclust</span><span class="fu">::</span><span class="fu"><a href="https://mclust-org.github.io/mclust/reference/adjustedRandIndex.html" class="external-link">adjustedRandIndex</a></span><span class="op">(</span><span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span>, <span class="va">clustdata</span><span class="op">[</span>,<span class="va">ccname</span><span class="op">]</span><span class="op">)</span> <span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
-<span><span class="co">#&gt; [1] "MVST_clust.cmeans -0.00732454388067655"</span></span>
-<span><span class="co">#&gt; [1] "MVST_flexcorr 0.00665834373699547"</span></span>
-<span><span class="co">#&gt; [1] "MVST_flexcanb 0.0452"</span></span>
-<span><span class="co">#&gt; [1] "MVST_flexmink 0.0193666666666667"</span></span>
-<span><span class="co">#&gt; [1] "MVST_GMM 0.0193666666666667"</span></span>
-<span><span class="co">#&gt; [1] "MVST_pamCluster 0.0193666666666667"</span></span>
-<span><span class="co">#&gt; [1] "MVST_kmedians 0.0193666666666667"</span></span>
-<span><span class="co">#&gt; [1] "MVST_angle 0.0613645538958417"</span></span>
+<span><span class="co">#&gt; [1] "MVST_clust.cmeans 0.730623252097483"</span></span>
+<span><span class="co">#&gt; [1] "MVST_flexcorr -0.00624219725343316"</span></span>
+<span><span class="co">#&gt; [1] "MVST_flexcanb 0.354166666666667"</span></span>
+<span><span class="co">#&gt; [1] "MVST_flexmink 1"</span></span>
+<span><span class="co">#&gt; [1] "MVST_GMM 1"</span></span>
+<span><span class="co">#&gt; [1] "MVST_pamCluster 1"</span></span>
+<span><span class="co">#&gt; [1] "MVST_kmedians 1"</span></span>
+<span><span class="co">#&gt; [1] "MVST_angle 0.0102610684968375"</span></span>
 <span><span class="co">#&gt; [1] "MVST_ejaccard -0.00782785383564842"</span></span>
-<span><span class="co">#&gt; [1] "MVST_hardcl 0.0381590348596948"</span></span>
-<span><span class="co">#&gt; [1] "MVST_cckmeans 0.0193666666666667"</span></span>
+<span><span class="co">#&gt; [1] "MVST_hardcl 0.373925214957009"</span></span>
+<span><span class="co">#&gt; [1] "MVST_cckmeans 1"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span> <span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span>, <span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                 </span></span>
 <span><span class="co">#&gt;                  MVST_flexcanb1 MVST_flexcanb2</span></span>
@@ -506,8 +506,8 @@ train from the baseline visit.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span> <span class="va">clustdata</span><span class="op">[</span>,<span class="va">cocanames</span><span class="op">[</span><span class="va">k</span><span class="op">]</span><span class="op">]</span>, <span class="va">clustdata</span><span class="op">[</span>,<span class="va">ccname</span><span class="op">]</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                 </span></span>
 <span><span class="co">#&gt;                  MVST_CC1 MVST_CC2</span></span>
-<span><span class="co">#&gt;   MVST_cckmeans1       49       26</span></span>
-<span><span class="co">#&gt;   MVST_cckmeans2       26       24</span></span></code></pre></div>
+<span><span class="co">#&gt;   MVST_cckmeans1       75        0</span></span>
+<span><span class="co">#&gt;   MVST_cckmeans2        0       50</span></span></code></pre></div>
 <p>There you have it.</p>
 </div>
 <div class="section level3">
