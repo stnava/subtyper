@@ -3074,22 +3074,22 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
         temp = fillBaselineColumn( dataToClust,
             newclustername, 
             idvar, visitName, baselineVisit, 
-            fast=FALSE, verbose=F )[[1]]
-        temp[,newclustername]=temp[,paste0(newclustername,'_BL')]
-    } else temp = dataToClust
+            fast=TRUE, verbose=F )[[1]]
+        dataToClust[rownames(temp),newclustername]=temp[,paste0(newclustername,'_BL')]
+    }
     if ( !missing(reorderingVariable) ) {
       # now reorder 
-      xdf=aggregate( temp[isbl,reorderingVariable], 
-        list(temp[isbl,newclustername]),  
+      xdf=aggregate( dataToClust[isbl,reorderingVariable], 
+        list(dataToClust[isbl,newclustername]),  
         mean, na.rm=TRUE )
       newreo=order(xdf[,2])
-      olabels = temp[,newclustername]
+      olabels = dataToClust[,newclustername]
       placeholder = olabels
       for ( jj in 1:nrow(xdf) ) placeholder[ olabels == newreo[jj] ] = xdf[jj,1]
-      temp[,newclustername] = placeholder
-      xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]), mean, na.rm=TRUE )
+      dataToClust[,newclustername] = placeholder
+      xdf=aggregate( dataToClust[isbl,reorderingVariable], list(dataToClust[isbl,newclustername]), mean, na.rm=TRUE )
       if ( verbose ) print(xdf)
       }
-    dataToClust[,newclustername] = paste0(newclustername, temp[,newclustername] )
+    dataToClust[,newclustername] = paste0(newclustername, dataToClust[,newclustername] )
     return( dataToClust )
     }
