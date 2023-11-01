@@ -3042,6 +3042,7 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     if ( !missing(baselineVisit) )
       stopifnot( baselineVisit %in% dataToClust[,visitName] )
     stopifnot( all( cocanames %in% colnames(dataToClust) ) )
+    usebaseline=FALSE
     if ( !missing(idvar) & !missing(visitName) & !missing(baselineVisit) )
       usebaseline=TRUE
     if ( length(cocanames) == 1 ) {
@@ -3073,12 +3074,13 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
         temp = fillBaselineColumn( dataToClust,
             newclustername, 
             idvar, visitName, baselineVisit, 
-            fast=T, verbose=F )[[1]]
+            fast=FALSE, verbose=F )[[1]]
         temp[,newclustername]=temp[,paste0(newclustername,'_BL')]
-    }
+    } else temp = dataToClust
     if ( !missing(reorderingVariable) ) {
       # now reorder 
-      xdf=aggregate( temp[isbl,reorderingVariable], list(temp[isbl,newclustername]),  
+      xdf=aggregate( temp[isbl,reorderingVariable], 
+        list(temp[isbl,newclustername]),  
         mean, na.rm=TRUE )
       newreo=order(xdf[,2])
       olabels = temp[,newclustername]
@@ -3091,5 +3093,3 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     dataToClust[,newclustername] = paste0(newclustername, temp[,newclustername] )
     return( dataToClust )
     }
-
-
