@@ -876,6 +876,15 @@ fillBaselineColumn <- function(
    fast = TRUE,
    verbose=TRUE
 ) {
+
+  myMode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+    }
+  mostfreq <- function( x, na.rm=TRUE ) {
+    if ( is.numeric( x ) ) return( mean(x,na.rm=na.rm ) )
+    return( myMode( x ) )
+  }
   if ( ! ( subjectID %in% names( mxdfin ) ) )
     stop("subjectID not in data frame's columns")
   if ( ! all( columnName %in% names( mxdfin ) ) )
@@ -900,9 +909,9 @@ fillBaselineColumn <- function(
       bldf1 = bldf[ bldf[,subjectID] %in% onlyones, ]
       sel2 = bldf[,subjectID] %in% morethanones
       if ( verbose )
-        print( paste( "aggregate ", sum(sel2), "subjects with > 1 row ... these subjects have as many as", maxbln, "entries" ) )
+        print( paste( "aggregate ", columnName, " in ", sum(sel2), "subjects with > 1 row ... these subjects have as many as", maxbln, "entries" ) )
       multisubs=bldf[sel2,subjectID]
-      bldf2 = aggregate( bldf[sel2,c(subjectID,columnName)], list(multisubs), mean)
+      bldf2 = aggregate( bldf[sel2,c(subjectID,columnName)], list(multisubs), mostfreq, na.rm=T)
       bldf2[,subjectID]=unique( multisubs )
       bldf = base::rbind( bldf1[,c(subjectID,columnName)], bldf2[,c(subjectID,columnName)] )
       bldf = bldf[ order( bldf[,subjectID] ), ]
@@ -972,8 +981,7 @@ fillBaselineColumn <- function(
       baseval = NA
       if ( sum( selbase ) > 0  & !isFactor ) {
         baseval = mean( lomxdfin[ selbase, columnNameLoc ],  na.rm=T )
-      }
-      if ( sum( selbase ) > 0  & isFactor ) {
+      } else if ( sum( selbase ) > 0  & isFactor ) {
         baseval = median( lomxdfin[ selbase, columnNameLoc ],  na.rm=T )
       }
       mxdfin[ losel , newcolnameLoc ] = baseval
@@ -1014,12 +1022,19 @@ adjustByCovariates  <- function(
     if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
     subdf = mxdfin[ gsel, ]
   } else subdf = mxdfin
+  for ( xx in all.vars( as.formula( adjustmentFormula ) ) ) {
+#    print( xx )
+ #   print( table( is.na( mxdfin[,x] ) ) )
+  }
   baseform = paste( outcomevar, " ~ 1" )
   imodel = lm( baseform, data=subdf ) # just the intercept
   ctlmodel = lm( adjustmentFormula, data=subdf )
-  predvol = predict( ctlmodel, newdata = mxdfin ) - predict( imodel, newdata = mxdfin  )
+#  print( table(subdf$istrain, subdf$studyName ) )
+#  print( table(mxdfin$istrain, mxdfin$studyName ) )
+  predintercept = predict( imodel, newdata = mxdfin  )
+  predvol = predict( ctlmodel, newdata = mxdfin ) - predintercept
   adjustedoutcome = paste0( outcomevar, "_adjusted" )
-  mxdfin[ , adjustedoutcome ] = mxdfin[,outcomevar] - predvol
+  mxdfin[ , adjustedoutcome ] = mxdfin[,outcomevar] - predvol 
   return( mxdfin )
 }
 
@@ -2863,13 +2878,14 @@ clearcolname = function( mydf, mycolname ) {
 #' @param ktrain the number of clusters
 #' @param reorderingVariable the name of the column to use to reorder the cluster names
 #' @param mvcl character prefix for the new cluster column names
+#' @param ksearch the cluster number(s) for clustering of the methods by concordance
 #' @param verbose boolean
 #' @return a list with newdata: dataframe with new variables attached; models contains the trained models; reorderers contains a dataframe for reordering cluster levels; quality measurements and clustering based on cluster concordance (adjusted rand index) are also returned.
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' @export
-consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain, reorderingVariable,mvcl='MVST', verbose=FALSE ) {
+consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain, reorderingVariable, mvcl='MVST', ksearch=3, verbose=FALSE ) {
 
     # from mclust - avoid import for this 1 function
     adjustedrandindex = function( x, y ) { 
@@ -2963,8 +2979,8 @@ consensusSubtypingTrain = function( dataToClust, featureNames, clustVec, ktrain,
     mystat2=mystat
     diag(mystat2)=NA
     if ( verbose ) pheatmap::pheatmap( mystat2 )
-    maxk = round(nn/2)
-    mypam = fpc::pamk(mystat2,krange=2:maxk,criterion="asw", usepam=TRUE,
+    if ( any( is.na( ksearch ) ) ) ksearch = 2:round(nn/2)
+    mypam = fpc::pamk(mystat2,krange=ksearch,criterion="asw", usepam=TRUE,
         scaling=FALSE, alpha=0.001, critout=FALSE, ns=10 )
     myClusterCluster = mypam$pamobject$clustering
     myClusterScores = rowMeans(mypam$pamobject$medoids,na.rm=T)
@@ -3094,7 +3110,7 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     cocatx = coca::coca(dmytx, K = targetk, B=1000, maxIterKM=5000, ccClMethod=consensusmethod )
 #    cocatx = coca::coca(dmytx, maxK = 6, B=5000 )
 #    coca = coca::coca( dmytx, maxK = 10, hclustMethod = "average")
-    cocatxlab = cocatx$clusterLabels
+    cocatxlab = as.numeric( cocatx$clusterLabels )
     if ( verbose )
       print( table( cocatxlab ) )
     dataToClust[,newclustername]=NA
@@ -3103,7 +3119,7 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
         temp = fillBaselineColumn( dataToClust,
             newclustername, 
             idvar, visitName, baselineVisit, 
-            fast=TRUE, verbose=F )[[1]]
+            fast=TRUE, verbose=FALSE )[[1]]
         dataToClust[rownames(temp),newclustername]=temp[,paste0(newclustername,'_BL')]
     }
     if ( !missing(reorderingVariable) ) {

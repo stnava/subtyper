@@ -11,6 +11,7 @@ consensusSubtypingTrain(
   ktrain,
   reorderingVariable,
   mvcl = "MVST",
+  ksearch = 3,
   verbose = FALSE
 )
 }
@@ -26,6 +27,8 @@ consensusSubtypingTrain(
 \item{reorderingVariable}{the name of the column to use to reorder the cluster names}
 
 \item{mvcl}{character prefix for the new cluster column names}
+
+\item{ksearch}{the cluster number(s) for clustering of the methods by concordance}
 
 \item{verbose}{boolean}
 }
