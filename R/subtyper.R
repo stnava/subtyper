@@ -58,7 +58,7 @@ match_cohort_pair <- function(df1, df2, cols, sample_size, num_iterations = 1000
   }
 
   if ( missing( sample_size ) ) sample_size = min( c(nrow(df2),nrow(df1)))
-
+  if ( sample_size > nrow(df1 ) ) sample_size = nrow( df1 ) - 1
   if ( option != 'optimal' ) {
     best_subset <- NULL
     min_t_statistic <- Inf
@@ -79,7 +79,7 @@ match_cohort_pair <- function(df1, df2, cols, sample_size, num_iterations = 1000
     for (i in 1:num_iterations) {
       # Randomly subset df1 based on the columns
       subset_indices <- sample(1:nrow(df1), 
-        size = sample_size, replace = TRUE )
+        size = sample_size, replace = FALSE )
       # print( head( subset_indices ) )
       subset_df1 <- df1[subset_indices, cols]
       # Calculate t-statistic for the subset
@@ -2565,6 +2565,64 @@ balancedDataframe <- function( x, variable, method ) {
     return(x)
     }
 
+
+
+#' balanced sampling of a multi-class variable
+#' 
+#' resample a dataframe to counteract variable imbalance
+#' 
+#' @param x data frame to extend
+#' @param variable column name
+#' @param method one of permissible methods listed in function (will print if wrong method passed)
+#' 
+#' @return new data frame
+#' @author Avants BB
+#' @export
+balanceDataMultiClass <- function( x, variable, method ) {
+  if ( sampling == 'under') {
+      minmaxdifftbl = table( x[,variable] )
+      mintbl = min( minmaxdifftbl )
+      diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
+      while( diffis > 0 ) {
+          minmaxdifftbl = table( x[,variable] )
+          mintbl = min( minmaxdifftbl )
+          diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
+          if ( diffis > 0 ) {
+              maxname = names( minmaxdifftbl[ minmaxdifftbl == max(minmaxdifftbl) ] )
+              indsformax = sample( which( x[,variable] == maxname ), mintbl, replace=FALSE )
+              otherinds = which( x[,variable] != maxname )
+              x=x[c(otherinds,indsformax),]
+              }
+          }
+      } else if ( sampling == 'over') {
+          minmaxdifftbl = table( x[,variable] )
+          mintbl = min( minmaxdifftbl )
+          diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
+          while( diffis > 0 ) {
+              minmaxdifftbl = table( x[,variable] )
+              maxtbl = max( minmaxdifftbl )
+              diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
+              if ( diffis > 0 ) {
+                  minname = names( minmaxdifftbl[ minmaxdifftbl == min(minmaxdifftbl) ] )
+                  indsformax = sample( which( x[,variable] == minname ), maxtbl, replace=TRUE )
+                  otherinds = which( x[,variable] != minname )
+                  x=x[c(otherinds,indsformax),]
+                  }
+              }
+      } else if ( sampling == 'mwmote' ) {
+      minmaxdifftbl = table( x[,variable] )
+      diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
+      while ( diffis > 50 ) {    
+          minmaxdifftbl = table( x[,variable] )
+          diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
+          if ( diffis > 0 ) {
+              temp=imbalance::mwmote( 
+                  x, diffis, classAttr = variable )
+              x=rbind( x, temp)
+          }
+      }
+  }
+}
 
 #' balanced data partition
 #' 
