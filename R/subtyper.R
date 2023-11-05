@@ -2612,7 +2612,7 @@ balanceDataMultiClass <- function( x, variable, method ) {
       } else if ( sampling == 'mwmote' ) {
       minmaxdifftbl = table( x[,variable] )
       diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
-      while ( diffis > 50 ) {    
+      while ( diffis > 0 ) {    
           minmaxdifftbl = table( x[,variable] )
           diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
           if ( diffis > 0 ) {
@@ -2622,6 +2622,7 @@ balanceDataMultiClass <- function( x, variable, method ) {
           }
       }
   }
+  return( x )
 }
 
 #' balanced data partition
