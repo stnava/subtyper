@@ -2579,7 +2579,8 @@ balancedDataframe <- function( x, variable, method ) {
 #' @author Avants BB
 #' @export
 balanceDataMultiClass <- function( x, variable, method ) {
-  if ( sampling == 'under') {
+  if ( method == 'none' ) return( x )
+  if ( method == 'under') {
       minmaxdifftbl = table( x[,variable] )
       mintbl = min( minmaxdifftbl )
       diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
@@ -2594,7 +2595,7 @@ balanceDataMultiClass <- function( x, variable, method ) {
               x=x[c(otherinds,indsformax),]
               }
           }
-      } else if ( sampling == 'over') {
+      } else if ( method == 'over') {
           minmaxdifftbl = table( x[,variable] )
           mintbl = min( minmaxdifftbl )
           diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
@@ -2609,7 +2610,7 @@ balanceDataMultiClass <- function( x, variable, method ) {
                   x=x[c(otherinds,indsformax),]
                   }
               }
-      } else if ( sampling == 'mwmote' ) {
+      } else if ( method == 'mwmote' ) {
       minmaxdifftbl = table( x[,variable] )
       diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
       while ( diffis > 0 ) {    
