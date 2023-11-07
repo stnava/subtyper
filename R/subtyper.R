@@ -2587,11 +2587,13 @@ balanceDataMultiClass <- function( x, variable, method, minimum_ratio=0.99 ) {
       diffis = min( minmaxdifftbl ) / max( minmaxdifftbl )
       while( diffis < minimum_ratio ) {
           minmaxdifftbl = table( x[,variable] )
+          maxtbl = max( minmaxdifftbl )
           mintbl = min( minmaxdifftbl )
-          diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
+          diffis = mintbl/maxtbl
           if ( diffis < minimum_ratio ) {
               maxname = names( minmaxdifftbl[ minmaxdifftbl == max(minmaxdifftbl) ] )
-              indsformax = sample( which( x[,variable] == maxname ), mintbl, replace=FALSE )
+              samplethismany = round( mintbl + ( maxtbl - mintbl ) * minimum_ratio ) - 1
+              indsformax = sample( which( x[,variable] == maxname ), samplethismany, replace=FALSE )
               otherinds = which( x[,variable] != maxname )
               x=x[c(otherinds,indsformax),]
               }
@@ -2606,7 +2608,8 @@ balanceDataMultiClass <- function( x, variable, method, minimum_ratio=0.99 ) {
               diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
               if ( diffis < minimum_ratio ) {
                   minname = names( minmaxdifftbl[ minmaxdifftbl == min(minmaxdifftbl) ] )
-                  indsformax = sample( which( x[,variable] == minname ), maxtbl, replace=TRUE )
+                  samplethismany = round( maxtbl * minimum_ratio )+1
+                  indsformax = sample( which( x[,variable] == minname ), samplethismany, replace=TRUE )
                   otherinds = which( x[,variable] != minname )
                   x=x[c(otherinds,indsformax),]
                   }
@@ -2618,7 +2621,7 @@ balanceDataMultiClass <- function( x, variable, method, minimum_ratio=0.99 ) {
             minmaxdifftbl = table( x[,variable] )
             diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
             if ( diffis < minimum_ratio ) {
-                samplethismany = max( minmaxdifftbl ) - min( minmaxdifftbl )
+                samplethismany = round( (max( minmaxdifftbl ) - min( minmaxdifftbl )) * minimum_ratio ) + 1
                 temp=imbalance::mwmote( x, samplethismany, classAttr = variable )
                 x=rbind( x, temp)
             }
@@ -2695,7 +2698,7 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
 
 #' mlr3classifier
 #' 
-#' cross-validate a mlr3 classification model
+#' build a mlr3 classification model
 #'
 #' @param dfin dataframe input
 #' @param tcols columns for the prediction task - first is the target outcome

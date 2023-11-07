@@ -414,16 +414,17 @@ train from the baseline visit.</p>
 <span><span class="co">#&gt; ClusterCluster</span></span>
 <span><span class="co">#&gt; [1] "ClusterCluster"</span></span>
 <span><span class="co">#&gt; clust.cmeans     flexcorr     flexcanb     flexmink          GMM   pamCluster </span></span>
-<span><span class="co">#&gt;            1            2            3            4            4            4 </span></span>
+<span><span class="co">#&gt;            1            2            3            1            1            1 </span></span>
 <span><span class="co">#&gt;     kmedians        angle     ejaccard       hardcl     cckmeans </span></span>
-<span><span class="co">#&gt;            4            2            2            3            4 </span></span>
+<span><span class="co">#&gt;            1            2            2            3            1 </span></span>
 <span><span class="co">#&gt; [1] "ClusterSimilarityScores"</span></span>
-<span><span class="co">#&gt; clust.cmeans     flexcorr       hardcl     cckmeans </span></span>
-<span><span class="co">#&gt;  0.486004077  0.006920787  0.356916373  0.550912601</span></span>
+<span><span class="co">#&gt;    cckmeans    flexcorr      hardcl </span></span>
+<span><span class="co">#&gt; 0.550912601 0.006920787 0.356916373</span></span>
 <span><span class="co">#&gt; highestARIMethods</span></span></code></pre></div>
 <p><img src="subtyper_files/figure-html/trainclustermodels-1.png" width="700"></p>
 <pre><code><span><span class="co">#&gt; [1] "highestARIMethods"</span></span>
-<span><span class="co">#&gt; [1] "flexmink"   "GMM"        "pamCluster" "kmedians"   "cckmeans"</span></span>
+<span><span class="co">#&gt; [1] "clust.cmeans" "flexmink"     "GMM"          "pamCluster"   "kmedians"    </span></span>
+<span><span class="co">#&gt; [6] "cckmeans"</span></span>
 <span><span class="va">clustmodels</span> <span class="op">=</span> <span class="va">cclusterobj</span><span class="op">[[</span><span class="st">"models"</span><span class="op">]</span><span class="op">]</span></span>
 <span><span class="va">reoModels</span> <span class="op">=</span> <span class="va">cclusterobj</span><span class="op">[[</span><span class="st">"reorderers"</span><span class="op">]</span><span class="op">]</span></span></code></pre>
 <p>Predict the subtypes (clusters) on all time points.</p>
