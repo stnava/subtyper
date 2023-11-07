@@ -4,7 +4,7 @@
 \alias{balanceDataMultiClass}
 \title{balanced sampling of a multi-class variable}
 \usage{
-balanceDataMultiClass(x, variable, method)
+balanceDataMultiClass(x, variable, method, minimum_ratio = 0.99)
 }
 \arguments{
 \item{x}{data frame to extend}
@@ -12,6 +12,8 @@ balanceDataMultiClass(x, variable, method)
 \item{variable}{column name}
 
 \item{method}{one of permissible methods listed in function (will print if wrong method passed)}
+
+\item{minimum_ratio}{minimum acceptable ratio of smallest to largest group n}
 }
 \value{
 new data frame

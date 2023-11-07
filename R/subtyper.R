@@ -2574,21 +2574,22 @@ balancedDataframe <- function( x, variable, method ) {
 #' @param x data frame to extend
 #' @param variable column name
 #' @param method one of permissible methods listed in function (will print if wrong method passed)
+#' @param minimum_ratio minimum acceptable ratio of smallest to largest group n
 #' 
 #' @return new data frame
 #' @author Avants BB
 #' @export
-balanceDataMultiClass <- function( x, variable, method ) {
+balanceDataMultiClass <- function( x, variable, method, minimum_ratio=0.99 ) {
   if ( method == 'none' ) return( x )
   if ( method == 'under') {
       minmaxdifftbl = table( x[,variable] )
       mintbl = min( minmaxdifftbl )
-      diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
-      while( diffis > 0 ) {
+      diffis = min( minmaxdifftbl ) / max( minmaxdifftbl )
+      while( diffis < minimum_ratio ) {
           minmaxdifftbl = table( x[,variable] )
           mintbl = min( minmaxdifftbl )
-          diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
-          if ( diffis > 0 ) {
+          diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
+          if ( diffis < minimum_ratio ) {
               maxname = names( minmaxdifftbl[ minmaxdifftbl == max(minmaxdifftbl) ] )
               indsformax = sample( which( x[,variable] == maxname ), mintbl, replace=FALSE )
               otherinds = which( x[,variable] != maxname )
@@ -2598,12 +2599,12 @@ balanceDataMultiClass <- function( x, variable, method ) {
       } else if ( method == 'over') {
           minmaxdifftbl = table( x[,variable] )
           mintbl = min( minmaxdifftbl )
-          diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
-          while( diffis > 0 ) {
+          diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
+          while( diffis < minimum_ratio ) {
               minmaxdifftbl = table( x[,variable] )
               maxtbl = max( minmaxdifftbl )
-              diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
-              if ( diffis > 0 ) {
+              diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
+              if ( diffis < minimum_ratio ) {
                   minname = names( minmaxdifftbl[ minmaxdifftbl == min(minmaxdifftbl) ] )
                   indsformax = sample( which( x[,variable] == minname ), maxtbl, replace=TRUE )
                   otherinds = which( x[,variable] != minname )
@@ -2611,18 +2612,18 @@ balanceDataMultiClass <- function( x, variable, method ) {
                   }
               }
       } else if ( method == 'mwmote' ) {
-      minmaxdifftbl = table( x[,variable] )
-      diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
-      while ( diffis > 0 ) {    
-          minmaxdifftbl = table( x[,variable] )
-          diffis = max( minmaxdifftbl ) - min( minmaxdifftbl )
-          if ( diffis > 0 ) {
-              temp=imbalance::mwmote( 
-                  x, diffis, classAttr = variable )
-              x=rbind( x, temp)
-          }
-      }
-  }
+        minmaxdifftbl = table( x[,variable] )
+        diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
+        while ( diffis < minimum_ratio ) {    
+            minmaxdifftbl = table( x[,variable] )
+            diffis = min( minmaxdifftbl )/max( minmaxdifftbl )
+            if ( diffis < minimum_ratio ) {
+                samplethismany = max( minmaxdifftbl ) - min( minmaxdifftbl )
+                temp=imbalance::mwmote( x, samplethismany, classAttr = variable )
+                x=rbind( x, temp)
+            }
+        }
+    }
   return( x )
 }
 
