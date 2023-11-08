@@ -37,7 +37,7 @@ by ensuring subjects exist in uniquely in either train or test}
 dataframe with task, learner, accuracy and balanced accuracy
 }
 \description{
-cross-validate a mlr3 classification model
+build a mlr3 classification model
 }
 \author{
 Avants BB

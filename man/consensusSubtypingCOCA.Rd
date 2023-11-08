@@ -13,6 +13,7 @@ consensusSubtypingCOCA(
   idvar,
   visitName,
   baselineVisit,
+  maxK,
   consensusmethod = "kmeans",
   verbose = TRUE
 )
@@ -33,6 +34,8 @@ consensusSubtypingCOCA(
 \item{visitName}{the column name defining the visit variables}
 
 \item{baselineVisit}{the string naming the baseline visit}
+
+\item{maxK}{maximum number of clusters}
 
 \item{consensusmethod}{either kmeans or hclust}
 
