@@ -238,12 +238,12 @@ fnames = getNamesFromDataframe( "XDAT", mydf )
 Next, we use subtyper methods to generate clustering solutions.
 We train from the baseline visit.
 
-```{r trainclustermodels}
+```{r trainclustermodels,message=FALSE,echo=TRUE,warning=FALSE}
 mvcl='MVST' # default prefix - can be changed
 cohortbl = mydf[ mydf$visit == 'V0', ]
 mydf = consensusSubtypingPrep( cohortbl, mydf, fnames,
   clustlist, maxK=6,
-  fnames[1], mvcl=mvcl, verbose=TRUE )
+  fnames[1], mvcl=mvcl, verbose=FALSE )
 ```
 
 

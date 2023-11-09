@@ -3200,6 +3200,7 @@ consensusSubtypingPrep = function( dataToTrain, dataToPredict, featureNames, clu
 #' @param baselineVisit the string naming the baseline visit
 #' @param maxK maximum number of clusters
 #' @param consensusmethod either kmeans or hclust
+#' @param returnonehot boolean 
 #' @param verbose boolean
 #' @return new dataframe with new variables attached
 #' @author Avants BB
@@ -3207,7 +3208,7 @@ consensusSubtypingPrep = function( dataToTrain, dataToPredict, featureNames, clu
 #' mydf = generateSubtyperData( 100 )
 #' @importFrom caret dummyVars contr.ltfr
 #' @export
-consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, maxK, consensusmethod='kmeans',verbose=TRUE ) {
+consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, maxK, consensusmethod='kmeans', returnonehot=FALSE, verbose=TRUE ) {
     # assume we already ran consensuscluster
     if ( !missing(idvar) )
       stopifnot( idvar %in% colnames(dataToClust) )
@@ -3238,13 +3239,15 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     }
     dmy = dummyVars(cocoform, data = dataToClust[,cocanames])
     dmytx = data.frame(predict(dmy, newdata = dataToClust[isbl,cocanames]))
+    if ( returnonehot ) return( dmytx )
     if ( ! missing( targetk ) & missing( maxK ) ) {
       cocatx = coca::coca(dmytx, K = targetk, B=1000, maxIterKM=5000, ccClMethod=consensusmethod )
     } else if ( ! missing( maxK ) ) {
       message(paste(consensusmethod,'spearman',maxK))
       cocatx = coca::coca(dmytx, K = NULL, maxK=maxK, 
-        # choiceKmethod='AUC', 
-        widestGap=TRUE, ccDistHC='spearman',
+#        dunn2s=TRUE,
+        choiceKmethod='AUC', 
+#        widestGap=TRUE, ccDistHC='spearman',
         B=1000, maxIterKM=5000, ccClMethod=consensusmethod )
     } else stop("Must set either maxK or targetk")
 #    cocatx = coca::coca(dmytx, maxK = 6, B=5000 )

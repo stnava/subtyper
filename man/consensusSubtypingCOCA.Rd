@@ -15,6 +15,7 @@ consensusSubtypingCOCA(
   baselineVisit,
   maxK,
   consensusmethod = "kmeans",
+  returnonehot = FALSE,
   verbose = TRUE
 )
 }
@@ -38,6 +39,8 @@ consensusSubtypingCOCA(
 \item{maxK}{maximum number of clusters}
 
 \item{consensusmethod}{either kmeans or hclust}
+
+\item{returnonehot}{boolean}
 
 \item{verbose}{boolean}
 }
