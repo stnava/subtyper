@@ -23,9 +23,11 @@ steps: &steps
         name: Install package dependencies manually
         command: Rscript -e "install.packages(c( 'FRESA.CAD', 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot'))"
     - run:
+        no_output_timeout: 30m
         name: Build package
         command: R CMD build .
     - run:
+        no_output_timeout: 30m
         name: Check package
         command: R CMD check --no-manual *tar.gz
 #    - store_artifacts:
