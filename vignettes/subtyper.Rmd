@@ -239,23 +239,13 @@ Next, we use subtyper methods to generate clustering solutions.
 We train from the baseline visit.
 
 ```{r trainclustermodels}
-cohortbl = mydf[ mydf$visit == 'V0', ]
 mvcl='MVST' # default prefix - can be changed
-cclusterobj = consensusSubtypingTrain( cohortbl, fnames, clustlist, 2,
-  mvcl=mvcl, verbose=TRUE )
-clustmodels = cclusterobj[["models"]]
-reoModels = cclusterobj[["reorderers"]]
+cohortbl = mydf[ mydf$visit == 'V0', ]
+mydf = consensusSubtypingPrep( cohortbl, mydf, fnames,
+  clustlist, maxK=6,
+  fnames[1], mvcl=mvcl, verbose=TRUE )
 ```
 
-
-Predict the subtypes (clusters) on all time points.
-```{r predictclustermodels}
-mydf = consensusSubtypingPredict( mydf, fnames, clustlist, 
-  clustmodels, reorderers = reoModels, 
-  mvcl=mvcl, idvar='Id', visitName='visit', baselineVisit='V0')
-cocanames = getNamesFromDataframe( mvcl, mydf, exclusions="_mem")
-cocanames=cocanames[ cocanames != mvcl ]
-```
 
 Given the full output, run a consensus method.
 
@@ -263,9 +253,11 @@ Given the full output, run a consensus method.
 # some hidden function cannot be found if we dont explicitly load caret
 library( caret ) 
 ccname = paste0(mvcl,"_CC")
-clustdata = consensusSubtypingCOCA( mydf, 2, cocanames,
-    newclustername=ccname, 
-    idvar='Id', visitName='visit', baselineVisit='V0', verbose=TRUE )
+cocanames = getNamesFromDataframe( paste0(mvcl,"_cstk"), mydf, exclusions='_mem')
+clustdata = consensusSubtypingCOCA( mydf, maxK=6, 
+  cocanames=cocanames,
+  newclustername=ccname, 
+  idvar='Id', visitName='visit', baselineVisit='V0', verbose=TRUE )
 ```
 
 Compare the new clustering to the originals.
@@ -275,8 +267,8 @@ for ( k in 1:length(cocanames)) {
   print( paste( cocanames[k], 
     mclust::adjustedRandIndex(clustdata[,cocanames[k]], clustdata[,ccname]) ))
 }
-table( clustdata[,cocanames[k]], clustdata[,cocanames[3]])
-table( clustdata[,cocanames[k]], clustdata[,ccname])
+table( clustdata[,cocanames[1]], clustdata[,ccname])
+table( clustdata[,cocanames[2]], clustdata[,ccname])
 ```
 
 There you have it.

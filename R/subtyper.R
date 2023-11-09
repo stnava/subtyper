@@ -3122,6 +3122,70 @@ consensusSubtypingPredict = function( dataToClust, featureNames, clustVec, clust
     }
 
 
+#' consensusSubtypingPrep
+#' 
+#' generate input for consensus clustering give several clustering algorithms
+#'
+#' @param dataToTrain dataframe input that contains the relevant variables (may have others as well) on which training will be based
+#' @param dataToPredict dataframe input that contains the relevant variables (may have others as well) for which prediction will be done
+#' @param featureNames names to use in the clustering
+#' @param clustVec names of the clustering methods to use
+#' @param maxK the maximum desired number of classes
+#' @param reorderingVariable the name of the column to use to reorder the cluster names
+#' @param mvcl character prefix for the new cluster column names
+#' @param idvar variable name for unique subject identifier column
+#' @param visitName the column name defining the visit variables
+#' @param baselineVisit the string naming the baseline visit
+#' @param whichrank allows user to get 2nd (or 3rd) rank set of methods
+#' @param ntoreturnperk number of method results per k to return
+#' @param verbose boolean
+#' @return new dataframe with new variables attached
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' @importFrom caret dummyVars contr.ltfr
+#' @export
+consensusSubtypingPrep = function( dataToTrain, dataToPredict, featureNames, clustVec, maxK, 
+  reorderingVariable, mvcl, idvar, visitName, baselineVisit, whichrank=0, ntoreturnperk=2, verbose=FALSE ) {
+  ############################
+  dataToPredictAll = dataToPredict
+  for ( desiredk in 2:maxK ) {
+    mvclK=paste0(mvcl,"_cstk_",desiredk)
+    ## cluster method training
+    cclusterobj = consensusSubtypingTrain( 
+        dataToTrain, featureNames, clustVec, desiredk, 
+        reorderingVariable=reorderingVariable, mvcl=mvclK, verbose=verbose )
+    dataToTrain = cclusterobj[["newdata"]]
+    clustmodels = cclusterobj[["models"]]
+    reoModels = cclusterobj[["reorderers"]]
+    clustlist = names( clustmodels )
+    myClusterScores = cclusterobj[["ClusterSimilarityScores"]]
+    myClusterCluster = cclusterobj[["ClusterClusters"]]
+    clustind = which( myClusterScores == 
+        sort(myClusterScores)[length(myClusterScores) - whichrank  ])# 2nd best
+    moreagreeable = names( myClusterCluster[ myClusterCluster == clustind ] )
+    if ( verbose ) {
+      message("moreagreeable")
+      print(moreagreeable)
+      }
+    moreagreeable = head( names( myClusterScores[ order(myClusterScores,decreasing=T) ] ),
+      ntoreturnperk )
+    if ( verbose ) {
+      message("mostagreeable")
+      print(moreagreeable)
+      }
+    # first run the clustering on all PPMI data 
+    clustdata = consensusSubtypingPredict( dataToPredict, 
+        featureNames, moreagreeable, clustmodels, 
+        reoModels, mvclK, 
+        idvar=idvar, visitName=visitName, baselineVisit=baselineVisit )
+    locclustnames = getNamesFromDataframe( mvclK, clustdata, exclusions="_mem" )
+    dataToPredictAll[, locclustnames] = clustdata[, locclustnames ]
+    }
+    return( dataToPredictAll )
+  }
+
+
 #' consensusSubtypingCOCA
 #' 
 #' apply consensus clustering give several clustering solutions
