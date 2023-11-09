@@ -1862,7 +1862,9 @@ featureImportanceForSubtypes <- function(
       myzsub = mycoffssub[,"Statistic"]
       if ( transform == 'effect_sizes' ) {
         myz = as.numeric( effectsize::z_to_d( myz, nrow(featureMatrix) )$d )
-        myzsub = as.numeric( effectsize::z_to_d( myzsub, nrow(featureMatrix))$d  )
+        if ( nrow( mycoffssub ) > 0 ) {
+          myzsub = as.numeric( effectsize::z_to_d( myzsub, nrow(featureMatrix))$d  )
+        } else myzsub=myz
         }
       clustzdescribe[j,rownames(mycoffs)]=myz
       clustsigdescribe[j,rownames(mycoffssub)]=myzsub
