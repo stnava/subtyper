@@ -254,10 +254,21 @@ Given the full output, run a consensus method.
 library( caret ) 
 ccname = paste0(mvcl,"_CC")
 cocanames = getNamesFromDataframe( paste0(mvcl,"_cstk"), mydf, exclusions='_mem')
-clustdata = consensusSubtypingCOCA( mydf, maxK=6, 
+maxK = 6
+myoh = clustdata = consensusSubtypingCOCA( mydf, maxK=maxK, 
   cocanames=cocanames,
   newclustername=ccname, 
-  idvar='Id', visitName='visit', baselineVisit='V0', verbose=TRUE )
+  idvar='Id', visitName='visit', 
+  baselineVisit='V0', 
+  binnmf=2,
+  returnonehot=TRUE )
+pheatmap::pheatmap( myoh )
+clustdata = consensusSubtypingCOCA( mydf, maxK=maxK, 
+  cocanames=cocanames,
+  newclustername=ccname, 
+  idvar='Id', visitName='visit', baselineVisit='V0', 
+  binnmf=2,
+  verbose=TRUE )
 ```
 
 Compare the new clustering to the originals.

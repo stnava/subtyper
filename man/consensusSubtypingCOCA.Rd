@@ -16,6 +16,7 @@ consensusSubtypingCOCA(
   maxK,
   consensusmethod = "kmeans",
   returnonehot = FALSE,
+  binnmf = 0,
   verbose = TRUE
 )
 }
@@ -41,6 +42,8 @@ consensusSubtypingCOCA(
 \item{consensusmethod}{either kmeans or hclust}
 
 \item{returnonehot}{boolean}
+
+\item{binnmf}{integer (0 is default - no nmf)}
 
 \item{verbose}{boolean}
 }

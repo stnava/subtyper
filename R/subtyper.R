@@ -44,6 +44,8 @@ nrgDateToRDate <- function( x ) {
 #' # print(matched_subset)
 #'
 #' @importFrom stats t.test
+#' @importFrom nmfbin nmfbin
+#' @importFrom MASS ginv
 #' @importFrom optmatch pairmatch match_on
 #' @export
 match_cohort_pair <- function(df1, df2, cols, sample_size, num_iterations = 1000, restrict_df1=0.05, option='optimal', verbose=TRUE ) {
@@ -2884,6 +2886,27 @@ mlr3classifiercv <- function( dfin, tcols, nrepeats=10, partrate=0.80, dup_size=
 }
 
 
+
+#' fill1col2another
+#' 
+#' fill missing data values into one column from another column;
+#' will only fill values that are NA
+#'
+#' @param df dataframe input
+#' @param x column to fill
+#' @param y column to fill from
+#' @return filled dataframe
+#' @author Avants BB
+#' @export
+fill1col2another <- function( df, x, y ) {
+    losel = is.na( df[,x] ) & !is.na(  df[,y] )
+    losel[ is.na( losel )] = FALSE
+    if ( sum( losel ) > 0 )
+      df[ losel, x ] = df[ losel, y ]
+    return( df )
+    }
+
+
 #' dcurvarsel
 #' 
 #' variable selection with CUR - using default parameters from package example
@@ -3201,6 +3224,7 @@ consensusSubtypingPrep = function( dataToTrain, dataToPredict, featureNames, clu
 #' @param maxK maximum number of clusters
 #' @param consensusmethod either kmeans or hclust
 #' @param returnonehot boolean 
+#' @param binnmf integer (0 is default - no nmf) 
 #' @param verbose boolean
 #' @return new dataframe with new variables attached
 #' @author Avants BB
@@ -3208,7 +3232,7 @@ consensusSubtypingPrep = function( dataToTrain, dataToPredict, featureNames, clu
 #' mydf = generateSubtyperData( 100 )
 #' @importFrom caret dummyVars contr.ltfr
 #' @export
-consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, maxK, consensusmethod='kmeans', returnonehot=FALSE, verbose=TRUE ) {
+consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, maxK, consensusmethod='kmeans', returnonehot=FALSE, binnmf=0, verbose=TRUE ) {
     # assume we already ran consensuscluster
     if ( !missing(idvar) )
       stopifnot( idvar %in% colnames(dataToClust) )
@@ -3239,6 +3263,10 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     }
     dmy = dummyVars(cocoform, data = dataToClust[,cocanames])
     dmytx = data.frame(predict(dmy, newdata = dataToClust[isbl,cocanames]))
+    if ( binnmf > 1 ) {
+      dmytx=nmfbin::nmfbin(data.matrix(dmytx), binnmf )$W
+      if ( verbose ) print("nmfbin done")
+    }
     if ( returnonehot ) return( dmytx )
     if ( ! missing( targetk ) & missing( maxK ) ) {
       cocatx = coca::coca(dmytx, K = targetk, B=1000, maxIterKM=5000, ccClMethod=consensusmethod )
@@ -3250,11 +3278,13 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
 #        widestGap=TRUE, ccDistHC='spearman',
         B=1000, maxIterKM=5000, ccClMethod=consensusmethod )
     } else stop("Must set either maxK or targetk")
+    if ( verbose ) message("COCA complete")
 #    cocatx = coca::coca(dmytx, maxK = 6, B=5000 )
 #    coca = coca::coca( dmytx, maxK = 10, hclustMethod = "average")
     cocatxlab = as.numeric( cocatx$clusterLabels )
-    if ( verbose )
+    if ( verbose ) {
       print( table( cocatxlab ) )
+      }
     dataToClust[,newclustername]=NA
     dataToClust[isbl,newclustername]=cocatxlab
     if ( usebaseline ) {
