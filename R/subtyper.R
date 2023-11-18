@@ -1004,6 +1004,7 @@ fillBaselineColumn <- function(
 #' @param adjustmentFormula string defining a valid formula to be used in \code{lm}.
 #' @param groupVariable names of the column that defines the group to use for training.
 #' @param group string defining a subgroup on which to train
+#' @param allowMissing boolean
 #' @return data frame with adjusted measurement variable as defined in formula
 #' @author Avants BB
 #' @examples
@@ -1015,7 +1016,8 @@ adjustByCovariates  <- function(
   mxdfin,
   adjustmentFormula,
   groupVariable,
-  group
+  group,
+  allowMissing=FALSE
 ) {
   outcomevar = gsub( " ", "", unlist(strsplit( adjustmentFormula, "~" ))[[1]] )
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
@@ -1036,7 +1038,13 @@ adjustByCovariates  <- function(
   predintercept = predict( imodel, newdata = mxdfin  )
   predvol = predict( ctlmodel, newdata = mxdfin ) - predintercept
   adjustedoutcome = paste0( outcomevar, "_adjusted" )
-  mxdfin[ , adjustedoutcome ] = mxdfin[,outcomevar] - predvol 
+  if ( ! allowMissing ) {
+    mxdfin[ , adjustedoutcome ] = mxdfin[,outcomevar] - predvol 
+  } else {
+    wtoadjust = names( predvol )
+    mxdfin[ , adjustedoutcome ] = mxdfin[,outcomevar]
+    mxdfin[ wtoadjust, adjustedoutcome ] = mxdfin[wtoadjust,outcomevar] - predvol 
+  }
   return( mxdfin )
 }
 

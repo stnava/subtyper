@@ -4,7 +4,13 @@
 \alias{adjustByCovariates}
 \title{Covariate adjustment}
 \usage{
-adjustByCovariates(mxdfin, adjustmentFormula, groupVariable, group)
+adjustByCovariates(
+  mxdfin,
+  adjustmentFormula,
+  groupVariable,
+  group,
+  allowMissing = FALSE
+)
 }
 \arguments{
 \item{mxdfin}{Input data frame with repeated measurements and a grouped time variable}
@@ -14,6 +20,8 @@ adjustByCovariates(mxdfin, adjustmentFormula, groupVariable, group)
 \item{groupVariable}{names of the column that defines the group to use for training.}
 
 \item{group}{string defining a subgroup on which to train}
+
+\item{allowMissing}{boolean}
 }
 \value{
 data frame with adjusted measurement variable as defined in formula
