@@ -1041,9 +1041,9 @@ adjustByCovariates  <- function(
   if ( ! allowMissing ) {
     mxdfin[ , adjustedoutcome ] = mxdfin[,outcomevar] - predvol 
   } else {
-    wtoadjust = names( predvol )
+    wtoadjust = !is.na(predvol)
     mxdfin[ , adjustedoutcome ] = mxdfin[,outcomevar]
-    mxdfin[ wtoadjust, adjustedoutcome ] = mxdfin[wtoadjust,outcomevar] - predvol 
+    mxdfin[ wtoadjust, adjustedoutcome ] = mxdfin[wtoadjust,outcomevar] - predvol[wtoadjust] 
   }
   return( mxdfin )
 }
