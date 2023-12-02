@@ -2593,6 +2593,7 @@ balancedDataframe <- function( x, variable, method ) {
 #' @export
 balanceDataMultiClass <- function( x, variable, method, minimum_ratio=0.99 ) {
   if ( method == 'none' ) return( x )
+  x[,variable]=as.character( x[,variable] )
   if ( method == 'under') {
       minmaxdifftbl = table( x[,variable] )
       mintbl = min( minmaxdifftbl )
