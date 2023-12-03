@@ -48,6 +48,7 @@ Imports:
   data.table,
   mclust,
   NMF,
+  nmfbin,
   optmatch,
   pheatmap,
   gprofiler2,
