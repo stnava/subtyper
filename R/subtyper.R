@@ -3334,13 +3334,14 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
 #' @param visitName the column name defining the visit variables
 #' @param baselineVisit the string naming the baseline visit
 #' @param maxK maximum number of clusters
+#' @param criterion see fpc pamk
 #' @param verbose boolean
 #' @return new dataframe with new variables attached
 #' @author Avants BB
 #' @examples
 #' mydf = generateSubtyperData( 100 )
 #' @export
-consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, maxK, verbose=TRUE ) {
+consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, maxK, criterion='asw', verbose=TRUE ) {
     if ( !missing(idvar) )
       stopifnot( idvar %in% colnames(dataToClust) )
     if ( !missing(visitName) )
@@ -3371,9 +3372,9 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
     dmy = dummyVars(cocoform, data = dataToClust[,cocanames])
     dmytx = data.frame(predict(dmy, newdata = dataToClust[isbl,cocanames]))
     if ( ! missing( targetk ) & missing( maxK ) ) {
-      cocatx = fpc::pamk( dmytx, targetk, usepam=FALSE, criterion="multiasw" )
+      cocatx = fpc::pamk( dmytx, targetk, usepam=FALSE, criterion=criterion )
     } else if ( ! missing( maxK ) ) {
-      cocatx = fpc::pamk( dmytx, 2:maxK, usepam=FALSE, criterion="multiasw" )
+      cocatx = fpc::pamk( dmytx, 2:maxK, usepam=FALSE, criterion=criterion )
     } else stop("Must set either maxK or targetk")
     if ( verbose ) message("COCA complete")
     cocatxlab = cocatx$pamobject$clustering

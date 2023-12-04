@@ -14,6 +14,7 @@ consensusSubtypingPAM(
   visitName,
   baselineVisit,
   maxK,
+  criterion = "asw",
   verbose = TRUE
 )
 }
@@ -35,6 +36,8 @@ consensusSubtypingPAM(
 \item{baselineVisit}{the string naming the baseline visit}
 
 \item{maxK}{maximum number of clusters}
+
+\item{criterion}{see fpc pamk}
 
 \item{verbose}{boolean}
 }
