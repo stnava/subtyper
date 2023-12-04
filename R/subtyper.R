@@ -3319,3 +3319,89 @@ consensusSubtypingCOCA = function( dataToClust, targetk, cocanames, newclusterna
     dataToClust[,newclustername] = paste0(newclustername, dataToClust[,newclustername] )
     return( dataToClust )
     }
+
+
+#' consensusSubtypingPAM
+#' 
+#' apply consensus clustering give several clustering solutions using PAM as the consensus method
+#'
+#' @param dataToClust dataframe input that contains the relevant variables (may have others as well)
+#' @param targetk the desired number of classes
+#' @param cocanames names of columns to use for the consensus
+#' @param newclustername the column name for the consensus clustering
+#' @param reorderingVariable the name of the column to use to reorder the cluster names
+#' @param idvar variable name for unique subject identifier column
+#' @param visitName the column name defining the visit variables
+#' @param baselineVisit the string naming the baseline visit
+#' @param maxK maximum number of clusters
+#' @param verbose boolean
+#' @return new dataframe with new variables attached
+#' @author Avants BB
+#' @examples
+#' mydf = generateSubtyperData( 100 )
+#' @export
+consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclustername, reorderingVariable, idvar, visitName, baselineVisit, maxK, verbose=TRUE ) {
+    if ( !missing(idvar) )
+      stopifnot( idvar %in% colnames(dataToClust) )
+    if ( !missing(visitName) )
+      stopifnot( visitName %in% colnames(dataToClust) )
+    if ( !missing(reorderingVariable) )
+      stopifnot( reorderingVariable %in% colnames(dataToClust) )
+    if ( !missing(baselineVisit) )
+      stopifnot( baselineVisit %in% dataToClust[,visitName] )
+    stopifnot( all( cocanames %in% colnames(dataToClust) ) )
+    usebaseline=FALSE
+    if ( !missing(idvar) & !missing(visitName) & !missing(baselineVisit) )
+      usebaseline=TRUE
+    if ( length(cocanames) == 1 ) {
+      dataToClust[,newclustername]=dataToClust[,cocanames]
+      message("COCA irrelevant - only a single clustering result is available.")
+      return( dataToClust )
+    }
+    dataToClust = clearcolname(dataToClust, newclustername )
+    isbl = rep(TRUE,nrow(dataToClust))
+    if ( usebaseline )
+      isbl = dataToClust[,visitName] == baselineVisit
+    cocoform = paste("~", paste( cocanames, collapse="+" ))
+    if ( verbose ) {
+        for ( x in cocanames ) {
+            print(table(dataToClust[isbl,x] ))
+        }
+    }
+    dmy = dummyVars(cocoform, data = dataToClust[,cocanames])
+    dmytx = data.frame(predict(dmy, newdata = dataToClust[isbl,cocanames]))
+    if ( ! missing( targetk ) & missing( maxK ) ) {
+      cocatx = fpc::pamk( dmytx, targetk, usepam=FALSE, criterion="multiasw" )
+    } else if ( ! missing( maxK ) ) {
+      cocatx = fpc::pamk( dmytx, 2:maxK, usepam=FALSE, criterion="multiasw" )
+    } else stop("Must set either maxK or targetk")
+    if ( verbose ) message("COCA complete")
+    cocatxlab = cocatx$pamobject$clustering
+    if ( verbose ) {
+      print( table( cocatxlab ) )
+      }
+    dataToClust[,newclustername]=NA
+    dataToClust[isbl,newclustername]=cocatxlab
+    if ( usebaseline ) {
+        temp = fillBaselineColumn( dataToClust,
+            newclustername, 
+            idvar, visitName, baselineVisit, 
+            fast=TRUE, verbose=FALSE )[[1]]
+        dataToClust[rownames(temp),newclustername]=temp[,paste0(newclustername,'_BL')]
+    }
+    if ( !missing(reorderingVariable) ) {
+      # now reorder 
+      xdf=aggregate( dataToClust[isbl,reorderingVariable], 
+        list(dataToClust[isbl,newclustername]),  
+        mean, na.rm=TRUE )
+      newreo=order(xdf[,2])
+      olabels = dataToClust[,newclustername]
+      placeholder = olabels
+      for ( jj in 1:nrow(xdf) ) placeholder[ olabels == newreo[jj] ] = xdf[jj,1]
+      dataToClust[,newclustername] = placeholder
+      xdf=aggregate( dataToClust[isbl,reorderingVariable], list(dataToClust[isbl,newclustername]), mean, na.rm=TRUE )
+      if ( verbose ) print(xdf)
+      }
+    dataToClust[,newclustername] = paste0(newclustername, dataToClust[,newclustername] )
+    return( dataToClust )
+    }
