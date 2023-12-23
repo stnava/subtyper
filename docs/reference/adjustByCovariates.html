@@ -71,7 +71,13 @@ One may want to use a specific sub-group for this, e.g. controls.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">adjustByCovariates</span><span class="op">(</span><span class="va">mxdfin</span>, <span class="va">adjustmentFormula</span>, <span class="va">groupVariable</span>, <span class="va">group</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">adjustByCovariates</span><span class="op">(</span></span>
+<span>  <span class="va">mxdfin</span>,</span>
+<span>  <span class="va">adjustmentFormula</span>,</span>
+<span>  <span class="va">groupVariable</span>,</span>
+<span>  <span class="va">group</span>,</span>
+<span>  allowMissing <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -90,6 +96,10 @@ One may want to use a specific sub-group for this, e.g. controls.</p>
 
 <dt>group</dt>
 <dd><p>string defining a subgroup on which to train</p></dd>
+
+
+<dt>allowMissing</dt>
+<dd><p>boolean</p></dd>
 
 </dl></div>
     <div id="value">

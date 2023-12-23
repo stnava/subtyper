@@ -29,29 +29,27 @@ interpret_icc <- function(icc, criterion = c("Cicchetti", "Yoo")) {
   
   # Cicchetti's criteria
   if (criterion == "Cicchetti") {
-    if (icc < 0.40) {
-      return("Poor")
-    } else if (icc < 0.60) {
+    if (icc < 0.40 & icc >= 0 ) {
+      return("Slight")
+    } else if (icc < 0.60 & icc >= 0) {
       return("Fair")
-    } else if (icc < 0.75) {
-      return("Good")
-    } else {
-      return("Excellent")
-    }
+    } else if (icc < 0.75 & icc >= 0) {
+      return("Moderate")
+    } else if (icc <= 1.00 & icc >= 0 )  {
+      return("Substantial")
+    } else return(NA)
   } 
   # Yoo's criteria
   else if (criterion == "Yoo") {
-    if (icc < 0.50) {
+    if (icc < 0.50 & icc >= 0 ) {
       return("Slight")
-    } else if (icc < 0.75) {
+    } else if (icc < 0.75 & icc >= 0) {
       return("Fair")
-    } else if (icc < 0.90) {
+    } else if (icc < 0.90 & icc >= 0 ) {
       return("Moderate")
-    } else if (icc < 1.00) {
+    } else if (icc <= 1.00 & icc >= 0) {
       return("Substantial")
-    } else {
-      return("Almost Perfect")
-    }
+    } else return(NA)
   }
 }
 
