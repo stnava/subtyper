@@ -6,6 +6,56 @@
 }
 
 
+#' Interpret ICC Value
+#'
+#' Interprets the Intra-Class Correlation Coefficient (ICC) value based on 
+#' the criteria set by Cicchetti (1994) or Yoo (2015).
+#'
+#' @param icc Numeric value; the ICC value to interpret.
+#' @param criterion Character string; either "Cicchetti" or "Yoo", 
+#' indicating which set of criteria to use for interpretation. 
+#' Defaults to "Cicchetti".
+#'
+#' @return A character string indicating the level of agreement or 
+#' reliability as per the chosen criterion.
+#'
+#' @examples
+#' interpret_icc(0.65, criterion = "Cicchetti")
+#' interpret_icc(0.65, criterion = "Yoo")
+#'
+#' @export
+interpret_icc <- function(icc, criterion = c("Cicchetti", "Yoo")) {
+  criterion <- match.arg(criterion)
+  
+  # Cicchetti's criteria
+  if (criterion == "Cicchetti") {
+    if (icc < 0.40) {
+      return("Poor")
+    } else if (icc < 0.60) {
+      return("Fair")
+    } else if (icc < 0.75) {
+      return("Good")
+    } else {
+      return("Excellent")
+    }
+  } 
+  # Yoo's criteria
+  else if (criterion == "Yoo") {
+    if (icc < 0.50) {
+      return("Slight")
+    } else if (icc < 0.75) {
+      return("Fair")
+    } else if (icc < 0.90) {
+      return("Moderate")
+    } else if (icc < 1.00) {
+      return("Substantial")
+    } else {
+      return("Almost Perfect")
+    }
+  }
+}
+
+
 #' Convert nrg format date to R format date
 #'
 #' @param x nrg format date
