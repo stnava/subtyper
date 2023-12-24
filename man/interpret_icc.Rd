@@ -4,12 +4,12 @@
 \alias{interpret_icc}
 \title{Interpret ICC Value}
 \usage{
-interpret_icc(icc, criterion = c("Cicchetti", "Yoo"))
+interpret_icc(icc, criterion = c("Cicchetti", "Koo"))
 }
 \arguments{
 \item{icc}{Numeric value; the ICC value to interpret.}
 
-\item{criterion}{Character string; either "Cicchetti" or "Yoo",
+\item{criterion}{Character string; either "Cicchetti" or "Koo",
 indicating which set of criteria to use for interpretation.
 Defaults to "Cicchetti".}
 }
@@ -19,10 +19,10 @@ reliability as per the chosen criterion.
 }
 \description{
 Interprets the Intra-Class Correlation Coefficient (ICC) value based on
-the criteria set by Cicchetti (1994) or Yoo (2015).
+the criteria set by Cicchetti (1994) or Koo (2015).
 }
 \examples{
 interpret_icc(0.65, criterion = "Cicchetti")
-interpret_icc(0.65, criterion = "Yoo")
+interpret_icc(0.65, criterion = "Koo")
 
 }

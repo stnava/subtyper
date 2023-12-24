@@ -9,10 +9,10 @@
 #' Interpret ICC Value
 #'
 #' Interprets the Intra-Class Correlation Coefficient (ICC) value based on 
-#' the criteria set by Cicchetti (1994) or Yoo (2015).
+#' the criteria set by Cicchetti (1994) or Koo (2015).
 #'
 #' @param icc Numeric value; the ICC value to interpret.
-#' @param criterion Character string; either "Cicchetti" or "Yoo", 
+#' @param criterion Character string; either "Cicchetti" or "Koo", 
 #' indicating which set of criteria to use for interpretation. 
 #' Defaults to "Cicchetti".
 #'
@@ -21,10 +21,10 @@
 #'
 #' @examples
 #' interpret_icc(0.65, criterion = "Cicchetti")
-#' interpret_icc(0.65, criterion = "Yoo")
+#' interpret_icc(0.65, criterion = "Koo")
 #'
 #' @export
-interpret_icc <- function(icc, criterion = c("Cicchetti", "Yoo")) {
+interpret_icc <- function(icc, criterion = c("Cicchetti", "Koo")) {
   criterion <- match.arg(criterion)
   
   # Cicchetti's criteria
@@ -39,8 +39,8 @@ interpret_icc <- function(icc, criterion = c("Cicchetti", "Yoo")) {
       return("Substantial")
     } else return(NA)
   } 
-  # Yoo's criteria
-  else if (criterion == "Yoo") {
+  # Koo's criteria
+  else if (criterion == "Koo") {
     if (icc < 0.50 & icc >= 0 ) {
       return("Slight")
     } else if (icc < 0.75 & icc >= 0) {
