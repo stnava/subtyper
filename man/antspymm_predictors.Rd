@@ -20,5 +20,5 @@ in a model, based antspymm tabular version of imaging data.
 It filters and processes the data to create meaningful predictors. LRAVG
 }
 \examples{
-predictors <- antspymm_predictors(demographic_data)
+# predictors <- antspymm_predictors(demographic_data)
 }

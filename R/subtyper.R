@@ -15,7 +15,7 @@
 #' @param doasym boolean
 #' @return A dataframe with processed demographic and imaging data.
 #' @examples
-#' predictors <- antspymm_predictors(demographic_data)
+#' # predictors <- antspymm_predictors(demographic_data)
 #' @export
 #'
 #' @importFrom dplyr filter
