@@ -5,6 +5,49 @@
     invisible()
 }
 
+#' Generate Predictors from ANTsPyMM Imaging Data
+#'
+#' This function generates a list of variable names to be used as predictors
+#' in a model, based antspymm tabular version of imaging data.
+#' It filters and processes the data to create meaningful predictors. LRAVG
+#'
+#' @param demog A dataframe containing demographic and imaging data.
+#' @param doasym boolean
+#' @return A dataframe with processed demographic and imaging data.
+#' @examples
+#' predictors <- antspymm_predictors(demographic_data)
+#' @export
+#'
+#' @importFrom dplyr filter
+#' @importFrom magrittr %>%
+antspymm_predictors <- function( demog, doasym=FALSE ) {
+  testnames=c(
+          getNamesFromDataframe( "T1w_" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr')),
+          getNamesFromDataframe( "mtl" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr')),
+          getNamesFromDataframe( "cerebellum" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr',"_cerebell")),
+          getNamesFromDataframe( "T1Hier_" , demog, exclusions=c("hier_id","[.]1","[.]2","[.]3",'background','tissue','dktregions','T1Hier_resnetGrade','hemisphere','lobes','SNR','evr','area')),
+          getNamesFromDataframe( "rsfMRI_" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean')),
+          getNamesFromDataframe( "perf_" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean')),
+          getNamesFromDataframe( "DTI_" , demog, exclusions=c("hier_id",'background','thk','area','vol','motion','FD','dvars','ssnr','tsnr','SNR','evr','cnx','relcn')) )
+  if ( doasym )
+    demog=mapAsymVar( demog, 
+              testnames[ grep("_l_", testnames) ], '_l_', "_r_" )
+  demog=mapLRAverageVar( demog, 
+              testnames[ grep("_l_", testnames) ], '_l_', "_r_" )
+  if ( doasym )
+    demog=mapAsymVar( demog, 
+                  testnames[ grep("left", testnames) ] )
+  demog=mapLRAverageVar( demog, 
+              testnames[ grep("left", testnames) ] )
+  testnames = c(
+              getNamesFromDataframe( "Asym" , demog ),
+              getNamesFromDataframe( "LRAVG" , demog ) ) %>% unique()
+  testnames = testnames[ -multigrep( c("DTI_relcn_LRAVG","DTI_relcn_Asym"), testnames ) ]
+  # special LR avg for falff
+  falffnames = getNamesFromDataframe( c("falff"), demog, exclusions=c('mean','sd','Unk'))
+  return( demog )
+  }
+
 
 #' Interpret ICC Value
 #'
