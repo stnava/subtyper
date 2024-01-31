@@ -1287,6 +1287,38 @@ trainSubtypeUni  <- function(
   return( stdf )
 }
 
+#' Scale Numeric Variables in a Data Frame
+#'
+#' This function scales the numeric variables in a data frame that are 
+#' specified in a given equation. Non-numeric variables mentioned in the 
+#' equation are ignored. Scaling is performed by centering and dividing by the 
+#' standard deviation.
+#'
+#' @param mydf A data frame containing the variables to be scaled.
+#' @param myeq An equation in the form of a string or an object of class 
+#'   \code{formula} specifying the variables to be scaled. Only the variables 
+#'   on the right-hand side of the equation are considered.
+#'
+#' @return A data frame with the specified numeric variables scaled. The 
+#'   function modifies the input data frame in place and returns it.
+#'
+#' @examples
+#' data(iris)
+#' scaled_iris <- scale_variables_in_equation(iris, myeq = "Sepal.Length ~ Sepal.Width + Petal.Length")
+#' head(scaled_iris)
+#'
+#' @export
+scale_variables_in_equation <- function( mydf, myeq ) {
+  myterms = all.vars(as.formula(myeq))[-1]
+  myterms = intersect(myterms, colnames(mydf))
+  for ( x in myterms ) {
+    if ( is.numeric( mydf[,x] )) {
+      mydf[,x] = scale(mydf[,x])
+    }
+  }
+  return(mydf)
+}
+
 
 #' Predict subtype for univariate data
 #'
@@ -2706,6 +2738,7 @@ prplot  <- function(
                     size=addpoints, palette=palette,
                     point=addthepoints, add='reg.line', conf.int=T,
                     color=colorvar, facet.by=byvariable,
+                    add.params = list(color = "blue", fill = "cyan"),
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) +
@@ -2721,6 +2754,7 @@ prplot  <- function(
                     size=addpoints, palette=palette,
                     conf.int=T,
                     point=addthepoints,
+                    add.params = list(color = "blue", fill = "cyan"),
                     fill=colorvar,
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
@@ -2729,6 +2763,7 @@ prplot  <- function(
                     size=addpoints, 
                     point=addthepoints, add='reg.line', conf.int=T,
                     color=colorvar,
+                    add.params = list(color = "blue", fill = "cyan"),
                     palette=palette,
                     cor.coef=TRUE ) +
                     theme(text = element_text(size=12))+ ylab(ystring) + 
