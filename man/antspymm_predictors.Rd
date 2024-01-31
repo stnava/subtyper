@@ -4,12 +4,14 @@
 \alias{antspymm_predictors}
 \title{Generate Predictors from ANTsPyMM Imaging Data}
 \usage{
-antspymm_predictors(demog, doasym = FALSE)
+antspymm_predictors(demog, doasym = FALSE, return_colnames = FALSE)
 }
 \arguments{
 \item{demog}{A dataframe containing demographic and imaging data.}
 
 \item{doasym}{boolean}
+
+\item{return_colnames}{boolean}
 }
 \value{
 A dataframe with processed demographic and imaging data.

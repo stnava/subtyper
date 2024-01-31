@@ -13,6 +13,7 @@
 #'
 #' @param demog A dataframe containing demographic and imaging data.
 #' @param doasym boolean
+#' @param return_colnames boolean
 #' @return A dataframe with processed demographic and imaging data.
 #' @examples
 #' # predictors <- antspymm_predictors(demographic_data)
@@ -20,15 +21,26 @@
 #'
 #' @importFrom dplyr filter
 #' @importFrom magrittr %>%
-antspymm_predictors <- function( demog, doasym=FALSE ) {
+antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
   testnames=c(
           getNamesFromDataframe( "T1w_" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr')),
           getNamesFromDataframe( "mtl" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr')),
           getNamesFromDataframe( "cerebellum" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr',"_cerebell")),
           getNamesFromDataframe( "T1Hier_" , demog, exclusions=c("hier_id","[.]1","[.]2","[.]3",'background','tissue','dktregions','T1Hier_resnetGrade','hemisphere','lobes','SNR','evr','area')),
-          getNamesFromDataframe( "rsfMRI_" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean')),
+          getNamesFromDataframe( "rsfMRI_fcnxpro" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean')),
           getNamesFromDataframe( "perf_" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean')),
           getNamesFromDataframe( "DTI_" , demog, exclusions=c("hier_id",'background','thk','area','vol','motion','FD','dvars','ssnr','tsnr','SNR','evr','cnx','relcn')) )
+  if ( return_colnames ) return( testnames )
+
+  if ( FALSE ) {
+    testnames = c(
+                getNamesFromDataframe( "Asym" , demog ),
+                getNamesFromDataframe( "LRAVG" , demog ) ) %>% unique()
+    testnames = testnames[ -multigrep( c("DTI_relcn_LRAVG","DTI_relcn_Asym"), testnames ) ]
+    # special LR avg for falff
+    falffnames = getNamesFromDataframe( c("falff"), demog, exclusions=c('mean','sd','Unk'))
+  }
+
   if ( doasym )
     demog=mapAsymVar( demog, 
               testnames[ grep("_l_", testnames) ], '_l_', "_r_" )
@@ -39,12 +51,6 @@ antspymm_predictors <- function( demog, doasym=FALSE ) {
                   testnames[ grep("left", testnames) ] )
   demog=mapLRAverageVar( demog, 
               testnames[ grep("left", testnames) ] )
-  testnames = c(
-              getNamesFromDataframe( "Asym" , demog ),
-              getNamesFromDataframe( "LRAVG" , demog ) ) %>% unique()
-  testnames = testnames[ -multigrep( c("DTI_relcn_LRAVG","DTI_relcn_Asym"), testnames ) ]
-  # special LR avg for falff
-  falffnames = getNamesFromDataframe( c("falff"), demog, exclusions=c('mean','sd','Unk'))
   return( demog )
   }
 
@@ -217,7 +223,40 @@ match_cohort_pair <- function(df1, df2, cols, sample_size, num_iterations = 1000
 #' @author Avants BB
 #' @export
 mapAsymVar <-function( mydataframe, leftvar, leftname='left', rightname='right', replacer='Asym' ) {
+
+  library(stringr)
+  library(purrr)
+  replace_values <- function(input_string) {
+    # Function to modify a number based on the specified rules
+    modify_value <- function(number) {
+      num <- as.numeric(number)
+      if (num >= 1 && num <= 249) {
+        return(as.character(num + 249))
+      } else {
+        return(number)
+      }
+    }
+    
+    # Extract all numbers from the string
+    numbers <- str_extract_all(input_string, "\\b\\d+\\b")[[1]]
+    
+    # Apply the modification to the numbers
+    modified_numbers <- map_chr(numbers, modify_value)
+    
+    # Replace old numbers with new numbers in the string
+    for (i in seq_along(numbers)) {
+      input_string <- str_replace(input_string, numbers[i], modified_numbers[i])
+    }
+
+    return(input_string)
+  }
+
   rightvar =  gsub( leftname, rightname, leftvar )
+#  for ( k in 1:length(rightvar) ) {
+#    r=rightvar[k]
+#    if ( length( grep("rsfMRI_",r) > 0 ) )
+#      rightvar[k]=replace_values(r)
+#  }
   hasright = rightvar %in% colnames(mydataframe)
   temp = mydataframe[,leftvar[hasright]] - mydataframe[,rightvar[hasright]]
   temp = temp * sign(temp )
@@ -2570,6 +2609,63 @@ quantSquared  <- function(
     return( newvec )
   }
 
+#' Augment a Data Frame with Custom Color Column
+#'
+#' This function adds a new column named 'custom_color' to a given data frame.
+#' The new column maps factor levels of a specified column to colors
+#' from a user-defined palette.
+#'
+#' @param df A data frame to be augmented.
+#' @param column_name The name of the column in `df` whose factor levels are to be 
+#'   mapped to colors. This column should exist in `df` and should be a factor or
+#'   convertible to a factor.
+#' @param color_palette A vector of colors, corresponding to the factor levels of
+#'   the specified column. The number of colors must match the number of unique
+#'   factor levels in the column.
+#'
+#' @return A data frame identical to `df` but with an additional column 
+#'   'custom_color', which contains the color mappings.
+#'
+#' @examples
+#' data <- data.frame(
+#'   category = c("A", "B", "C", "A", "B"),
+#'   value = c(10, 20, 30, 40, 50)
+#' )
+#' palette <- c("red", "green", "blue")
+#' augmented_data <- augment_with_custom_color(data, "category", palette)
+#'
+#' @importFrom ggpubr get_palette
+#' @importFrom stats setNames
+#' @export
+augment_with_custom_color <- function(df, column_name, color_palette, color_palette_name = NULL ) {
+  # Check if the column exists in the data frame
+  if (!column_name %in% names(df)) {
+    stop("Column not found in the data frame")
+  }
+
+  # Convert the column to a factor if it's not already
+  factor_col <- factor(df[[column_name]])
+
+  # Extract the factor levels of the column
+  factor_levels <- levels(factor_col)
+
+  if ( ! missing( color_palette_name ) ) {
+    color_palette = get_palette(palette = color_palette_name, length(factor_levels))
+  }
+
+  # Check if the number of colors matches the number of factor levels
+  if (length(color_palette) != length(factor_levels)) {
+    stop("The number of colors must match the number of factor levels")
+  }
+
+  # Create a named vector for color mapping
+  color_mapping <- setNames(color_palette, factor_levels)
+
+  # Map the factor levels to the colors
+  df$custom_color <- color_mapping[factor_col]
+
+  return(df)
+}
 
 
 #' prplot
@@ -2595,12 +2691,14 @@ prplot  <- function(
   if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
+#    vv$res=augment_with_custom_color(vv$res, colorvar, color_palette_name=palette)
+    vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
     if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
       return( ggdotplot(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
                     conf.int=T,
                     point=addthepoints,
-                    fill=colorvar, facet.by=byvariable,
+                    facet.by=byvariable,
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) )
@@ -2610,10 +2708,14 @@ prplot  <- function(
                     color=colorvar, facet.by=byvariable,
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
-                    ggtitle( titlestring ) )
+                    ggtitle( titlestring ) +
+  theme(legend.position = "top", legend.title = element_blank())  # Position legend at top
+ )
   }
   if ( missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, plot=FALSE)
+#    vv$res=augment_with_custom_color(vv$res, colorvar, color_palette_name=palette)
+    vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
      if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
       return( ggboxplot(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
@@ -2626,10 +2728,12 @@ prplot  <- function(
     } else return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, 
                     point=addthepoints, add='reg.line', conf.int=T,
-                    color=colorvar, palette=palette,
+                    color=colorvar,
+                    palette=palette,
                     cor.coef=TRUE ) +
                     theme(text = element_text(size=12))+ ylab(ystring) + 
-                    ggtitle( titlestring ) )
+                    ggtitle( titlestring ) + theme(legend.position = "top", legend.title = element_blank())  # Position legend at top
+)
     }
   }
 
