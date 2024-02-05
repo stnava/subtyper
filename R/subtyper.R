@@ -5,6 +5,52 @@
     invisible()
 }
 
+
+#' Filter Columns by Percentage of NA Values
+#'
+#' @description
+#' This function filters out columns from a dataframe that have a percentage of
+#' NA (missing) values greater or equal to a user-defined threshold. The percentage
+#' is calculated with respect to the total number of rows in the dataframe.
+#'
+#' @param df A dataframe from which columns will be filtered.
+#' @param percentThreshold A numeric value between 0 and 100 indicating the percentage
+#'        threshold of NA values. Columns with NA percentages greater or equal to this
+#'        value will be removed from the dataframe.
+#'
+#' @return A dataframe with columns filtered based on the NA percentage threshold.
+#'
+#' @examples
+#' data(mtcars)
+#' mtcars[1:5, 1:2] <- NA # Introduce NA values for demonstration
+#' filtered_df <- filterNAcolumns(mtcars, 10)
+#' print(filtered_df)
+#'
+#' @export
+#'
+#' @import dplyr
+filterNAcolumns <- function(df, percentThreshold) {
+  # Validate input
+  if (!is.data.frame(df)) {
+    stop("The input 'df' must be a dataframe.")
+  }
+  
+  if (!is.numeric(percentThreshold) || percentThreshold < 0 || percentThreshold > 100) {
+    stop("The 'percentThreshold' must be a numeric value between 0 and 100.")
+  }
+  
+  # Calculate the percentage of NA values for each column
+  na_percent <- sapply(df, function(col) {
+    sum(is.na(col)) / nrow(df) * 100
+  })
+  
+  # Filter columns based on threshold
+  filtered_df <- df[, na_percent < percentThreshold]
+  
+  return(filtered_df)
+}
+
+
 #' Generate Predictors from ANTsPyMM Imaging Data
 #'
 #' This function generates a list of variable names to be used as predictors
