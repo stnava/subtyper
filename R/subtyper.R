@@ -45,7 +45,7 @@ filterNAcolumns <- function(df, percentThreshold) {
   })
   
   # Filter columns based on threshold
-  filtered_df <- df[, na_percent < percentThreshold]
+  filtered_df <- df[, na_percent < (100.0-percentThreshold)]
   
   return(filtered_df)
 }
