@@ -97,6 +97,9 @@
     <loc>/reference/filterForGoodData.html</loc>
   </url>
   <url>
+    <loc>/reference/filterNAcolumns.html</loc>
+  </url>
+  <url>
     <loc>/reference/fs.html</loc>
   </url>
   <url>
@@ -131,6 +134,9 @@
   </url>
   <url>
     <loc>/reference/match_cohort_pair.html</loc>
+  </url>
+  <url>
+    <loc>/reference/merge_ppmi_imaging_clinical_demographic_data.html</loc>
   </url>
   <url>
     <loc>/reference/mlr3classification.html</loc>

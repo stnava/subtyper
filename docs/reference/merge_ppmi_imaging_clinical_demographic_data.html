@@ -74,9 +74,9 @@ It checks for required columns, replaces placeholder values, merges datasets, an
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">merge_ppmi_imaging_clinical_demographic_data</span><span class="op">(</span></span>
 <span>  <span class="va">demog</span>,</span>
 <span>  <span class="va">ppmidemog0</span>,</span>
-<span>  <span class="va">saa</span>,</span>
 <span>  <span class="va">pymf</span>,</span>
 <span>  <span class="va">pymversion</span>,</span>
+<span>  <span class="va">saa</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -84,15 +84,11 @@ It checks for required columns, replaces placeholder values, merges datasets, an
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>demog</dt>
-<dd><p>DataFrame containing demographic information with columns like PATNO, BIRTHDT.</p></dd>
+<dd><p>DataFrame containing demographic information with columns like PATNO, BIRTHDT.  An example filename from LONI would be Demographics_06Feb2024.csv</p></dd>
 
 
 <dt>ppmidemog0</dt>
-<dd><p>DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.</p></dd>
-
-
-<dt>saa</dt>
-<dd><p>DataFrame containing supplemental clinical measurements with PATNO, EVENT_ID.</p></dd>
+<dd><p>DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.  An example filename from LONI would be PPMI_Curated_Data_Cut_Public_20230612_rev.csv.</p></dd>
 
 
 <dt>pymf</dt>
@@ -101,6 +97,10 @@ It checks for required columns, replaces placeholder values, merges datasets, an
 
 <dt>pymversion</dt>
 <dd><p>A character string identifying the ANTsPyMM pipeline variant.</p></dd>
+
+
+<dt>saa</dt>
+<dd><p>DataFrame (optional) containing supplemental clinical measurements with PATNO, EVENT_ID.</p></dd>
 
 
 <dt>verbose</dt>

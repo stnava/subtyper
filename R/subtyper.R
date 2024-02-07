@@ -3691,11 +3691,11 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
 #' This function merges, cleans, and enriches clinical and demographic data from a neurological study.
 #' It checks for required columns, replaces placeholder values, merges datasets, and computes new variables.
 #'
-#' @param demog DataFrame containing demographic information with columns like PATNO, BIRTHDT.
-#' @param ppmidemog0 DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.
-#' @param saa DataFrame containing supplemental clinical measurements with PATNO, EVENT_ID.
+#' @param demog DataFrame containing demographic information with columns like PATNO, BIRTHDT.  An example filename from LONI would be Demographics_06Feb2024.csv
+#' @param ppmidemog0 DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.  An example filename from LONI would be PPMI_Curated_Data_Cut_Public_20230612_rev.csv.
 #' @param pymf DataFrame containing imaging and additional clinical data keyed by subjectID.
 #' @param pymversion A character string identifying the ANTsPyMM pipeline variant.
+#' @param saa DataFrame (optional) containing supplemental clinical measurements with PATNO, EVENT_ID.
 #' @param verbose boolean
 #' @return A processed DataFrame with merged and enriched clinical and demographic information.
 #' @export
@@ -3703,11 +3703,14 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
 #' \dontrun{
 #'   processed_data <- process_clinical_demographic_data(demog, ppmidemog0, saa, pymf)
 #' }
-merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa, pymf, pymversion, verbose=TRUE ) {
+merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf, pymversion, saa, verbose=TRUE ) {
   # Load required libraries
   library(dplyr)
   library(subtyper)
   library(forcats)
+  if ( missing( saa ) ) {
+    saa = ppmidemog0[,c("PATNO","EVENT_ID","CSFSAA")]
+  }
 
   # Ensure required columns are present
   stopifnot(all(c("PATNO", "BIRTHDT") %in% names(demog)),
@@ -3781,7 +3784,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa,
             if ( is.na(ccdx)) newjdx = paste0(ccdx2,mygroup)
             clin2$joinedDX[ subtyper::fs(clin2$PATNO == uid )]=newjdx
             paireddx[uid,c('ppmidx','ccdx', 'ccdx2', 'group', 'joinedDX')]=c(dx2,ccdx,ccdx2, mygroup, newjdx)
-          }  else print(uid)
+          }  else if ( verbose ) print(paste("missing",uid))
       }
   paireddx$isConsensus=!is.na(paireddx$ccdx)
   # table( paireddx$ppmidx, paireddx$joinedDX  )
@@ -3902,9 +3905,11 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa,
   clin2bl=clin2[clin2$EVENT_ID=='BL',]
   aggregate( updrs_totscore ~ DXSubAsyn, clin2bl, mean, na.rm=T )
   negcnids = clin2bl$PATNO[ subtyper::fs(clin2bl$DXSubAsyn == 'CNPositive') ]
-  table( 
-    clin2bl$subgroup[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ],
-    clin2bl$DXSub[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ] )
+  if ( verbose ) {
+    print( table( 
+      clin2bl$subgroup[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ],
+      clin2bl$DXSub[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ] ) )
+  }
 
 
   clin2bl$DXSubAsyn[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ]
@@ -3926,5 +3931,12 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa,
           c('brainVolume','hy','MOCA',updrsnames), 
           'commonID', 'yearsbl', 0, 
           fast=T, verbose=F )[[1]]
+
+  if ( verbose ) {
+    print( table( 
+      clin2bl$joinedDX,
+      clin2bl$AsynStatus ) )
+  }
+
   return(clin2b)
 }

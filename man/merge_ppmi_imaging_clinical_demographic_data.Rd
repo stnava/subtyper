@@ -7,22 +7,22 @@
 merge_ppmi_imaging_clinical_demographic_data(
   demog,
   ppmidemog0,
-  saa,
   pymf,
   pymversion,
+  saa,
   verbose = TRUE
 )
 }
 \arguments{
-\item{demog}{DataFrame containing demographic information with columns like PATNO, BIRTHDT.}
+\item{demog}{DataFrame containing demographic information with columns like PATNO, BIRTHDT.  An example filename from LONI would be Demographics_06Feb2024.csv}
 
-\item{ppmidemog0}{DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.}
-
-\item{saa}{DataFrame containing supplemental clinical measurements with PATNO, EVENT_ID.}
+\item{ppmidemog0}{DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.  An example filename from LONI would be PPMI_Curated_Data_Cut_Public_20230612_rev.csv.}
 
 \item{pymf}{DataFrame containing imaging and additional clinical data keyed by subjectID.}
 
 \item{pymversion}{A character string identifying the ANTsPyMM pipeline variant.}
+
+\item{saa}{DataFrame (optional) containing supplemental clinical measurements with PATNO, EVENT_ID.}
 
 \item{verbose}{boolean}
 }
