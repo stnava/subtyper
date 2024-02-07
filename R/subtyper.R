@@ -3713,7 +3713,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa,
   stopifnot(all(c("PATNO", "BIRTHDT") %in% names(demog)),
             all(c("PATNO", "EVENT_ID", "age_at_visit", "age") %in% names(ppmidemog0)),
             all(c("PATNO", "EVENT_ID") %in% names(saa)),
-            all(c("subjectID", "projectID", "filename") %in% names(pymf)))
+            all(c("subjectID", "projectID", "filename","date","T1Hier_resnetGrade") %in% names(pymf)))
 
   demog[demog=='.']=NA
   saa[saa=='.']=NA
