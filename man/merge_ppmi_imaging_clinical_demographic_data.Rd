@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{merge_ppmi_imaging_clinical_demographic_data}
 \alias{merge_ppmi_imaging_clinical_demographic_data}
-\title{Process Clinical and Demographic Data for Neurological Study}
+\title{Process Clinical and Demographic Data for a PPMI Study}
 \usage{
 merge_ppmi_imaging_clinical_demographic_data(
   demog,
@@ -14,15 +14,15 @@ merge_ppmi_imaging_clinical_demographic_data(
 )
 }
 \arguments{
-\item{demog}{DataFrame containing demographic information with columns like PATNO, BIRTHDT.  An example filename from LONI would be Demographics_06Feb2024.csv}
+\item{demog}{DataFrame containing PPMI demographic information with columns like PATNO, BIRTHDT.  An example filename from LONI would be Demographics_06Feb2024.csv}
 
-\item{ppmidemog0}{DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.  An example filename from LONI would be PPMI_Curated_Data_Cut_Public_20230612_rev.csv.}
+\item{ppmidemog0}{DataFrame containing curated PPMI clinical data including PATNO, EVENT_ID, age_at_visit, age.  An example filename from LONI would be PPMI_Curated_Data_Cut_Public_20230612_rev.csv.}
 
-\item{pymf}{DataFrame containing imaging and additional clinical data keyed by subjectID.}
+\item{pymf}{DataFrame containing imaging and additional clinical data keyed by subjectID, date and filename}
 
 \item{pymversion}{A character string identifying the ANTsPyMM pipeline variant.}
 
-\item{saa}{DataFrame (optional) containing supplemental clinical measurements with PATNO, EVENT_ID.}
+\item{saa}{DataFrame (optional) containing supplemental clinical measurements with PATNO, EVENT_ID and CSFSAA.}
 
 \item{verbose}{boolean}
 }

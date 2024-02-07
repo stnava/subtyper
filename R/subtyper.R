@@ -3686,16 +3686,16 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
 
 
 
-#' Process Clinical and Demographic Data for Neurological Study
+#' Process Clinical and Demographic Data for a PPMI Study
 #'
 #' This function merges, cleans, and enriches clinical and demographic data from a neurological study.
 #' It checks for required columns, replaces placeholder values, merges datasets, and computes new variables.
 #'
-#' @param demog DataFrame containing demographic information with columns like PATNO, BIRTHDT.  An example filename from LONI would be Demographics_06Feb2024.csv
-#' @param ppmidemog0 DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.  An example filename from LONI would be PPMI_Curated_Data_Cut_Public_20230612_rev.csv.
-#' @param pymf DataFrame containing imaging and additional clinical data keyed by subjectID.
+#' @param demog DataFrame containing PPMI demographic information with columns like PATNO, BIRTHDT.  An example filename from LONI would be Demographics_06Feb2024.csv
+#' @param ppmidemog0 DataFrame containing curated PPMI clinical data including PATNO, EVENT_ID, age_at_visit, age.  An example filename from LONI would be PPMI_Curated_Data_Cut_Public_20230612_rev.csv.
+#' @param pymf DataFrame containing imaging and additional clinical data keyed by subjectID, date and filename
 #' @param pymversion A character string identifying the ANTsPyMM pipeline variant.
-#' @param saa DataFrame (optional) containing supplemental clinical measurements with PATNO, EVENT_ID.
+#' @param saa DataFrame (optional) containing supplemental clinical measurements with PATNO, EVENT_ID and CSFSAA.
 #' @param verbose boolean
 #' @return A processed DataFrame with merged and enriched clinical and demographic information.
 #' @export
@@ -3911,13 +3911,6 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
       clin2bl$DXSub[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ] ) )
   }
 
-
-  clin2bl$DXSubAsyn[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ]
-  clin2bl$DXSub[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ]
-
-  table( 
-    ppmi$subgroup[ subtyper::fs(ppmi$PATNO %in% negcnids)  ],
-    ppmi$CONCOHORT[ subtyper::fs(ppmi$PATNO %in% negcnids)  ] )
   ##########################
   clin2$commonID=clin2$PATNO
   clin2$commonAge=clin2$age_BL
