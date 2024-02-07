@@ -9,7 +9,8 @@ merge_ppmi_imaging_clinical_demographic_data(
   ppmidemog0,
   saa,
   pymf,
-  pymversion
+  pymversion,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -21,7 +22,9 @@ merge_ppmi_imaging_clinical_demographic_data(
 
 \item{pymf}{DataFrame containing imaging and additional clinical data keyed by subjectID.}
 
-\item{pymversion}{A character string specifying the version of ANTsPyMM that was run.}
+\item{pymversion}{A character string identifying the ANTsPyMM pipeline variant.}
+
+\item{verbose}{boolean}
 }
 \value{
 A processed DataFrame with merged and enriched clinical and demographic information.

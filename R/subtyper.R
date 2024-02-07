@@ -3695,14 +3695,15 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
 #' @param ppmidemog0 DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.
 #' @param saa DataFrame containing supplemental clinical measurements with PATNO, EVENT_ID.
 #' @param pymf DataFrame containing imaging and additional clinical data keyed by subjectID.
-#' @param pymversion A character string specifying the version of ANTsPyMM that was run.
+#' @param pymversion A character string identifying the ANTsPyMM pipeline variant.
+#' @param verbose boolean
 #' @return A processed DataFrame with merged and enriched clinical and demographic information.
 #' @export
 #' @examples
 #' \dontrun{
 #'   processed_data <- process_clinical_demographic_data(demog, ppmidemog0, saa, pymf)
 #' }
-merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa, pymf, pymversion) {
+merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa, pymf, pymversion, verbose=TRUE ) {
   # Load required libraries
   library(dplyr)
   library(subtyper)
@@ -3714,23 +3715,25 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa,
             all(c("PATNO", "EVENT_ID") %in% names(saa)),
             all(c("subjectID", "projectID", "filename") %in% names(pymf)))
 
-  # Replace '.' with NA
-  list(demog, ppmidemog0, saa, pymf) <- lapply(list(demog, ppmidemog0, saa, pymf), function(df) {
-    df[df == '.'] <- NA
-    df
-  })
+  demog[demog=='.']=NA
+  saa[saa=='.']=NA
+  ppmidemog0[ppmidemog0=='.']=NA
+  ppmidemog0 = ppmidemog0[ , !(colnames(ppmidemog0) %in% "CSFSAA")]
+  ppmi = merge( ppmidemog0, saa, by=c("PATNO","EVENT_ID"), suffixes = c("",".y"), all.x=TRUE )
+  ppmi[ppmi=='.']=NA
+  ppmi$yearsbl = ppmi$age_at_visit - ppmi$age
+  rm( ppmidemog0 )
+  idcols = c("subjectID","date","subjectIDdate", "imageID",'filename')
+  idcolsdemog = c("PATNO","visit_date","EVENT_ID")
+  clin2 = pymf
+  clin2$PATNO = pymf$subjectID
 
-  # Process ppmidemog0 and merge with saa
-  ppmidemog0 <- ppmidemog0 %>% select(-CSFSAA)
-  ppmi <- merge(ppmidemog0, saa, by = c("PATNO", "EVENT_ID"), all.x = TRUE)
-  ppmi$yearsbl <- with(ppmi, age_at_visit - age)
-
-  # Generate dxmapper based on unique subgroups in ppmi
   udx = sort(unique(ppmi$subgroup))
   dxmapper = data.frame( ppmisubgroup=udx )
   rownames(dxmapper)=udx
   for ( gdx in c("GBA","LRRK2","PINK1","SNCA","PRKN") )
     dxmapper[ udx[grep(gdx,udx)],c('genetictype')]=gdx
+
   dxmapper[is.na(dxmapper$genetictype),'genetictype']='Sporadic'
   dxmapper["Healthy Control",'genetictype']='CN'
   dxmapper["GBA",'jdx']='PDGBA'         # 1
