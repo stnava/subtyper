@@ -3682,3 +3682,246 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
     dataToClust[,newclustername] = paste0(newclustername, dataToClust[,newclustername] )
     return( dataToClust )
     }
+
+
+
+
+#' Process Clinical and Demographic Data for Neurological Study
+#'
+#' This function merges, cleans, and enriches clinical and demographic data from a neurological study.
+#' It checks for required columns, replaces placeholder values, merges datasets, and computes new variables.
+#'
+#' @param demog DataFrame containing demographic information with columns like PATNO, BIRTHDT.
+#' @param ppmidemog0 DataFrame containing preliminary demographic data including PATNO, EVENT_ID, age_at_visit, age.
+#' @param saa DataFrame containing supplemental clinical measurements with PATNO, EVENT_ID.
+#' @param pymf DataFrame containing imaging and additional clinical data keyed by subjectID.
+#' @param pymversion A character string specifying the version of ANTsPyMM that was run.
+#' @return A processed DataFrame with merged and enriched clinical and demographic information.
+#' @export
+#' @examples
+#' \dontrun{
+#'   processed_data <- process_clinical_demographic_data(demog, ppmidemog0, saa, pymf)
+#' }
+merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, saa, pymf, pymversion) {
+  # Load required libraries
+  library(dplyr)
+  library(subtyper)
+  library(forcats)
+
+  # Ensure required columns are present
+  stopifnot(all(c("PATNO", "BIRTHDT") %in% names(demog)),
+            all(c("PATNO", "EVENT_ID", "age_at_visit", "age") %in% names(ppmidemog0)),
+            all(c("PATNO", "EVENT_ID") %in% names(saa)),
+            all(c("subjectID", "projectID", "filename") %in% names(pymf)))
+
+  # Replace '.' with NA
+  list(demog, ppmidemog0, saa, pymf) <- lapply(list(demog, ppmidemog0, saa, pymf), function(df) {
+    df[df == '.'] <- NA
+    df
+  })
+
+  # Process ppmidemog0 and merge with saa
+  ppmidemog0 <- ppmidemog0 %>% select(-CSFSAA)
+  ppmi <- merge(ppmidemog0, saa, by = c("PATNO", "EVENT_ID"), all.x = TRUE)
+  ppmi$yearsbl <- with(ppmi, age_at_visit - age)
+
+  # Generate dxmapper based on unique subgroups in ppmi
+  udx = sort(unique(ppmi$subgroup))
+  dxmapper = data.frame( ppmisubgroup=udx )
+  rownames(dxmapper)=udx
+  for ( gdx in c("GBA","LRRK2","PINK1","SNCA","PRKN") )
+    dxmapper[ udx[grep(gdx,udx)],c('genetictype')]=gdx
+  dxmapper[is.na(dxmapper$genetictype),'genetictype']='Sporadic'
+  dxmapper["Healthy Control",'genetictype']='CN'
+  dxmapper["GBA",'jdx']='PDGBA'         # 1
+  dxmapper["GBA + Hyposmia",'jdx']='ProdromalGBA'         # 2
+  dxmapper["GBA + RBD + Hyposmia",'jdx']='ProdromalGBA'   # 3
+  dxmapper["Healthy Control",'jdx']='CN' # 4
+  dxmapper["Hyposmia",'jdx']='ProdromalSporadic' # 5
+  dxmapper["LRRK2",'jdx']='PDLRRK2'     # 6
+  dxmapper["LRRK2 + GBA",'jdx']='PDLRRK2'     # 7
+  dxmapper["LRRK2 + GBA + Hyposmia",'jdx']='ProdromalLRRK2'     # 8
+  dxmapper["LRRK2 + Hyposmia",'jdx']='ProdromalLRRK2'     # 9
+  dxmapper["PINK1",'jdx']='PDPINK1' # 10
+  dxmapper["PRKN",'jdx']='PDPRKN'   # 11
+  dxmapper["RBD",'jdx']='ProdromalSporadic' # 12
+  dxmapper["RBD + Hyposmia",'jdx']='ProdromalSporadic' # 13
+  dxmapper["SNCA",'jdx']='PDSNCA' # 14
+  dxmapper["SNCA + Hyposmia",'jdx']='ProdromalSNCA' # 15
+  dxmapper["Sporadic",'jdx']='PDSporadic'   # 16
+  ####################################################################
+  clin2ppmi=unique( clin2$PATNO[ clin2$projectID == 'PPMI' ] )
+  ppmidx = ppmi[ , c("PATNO", 'COHORT', 'CONCOHORT', "subgroup")]
+  ppmidx$CONCOHORT[ ppmidx$CONCOHORT == 1  ]='PD'
+  ppmidx$CONCOHORT[ ppmidx$CONCOHORT == 2  ]='CN'
+  ppmidx$CONCOHORT[ ppmidx$CONCOHORT == 4  ]='Prodromal'
+  ppmidx$COHORT[ ppmidx$COHORT == 1  ]='PD'
+  ppmidx$COHORT[ ppmidx$COHORT == 2  ]='CN'
+  ppmidx$COHORT[ ppmidx$COHORT == 4  ]='Prodromal'
+  paireddx = data.frame( PATNO=clin2ppmi )
+  rownames(  paireddx )=clin2ppmi
+  clin2$joinedDX=NA
+  for ( uid in clin2ppmi ) {
+          uid = as.character( uid )
+          dx2=na.omit(unique( ppmidx$subgroup[ subtyper::fs(ppmidx$PATNO == uid )]))
+          dx1=na.omit(as.character(unique( clin2$joinedDX[ subtyper::fs(clin2$PATNO == uid )])))
+          dx1new=dxmapper[dx2,'jdx']
+          seluid = subtyper::fs(ppmidx$PATNO == uid )
+          if ( sum(seluid) > 0 & length(dx2) > 0 ) {
+            ccdx=na.omit(unique( ppmidx$CONCOHORT[ subtyper::fs(ppmidx$PATNO == uid )]))
+            ccdx2=na.omit(unique( ppmidx$COHORT[ subtyper::fs(ppmidx$PATNO == uid )]))
+            if ( length( ccdx) == 0 ) ccdx=ccdx2
+            stopifnot( length(ccdx)==1)
+            mygroup=dxmapper[dx2,'genetictype']
+            if ( dx2 == "Healthy Control" ) mygroup=""
+            if ( !is.na(ccdx)) newjdx = paste0(ccdx,mygroup)
+            if ( is.na(ccdx)) newjdx = paste0(ccdx2,mygroup)
+            clin2$joinedDX[ subtyper::fs(clin2$PATNO == uid )]=newjdx
+            paireddx[uid,c('ppmidx','ccdx', 'ccdx2', 'group', 'joinedDX')]=c(dx2,ccdx,ccdx2, mygroup, newjdx)
+          }  else print(uid)
+      }
+  paireddx$isConsensus=!is.na(paireddx$ccdx)
+  # table( paireddx$ppmidx, paireddx$joinedDX  )
+  clin2$joinedDX[ clin2$joinedDX == 'CNGBA'] = 'CN'
+  ####################################################################
+
+  # message("HERE WE DEAL WITH STATS ASYN")
+  clin2$AsynStatus=NA
+  clin2$age_BL=NA
+  ppmi$CSFSAA[ ppmi$CSFSAA %in% c(2,3)]=NA
+  uids = as.character(unique( ppmi$PATNO ))
+  clin2$PATNO=as.character(clin2$PATNO)
+  for ( u in uids ) {
+    clin2sel=clin2$PATNO == as.character(u)
+    if ( sum(clin2sel) > 0 ) {
+      clin2[clin2sel,'age_BL']=min(ppmi[ ppmi$PATNO == as.character(u), 'age'],na.rm=T)
+      suppas = unique(ppmi[ ppmi$PATNO == as.character(u), 'CSFSAA'])
+      if ( 1 %in% suppas ) {
+        suppas='Positive'
+      } else if ( 0 %in% suppas ) {
+        suppas='Negative'
+      } else suppas=NA
+      clin2[clin2sel,'AsynStatus']=suppas
+    }
+  }
+#  table( is.na(clin2$age_BL))
+  ####################################
+  imagingdate=rep( NA, nrow( clin2 ) )
+  for ( k in 1:nrow( clin2 ) ) {
+    imagingdate[k] = substr( unlist(strsplit( clin2$filename[k], '-' ))[3],0,4)
+    }
+  clin2$imaging_year = imagingdate
+  testid="102529"
+  ppmi$PATNO=as.character(ppmi$PATNO)
+  demog$PATNO = as.character( demog$PATNO )
+  commonids = unique( intersect( ppmi$PATNO, demog$PATNO ) )
+  ppmi = merge( ppmi, demog, by='PATNO', all.x=TRUE )
+  rmnames=names(ppmi)[ grep("[.]y",names(ppmi))]
+  ppmi=ppmi[,!(names(ppmi) %in% rmnames)]
+  # names(ppmi)=gsub("[.]x","",names(ppmi))
+  ppmi$birthdate=ppmi$BIRTHDT
+  # convert birtdate to NRG format
+  for ( k in 1:nrow(ppmi) ) {
+          if ( ! is.na( ppmi$BIRTHDT[k] ) ) {
+              temp=unlist(strsplit(ppmi$BIRTHDT[k], "/"))
+              ppmi$birthdate[k]=as.numeric(paste0(temp[2],temp[1],15)) # add the 15th as the estimated date
+          }
+      }
+  demog$birthdate=NA
+  for ( k in 1:nrow(demog) ) {
+    if ( ! is.na( demog$BIRTHDT[k] ) ) {
+      temp=unlist(strsplit(demog$BIRTHDT[k], "/"))
+      demog$birthdate[k]=as.numeric(paste0(temp[2],temp[1],15)) 
+      # add the 15th as the estimated date
+      }
+  }
+  # now we can compute age at imaging using imaging date in addition to BIRTHDT
+  clin2$ageatimaging=NA
+  clin2$EVENT_ID=NA
+  clin2$clin_imaging_mismatch=TRUE
+  rm(clin2add)
+  for ( k in 1:nrow( clin2 ) ) {
+      subjectbdate = unique( demog$birthdate[ demog$PATNO == clin2$PATNO[k] ] )
+      clin2$ageatimaging[k] = as.numeric( 
+              difftime( 
+                  nrgDateToRDate( clin2$date[k] ), 
+                  nrgDateToRDate( subjectbdate ), units='weeks' )/52.0)
+      # find the closest EVENT_ID using ageviz
+      agesel=which( ppmi$PATNO == clin2$PATNO[k] )
+      if ( length( agesel ) == 0 | is.na( clin2$ageatimaging[k] ) ) {
+          next # this is like continue
+          }
+      locages=ppmi[agesel,'age_at_visit']
+      closest=which.min( abs(clin2$ageatimaging[k]-locages))
+      wclin = agesel[closest]
+      clin2$EVENT_ID[k]=ppmi[wclin,'EVENT_ID.x']
+      # select clin
+      if ( length(wclin) == 1 ) {
+          if ( ! exists("clin2add" ) ) {
+              clin2add=names(ppmi)[ !(names(ppmi) %in% names(clin2) )]
+              }
+          clin2[k,clin2add]=ppmi[wclin,clin2add]
+          clin2$clin_imaging_mismatch[k]=FALSE
+          } else {
+              stop("akred - should not reach this point")
+              wclin = which(ppmi$PATNO == clin2$PATNO[k] )
+              # find next closest match
+              if ( length(wclin) > 0 ) {
+                  locclin=ppmi[wclin,]
+                  closest=which.min( abs(clin2$ageatimaging[k]-locclin$age_at_visit))
+                  clin2[k,clin2add]=locclin[closest,clin2add]
+              }
+          }
+  }
+  clin2$yearsbl = NA
+  uids = as.character(unique( clin2$PATNO ))
+  for ( u in uids ) {
+    clin2sel=clin2$PATNO == as.character(u)
+    if ( sum(clin2sel) > 0 ) {
+      clin2[clin2sel,'age_BL']=min(clin2[clin2sel, 'ageatimaging'],na.rm=T)
+    }
+  }
+  clin2$age_BL[ is.na( clin2$age_BL )] = clin2$age[ is.na( clin2$age_BL )]
+  clin2$yearsbl = clin2$ageatimaging - clin2$age_BL
+  clin2$brainVolume = rowSums( clin2[,getNamesFromDataframe( c("T1Hier","vol","hemis"), clin2 )])
+  clin2$brainVolume = clin2$brainVolume/mean(clin2$brainVolume,na.rm=T)
+  clin2$mrimfg[ clin2$mrimfg == ""]="Unk"
+  clin2$APOE[ clin2$APOE == "" ] = "e3/e3"
+  clin2$abeta = as.numeric( clin2$abeta )
+  clin2$tau = as.numeric( clin2$tau )
+  clin2$DXSubAsyn = NA
+  ###########################################################################
+  nna=!is.na( clin2$AsynStatus )
+  clin2$DXSubAsyn[nna]=paste0(clin2$joinedDX[nna], clin2$AsynStatus[nna] )
+  updrsnames = c( getNamesFromDataframe( 'updrs' , clin2), 
+    getNamesFromDataframe( 'moca' , clin2) )
+  for ( u in c(updrsnames,"duration_yrs") ) clin2[,u]=as.numeric( clin2[,u])
+  clin2bl=clin2[clin2$EVENT_ID=='BL',]
+  aggregate( updrs_totscore ~ DXSubAsyn, clin2bl, mean, na.rm=T )
+  negcnids = clin2bl$PATNO[ subtyper::fs(clin2bl$DXSubAsyn == 'CNPositive') ]
+  table( 
+    clin2bl$subgroup[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ],
+    clin2bl$DXSub[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ] )
+
+
+  clin2bl$DXSubAsyn[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ]
+  clin2bl$DXSub[ subtyper::fs(clin2bl$PATNO %in% negcnids)  ]
+
+  table( 
+    ppmi$subgroup[ subtyper::fs(ppmi$PATNO %in% negcnids)  ],
+    ppmi$CONCOHORT[ subtyper::fs(ppmi$PATNO %in% negcnids)  ] )
+  ##########################
+  clin2$commonID=clin2$PATNO
+  clin2$commonAge=clin2$age_BL
+  clin2$commonSex="Male"
+  clin2$commonSex[clin2$SEX ==0 ]="Female"
+  clin2$commonEdu=as.numeric( clin2$educ )
+  clin2$MOCA=clin2$moca
+  clin2$studyName = clin2$projectID
+  clin2$hy=as.numeric( clin2$hy )
+  clin2b = fillBaselineColumn( clin2,
+          c('brainVolume','hy','MOCA',updrsnames), 
+          'commonID', 'yearsbl', 0, 
+          fast=T, verbose=F )[[1]]
+  return(clin2b)
+}
