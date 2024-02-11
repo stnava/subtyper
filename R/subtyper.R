@@ -3697,7 +3697,7 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
 #'
 #' @examples
 #' # Assuming dfA and dfB are already defined and have 'subjectID' and 'date' columns
-#' merged_df <- merge_closest_date(dfA, dfB)
+#' # merged_df <- merge_ADNI_antspymm_by_closest_date(dfA, dfB)
 #' 
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
