@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{merge_ppmi_imaging_clinical_demographic_data}
 \alias{merge_ppmi_imaging_clinical_demographic_data}
-\title{Process Clinical and Demographic Data for a PPMI Study}
+\title{Process Clinical/Demographic and imaging Data for a PPMI Study}
 \usage{
 merge_ppmi_imaging_clinical_demographic_data(
   demog,

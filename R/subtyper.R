@@ -3684,9 +3684,104 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
     }
 
 
+#' Process Clinical/Demographic and imaging Data for an ADNI Study
+#'
+#' This function merges two data frames based on a common patient ID and the closest date, ensuring that each row in the first data frame (`dfA`) is matched with the row from the second data frame (`dfB`) that has the closest date for the same patient ID. The final merged data frame includes all columns from both `dfA` and `dfB`, excluding the patient ID and date columns from `dfB` to avoid duplication. The function is designed to handle date columns as Date objects and includes a progress bar to indicate the matching process's progress. EXAMDATE is assumed present in dfA and date present in dfB where date is numerically formatted as YYYYMMDD.
+#'
+#' @param dfA The first data frame to be merged, expected to contain columns for patient ID and date.
+#' @param dfB The second data frame to be merged, expected to contain columns for patient ID and date. Rows from `dfB` are matched to `dfA` based on the closest date for each patient ID.
+#' @param patientidcol Character string specifying the column name in both data frames that contains the patient ID. Default is 'subjectID'.
+#' @param verbose Logical indicating whether to print additional information during processing, such as the number of common IDs found and dimensions of the data frames before and after merging. Default is TRUE.  setting verbose to 2 provides more feedback.
+#'
+#' @return Returns a merged data frame with the same number of rows as `dfA` and includes all columns from both `dfA` and `dfB`, with `dfB` columns matched based on the closest date for each patient ID. The date columns from `dfB` are excluded to avoid duplication.
+#'
+#' @examples
+#' # Assuming dfA and dfB are already defined and have 'subjectID' and 'date' columns
+#' merged_df <- merge_closest_date(dfA, dfB)
+#' 
+#' @importFrom utils txtProgressBar setTxtProgressBar
+#' @export
+#'
+#' @note The function assumes that the date columns in the dfB data frame formatted as 'YYYYMMDD' and converts them to Date objects for processing. The progress bar functionality uses base R's txtProgressBar, which is displayed in the console.  dfA's EXAMDATE is of the form YYYY-MM-DD.
+merge_ADNI_antspymm_by_closest_date <- function(dfA, dfB, patientidcol='subjectID', verbose=TRUE) {
+  # Convert date columns to Date objects
+  # dfA[, datecol] <- as.Date(as.character(dfA[, datecol]), format = "%Y%m%d")
+  datecol='EXAMDATE'
+  dfB[,'EXAMDATE']=dfB[,'date']
+  dfB[, datecol] <- as.Date(as.character(dfB[, datecol]), format = "%Y%m%d")
+  # Intersect patient IDs to ensure matching on patientidcol
+  isect <- intersect(dfA[, patientidcol], dfB[, patientidcol])
+  if ( verbose ) {
+    print( paste(length( isect ), " common ids "))
+  }
+  dfA <- dfA[dfA[, patientidcol] %in% isect, ]
+  dfB <- dfB[dfB[, patientidcol] %in% isect, ]
+  
+  if (verbose) {
+    print("Initial dfA dim")
+    print( dim(dfA))
+    print(head(dfA[, datecol], 3))
+    print(head(dfB[, datecol], 3))
+  }
+  
+  # Initialize progress bar
+  pb <- txtProgressBar(min = 0, max = nrow(dfA), style = 3)
+  
+  # Create an empty list to hold the matched rows from dfB
+  matched_rows <- vector("list", nrow(dfA))
+  date_diff_years <- numeric(nrow(dfA))
+  
+  for (i in 1:nrow(dfA)) {
+    current_row <- dfA[i, ]
+    # Filter dfB for matching patient ID
+    matching_rows <- dfB[dfB[, patientidcol] == current_row[, patientidcol], ]
+
+    if (nrow(matching_rows) > 0) {
+      if ( verbose > 1 ) {
+        print( "dfA" )
+        print( dfA[i, c("subjectID","date")  ]  )
+        print( "dfB" )
+        print( matching_rows[, c("subjectID","date")  ] )
+      }
+      # Calculate absolute date differences
+      date_diffs <- abs(difftime(matching_rows[, datecol], current_row[, datecol], units = "days"))
+      date_diffs = as.numeric( date_diffs ) / 365.0
+      if ( verbose > 1 ) print( date_diffs )
+      # Find the index of the minimum difference
+      closest_row_index <- which.min(date_diffs)
+      # Store the closest row
+      matched_rows[[i]] <- matching_rows[closest_row_index, ]
+      date_diff_years[i]=min(date_diffs)
+    } else {
+      # Fill with NA if no match found, ensuring length matches dfB
+      matched_rows[[i]] <- setNames(as.list(rep(NA, ncol(dfB))), names(dfB))
+      date_diff_years[i]=NA
+    }
+    
+    # Update progress bar
+    setTxtProgressBar(pb, i)
+  }
+  
+  # Close the progress bar
+  close(pb)
+  dfA$date_diff_years=date_diff_years
+  # Combine the matched rows into a data frame
+  matched_dfB <- do.call(rbind, matched_rows)
+  
+  # Merge the original dfA with the matched rows from dfB
+  # This ensures all columns from dfB are included, and the final dataframe has the same number of rows as dfA
+  merged_df <- cbind(dfA, matched_dfB[, !(names(matched_dfB) %in% c(datecol, patientidcol))])
+  
+  if (verbose) {
+    print("merged_df dim")
+    print( dim(merged_df))
+  }
+
+  return(merged_df)
+}
 
 
-#' Process Clinical and Demographic Data for a PPMI Study
+#' Process Clinical/Demographic and imaging Data for a PPMI Study
 #'
 #' This function merges, cleans, and enriches clinical and demographic data from a neurological study.
 #' It checks for required columns, replaces placeholder values, merges datasets, and computes new variables.
