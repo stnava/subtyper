@@ -12,7 +12,7 @@ merge_ADNI_antspymm_by_closest_date(
 )
 }
 \arguments{
-\item{dfA}{The first data frame to be merged, expected to contain columns for patient ID and date.}
+\item{dfA}{The first data frame to be merged, expected to contain columns for patient ID and date.   may need \code{dfA$subjectID = dfA$PTID}.}
 
 \item{dfB}{The second data frame to be merged, expected to contain columns for patient ID and date. Rows from \code{dfB} are matched to \code{dfA} based on the closest date for each patient ID.}
 

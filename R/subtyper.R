@@ -3688,7 +3688,7 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
 #'
 #' This function merges two data frames based on a common patient ID and the closest date, ensuring that each row in the first data frame (`dfA`) is matched with the row from the second data frame (`dfB`) that has the closest date for the same patient ID. The final merged data frame includes all columns from both `dfA` and `dfB`, excluding the patient ID and date columns from `dfB` to avoid duplication. The function is designed to handle date columns as Date objects and includes a progress bar to indicate the matching process's progress. EXAMDATE is assumed present in dfA and date present in dfB where date is numerically formatted as YYYYMMDD.
 #'
-#' @param dfA The first data frame to be merged, expected to contain columns for patient ID and date.
+#' @param dfA The first data frame to be merged, expected to contain columns for patient ID and date.   may need \code{dfA$subjectID = dfA$PTID}.
 #' @param dfB The second data frame to be merged, expected to contain columns for patient ID and date. Rows from `dfB` are matched to `dfA` based on the closest date for each patient ID.
 #' @param patientidcol Character string specifying the column name in both data frames that contains the patient ID. Default is 'subjectID'.
 #' @param verbose Logical indicating whether to print additional information during processing, such as the number of common IDs found and dimensions of the data frames before and after merging. Default is TRUE.  setting verbose to 2 provides more feedback.
@@ -3703,12 +3703,12 @@ consensusSubtypingPAM = function( dataToClust, targetk, cocanames, newclusternam
 #' @export
 #'
 #' @note The function assumes that the date columns in the dfB data frame formatted as 'YYYYMMDD' and converts them to Date objects for processing. The progress bar functionality uses base R's txtProgressBar, which is displayed in the console.  dfA's EXAMDATE is of the form YYYY-MM-DD.
-#' @importFrom utils txtProgressBar setTxtProgressBar close
+#' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
 merge_ADNI_antspymm_by_closest_date <- function(dfA, dfB, patientidcol='subjectID', verbose=TRUE) {
   # Safety checks for required columns in dfA and dfB
   if (!all(c(patientidcol, 'EXAMDATE') %in% names(dfA))) {
-    stop("dfA is missing one of the required columns: ", patientidcol, " or EXAMDATE")
+    stop("dfA is missing one of the required columns: ", patientidcol, " or EXAMDATE ... try setting dfA$subjectID = dfA$PTID ")
   }
   if (!all(c(patientidcol, 'date') %in% names(dfB))) {
     stop("dfB is missing one of the required columns: ", patientidcol, " or date")
