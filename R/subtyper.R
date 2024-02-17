@@ -4087,7 +4087,8 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     if ( is.numeric( x ) ) return( mean(x,na.rm=na.rm ) )
     return( myMode( x ) )
   }
-  timeaxis0 = seq( min(demogmdl[,x[1]]), max(demogmdl[,x[1]]),length.out=100)
+  tt=x[1]
+  timeaxis0 = seq( min(demogmdl[,tt]), max(demogmdl[,tt]),length.out=222)
   if ( predictorsigns[x[1]] < 0 ) timeaxis0=rev(timeaxis0)
   myconf = confint.default(qmdl)
   mycolor='magenta'
@@ -4132,8 +4133,10 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   myyvars = demogmdl[,y]
   verbfn('myyvars',verbose)
   rangerx = range(demogmdl[psel,x])
-  rangerx = rangerx * c(0.975,1.025)
-  rangery = range(myyvars) * c(0.975,1.025)
+  rangerx = range(timeaxis0)
+  scl = c(0.98,1.02)
+  rangerx = rangerx * scl
+  rangery = range(myyvars) * scl
   verbfn('ranger',verbose)
   plot(timeaxis0, Y$fit, xlab = xrowname, ylab = y, type='l',
     xlim=rangerx,
