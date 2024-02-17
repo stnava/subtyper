@@ -4104,6 +4104,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     n = length( atpreds ) + 1
     if ( zz %in% x ) {
         loqhiq=quantile(demogmdl[,zz],c(0.01,0.99),na.rm=T)
+        loqhiq=range(demogmdl[,zz],na.rm=T)
         timeaxis = seq( loqhiq[1], loqhiq[2],length.out=length(timeaxis0))
         if ( predictorsigns[zz] < 0 ) timeaxis=rev(timeaxis)
         atpreds[[ n ]] = timeaxis
