@@ -45,6 +45,6 @@ holding other predictors at their median or mode values. It allows specifying a 
 }
 \examples{
 # Assuming `data` is your dataset, `fit` is a fitted GLM, and you're interested in predictors `x1` and `x2`:
-visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group")
+# visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group")
 
 }

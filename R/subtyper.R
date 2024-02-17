@@ -4046,9 +4046,10 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #'
 #' @examples
 #' # Assuming `data` is your dataset, `fit` is a fitted GLM, and you're interested in predictors `x1` and `x2`:
-#' visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group")
+#' # visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group")
 #'
 #' @importFrom ggplot2 ggplot geom_line geom_point
+#' @importFrom ciTools add_ci
 #' @export
 visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, verbose = FALSE) {  
   
