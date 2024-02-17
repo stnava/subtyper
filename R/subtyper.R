@@ -4049,7 +4049,6 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group")
 #'
 #' @importFrom ggplot2 ggplot geom_line geom_point
-#' @importFrom MASS predict.glm
 #' @export
 visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, verbose = FALSE) {  
   
