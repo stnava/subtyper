@@ -80,7 +80,7 @@
     <div id="arguments">
     <h2>Arguments</h2>
     <dl><dt>dfA</dt>
-<dd><p>The first data frame to be merged, expected to contain columns for patient ID and date.</p></dd>
+<dd><p>The first data frame to be merged, expected to contain columns for patient ID and date.   may need <code>dfA$subjectID = dfA$PTID</code>.</p></dd>
 
 
 <dt>dfB</dt>
@@ -109,9 +109,9 @@
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Assuming dfA and dfB are already defined and have 'subjectID' and 'date' columns</span></span></span>
-<span class="r-in"><span><span class="va">merged_df</span> <span class="op">&lt;-</span> <span class="fu">merge_closest_date</span><span class="op">(</span><span class="va">dfA</span>, <span class="va">dfB</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in merge_closest_date(dfA, dfB):</span> could not find function "merge_closest_date"</span>
+<span class="r-in"><span><span class="co"># merged_df &lt;- merge_ADNI_antspymm_by_closest_date(dfA, dfB)</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"></span>
 </code></pre></div>
     </div>
   </div>

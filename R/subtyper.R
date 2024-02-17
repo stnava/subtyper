@@ -4022,3 +4022,129 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 
   return(clin2b)
 }
+
+
+
+
+#' Visualize the Joint Effect of Variables in a GLM
+#'
+#' This function visualizes the joint effect of several variables in a generalized linear model (GLM)
+#' by plotting the predicted response over a range of values for the primary predictor variable, while
+#' holding other predictors at their median or mode values. It allows specifying a group for focused analysis.
+#'
+#' @param demogmdl Data frame containing the variables used in the GLM.
+#' @param qmdl Fitted GLM object from which predictions will be generated.
+#' @param x Character vector specifying the names of the predictor variables, with the first being the primary.
+#' @param y The name of the response variable.
+#' @param group The name of the group variable or specific group to be analyzed.
+#' @param titlestring Title of the plot indicating the focus of the visualization.
+#' @param groupvar Optional; the name of the variable in `demogmdl` that defines group membership. Default is 'group'.
+#' @param predictorsigns Optional; a named numeric vector indicating the direction of the effect of each predictor.
+#' @param verbose Logical; if TRUE, additional processing information will be printed to the console.
+#'
+#' @return Generates a plot visualizing the predicted response and confidence intervals across the range of the primary predictor.
+#'
+#' @examples
+#' # Assuming `data` is your dataset, `fit` is a fitted GLM, and you're interested in predictors `x1` and `x2`:
+#' visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group")
+#'
+#' @importFrom ggplot2 ggplot geom_line geom_point
+#' @importFrom MASS predict.glm
+#' @export
+visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, verbose = FALSE) {  
+  
+  verbfn <- function( x, verbose=FALSE ) {
+    if ( verbose ) print(paste("visglm:", x)); 
+  }
+  verbfn('start',verbose)
+  myMode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+    }
+  mostfreq <- function( x, na.rm=TRUE ) {
+    if ( is.numeric( x ) ) return( mean(x,na.rm=na.rm ) )
+    return( myMode( x ) )
+  }
+
+  # Check if groupvar exists in data
+  if ( !(groupvar %in% colnames(demogmdl) )) {
+    errmsg = paste("The group variable", groupvar, "does not exist in the dataset.")
+    stop(errmsg)
+  }
+  verbfn('check group',verbose)
+  if (is.null(predictorsigns)) {
+    predictorsigns = rep(1,length(x))
+    names(predictorsigns)=x
+    }
+  verbfn('predictorsigns',verbose)
+  xrowname=paste(x,collapse='+')
+  verbfn('xrowname',verbose)
+  myMode <- function(x) {
+    ux <- unique(x)
+    ux[which.max(tabulate(match(x, ux)))]
+    }
+  mostfreq <- function( x, na.rm=TRUE ) {
+    if ( is.numeric( x ) ) return( mean(x,na.rm=na.rm ) )
+    return( myMode( x ) )
+  }
+  timeaxis0 = seq( min(demogmdl[,x[1]]), max(demogmdl[,x[1]]),length.out=100)
+  if ( predictorsigns[x[1]] < 0 ) timeaxis0=rev(timeaxis0)
+  myconf = confint.default(qmdl)
+  mycolor='magenta'
+  mylev=group
+  verbfn('group',verbose)
+  if ( group != 'control' ) mycolor='blue'
+  if ( group=='all') {
+    psel=rep(TRUE,nrow(demogmdl))
+    mylev=group
+  } else psel = demogmdl[,groupvar] == group
+  atpreds = list( )
+  varstoadd = all.vars(qmdl$formula)[-1]
+  verbfn('varstoadd',verbose)
+  for ( zz in  varstoadd ) {
+    n = length( atpreds ) + 1
+    if ( zz %in% x ) {
+        loqhiq=quantile(demogmdl[,zz],c(0.01,0.99),na.rm=T)
+        timeaxis = seq( loqhiq[1], loqhiq[2],length.out=length(timeaxis0))
+        if ( predictorsigns[zz] < 0 ) timeaxis=rev(timeaxis)
+        atpreds[[ n ]] = timeaxis
+    } else if ( is.numeric( demogmdl[psel,zz] )) {
+        atpreds[[ n ]] = rep( mean(demogmdl[psel,zz]), length(timeaxis0))
+    } else {
+        mostfreqvar = mostfreq( demogmdl[psel,zz] )
+        atpreds[[ n ]] = rep( mostfreqvar, length(timeaxis0))
+    }
+    names(atpreds)[[n]] = zz
+  }
+  verbfn('x1',verbose)
+  x=x[1]
+  verbfn('add_ci',verbose)
+  dat1 <- add_ci(demogmdl, qmdl, names = c("lpb", "upb"), alpha = 0.05, nsims = 25)
+  verbfn('Ypred',verbose)
+  Y <- predict( qmdl, atpreds, type='response', se.fit=TRUE )
+  verbfn('Yci',verbose)
+  ydelta = Y$fit - Y$se.fit
+  Y$ciminus = Y$fit-1.96*Y$se.fit
+  Y$ciplus = Y$fit+1.96*Y$se.fit
+  verbfn('ciplus',verbose)
+  myyvars = c(demogmdl[psel,y],Y$ciminus, Y$ciplus)
+  myyvars = demogmdl[,y]
+  verbfn('myyvars',verbose)
+  rangerx = range(demogmdl[psel,x])
+  rangerx = rangerx * c(0.975,1.025)
+  rangery = range(myyvars) * c(0.975,1.025)
+  verbfn('ranger',verbose)
+  plot(timeaxis0, Y$fit, xlab = xrowname, ylab = y, type='l',
+    xlim=rangerx,
+    ylim=rangery, main=paste(group, " ", titlestring))
+  verbfn('plotting',verbose)
+  lines(timeaxis0, Y$fit, lwd = 2, col = mycolor)
+  lines(timeaxis0, Y$ciplus, lwd = 2, col = "red", lty=2)
+  lines(timeaxis0, Y$ciminus, lwd = 2, col = "red", lty=2)
+  verbfn('plot',verbose)
+  points( (demogmdl[psel,x[1]]), demogmdl[psel,y], col=mycolor )
+  if ( group == 'all' ) {
+    notexp=demogmdl[,groupvar]!=group
+    points( (demogmdl[notexp,x]), demogmdl[notexp,y], col='magenta' )
+  }
+}
