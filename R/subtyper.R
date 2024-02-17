@@ -1359,7 +1359,7 @@ scale_variables_in_equation <- function( mydf, myeq ) {
   myterms = intersect(myterms, colnames(mydf))
   for ( x in myterms ) {
     if ( is.numeric( mydf[,x] )) {
-      mydf[,x] = scale(mydf[,x])
+      mydf[,x] = c(scale(mydf[,x]))
     }
   }
   return(mydf)
