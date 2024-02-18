@@ -4115,7 +4115,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     return( myMode( x ) )
   }
   tt=x[1]
-  n2sim = 5000
+  n2sim = 500
   timeaxis0 = seq( min(demogmdl[,tt]), max(demogmdl[,tt]),length.out=n2sim)
   if ( predictorsigns[x[1]] < 0 ) timeaxis0=rev(timeaxis0)
   myconf = confint.default(qmdl)
