@@ -13,6 +13,7 @@ visglm(
   titlestring,
   groupvar = "group",
   predictorsigns = NULL,
+  jdf_simulation = FALSE,
   verbose = FALSE
 )
 }
@@ -32,6 +33,8 @@ visglm(
 \item{groupvar}{Optional; the name of the variable in \code{demogmdl} that defines group membership. Default is 'group'.}
 
 \item{predictorsigns}{Optional; a named numeric vector indicating the direction of the effect of each predictor.}
+
+\item{jdf_simulation}{boolean}
 
 \item{verbose}{Logical; if TRUE, additional processing information will be printed to the console.}
 }

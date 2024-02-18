@@ -4040,6 +4040,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' @param titlestring Title of the plot indicating the focus of the visualization.
 #' @param groupvar Optional; the name of the variable in `demogmdl` that defines group membership. Default is 'group'.
 #' @param predictorsigns Optional; a named numeric vector indicating the direction of the effect of each predictor.
+#' @param jdf_simulation boolean
 #' @param verbose Logical; if TRUE, additional processing information will be printed to the console.
 #'
 #' @return Generates a plot visualizing the predicted response and confidence intervals across the range of the primary predictor.
@@ -4050,9 +4051,35 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #'
 #' @importFrom ggplot2 ggplot geom_line geom_point
 #' @importFrom ciTools add_ci
+#' @import ciTools
 #' @export
-visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, verbose = FALSE) {  
-  
+visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, verbose = FALSE) {  
+  .env <- environment() ## identify the environment of cv.step
+
+  simulateJointDistribution <- function(exampleData, nSimulations) {
+    # Step 1: Compute covariance matrix and perform Cholesky decomposition
+    covMatrix <- cov(data.matrix(exampleData))
+    cholMatrix <- chol(covMatrix)
+    
+    # Step 2: Simulate standard normally distributed data
+    n <- nrow(exampleData)  # Original number of observations
+    p <- ncol(exampleData)  # Original number of variables
+    simDataStdNormal <- matrix(rnorm(nSimulations * p), nrow = nSimulations, ncol = p)
+    
+    # Step 3: Apply the Cholesky matrix to simulated data to preserve correlation
+    simDataCorrelated <- simDataStdNormal %*% cholMatrix
+    
+    # Step 4: Adjust the means of the simulated data
+    meanVector <- colMeans(exampleData)  # Mean of each variable in the original data
+    simDataAdjusted <- sweep(simDataCorrelated, 2, meanVector, '+')
+    
+    # Step 5: Convert to a data frame and assign column names
+    simDataFrame <- as.data.frame(simDataAdjusted)
+    names(simDataFrame) <- names(exampleData)
+    
+    return(simDataFrame)
+  }
+
   verbfn <- function( x, verbose=FALSE ) {
     if ( verbose ) print(paste("visglm:", x)); 
   }
@@ -4088,7 +4115,8 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     return( myMode( x ) )
   }
   tt=x[1]
-  timeaxis0 = seq( min(demogmdl[,tt]), max(demogmdl[,tt]),length.out=222)
+  n2sim = 5000
+  timeaxis0 = seq( min(demogmdl[,tt]), max(demogmdl[,tt]),length.out=n2sim)
   if ( predictorsigns[x[1]] < 0 ) timeaxis0=rev(timeaxis0)
   myconf = confint.default(qmdl)
   mycolor='magenta'
@@ -4102,6 +4130,14 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   atpreds = list( )
   varstoadd = all.vars(qmdl$formula)[-1]
   verbfn('varstoadd',verbose)
+  if ( jdf_simulation ) {
+    simmed = simulateJointDistribution( data.matrix(demogmdl[,x]), n2sim )
+    for ( j in 1:ncol(simmed) ) {
+      ord1=order(simmed[,j])
+      simmed[,j]=simmed[ord1,j]
+    }
+    colnames(simmed)=x
+    }
   for ( zz in  varstoadd ) {
     n = length( atpreds ) + 1
     if ( zz %in% x ) {
@@ -4110,6 +4146,8 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
         timeaxis = seq( loqhiq[1], loqhiq[2],length.out=length(timeaxis0))
         if ( predictorsigns[zz] < 0 ) timeaxis=rev(timeaxis)
         atpreds[[ n ]] = timeaxis
+        if ( jdf_simulation )
+          atpreds[[ n ]] = as.numeric(simmed[,zz])
     } else if ( is.numeric( demogmdl[psel,zz] )) {
         atpreds[[ n ]] = rep( mean(demogmdl[psel,zz]), length(timeaxis0))
     } else {
@@ -4123,7 +4161,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   verbfn('add_ci',verbose)
   dat1 <- add_ci(demogmdl, qmdl, names = c("lpb", "upb"), alpha = 0.05, nsims = 25)
   verbfn('Ypred',verbose)
-  Y <- predict( qmdl, atpreds, type='response', se.fit=TRUE )
+  Y <- predict( qmdl, atpreds, type='response', se.fit=TRUE, env=.env )
   verbfn('Yci',verbose)
   ydelta = Y$fit - Y$se.fit
   Y$ciminus = Y$fit-1.96*Y$se.fit
@@ -4146,7 +4184,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   lines(timeaxis0, Y$ciplus, lwd = 2, col = "red", lty=2)
   lines(timeaxis0, Y$ciminus, lwd = 2, col = "red", lty=2)
   verbfn('plot',verbose)
-  points( (demogmdl[psel,x[1]]), demogmdl[psel,y], col=mycolor )
+  points( (demogmdl[psel,x]), demogmdl[psel,y], col=mycolor )
   if ( group == 'all' ) {
     notexp=demogmdl[,groupvar]!=group
     points( (demogmdl[notexp,x]), demogmdl[notexp,y], col='magenta' )

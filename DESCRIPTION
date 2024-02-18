@@ -20,6 +20,7 @@ Depends:
 Imports:
   ggplot2,
   caret,
+  ciTools,
   ClusterR,
   cluster,
   coca,
