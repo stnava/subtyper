@@ -4041,6 +4041,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' @param groupvar Optional; the name of the variable in `demogmdl` that defines group membership. Default is 'group'.
 #' @param predictorsigns Optional; a named numeric vector indicating the direction of the effect of each predictor.
 #' @param jdf_simulation boolean
+#' @param xrange explicitly set xrange
 #' @param verbose Logical; if TRUE, additional processing information will be printed to the console.
 #'
 #' @return Generates a plot visualizing the predicted response and confidence intervals across the range of the primary predictor.
@@ -4053,10 +4054,10 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' @importFrom ciTools add_ci
 #' @import ciTools
 #' @export
-visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, verbose = FALSE) {  
+visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, xrange=NULL, verbose = FALSE) {  
   .env <- environment() ## identify the environment of cv.step
 
-  simulateJointDistribution <- function(exampleData, nSimulations) {
+  simulateJointDistribution <- function(exampleData, nSimulations, distribution='unf') {
     # Step 1: Compute covariance matrix and perform Cholesky decomposition
     covMatrix <- cov(data.matrix(exampleData))
     cholMatrix <- chol(covMatrix)
@@ -4064,8 +4065,13 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     # Step 2: Simulate standard normally distributed data
     n <- nrow(exampleData)  # Original number of observations
     p <- ncol(exampleData)  # Original number of variables
-    simDataStdNormal <- matrix(rnorm(nSimulations * p), nrow = nSimulations, ncol = p)
-    
+    if ( distribution=='normal' ) {
+      simDataStdNormal <- matrix(rnorm(nSimulations * p), nrow = nSimulations, ncol = p)
+    } else {
+      simDataStdNormal <- scale(matrix( 1:(nSimulations * p), nrow = nSimulations, ncol = p),T,T)
+    #  simDataStdNormal[ simDataStdNormal > 1.5]=1.5
+    #  simDataStdNormal[ simDataStdNormal < -1.5]=-1.5
+    }
     # Step 3: Apply the Cholesky matrix to simulated data to preserve correlation
     simDataCorrelated <- simDataStdNormal %*% cholMatrix
     
@@ -4106,14 +4112,6 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   verbfn('predictorsigns',verbose)
   xrowname=paste(x,collapse='+')
   verbfn('xrowname',verbose)
-  myMode <- function(x) {
-    ux <- unique(x)
-    ux[which.max(tabulate(match(x, ux)))]
-    }
-  mostfreq <- function( x, na.rm=TRUE ) {
-    if ( is.numeric( x ) ) return( mean(x,na.rm=na.rm ) )
-    return( myMode( x ) )
-  }
   tt=x[1]
   n2sim = 500
   timeaxis0 = seq( min(demogmdl[,tt]), max(demogmdl[,tt]),length.out=n2sim)
@@ -4132,17 +4130,14 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   verbfn('varstoadd',verbose)
   if ( jdf_simulation ) {
     simmed = simulateJointDistribution( data.matrix(demogmdl[,x]), n2sim )
-    for ( j in 1:ncol(simmed) ) {
-      ord1=order(simmed[,j])
-      simmed[,j]=simmed[ord1,j]
-    }
     colnames(simmed)=x
     }
+  if ( is.null( xrange )) {
+    loqhiq=range(demogmdl[,x],na.rm=T)
+  } else loqhiq = xrange
   for ( zz in  varstoadd ) {
     n = length( atpreds ) + 1
     if ( zz %in% x ) {
-        loqhiq=quantile(demogmdl[,zz],c(0.01,0.99),na.rm=T)
-        loqhiq=range(demogmdl[,zz],na.rm=T)
         timeaxis = seq( loqhiq[1], loqhiq[2],length.out=length(timeaxis0))
         if ( predictorsigns[zz] < 0 ) timeaxis=rev(timeaxis)
         atpreds[[ n ]] = timeaxis
@@ -4157,7 +4152,6 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     names(atpreds)[[n]] = zz
   }
   verbfn('x1',verbose)
-  x=x[1]
   verbfn('add_ci',verbose)
   dat1 <- add_ci(demogmdl, qmdl, names = c("lpb", "upb"), alpha = 0.05, nsims = 25)
   verbfn('Ypred',verbose)
@@ -4171,20 +4165,25 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   myyvars = demogmdl[,y]
   verbfn('myyvars',verbose)
   rangerx = range(demogmdl[psel,x])
-  rangerx = range(timeaxis0)
   scl = c(0.98,1.02)
   rangerx = rangerx * scl
   rangery = range(myyvars) * scl
   verbfn('ranger',verbose)
   plot(timeaxis0, Y$fit, xlab = xrowname, ylab = y, type='l',
-    xlim=rangerx,
+    xlim=loqhiq,
     ylim=rangery, main=paste(group, " ", titlestring))
   verbfn('plotting',verbose)
   lines(timeaxis0, Y$fit, lwd = 2, col = mycolor)
   lines(timeaxis0, Y$ciplus, lwd = 2, col = "red", lty=2)
   lines(timeaxis0, Y$ciminus, lwd = 2, col = "red", lty=2)
   verbfn('plot',verbose)
-  points( (demogmdl[psel,x]), demogmdl[psel,y], col=mycolor )
+#  myco=(coefficents(summary(qmdl)))
+#  corows=rownames(myco)
+#  bestx=which.min( myco[ ])
+  if ( length( x ) > 1 ) {
+    xpoints = rowMeans( demogmdl[psel,x], na.rm=T )
+  } else xpoints = demogmdl[psel,x]
+  points( xpoints, demogmdl[psel,y], col=mycolor )
   if ( group == 'all' ) {
     notexp=demogmdl[,groupvar]!=group
     points( (demogmdl[notexp,x]), demogmdl[notexp,y], col='magenta' )

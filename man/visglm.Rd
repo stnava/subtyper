@@ -14,6 +14,7 @@ visglm(
   groupvar = "group",
   predictorsigns = NULL,
   jdf_simulation = FALSE,
+  xrange = NULL,
   verbose = FALSE
 )
 }
@@ -35,6 +36,8 @@ visglm(
 \item{predictorsigns}{Optional; a named numeric vector indicating the direction of the effect of each predictor.}
 
 \item{jdf_simulation}{boolean}
+
+\item{xrange}{explicitly set xrange}
 
 \item{verbose}{Logical; if TRUE, additional processing information will be printed to the console.}
 }
