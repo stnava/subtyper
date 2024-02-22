@@ -2985,6 +2985,39 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
     return( mylearners )
 }
 
+
+#' shorter antspymm names
+#' 
+#' @export
+shorten_pymm_names <-function(x){
+    xx=tolower(x)
+    xx=gsub("rsfmri_fcnxpro122_",'rsf_',xx,fixed=TRUE)
+    xx=gsub("dti_mean_fa_",'dti_fa_',xx,fixed=TRUE)
+    xx=gsub("perf_cbf_mean_",'cbf_',xx,fixed=TRUE)
+    xx=gsub(".jhu_icbm_labels_1mm",'',xx,fixed=TRUE)
+    xx=gsub("_.include_optic_radiation..",'',xx,fixed=TRUE)
+    xx=gsub("..",'.',xx,fixed=TRUE)
+    xx=gsub(".",'_',xx,fixed=TRUE)
+    xx=gsub("cerebellar_peduncle",'cereb_ped',xx,fixed=TRUE)
+    xx=gsub("posterior_limb_of_internal_capsule",'post_limb_int_cap',xx,fixed=TRUE)
+    xx=gsub("t1hier_",'t1_',xx,fixed=TRUE)
+    xx=gsub("anterior",'ant',xx,fixed=TRUE)
+    xx=gsub("posterior",'post',xx,fixed=TRUE)
+    xx=gsub("inferior",'inf',xx,fixed=TRUE)
+    xx=gsub("superior",'sup',xx,fixed=TRUE)
+    xx=gsub("dktcortex",'_ctx',xx,fixed=TRUE)
+    xx=gsub("__",'_',xx,fixed=TRUE)
+    xx=gsub("_lravg",'',xx,fixed=TRUE)
+    xx=gsub("dti_mean_fa",'dti_fa',xx,fixed=TRUE)
+    xx=gsub("iculus_could_be_a_part_of_ant_internal_capsule","",xx,fixed=TRUE)
+    xx=gsub("_cres_stria_terminalis_can_not_be_resolved_with_current_resolution","",xx,fixed=TRUE)
+    xx=gsub("_include_inf_longitidinal_fasciculus_and_inf_fronto_occipital_fasciculus","",xx,fixed=TRUE)
+    for ( x in 1:length(xx) ) {
+      xx[x]=substr(xx[x],0,40)
+    }
+    return(xx)
+}
+
 #' mlr3classifier
 #' 
 #' build a mlr3 classification model
