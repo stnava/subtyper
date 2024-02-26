@@ -227,6 +227,10 @@ match_cohort_pair <- function(df1, df2, cols, sample_size, num_iterations = 1000
         size = sample_size, replace = FALSE )
       # print( head( subset_indices ) )
       subset_df1 <- df1[subset_indices, cols]
+      if ( length( cols) == 1 ) {
+        subset_df1=data.frame(df1[subset_indices, cols] )
+        colnames(subset_df1)=cols
+      } 
       # Calculate t-statistic for the subset
       for (col in cols) {
           t_statistic[col]=abs(t.test(subset_df1[,col], df2[,col])$statistic)
@@ -1363,6 +1367,55 @@ scale_variables_in_equation <- function( mydf, myeq ) {
     }
   }
   return(mydf)
+}
+
+
+
+#' Determine the Variable Type Based on Its Name
+#'
+#' This function inspects the input character vector for specific patterns
+#' indicating the type of variable (e.g., "T1", "rsfMRI", "DTI", "NM2") and
+#' returns a corresponding string identifier for the first matched type.
+#' If no known pattern is found, it returns `NA`.
+#'
+#' @param x A character vector containing names or identifiers to be checked
+#'          against known patterns for variable types. It must be a character vector.
+#'
+#' @return A character string indicating the type of variable matched based
+#'         on the predefined patterns ("T1", "rsfMRI", "DTI", "NM2DMT").
+#'         Returns `NA` if no pattern matches.
+#'
+#' @examples
+#' antspymm_vartype("This is a T1 weighted image")  # Returns "T1"
+#' antspymm_vartype("Subject underwent rsfMRI")    # Returns "rsfMRI"
+#' antspymm_vartype("DTI sequence")                # Returns "DTI"
+#' antspymm_vartype("Analysis of NM2")             # Returns "NM2DMT"
+#' antspymm_vartype("Unknown type")                # Returns NA
+#'
+#' @note This function only checks for the first occurrence of a pattern
+#'       and does not account for multiple different patterns within the
+#'       same input. The order of pattern checking is fixed and may affect
+#'       the result if multiple patterns are present.
+#'
+#' @export
+antspymm_vartype <- function(x) {
+  # Validate input
+  if (!is.character(x)) {
+    stop("Input must be a character vector.")
+  }
+  
+  # Define patterns and corresponding returns in a named list
+  patterns <- list(T1 = "T1", rsfMRI = "rsfMRI", DTI = "DTI", NM2 = "NM2DMT")
+  
+  # Iterate through the patterns
+  for (pattern in names(patterns)) {
+    if (any(grepl(pattern, x))) {
+      return(patterns[[pattern]])
+    }
+  }
+  
+  # Default return if no pattern matched
+  return(NA)
 }
 
 
@@ -2986,6 +3039,18 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
 }
 
 
+
+#' return nuisance variable strings
+#' 
+#' these strings can be used with getNamesFromDataFrame or multigrep to 
+#' either include or exclude nuisance variables.
+#' 
+#' @export
+antspymm_nuisance_names <-function(x){
+xcl = c("snr_","bandp","_mean","censor","smooth","outlier","motion","FD","despik","_nc_","_evr","minut","left","right","paramset","_sd","upsampling")
+return( xcl )
+}
+
 #' shorter antspymm names
 #' 
 #' @export
@@ -3223,6 +3288,7 @@ fill1col2another <- function( df, x, y ) {
       df[ losel, x ] = df[ losel, y ]
     return( df )
     }
+
 
 
 #' dcurvarsel
