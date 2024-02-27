@@ -2614,7 +2614,8 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
   indf[,colorvar]=factor(indf[,colorvar])
   indf$snapfact=factor(indf[,colorvar])
   ylimmer = range( indf[,yvar])
-  glist[[length(glist)+1]]= ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste(anatshow[1])) + ylim( ylimmer ) #+ theme(legend.position = "none")
+  glist[[length(glist)+1]]= ggscatter(indf, x = xvar, y = yvar, color=colorvar,   size=3.45,  point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ylim( ylimmer )
+  # ggtitle(paste(anatshow[1])) + ylim( ylimmer ) #+ theme(legend.position = "none")
 
   if ( is.numeric(indf[,anat]) ) {
     medsplit = median( indf[,anat], na.rm=T )
@@ -2625,12 +2626,12 @@ threewayinteraction <- function( indf, xvar, yvar, colorvar, anat, anatshow, ggp
     hisel=indf[,anat]==loclev
     loclev2=paste0("!",loclev)
   }
-  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('+',anatshow[2],loclev)) + theme(legend.position = "none") + ylim( ylimmer )
+  glist[[length(glist)+1]]=ggscatter(indf[hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE ) + theme(text = element_text(size=12))+ ggtitle(paste('+',anatshow[2])) + theme(legend.position = "none") + ylim( ylimmer )
 
   
-  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('-',anatshow[3],loclev2))+ theme(legend.position = "none") + ylim(  ylimmer )
+  glist[[length(glist)+1]]=ggscatter(indf[!hisel,], x = xvar, y = yvar, color=colorvar,   size=3.45, point=showpoints, add = "reg.line", palette=ggpalette, conf.int=T, cor.coef=TRUE  ) + theme(text = element_text(size=12))+ ggtitle(paste('-',anatshow[3]))+ theme(legend.position = "none") + ylim(  ylimmer )
 
-  grid.arrange(grobs=glist,ncol=3)
+  grid.arrange(grobs=glist,ncol=3,top=anatshow[1])
 
 }
 
@@ -2833,16 +2834,21 @@ prplot  <- function(
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) )
-    } else return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
+    } else {
+      myaddparams = list(color = "blue", fill = "cyan")
+      myaddparams = list()
+      mypp = predict( mdl )
+      mylims = range(mypp) * c( 1.3, 1. )
+      return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
                     point=addthepoints, add='reg.line', conf.int=T,
                     color=colorvar, facet.by=byvariable,
-                    add.params = list(color = "blue", fill = "cyan"),
+                    add.params = myaddparams,
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) +
-  theme(legend.position = "top", legend.title = element_blank())  # Position legend at top
- )
+  theme(legend.position = "top", legend.title = element_blank())  )
+    }
   }
   if ( missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, plot=FALSE)
