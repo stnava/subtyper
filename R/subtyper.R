@@ -3062,9 +3062,14 @@ return( xcl )
 #' @export
 shorten_pymm_names <-function(x){
     xx=tolower(x)
+    xx=gsub("_.cres..stria_terminalis_.can_not_be_resolved_with_current_resolution..","",xx,fixed=TRUE)
     xx=gsub("_",".",xx)
+    xx=gsub("longitudinal.fasciculus",'l.fasc',xx,fixed=TRUE)
+    xx=gsub("corona.radiata",'cor.rad',xx,fixed=TRUE)
+    xx=gsub("central",'cent',xx,fixed=TRUE)
     xx=gsub("deep.cit168",'',xx,fixed=TRUE)
     xx=gsub("cit168",'',xx,fixed=TRUE)
+    xx=gsub("mtg.sn",'',xx,fixed=TRUE)
     xx=gsub("rsfmri.fcnxpro122.",'rsf.',xx,fixed=TRUE)
     xx=gsub("dti.mean.fa.",'dti.fa.',xx,fixed=TRUE)
     xx=gsub("perf.cbf.mean.",'cbf.',xx,fixed=TRUE)
@@ -3073,20 +3078,27 @@ shorten_pymm_names <-function(x){
     xx=gsub("..",'.',xx,fixed=TRUE)
     xx=gsub("..",'.',xx,fixed=TRUE)
     xx=gsub("cerebellar.peduncle",'cereb.ped',xx,fixed=TRUE)
-    xx=gsub("posterior.limb.of.internal.capsule",'post.limb.int.cap',xx,fixed=TRUE)
+    xx=gsub("anterior.limb.of.internal.capsule",'ant.int.cap',xx,fixed=TRUE)
+    xx=gsub("posterior.limb.of.internal.capsule",'post.int.cap',xx,fixed=TRUE)
     xx=gsub("t1hier.",'t1.',xx,fixed=TRUE)
     xx=gsub("anterior",'ant',xx,fixed=TRUE)
     xx=gsub("posterior",'post',xx,fixed=TRUE)
     xx=gsub("inferior",'inf',xx,fixed=TRUE)
     xx=gsub("superior",'sup',xx,fixed=TRUE)
     xx=gsub("dktcortex",'.ctx',xx,fixed=TRUE)
-    xx=gsub("..",'.',xx,fixed=TRUE)
     xx=gsub(".lravg",'',xx,fixed=TRUE)
     xx=gsub("dti.mean.fa",'dti.fa',xx,fixed=TRUE)
     xx=gsub("retrolenticular.part.of.internal","rent.int.cap",xx,fixed=TRUE)
     xx=gsub("iculus.could.be.a.part.of.ant.internal.capsule","",xx,fixed=TRUE)
-    xx=gsub(".cres.stria.terminalis.can.not.be.resolved.with.current.resolution","",xx,fixed=TRUE)
-    xx=gsub(".include.inf.longitidinal.fasciculus.and.inf.fronto.occipital.fasciculus","",xx,fixed=TRUE)
+    xx=gsub("iculus.could.be.a.part.of.ant.internal.capsule","",xx,fixed=TRUE)
+    xx=gsub(".fronto.occipital.",".frnt.occ.",xx,fixed=TRUE)
+    xx=gsub(".longitidinal.fasciculus.",".long.fasc.",xx,fixed=TRUE)
+    xx=gsub(".longitidinal.fasciculus.",".long.fasc.",xx,fixed=TRUE)
+    xx=gsub(".external.capsule",".ext.cap",xx,fixed=TRUE)
+    xx=gsub("of.internal.capsule",".int.cap",xx,fixed=TRUE)
+    xx=gsub("fornix.cres.stria.terminalis","fornix.",xx,fixed=TRUE)
+    xx=gsub("capsule","",xx,fixed=TRUE)
+    xx=gsub("..",'.',xx,fixed=TRUE)
     for ( x in 1:length(xx) ) {
       xx[x]=substr(xx[x],0,40)
     }
@@ -4163,7 +4175,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' @importFrom ciTools add_ci
 #' @import ciTools
 #' @export
-visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, xrange=NULL, verbose = FALSE) {  
+visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, xrange=NULL, verbose = FALSE) {  
   .env <- environment() ## identify the environment of cv.step
 
   simulateJointDistribution <- function(exampleData, nSimulations, distribution='unf') {
@@ -4225,7 +4237,9 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
   n2sim = 500
   timeaxis0 = seq( min(demogmdl[,tt]), max(demogmdl[,tt]),length.out=n2sim)
   if ( predictorsigns[x[1]] < 0 ) timeaxis0=rev(timeaxis0)
-  myconf = confint.default(qmdl)
+  verbfn('confint',verbose)
+  myconf = confint(qmdl)
+  verbfn('confint done',verbose)
   mycolor='magenta'
   mylev=group
   verbfn('group',verbose)
@@ -4235,7 +4249,10 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     mylev=group
   } else psel = demogmdl[,groupvar] == group
   atpreds = list( )
-  varstoadd = all.vars(qmdl$formula)[-1]
+  verbfn('all.vars',verbose)
+  if ( missing( varstoadd) ) {
+    varstoadd = all.vars(qmdl$formula)[-1]
+  }
   verbfn('varstoadd',verbose)
   if ( jdf_simulation ) {
     simmed = simulateJointDistribution( data.matrix(demogmdl[,x]), n2sim )
@@ -4261,10 +4278,12 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  groupvar = 'group'
     names(atpreds)[[n]] = zz
   }
   verbfn('x1',verbose)
-  verbfn('add_ci',verbose)
-  dat1 <- add_ci(demogmdl, qmdl, names = c("lpb", "upb"), alpha = 0.05, nsims = 25)
   verbfn('Ypred',verbose)
   Y <- predict( qmdl, atpreds, type='response', se.fit=TRUE, env=.env )
+  verbfn('add_ci',verbose)
+  demogmdl$imaging_protocol=mostfreq(demogmdl$imaging_protocol)
+  demogmdl$commonID=mostfreq(demogmdl$commonID)
+  dat1 <- add_ci(demogmdl, qmdl, names = c("lpb", "upb"), alpha = 0.05, nsims = 25, allow.new.levels = TRUE)
   verbfn('Yci',verbose)
   ydelta = Y$fit - Y$se.fit
   Y$ciminus = Y$fit-1.96*Y$se.fit

@@ -11,6 +11,7 @@ visglm(
   y,
   group,
   titlestring,
+  varstoadd,
   groupvar = "group",
   predictorsigns = NULL,
   jdf_simulation = FALSE,
