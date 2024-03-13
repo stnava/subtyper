@@ -4317,3 +4317,58 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
     points( (demogmdl[notexp,x]), demogmdl[notexp,y], col='magenta' )
   }
 }
+
+
+#' Assign Quality Control Ratings Based on Specific Criteria
+#'
+#' This function assigns quality control ratings to a dataset based on several
+#' criteria related to measurements of a specific anatomical structure, such as the substantia nigra.
+#' The ratings are determined by whether the measurements fall within certain thresholds.
+#'
+#' @param df A data frame containing the dataset to be rated. No default value, must be provided by the user.
+#' @param z_coord_col Name of the column for the Z-coordinate measurement. Default is "NM2DMT_NM_substantianigra_z_coordinate".
+#' @param volume_col Name of the column for the volume measurement. Default is "NM2DMT_NM_volume_substantianigra".
+#' @param avg_col Name of the column for the average measurement. Default is "NM2DMT_NM_avg_substantianigra".
+#' @param sd_col Name of the column for the standard deviation measurement. Default is "NM2DMT_NM_sd".
+#' @param max_col Name of the column for the maximum value measurement. Default is "NM2DMT_NM_max".
+#' @param lohi A numeric vector of length 2 specifying the lower and upper thresholds for the Z-coordinate. Defaults to c(0.3, 0.7).
+#' @param volume_threshold A numeric value specifying the threshold for the volume measurement. Default is 500.
+#' @param avg_threshold A numeric value specifying the threshold for the average measurement. Default is 2500.
+#' @param sd_threshold A numeric value specifying the threshold for the standard deviation measurement. Default is 50.
+#' @param max_threshold A numeric value specifying the threshold for the maximum value measurement. Default is 5500.
+#' @param verbose  boolean
+#' @return The original data frame with an additional column `NM_QC_Ratings_BA` containing the quality control ratings.
+#' @examples
+#' # Example usage:
+#' # df_rated <- assign_qc_ratings(df)
+#' # View(df_rated)
+#' @export
+assign_qc_ratings_NM2DMT <- function(df, 
+                              z_coord_col = "NM2DMT_NM_substantianigra_z_coordinate", 
+                              volume_col = "NM2DMT_NM_volume_substantianigra", 
+                              avg_col = "NM2DMT_NM_avg_substantianigra", 
+                              sd_col = "NM2DMT_NM_sd", 
+                              max_col = "NM2DMT_NM_max", 
+                              lohi = c(0.3, 0.7), 
+                              volume_threshold = 500, 
+                              avg_threshold = 2500, 
+                              sd_threshold = 50, 
+                              max_threshold = 5500, verbose=FALSE ) {  
+  df$NM_QC_Ratings_BA <- NA
+  df$NM_QC_Ratings_BA[subtyper::fs(df[[z_coord_col]] > lohi[1] & df[[z_coord_col]] < lohi[2])] <- 1
+  df$NM_QC_Ratings_BA[subtyper::fs(df[[z_coord_col]] <= lohi[1] | df[[z_coord_col]] >= lohi[2])] <- 0
+  df$NM_QC_Ratings_BA[subtyper::fs(df[[volume_col]] < volume_threshold)] <- 0
+  df$NM_QC_Ratings_BA[subtyper::fs(df[[avg_col]] > avg_threshold)] <- 0
+  df$NM_QC_Ratings_BA[subtyper::fs(df[[sd_col]] > sd_threshold)] <- 0
+  df$NM_QC_Ratings_BA[subtyper::fs(df[[max_col]] > max_threshold)] <- 0
+  
+  # Optionally, return tables of ratings and their proportions
+  ratings_table <- table(df$NM_QC_Ratings_BA)
+  ratings_proportion <- ratings_table / sum(ratings_table)
+  if ( verbose ) {
+    print( ratings_table )
+    print( ratings_proportion )
+  }
+  return( df$NM_QC_Ratings_BA )
+  # list(df = df, ratings_table = ratings_table, ratings_proportion = ratings_proportion)
+}
