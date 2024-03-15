@@ -3056,7 +3056,7 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
 #' 
 #' @export
 antspymm_nuisance_names <-function(x){
-xcl = c("snr_","bandp","_mean","censor","smooth","outlier","motion","FD","despik","_nc_","_evr","minut","left","right","paramset","_sd","upsampling")
+xcl = c("snr_","bandp","_mean","censor","smooth","outlier","motion","FD","despik","_nc_","_evr","minut","left","right","paramset","_sd","upsampling","mhdist","RandomBasis","templateL1")
 return( xcl )
 }
 
