@@ -80,8 +80,11 @@ holding other predictors at their median or mode values. It allows specifying a 
 <span>  <span class="va">y</span>,</span>
 <span>  <span class="va">group</span>,</span>
 <span>  <span class="va">titlestring</span>,</span>
+<span>  <span class="va">varstoadd</span>,</span>
 <span>  groupvar <span class="op">=</span> <span class="st">"group"</span>,</span>
 <span>  predictorsigns <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  jdf_simulation <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  xrange <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -120,6 +123,14 @@ holding other predictors at their median or mode values. It allows specifying a 
 <dd><p>Optional; a named numeric vector indicating the direction of the effect of each predictor.</p></dd>
 
 
+<dt>jdf_simulation</dt>
+<dd><p>boolean</p></dd>
+
+
+<dt>xrange</dt>
+<dd><p>explicitly set xrange</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Logical; if TRUE, additional processing information will be printed to the console.</p></dd>
 
@@ -134,9 +145,9 @@ holding other predictors at their median or mode values. It allows specifying a 
     <div id="ref-examples">
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Assuming `data` is your dataset, `fit` is a fitted GLM, and you're interested in predictors `x1` and `x2`:</span></span></span>
-<span class="r-in"><span><span class="fu">visglm</span><span class="op">(</span><span class="va">data</span>, <span class="va">fit</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span><span class="op">)</span>, <span class="st">"y"</span>, <span class="st">"control"</span>, <span class="st">"Visualization for Control Group"</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group"):</span> could not find function "visglm"</span>
+<span class="r-in"><span><span class="co"># visglm(data, fit, c("x1", "x2"), "y", "control", "Visualization for Control Group")</span></span></span>
 <span class="r-in"><span></span></span>
+<span class="r-in"></span>
 </code></pre></div>
     </div>
   </div>

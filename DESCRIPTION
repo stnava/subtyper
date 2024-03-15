@@ -47,6 +47,8 @@ Imports:
   plyr,
   DDoutlier,
   data.table,
+  lmerTest,
+  stringr,
   mclust,
   NMF,
   nmfbin,

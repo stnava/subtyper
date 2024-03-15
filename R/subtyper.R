@@ -4498,8 +4498,9 @@ interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2sho
 #' # summary(results$full_model) # Full model summary
 #' # results$model_comparison # ANOVA comparison
 #' # results$effect_sizes # Effect sizes
-#' @importFrom lme4 lmer
+#' @importFrom lmerTest lmer
 #' @importFrom stats anova
+#' @importFrom stringr str_extract str_match
 #' @importFrom effectsize t_to_d
 #' @export
 lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_effects) {
