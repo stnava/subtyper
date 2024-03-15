@@ -4372,3 +4372,176 @@ assign_qc_ratings_NM2DMT <- function(df,
   return( df$NM_QC_Ratings_BA )
   # list(df = df, ratings_table = ratings_table, ratings_proportion = ratings_proportion)
 }
+
+
+#' Eliminate Non-Unique Columns from a Matrix
+#'
+#' This function takes a matrix as input and returns a new matrix with all non-unique columns removed.
+#' It first transposes the matrix to work with rows instead of columns, making it easier to apply the
+#' `duplicated` function. Then, it finds and removes duplicated rows in the transposed matrix, which correspond
+#' to non-unique columns in the original matrix. Finally, it transposes the matrix back to its original
+#' orientation, now with only unique columns remaining.
+#'
+#' @param matrix A numeric or character matrix from which to remove non-unique columns.
+#' @return A matrix with non-unique columns removed, maintaining the original order of the remaining columns.
+#' @examples
+#' exampleMatrix <- matrix(c(1, 2, 3, 1, 2, 3, 1, 2, 3, 4, 5, 6), nrow = 3, byrow = TRUE)
+#' print(exampleMatrix)
+#' #      [,1] [,2] [,3] [,4]
+#' # [1,]    1    2    3    1
+#' # [2,]    2    3    1    2
+#' # [3,]    3    1    2    4
+#' 
+#' uniqueMatrix <- eliminateNonUniqueColumns(exampleMatrix)
+#' print(uniqueMatrix)
+#' #      [,1] [,2]
+#' # [1,]    1    1
+#' # [2,]    2    2
+#' # [3,]    3    4
+#' @export
+eliminateNonUniqueColumns <- function(matrix) {
+  # Transpose the matrix to work with rows instead of columns for easier application of the 'duplicated' function
+  t_matrix <- t(matrix)
+  
+  # Find unique rows in the transposed matrix (which correspond to unique columns in the original matrix)
+  unique_t_matrix <- t_matrix[!duplicated(t_matrix), ]
+  
+  # Transpose back to the original orientation, now with non-unique columns removed
+  result_matrix <- t(unique_t_matrix)
+  
+  return(result_matrix)
+}
+
+
+#' Interpret SiMLR Vector
+#'
+#' This function interprets a vector from SiMLR (similarity-driven multivariate linear reconstruction)
+#' specifically focusing on a given variable (e.g., a specific principal component or cluster). It extracts and normalizes the vector associated 
+#' with the specified SiMLR variable, sorts it to identify the top elements, and optionally filters out non-significant values. 
+#' This function is useful for understanding the contribution of different features in the context of the SiMLR analysis.
+#'
+#' @param simlrResult A list containing SiMLR analysis results, which should include a matrix `v` 
+#' representing vectors of interest (e.g., principal components).
+#' @param simlrMats A list of matrices associated with SiMLR analysis, where each matrix corresponds 
+#' to a different modality or data type analyzed by SiMLR.
+#' @param simlrVariable A string specifying the variable within `simlrResult` to interpret. The variable 
+#' name should include both an identifier (e.g., "PC" for principal component) and a numeric index.
+#' @param n2show An integer specifying the number of top elements to show from the sorted, normalized vector. 
+#' Defaults to 5. If `NULL` or greater than the length of the vector, all elements are shown.
+#' @return A named vector of the top `n2show` elements (or all if `n2show` is `NULL` or too large), 
+#' sorted in decreasing order of their absolute values. Elements are named according to their identifiers 
+#' in `simlrMats` and filtered to exclude non-significant values (absolute value > 0).
+#' @examples
+#' # This example assumes you have SiMLR result `simlrResult`, matrices `simlrMats`, and you want to 
+#' # interpret the first principal component "PC1".
+#' # simlrResult <- list(v = list(PC = matrix(runif(20), ncol = 2)))
+#' # simlrMats <- list(PC = matrix(runif(100), ncol = 10))
+#' # simlrVariable <- "PC1"
+#' # interpretedVector <- interpret_simlr_vector(simlrResult, simlrMats, simlrVariable)
+#' # print(interpretedVector)
+#' @importFrom stringr str_match str_extract
+#' @export
+interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2show = 5 ) {
+
+  split_string_correctly <- function(input_string) {
+    # Extract the leading alphabetic characters (possibly including numbers within the alphabetic segment)
+    alpha_part <- str_match(input_string, "([A-Za-z0-9]+(?=[A-Za-z]+[0-9]+$))[A-Za-z]*")[,1]
+    
+    # Extract the numeric part at the end
+    numeric_part <- str_extract(input_string, "[0-9]+$")
+    
+    c( alpha_part, numeric_part)
+  }
+  varparts = split_string_correctly( simlrVariable )
+  varparts[1]=gsub("PC","",varparts[1])
+  nmslist=list()
+  for ( k in 1:length(simlrMats) ) nmslist[[names(simlrMats)[k]]]=shorten_pymm_names(colnames(simlrMats[[k]]))
+
+  # Extract the vector for the given modality and region, and normalize it
+  t1vec <- abs(simlrResult$v[[varparts[1]]][, as.integer(varparts[2])])
+  t1vec=t1vec/max(t1vec)
+  
+  # Assign names to the vector elements from the names list
+  names(t1vec) <- nmslist[[varparts[1]]]
+  
+  # Sort the vector in decreasing order and select the top 'n2show' elements
+  # If 'n2show' is NULL or greater than the length of t1vec, use the length of t1vec
+  n_items_to_show <- if (is.null(n2show)) length(t1vec) else min(c(n2show, length(t1vec)))
+  t1vec_sorted <- head(t1vec[order(t1vec, decreasing = TRUE)], n_items_to_show)
+  
+  # Filter out non-significant values (absolute value > 0)
+  t1vec_filtered <- t1vec_sorted[abs(t1vec_sorted) > 0]
+  
+  return(t1vec_filtered)
+}
+
+
+#' Linear Mixed Effects Model Analysis with ANOVA and Effect Size Calculation
+#'
+#' This function fits two linear mixed effects models: a base model without the main predictor of interest
+#' and a full model including the main predictor. It then compares these models using ANOVA to test the
+#' significance of adding the main predictor. Additionally, it calculates the effect sizes for the predictor
+#' in the full model. This function is designed to facilitate the analysis of data where both fixed and
+#' random effects are present, accommodating complex experimental designs.
+#'
+#' @param data A data frame containing the variables referenced in the model formulas.
+#' @param outcome The name of the dependent variable (outcome) as a string.
+#' @param predictor The name of the main predictor variable as a string.
+#' @param fixed_effects A string specifying the fixed effects to be included in the model, excluding the main predictor.
+#' @param random_effects A string specifying the random effects to be included in the model. we assume this is a subject ID.
+#' @return A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
+#' predictor, coefficients of the full model, and the count of unique levels in the random effects variable.
+#' @examples
+#' # Assuming 'data' is your dataset with columns 'outcome', 'predictor', 'fixed_var1', ...,
+#' # and 'subject' as the random effect:
+#' # results <- lmer_anv_p_and_d(data, "outcome", "predictor", "fixed_var1 + fixed_var2", "subject")
+#' # summary(results$full_model) # Full model summary
+#' # results$model_comparison # ANOVA comparison
+#' # results$effect_sizes # Effect sizes
+#' @importFrom lme4 lmer
+#' @importFrom stats anova
+#' @importFrom effectsize t_to_d
+#' @export
+lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_effects) {
+  # Validate input to ensure variables exist in the data frame
+  stopifnot(is.character(outcome), is.character(predictor), is.character(fixed_effects), is.character(random_effects))
+
+  # Construct the model formulas directly
+  base_model_formula <- as.formula(paste(outcome, "~", fixed_effects, "+ (1|", random_effects, ")"))
+  full_model_formula <- as.formula(paste(outcome, "~", fixed_effects, "*", predictor, "+ (1|", random_effects, ")"))
+  all_vars = all.vars( full_model_formula )
+  missing_vars <- setdiff(all_vars, colnames(data))
+  if (length(missing_vars) > 0) {
+    stop("The following variables are missing in the data: ", paste(missing_vars, collapse = ", "), ".")
+  }
+  
+  
+  # Subset data to exclude rows with NA values for relevant variables
+  datasub <- na.omit(data[, all_vars])
+
+  # Fit the linear mixed models using lmer from the lme4 package
+  base_model <- lmer(base_model_formula, data = datasub, REML = FALSE)
+  full_model <- lmer(full_model_formula, data = datasub, REML = FALSE)
+  
+  # Perform ANOVA to compare the models
+  model_comparison <- anova(base_model, full_model)
+  
+  # Calculate effect sizes for the full model
+  coefs <- summary(full_model)$coefficients
+  ndf <- length(unique(datasub[[random_effects]])) # Now using datasub for N calculation
+  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], rep(ndf, nrow(coefs)))
+  effect_sizes <- data.frame(effect_sizes)
+  rownames(effect_sizes) <- rownames(coefs)
+  effect_sizes <- effect_sizes[grep(predictor, rownames(effect_sizes)), ]
+
+  # Prepare and return the results
+  results <- list(
+    full_model = full_model,
+    model_comparison = model_comparison,
+    effect_sizes = effect_sizes,
+    coefficients = coefs,
+    n = length(unique(datasub[[random_effects]]))
+  )
+  
+  return(results)
+}
