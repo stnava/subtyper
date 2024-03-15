@@ -1348,6 +1348,7 @@ trainSubtypeUni  <- function(
 #' @param myeq An equation in the form of a string or an object of class 
 #'   \code{formula} specifying the variables to be scaled. Only the variables 
 #'   on the right-hand side of the equation are considered.
+#' @param variables_to_exclude vector of strings not to scale
 #'
 #' @return A data frame with the specified numeric variables scaled. The 
 #'   function modifies the input data frame in place and returns it.
@@ -1358,8 +1359,10 @@ trainSubtypeUni  <- function(
 #' head(scaled_iris)
 #'
 #' @export
-scale_variables_in_equation <- function( mydf, myeq ) {
+scale_variables_in_equation <- function( mydf, myeq, variables_to_exclude ) {
   myterms = all.vars(as.formula(myeq))[-1]
+  if ( ! missing( variables_to_exclude ) )
+    myterms = myterms[ ! ( myterms %in% variables_to_exclude )]
   myterms = intersect(myterms, colnames(mydf))
   for ( x in myterms ) {
     if ( is.numeric( mydf[,x] )) {
@@ -4483,6 +4486,7 @@ interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2sho
 #' significance of adding the main predictor. Additionally, it calculates the effect sizes for the predictor
 #' in the full model. This function is designed to facilitate the analysis of data where both fixed and
 #' random effects are present, accommodating complex experimental designs.
+#' NOTE: this function will scale variables internally to aid coefficient estimate visualization.
 #'
 #' @param data A data frame containing the variables referenced in the model formulas.
 #' @param outcome The name of the dependent variable (outcome) as a string.
@@ -4519,6 +4523,7 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   
   # Subset data to exclude rows with NA values for relevant variables
   datasub <- na.omit(data[, all_vars])
+  datasub = scale_variables_in_equation( datasub, full_model_formula )
 
   # Fit the linear mixed models using lmer from the lme4 package
   base_model <- lmer(base_model_formula, data = datasub, REML = FALSE)

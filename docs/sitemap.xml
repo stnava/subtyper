@@ -37,10 +37,19 @@
     <loc>/reference/adjustByCovariatesUni.html</loc>
   </url>
   <url>
+    <loc>/reference/antspymm_nuisance_names.html</loc>
+  </url>
+  <url>
     <loc>/reference/antspymm_predictors.html</loc>
   </url>
   <url>
+    <loc>/reference/antspymm_vartype.html</loc>
+  </url>
+  <url>
     <loc>/reference/assembleTestRetest.html</loc>
+  </url>
+  <url>
+    <loc>/reference/assign_qc_ratings_NM2DMT.html</loc>
   </url>
   <url>
     <loc>/reference/augment_with_custom_color.html</loc>
@@ -80,6 +89,9 @@
   </url>
   <url>
     <loc>/reference/dcurvarsel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eliminateNonUniqueColumns.html</loc>
   </url>
   <url>
     <loc>/reference/featureImportanceForSubtypes.html</loc>
@@ -122,6 +134,12 @@
   </url>
   <url>
     <loc>/reference/interpret_icc.html</loc>
+  </url>
+  <url>
+    <loc>/reference/interpret_simlr_vector.html</loc>
+  </url>
+  <url>
+    <loc>/reference/lmer_anv_p_and_d.html</loc>
   </url>
   <url>
     <loc>/reference/mapAsymVar.html</loc>
@@ -194,6 +212,9 @@
   </url>
   <url>
     <loc>/reference/scale_variables_in_equation.html</loc>
+  </url>
+  <url>
+    <loc>/reference/shorten_pymm_names.html</loc>
   </url>
   <url>
     <loc>/reference/threewayinteraction.html</loc>
