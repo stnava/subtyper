@@ -4,7 +4,15 @@
 \alias{lmer_anv_p_and_d}
 \title{Linear Mixed Effects Model Analysis with ANOVA and Effect Size Calculation}
 \usage{
-lmer_anv_p_and_d(data, outcome, predictor, fixed_effects, random_effects)
+lmer_anv_p_and_d(
+  data,
+  outcome,
+  predictor,
+  fixed_effects,
+  random_effects,
+  predictoroperator = "*",
+  verbose = FALSE
+)
 }
 \arguments{
 \item{data}{A data frame containing the variables referenced in the model formulas.}
@@ -16,6 +24,10 @@ lmer_anv_p_and_d(data, outcome, predictor, fixed_effects, random_effects)
 \item{fixed_effects}{A string specifying the fixed effects to be included in the model, excluding the main predictor.}
 
 \item{random_effects}{A string specifying the random effects to be included in the model. we assume this is a subject ID.}
+
+\item{predictoroperator}{either a \code{+} or \code{*}}
+
+\item{verbose}{boolean}
 }
 \value{
 A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
@@ -27,6 +39,7 @@ and a full model including the main predictor. It then compares these models usi
 significance of adding the main predictor. Additionally, it calculates the effect sizes for the predictor
 in the full model. This function is designed to facilitate the analysis of data where both fixed and
 random effects are present, accommodating complex experimental designs.
+NOTE: this function will scale variables internally to aid coefficient estimate visualization.
 }
 \examples{
 # Assuming 'data' is your dataset with columns 'outcome', 'predictor', 'fixed_var1', ...,

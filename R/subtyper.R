@@ -4493,6 +4493,8 @@ interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2sho
 #' @param predictor The name of the main predictor variable as a string.
 #' @param fixed_effects A string specifying the fixed effects to be included in the model, excluding the main predictor.
 #' @param random_effects A string specifying the random effects to be included in the model. we assume this is a subject ID.
+#' @param predictoroperator either a \code{+} or \code{*}
+#' @param verbose boolean
 #' @return A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
 #' predictor, coefficients of the full model, and the count of unique levels in the random effects variable.
 #' @examples
@@ -4507,15 +4509,39 @@ interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2sho
 #' @importFrom stringr str_extract str_match
 #' @importFrom effectsize t_to_d
 #' @export
-lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_effects) {
+lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_effects, predictoroperator='*', verbose=FALSE ) {
   # Validate input to ensure variables exist in the data frame
   stopifnot(is.character(outcome), is.character(predictor), is.character(fixed_effects), is.character(random_effects))
 
+  hasConverged <- function (mm) {
+#    if ( !inherits(mm, "merMod")) stop("Error: must pass a lmerMod object")
+    retval <- NULL    
+    if(is.null(unlist(mm@optinfo$conv$lme4))) {
+      retval = 1
+    }
+    else {
+      if (isSingular(mm)) {
+        retval = 0
+      } else {
+        retval = -1
+      }
+    }
+    return(retval)
+  }
   # Construct the model formulas directly
-  base_model_formula <- as.formula(paste(outcome, "~", fixed_effects, "+ (1|", random_effects, ")"))
-  full_model_formula <- as.formula(paste(outcome, "~", fixed_effects, "*", predictor, "+ (1|", random_effects, ")"))
+  base_model_formula <- paste( outcome, "~", paste(" (1|", random_effects, ")"), "+", fixed_effects )
+  if ( verbose ) {
+    print("base_model_formula")
+    print( base_model_formula )
+    }
+  full_model_formula <- paste( base_model_formula, predictoroperator, predictor )
+  base_model_formula = as.formula( base_model_formula )
+  full_model_formula = as.formula( full_model_formula )
   all_vars = all.vars( full_model_formula )
   missing_vars <- setdiff(all_vars, colnames(data))
+  if ( verbose ) {
+    print( full_model_formula )
+    }
   if (length(missing_vars) > 0) {
     stop("The following variables are missing in the data: ", paste(missing_vars, collapse = ", "), ".")
   }
@@ -4526,8 +4552,19 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   datasub = scale_variables_in_equation( datasub, full_model_formula )
 
   # Fit the linear mixed models using lmer from the lme4 package
-  base_model <- lmer(base_model_formula, data = datasub, REML = FALSE)
-  full_model <- lmer(full_model_formula, data = datasub, REML = FALSE)
+  base_model = tryCatch({
+      lmer(base_model_formula, data = datasub, REML = FALSE)
+    }, error = function(e) {
+      NULL
+    })
+  if ( is.null(base_model) ) return(NULL)
+  full_model = tryCatch({
+    lmer(full_model_formula, data = datasub, REML = FALSE)
+    }, error = function(e) {
+      NULL
+    })
+  if ( is.null(full_model)  ) return(NULL)
+  if ( hasConverged(full_model) != 1 ) return(NULL)
   
   # Perform ANOVA to compare the models
   model_comparison <- anova(base_model, full_model)
@@ -4550,4 +4587,32 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   )
   
   return(results)
+}
+
+
+
+#' Set Seed Based on Current Time
+#'
+#' This function sets the random number generator seed based on the current time,
+#' with a fine resolution of seconds. This ensures a different seed is used each time
+#' the function is called, provided calls are at least one second apart.
+#'
+#' @return The numeric value used as the seed, derived from the current time in seconds.
+#' @examples
+#' seedValue <- setSeedBasedOnTime()
+#' print(seedValue)
+#' @export
+setSeedBasedOnTime <- function() {
+  op <- options(digits.secs = 8)
+  # Get the current time
+  currentTime <- Sys.time()
+  
+  # Convert the current time to a numeric value
+  # numericTime <- as.numeric(currentTime, units = "secs")
+  numericTime = as.integer(substr(as.character(Sys.time()),22,200))
+  # Use the numeric time as the seed
+  set.seed(numericTime)
+  
+  # Optionally, return the seed value used
+  return(numericTime)
 }

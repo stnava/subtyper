@@ -4,7 +4,7 @@
 \alias{scale_variables_in_equation}
 \title{Scale Numeric Variables in a Data Frame}
 \usage{
-scale_variables_in_equation(mydf, myeq)
+scale_variables_in_equation(mydf, myeq, variables_to_exclude)
 }
 \arguments{
 \item{mydf}{A data frame containing the variables to be scaled.}
@@ -12,6 +12,8 @@ scale_variables_in_equation(mydf, myeq)
 \item{myeq}{An equation in the form of a string or an object of class
 \code{formula} specifying the variables to be scaled. Only the variables
 on the right-hand side of the equation are considered.}
+
+\item{variables_to_exclude}{vector of strings not to scale}
 }
 \value{
 A data frame with the specified numeric variables scaled. The
