@@ -3070,7 +3070,7 @@ shorten_pymm_names <-function(x){
     xx=gsub("longitudinal.fasciculus",'l.fasc',xx,fixed=TRUE)
     xx=gsub("corona.radiata",'cor.rad',xx,fixed=TRUE)
     xx=gsub("central",'cent',xx,fixed=TRUE)
-    xx=gsub("deep.cit168",'',xx,fixed=TRUE)
+    xx=gsub("deep.cit168",'dp.',xx,fixed=TRUE)
     xx=gsub("cit168",'',xx,fixed=TRUE)
     xx=gsub("mtg.sn",'',xx,fixed=TRUE)
     xx=gsub("rsfmri.fcnxpro122.",'rsf.',xx,fixed=TRUE)
