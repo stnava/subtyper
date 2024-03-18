@@ -4340,7 +4340,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
 #' @param sd_threshold A numeric value specifying the threshold for the standard deviation measurement. Default is 50.
 #' @param max_threshold A numeric value specifying the threshold for the maximum value measurement. Default is 5500.
 #' @param verbose  boolean
-#' @return The original data frame with an additional column `NM_QC_Ratings_BA` containing the quality control ratings.
+#' @return The original data frame with additional columns containing the quality control ratings. 1=pass; 0=fail.
 #' @examples
 #' # Example usage:
 #' # df_rated <- assign_qc_ratings(df)
@@ -4357,22 +4357,33 @@ assign_qc_ratings_NM2DMT <- function(df,
                               avg_threshold = 2500, 
                               sd_threshold = 50, 
                               max_threshold = 5500, verbose=FALSE ) {  
-  df$NM_QC_Ratings_BA <- NA
-  df$NM_QC_Ratings_BA[subtyper::fs(df[[z_coord_col]] > lohi[1] & df[[z_coord_col]] < lohi[2])] <- 1
-  df$NM_QC_Ratings_BA[subtyper::fs(df[[z_coord_col]] <= lohi[1] | df[[z_coord_col]] >= lohi[2])] <- 0
-  df$NM_QC_Ratings_BA[subtyper::fs(df[[volume_col]] < volume_threshold)] <- 0
-  df$NM_QC_Ratings_BA[subtyper::fs(df[[avg_col]] > avg_threshold)] <- 0
-  df$NM_QC_Ratings_BA[subtyper::fs(df[[sd_col]] > sd_threshold)] <- 0
-  df$NM_QC_Ratings_BA[subtyper::fs(df[[max_col]] > max_threshold)] <- 0
+  df$NM_QC_Ratings_Z <- NA
+  df$NM_QC_Ratings_Z[subtyper::fs(df[[z_coord_col]] > lohi[1] & df[[z_coord_col]] < lohi[2])] <- 1
+  df$NM_QC_Ratings_Z[subtyper::fs(df[[z_coord_col]] <= lohi[1] | df[[z_coord_col]] >= lohi[2])] <- 0
+  df$NM_QC_Ratings_SNVol <- NA
+  df$NM_QC_Ratings_SNVol[subtyper::fs(df[[volume_col]] < volume_threshold)] <- 0
+  df$NM_QC_Ratings_SNVol[subtyper::fs(df[[volume_col]] >= volume_threshold)] <- 1
+  df$NM_QC_Ratings_AvgIntensity <- NA
+  df$NM_QC_Ratings_AvgIntensity[subtyper::fs(df[[avg_col]] <= avg_threshold)] <- 1
+  df$NM_QC_Ratings_AvgIntensity[subtyper::fs(df[[avg_col]] > avg_threshold)] <- 0
+  df$NM_QC_Ratings_SDIntensity <- NA
+  df$NM_QC_Ratings_SDIntensity[subtyper::fs(df[[sd_col]] > sd_threshold)] <- 0
+  df$NM_QC_Ratings_SDIntensity[subtyper::fs(df[[sd_col]] <= sd_threshold)] <- 1
+  df$NM_QC_Ratings_MaxIntensity <- NA
+  df$NM_QC_Ratings_MaxIntensity[subtyper::fs(df[[max_col]] > max_threshold)] <- 0
+  df$NM_QC_Ratings_MaxIntensity[subtyper::fs(df[[max_col]] <= max_threshold)] <- 1
   
+
+  nmqccols=c("NM_QC_Ratings_Z","NM_QC_Ratings_SNVol","NM_QC_Ratings_AvgIntensity","NM_QC_Ratings_SDIntensity","NM_QC_Ratings_MaxIntensity")
+  df$NM_QC_Ratings_Failures=length(nmqccols)-rowSums( df[,nmqccols], na.rm=T )
+  df$NM_QC_Ratings_Failures[ is.na( df$NM2DMT_NM_max ) ]=NA
+  nmqccols=c(nmqccols,'NM_QC_Ratings_Failures')
   # Optionally, return tables of ratings and their proportions
-  ratings_table <- table(df$NM_QC_Ratings_BA)
-  ratings_proportion <- ratings_table / sum(ratings_table)
+  ratings_table <- table(df$NM_QC_Ratings_Failures)
   if ( verbose ) {
     print( ratings_table )
-    print( ratings_proportion )
   }
-  return( df$NM_QC_Ratings_BA )
+  return( df[,nmqccols] )
   # list(df = df, ratings_table = ratings_table, ratings_proportion = ratings_proportion)
 }
 
