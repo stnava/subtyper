@@ -45,7 +45,7 @@ assign_qc_ratings_NM2DMT(
 \item{verbose}{boolean}
 }
 \value{
-The original data frame with an additional column \code{NM_QC_Ratings_BA} containing the quality control ratings.
+The original data frame with additional columns containing the quality control ratings. 1=pass; 0=fail.
 }
 \description{
 This function assigns quality control ratings to a dataset based on several
