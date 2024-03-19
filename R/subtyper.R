@@ -1408,7 +1408,8 @@ antspymm_vartype <- function(x) {
   }
   
   # Define patterns and corresponding returns in a named list
-  patterns <- list(T1 = "T1", rsfMRI = "rsfMRI", DTI = "DTI", NM2 = "NM2DMT")
+  patterns <- list(T1 = "T1", rsfMRI = "rsfMRI", DTI = "DTI", NM2 = "NM2DMT", T2="T2Flair", 
+    t1 = "T1", rsfmri = "rsfMRI", dti = "DTI", nm2 = "NM2DMT", t2="T2Flair")
   
   # Iterate through the patterns
   for (pattern in names(patterns)) {
