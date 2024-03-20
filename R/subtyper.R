@@ -4655,9 +4655,13 @@ plotCategoricalData <- function(  datatoplot, columnName ) {
   
   # Plot
   ggplot(freqDataFrame, aes(x = Category, y = Frequency, fill = SubjectCategory)) +
-    geom_bar(stat = "identity") +
+    geom_bar(stat = "identity", show.legend = FALSE) +
+    scale_fill_manual(values = c("TRUE" = "red", "FALSE" = "lightblue")) +
     theme_minimal() +
-    labs(x = columnName, y = "Frequency")
+    labs(title = paste("Dist.", columnName, "/ Subject (red)"),
+         y = "Frequency",
+         x = columnName) +
+    coord_flip()  # Flip for horizontal bars
 }
 
 
@@ -4774,7 +4778,7 @@ normativeSummary <- function(data, subjectRow, columns, zoom, verbose=TRUE) {
       labs(title = "Z-Scores vs. pop.",
            y = "Z-Score",
            x = "") +
-      coord_flip()
+      coord_flip() + theme(legend.key.width = unit(0.005, "npc"))
   } else {
     cat("No numeric data for z-score plot.\n")
   }
