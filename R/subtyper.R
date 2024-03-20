@@ -1409,7 +1409,7 @@ antspymm_vartype <- function(x) {
   
   # Define patterns and corresponding returns in a named list
   patterns <- list(T1 = "T1", rsfMRI = "rsfMRI", DTI = "DTI", NM2 = "NM2DMT", T2="T2Flair", 
-    t1 = "T1", rsfmri = "rsfMRI", dti = "DTI", nm2 = "NM2DMT", t2="T2Flair")
+    t1 = "T1", rsfmri = "rsfMRI", dti = "DTI", nm2 = "NM2DMT", t2="T2Flair", perf='perf')
   
   # Iterate through the patterns
   for (pattern in names(patterns)) {
@@ -4628,3 +4628,251 @@ setSeedBasedOnTime <- function() {
   # Optionally, return the seed value used
   return(numericTime)
 }
+
+
+
+#' Plot Categorical Data
+#'
+#' This function creates a visualization for categorical data using ggplot2. It takes a dataset and a column name,
+#' generates a frequency table for the categorical data, and plots the frequencies.
+#'
+#' @param datatoplot A data frame containing the dataset to be plotted.
+#' @param columnName The name of the column in the dataset that contains categorical data.
+#'
+#' @return A ggplot object representing the frequency of each category in the specified column.
+#' @export
+#'
+#' @examples
+#' # plotCategoricalData(myData, "myCategoryColumn")
+plotCategoricalData <- function(  datatoplot, columnName ) {
+  # Convert the frequency table to a data frame for ggplot
+
+  freqDataFrame <- as.data.frame(datatoplot[[columnName]]$FrequencyTable)
+  names(freqDataFrame) <- c("Category", "Frequency")
+  
+  # Add a column to indicate the subject's category
+  freqDataFrame$SubjectCategory <- freqDataFrame$Category == datatoplot[[columnName]]$SubjectCategory
+  
+  # Plot
+  ggplot(freqDataFrame, aes(x = Category, y = Frequency, fill = SubjectCategory)) +
+    geom_bar(stat = "identity") +
+    theme_minimal() +
+    labs(x = columnName, y = "Frequency")
+}
+
+
+#' Normative Summary
+#'
+#' This function provides a normative summary for a given subject within a dataset. It can be configured
+#' to focus on specific columns and can be zoomed into particular data points.
+#'
+#' @param data A data frame containing the dataset for analysis.
+#' @param subjectRow The row number or identifier for the subject of interest within the dataset.
+#' @param columns A vector of column names in the dataset that should be summarized.
+#' @param zoom A parameter to specify the focus or zoom level of the summary.
+#' @param verbose A logical flag indicating whether to print detailed output.
+#'
+#' @return A summary object containing normative statistics for the specified columns of the subject.
+#' @export
+#'
+#' @examples
+#' # normativeSummary(myData, 1, c("Column1", "Column2"), zoom = 1, verbose = TRUE)
+normativeSummary <- function(data, subjectRow, columns, zoom, verbose=TRUE) {
+  if(!is.data.frame(data)) stop("The 'data' input must be a data frame.")
+  if(!all(columns %in% names(data))) stop("All specified columns must exist in the data frame.")
+  if(subjectRow > nrow(data) || subjectRow < 1) stop("Subject row is out of bounds.")
+  
+  if ( ! missing( zoom ) ) {
+    dataz=find_closest_subjects( data[subjectRow,], data, k=zoom, 'commonSex', 'commonAge')
+    data = do.call(rbind, dataz)
+    subjectRow=1
+  }
+
+  summaryList <- list()
+  histList = list()
+  
+  for (col in columns) {
+    columnData <- data[[col]]
+    if ( subtyper::fs(antspymm_vartype(col) %in% c("T1","T2Flair","DTI")) & 'brainVolume' %in% colnames(data)) {
+      columnData=columnData/data$brainVolume
+      if ( verbose ) {
+        print(paste("normalize",col,'by BV'))
+      }
+    }
+    isNumeric <- is.numeric(columnData)
+    if (isNumeric) {
+      # Process numeric data
+      meanVal <- mean(columnData, na.rm = TRUE)
+      sdVal <- (stats::sd(columnData, na.rm = TRUE))
+      subjectScore <- columnData[subjectRow]
+      zScore <- (subjectScore - meanVal) / sdVal
+      if ( verbose ) {
+        print( paste( col, meanVal, sdVal, subjectScore, zScore ) )
+      }
+      if ( !is.na( subjectScore) ) {
+        tTestResult <- t.test(columnData, alternative = "greater", mu = subjectScore)
+      } else tTestResult=list(estimate=NA,p.value=NA,statistic=NA)
+
+      ttl=paste(shorten_pymm_names(col),'sub. (blue) vs pop.')
+      histdf=data.frame( vid=rep("pop",length(columnData)), value=columnData )
+      if ( max( histdf$value,na.rm=T ) < 1 ) {
+        scl=100/(range( histdf$value,na.rm=T )[2]-range( histdf$value,na.rm=T  )[1])
+        histdf$value=histdf$value * scl
+        ttl=paste(ttl,"\n : vals scaled by",insight::format_value(scl))
+      }
+      histdf[subjectRow,'vid']='subject'
+
+      histList[[col]]=gghistogram(histdf, x = 'value',  
+        add.params=list(size=1.25,linetype = "dashed"),
+        add = "mean", add_density = TRUE, title=ttl, fill='vid', legend='none')
+
+      summaryList[[col]] <- list(
+        Mean = meanVal,
+        SD = sdVal,
+        SubjectScore = subjectScore,
+        ZScore = zScore,
+        TTestPValue = tTestResult$p.value
+      )
+    } else {
+      # Process categorical data
+      freqTable <- table(columnData)
+      subjectCategory <- as.character(columnData[subjectRow])
+      
+      summaryList[[col]] <- list(
+        FrequencyTable = freqTable,
+        SubjectCategory = subjectCategory
+      )
+    }
+  }
+  
+  # Assuming 'summaryList' contains the processed data
+  for (col in columns) {
+    if (!is.numeric(data[[col]])) {
+      # Assume 'summaryList' is available from the earlier processing
+      freqTable <- summaryList[[col]]$FrequencyTable
+      subjectCategory <- summaryList[[col]]$SubjectCategory
+      histList[[col]]=plotCategoricalData( summaryList, col)
+    }
+  }
+
+  # Print summary
+
+  # Visualization: For simplicity, focusing on numeric columns for z-score plot
+  numericColumns <- sapply(summaryList, function(x) "ZScore" %in% names(x))
+  if (any(numericColumns)) {
+    zScores <- sapply(summaryList[numericColumns], function(x) x$ZScore)
+    names(zScores) <- names(summaryList)[numericColumns]
+    zScoreDataFrame <- data.frame(Column = names(zScores), ZScore = zScores)
+    zScoreDataFrame$Column = shorten_pymm_names(zScoreDataFrame$Column )
+    if ( verbose )
+      print( zScoreDataFrame )
+    histList[[paste0(col,".z")]]=ggplot(zScoreDataFrame, aes(x = Column, y = ZScore, fill = ZScore)) +
+      geom_bar(stat = "identity") +
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      scale_fill_gradient2(low = succcolor, high = "red", mid = "white", midpoint = 0) +
+      theme_minimal() +
+      labs(title = "Z-Scores vs. pop.",
+           y = "Z-Score",
+           x = "") +
+      coord_flip()
+  } else {
+    cat("No numeric data for z-score plot.\n")
+  }
+
+  grid.arrange(grobs=histList,ncol=round(sqrt(length(histList))),top=paste("Normative Results:",data[subjectRow,'commonID']))
+  return(summaryList)
+}
+
+
+#' Find Closest Subjects
+#'
+#' This function identifies the closest subjects in a target dataset to a reference dataset
+#' based on specified criteria such as sex and age.
+#'
+#' @param reference_df A data frame containing the reference dataset.
+#' @param target_df A data frame containing the target dataset to search within.
+#' @param k The number of closest subjects to find.
+#' @param sex_col_name The name of the column in the datasets that contains subjects' sex.
+#' @param age_col_name The name of the column in the datasets that contains subjects' age.
+#'
+#' @return A data frame with the rows from `target_df` that are closest to `reference_df` based on the criteria.
+#' @export
+#'
+#' @examples
+#' # find_closest_subjects(referenceData, targetData, 5, "Gender", "Age")
+find_closest_subjects <- function(reference_df, target_df, k, sex_col_name, age_col_name) {
+  # Error checking for column names
+  if(!(sex_col_name %in% names(reference_df)) | !(age_col_name %in% names(reference_df))) {
+    stop("Reference data frame must contain the specified 'sex' and 'age' column names.")
+  }
+  if(!(sex_col_name %in% names(target_df)) | !(age_col_name %in% names(target_df))) {
+    stop("Target data frame must contain the specified 'sex' and 'age' column names.")
+  }
+  if(!is.numeric(k) | k <= 0 | length(k) != 1) {
+    stop("'k' must be a positive integer.")
+  }
+  
+  # Initialize an empty list to store the results
+  results <- list()
+  
+  # Loop through each row in the reference data frame
+  for (i in 1:nrow(reference_df)) {
+    # Extract the current row's sex and age
+    current_sex <- reference_df[[sex_col_name]][i]
+    current_age <- reference_df[[age_col_name]][i]
+    
+    # Filter the target data frame for subjects of the same sex
+    same_sex_df <- target_df[target_df[[sex_col_name]] == current_sex,]
+    
+    # Calculate the absolute difference in age between the reference subject and all target subjects
+    same_sex_df$age_diff <- abs(same_sex_df[[age_col_name]] - current_age)
+    
+    # Sort the data frame by age difference
+    sorted_subjects <- same_sex_df[order(same_sex_df$age_diff), ]
+    
+    # Select the top 'k' closest subjects, handling cases where there are fewer than 'k' subjects
+    num_rows_to_select <- min(nrow(sorted_subjects), k)
+    closest_subjects <- sorted_subjects[1:num_rows_to_select, ]
+    
+    # Store the result
+    results[[i]] <- closest_subjects
+  }
+  
+  # Return the final result
+  return(results)
+}
+
+
+
+
+#' Replace Values in a Vector
+#'
+#' This function replaces specified values within a vector with new values.
+#'
+#' @param vec The original vector in which values need to be replaced.
+#' @param old_values A vector containing the old values to be replaced.
+#' @param new_values A vector containing the new values to replace the old ones.
+#'
+#' @return A vector with the old values replaced by the new values.
+#' @export
+#'
+#' @examples
+#' replace_values(c(1, 2, 3, 4), c(2, 4), c(20, 40))
+replace_values <- function(vec, old_values, new_values) {
+  # Ensure old_values and new_values are vectors of the same length
+  if (length(old_values) != length(new_values)) {
+    stop("old_values and new_values must have the same length")
+  }
+  
+  # Check for NA in old_values to handle it specifically
+  for (i in seq_along(old_values)) {
+    if (is.na(old_values[i])) {
+      vec[is.na(vec)] <- new_values[i]
+    } else {
+      vec[vec == old_values[i]] <- new_values[i]
+    }
+  }
+  
+  return(vec)
+}
+
