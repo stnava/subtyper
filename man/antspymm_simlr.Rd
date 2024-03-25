@@ -52,5 +52,5 @@ data types, permutation testing, and more.
 }
 \examples{
 # Example usage:
-result <- antspymm_simlr(dataframe)
+# result <- antspymm_simlr(dataframe)
 }

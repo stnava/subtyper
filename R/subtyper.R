@@ -4927,7 +4927,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @export
 #' @examples
 #' # Example usage:
-#' result <- antspymm_simlr(dataframe)
+#' # result <- antspymm_simlr(dataframe)
 antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, doperm=FALSE ) {
   idps=antspymm_predictors(blaster,TRUE,TRUE)
   idps=idps[ -multigrep(antspymm_nuisance_names()[-3],idps)]
