@@ -4994,14 +4994,19 @@ antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energ
   nms = names(mats)
   regs0 = list()
 
+  update_residuals <- function(mats, x, covariate, blaster2, allnna) {
+    formula <- as.formula(paste("data.matrix(mats[[", x, "]]) ~ ", covariate))
+    fit <- lm(formula, data = blaster2[allnna, ])
+    residuals(fit)
+    }
+
   for ( x in 1:length(mats)) {
-      mats[[x]]=residuals( lm(  data.matrix(mats[[x]]) ~ commonSex, data=blaster2[allnna,]))
+      mats[[x]]=update_residuals( mats, x, covariates, blaster2, allnna )
       mats[[x]]=data.matrix(mats[[x]])
       mycor = cor( mats[[x]] )
       mycor[mycor < 0.8]=0
       regs0[[x]]=data.matrix(mycor)
       }
-
 
   names(regs0)=names(mats)
   regs = regularizeSimlr( mats, fraction=0.05, sigma=rep(2.0,length(mats)) )
