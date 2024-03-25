@@ -4922,13 +4922,15 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param doAsym Logical indicating whether asymmetry predictors should be included. Defaults to TRUE.
 #' @param returnidps Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.
 #' @param restrictDFN Logical indicating whether to restrict analysis to default network features. Defaults to FALSE.
+#' @param resnetGradeThresh image quality threshold (higher better).
 #' @param doperm Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.
 #' @return A list containing the results of the similarity analysis and related data.
 #' @export
 #' @examples
 #' # Example usage:
 #' # result <- antspymm_simlr(dataframe)
-antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, doperm=FALSE ) {
+antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, 
+resnetGradeThresh=1.02, doperm=FALSE ) {
   idps=antspymm_predictors(blaster,TRUE,TRUE)
   idps=idps[ -multigrep(antspymm_nuisance_names()[-3],idps)]
   if ( ! doAsym ) {
@@ -4958,8 +4960,8 @@ antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energ
     idps[ multigrep( c("mean_md","DTI"),idps,intersect=TRUE)] ))
   idps=unique(c(t1names,dtnames,rsfnames))
   if ( returnidps ) return(idps)
-  allnna=select_training_boolean[  blaster$T1Hier_resnetGrade >= 1.02 ]
-  blaster2=blaster[  blaster$T1Hier_resnetGrade >= 1.02, ]
+  allnna=select_training_boolean[  blaster$T1Hier_resnetGrade >= resnetGradeThresh ]
+  blaster2=blaster[  blaster$T1Hier_resnetGrade >= resnetGradeThresh, ]
   #################################################
   nperms=0
   if ( missing( connect_cog ) ) {

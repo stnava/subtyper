@@ -15,6 +15,7 @@ antspymm_simlr(
   doAsym = TRUE,
   returnidps = FALSE,
   restrictDFN = FALSE,
+  resnetGradeThresh = 1.02,
   doperm = FALSE
 )
 }
@@ -38,6 +39,8 @@ antspymm_simlr(
 \item{returnidps}{Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.}
 
 \item{restrictDFN}{Logical indicating whether to restrict analysis to default network features. Defaults to FALSE.}
+
+\item{resnetGradeThresh}{image quality threshold (higher better).}
 
 \item{doperm}{Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.}
 }
