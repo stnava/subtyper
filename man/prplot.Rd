@@ -12,7 +12,8 @@ prplot(
   ystring = "",
   addpoints = 0,
   palette = "npg",
-  colorvar = ""
+  colorvar = "",
+  extradata = NULL
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ prplot(
 \item{palette}{string}
 
 \item{colorvar}{string}
+
+\item{extradata}{dataframe with additional information to be rendered}
 }
 \value{
 the quantile transformed vector

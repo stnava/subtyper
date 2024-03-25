@@ -2817,18 +2817,31 @@ augment_with_custom_color <- function(df, column_name, color_palette, color_pale
 #' @param addpoints continuous value greater than zero
 #' @param palette string
 #' @param colorvar string
+#' @param extradata dataframe with additional information to be rendered
 #' @return the quantile transformed vector
 #' @author Avants BB
 #' @export
 prplot  <- function(
-  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0, palette='npg', colorvar=''
-   ) {
+  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0, palette='npg', colorvar='', extradata=NULL ) {
   addthepoints=FALSE
+  colorvarnotempty=TRUE
+  if ( colorvar=='') {
+    colorvarnotempty=FALSE
+    colorvar='black'
+  }
+  if ( !is.null( extradata ) ) {
+    extradata=extradata[ names(predict(mdl)), ]
+  }
   if ( addpoints > 0 ) addthepoints=TRUE
   if ( ! missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
+    if ( colorvar %in% model.frame(mdl) ) {
+        vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
+      } else if ( !is.null( extradata ) ) {
+        if ( colorvar %in% colnames( extradata ))
+          vv$res[,colorvar]=extradata[,colorvar]
+      }
 #    vv$res=augment_with_custom_color(vv$res, colorvar, color_palette_name=palette)
-    vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
     if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
       return( ggdotplot(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
@@ -2851,14 +2864,20 @@ prplot  <- function(
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) +
-  theme(legend.position = "top", legend.title = element_blank())  )
+                    theme(legend.position = "top", legend.title = element_blank())  )
     }
   }
   if ( missing( byvariable ) ) {
     vv=visreg::visreg( mdl, xvariable, plot=FALSE)
+    if ( colorvar %in% model.frame(mdl) ) {
+      vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
+    } else if ( !is.null( extradata ) ) {
+      if ( colorvar %in% colnames( extradata )) {
+        vv$res[,colorvar]=extradata[,colorvar]
+        }
+    }
 #    vv$res=augment_with_custom_color(vv$res, colorvar, color_palette_name=palette)
-    vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
-     if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
+    if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
       return( ggboxplot(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, palette=palette,
                     conf.int=T,
@@ -2868,7 +2887,8 @@ prplot  <- function(
                     cor.coef=TRUE ) +  
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) )
-    } else return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
+    } else {
+      return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
                     size=addpoints, 
                     point=addthepoints, add='reg.line', conf.int=T,
                     color=colorvar,
@@ -2877,7 +2897,8 @@ prplot  <- function(
                     cor.coef=TRUE ) +
                     theme(text = element_text(size=12))+ ylab(ystring) + 
                     ggtitle( titlestring ) + theme(legend.position = "top", legend.title = element_blank())  # Position legend at top
-)
+                  )
+    }
     }
   }
 
@@ -4880,3 +4901,209 @@ replace_values <- function(vec, old_values, new_values) {
   return(vec)
 }
 
+
+
+
+
+#' Perform SiMLR Analysis on Multimodal ANTsPyMM Data
+#'
+#' This function processes multimodal data using SiMLR. It is designed
+#' to be flexible, allowing for various preprocessing steps and analysis options. The analysis
+#' can be adjusted through multiple parameters, offering control over the inclusion of certain
+#' data types, permutation testing, and more.
+#'
+#' @param blaster A dataframe containing multimodal data for analysis.
+#' @param select_training_boolean boolean vector to define which entries are in training data
+#' @param connect_cog Logical indicating whether cognitive data should be included. Defaults to FALSE.
+#' @param energy The type of energy model to use for similarity analysis. Defaults to 'reg'.
+#' @param nsimlr Number of similarity analyses to perform. Defaults to 5.
+#' @param covariates any covariates to adjust training matrices
+#' @param myseed Seed for random number generation to ensure reproducibility. Defaults to 3.
+#' @param doAsym Logical indicating whether asymmetry predictors should be included. Defaults to TRUE.
+#' @param returnidps Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.
+#' @param restrictDFN Logical indicating whether to restrict analysis to default network features. Defaults to FALSE.
+#' @param doperm Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.
+#' @return A list containing the results of the similarity analysis and related data.
+#' @export
+#' @examples
+#' # Example usage:
+#' result <- antspymm_simlr(dataframe)
+antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, doperm=FALSE ) {
+  idps=antspymm_predictors(blaster,TRUE,TRUE)
+  idps=idps[ -multigrep(antspymm_nuisance_names()[-3],idps)]
+  if ( ! doAsym ) {
+    idps=idps[ -grep("Asym",idps)]
+    } else {
+    idps=idps[ -grep("Asymcit168",idps)]
+  }
+  idps=idps[ -grep("cleanup",idps)]
+  idps=idps[ -grep("snseg",idps)]
+  idps=idps[ -grep("_deep_",idps)]
+  idps=idps[ -grep("fcnxpro134",idps)]
+  idps=idps[ -grep("fcnxpro129",idps)]
+  idps=idps[ -grep("peraf",idps)]
+  idps=idps[ -grep("alff",idps)]
+  idps=idps[ -grep("LRAVGcit168",idps)]
+  idps=idps[ -grep("_l_",idps,fixed=TRUE)]
+  idps=idps[ -grep("_r_",idps,fixed=TRUE)]
+  rsfnames = idps[ grep("_2_",idps)]
+  if ( restrictDFN ) {
+    rsfnames = rsfnames[ grep("Default",rsfnames)]
+  } else {
+#    rsfnames = rsfnames[ multigrep( c("imbic","TempPar"),rsfnames)]
+  }
+  t1names = idps[ multigrep( c("T1Hier"),idps,intersect=TRUE)]
+  dtnames = unique( c( 
+    idps[ multigrep( c("mean_fa","DTI"),idps,intersect=TRUE)],
+    idps[ multigrep( c("mean_md","DTI"),idps,intersect=TRUE)] ))
+  idps=unique(c(t1names,dtnames,rsfnames))
+  if ( returnidps ) return(idps)
+  allnna=select_training_boolean[  blaster$T1Hier_resnetGrade >= 1.02 ]
+  blaster2=blaster[  blaster$T1Hier_resnetGrade >= 1.02, ]
+  #################################################
+  nperms=0
+  if ( missing( connect_cog ) ) {
+    matsFull = list(
+        t1=blaster2[,t1names],
+        rs=blaster2[,rsfnames],
+        dt=blaster2[,dtnames] )
+    mats = list(
+        t1=antsrimpute(blaster2[allnna,t1names]),
+        rs=antsrimpute(blaster2[allnna,rsfnames]),
+        dt=antsrimpute(blaster2[allnna,dtnames]) )
+  } else {
+    matsFull = list(
+        t1=blaster2[,t1names],
+        rs=blaster2[,rsfnames],
+        dt=blaster2[,dtnames],
+        cg=blaster2[,connect_cog] )
+    mats = list(
+        t1=antsrimpute(blaster2[allnna,t1names]),
+        rs=antsrimpute(blaster2[allnna,rsfnames]),
+        dt=antsrimpute(blaster2[allnna,dtnames]),
+        cg=antsrimpute(blaster2[allnna,connect_cog]))
+  }
+  if ( doperm ) {
+    nada=setSeedBasedOnTime()
+    sss=sample( 1:nrow( matsFull[[1]]  ))
+    for ( jj in 1:length( mats ) ) {
+        ss=sample( 1:nrow( mats[[jj]]  ))
+        mats[[jj]]=mats[[jj]][sample( 1:nrow( mats[[jj]]  )),]
+    }
+  }
+  nms = names(mats)
+  regs0 = list()
+
+  for ( x in 1:length(mats)) {
+      mats[[x]]=residuals( lm(  data.matrix(mats[[x]]) ~ commonSex, data=blaster2[allnna,]))
+      mats[[x]]=data.matrix(mats[[x]])
+      mycor = cor( mats[[x]] )
+      mycor[mycor < 0.8]=0
+      regs0[[x]]=data.matrix(mycor)
+      }
+
+
+  names(regs0)=names(mats)
+  regs = regularizeSimlr( mats, fraction=0.05, sigma=rep(2.0,length(mats)) )
+  names(regs0)=names(mats)
+  names(regs)=names(mats)
+  if ( !missing( connect_cog ) ) 
+    regs[["cg"]] = Matrix(regs0[["cg"]], sparse = TRUE) 
+  if ( !doperm )
+    for ( pp in 1:length(regs)) plot(image(regs[[pp]]))
+  for ( k in 1:length(mats)) {
+    if ( ncol(mats[[k]]) != ncol(regs[[k]]) ) {
+      regs[[k]]=Matrix(regs0[[k]], sparse = TRUE) 
+      msg=paste("regularization cols not equal",k,ncol(mats[[k]]),ncol(regs[[k]]),names(mats)[k])
+      message(msg)
+      # stop( )
+      }
+    }
+  ########### zzz ############
+  myjr = T
+  prescaling = c( 'center', 'np' )
+  optimus = 'lineSearch'
+  maxits = 100
+  ebber = 0.99
+  pizzer = rep( "positive", length(mats) )
+  objectiver='cca';mixer = 'pca'
+  if ( energy == 'reg') {
+    objectiver='regression';mixer = 'ica'
+  }
+  if ( energy == 'lrr') {
+    objectiver='lowRankRegression';mixer = 'pca'
+  }
+  sparval = rep( 0.8, length( mats ))
+  if ( nsimlr < 1 ) {
+    ctit=0
+    for ( jj in 1:length(mats) ) {
+      ctit=ctit+ncol(mats[[jj]])
+      sparval[jj] = 1.0 - 20/ncol(mats[[jj]])
+    }
+    nsimlr = round( ctit * nsimlr )
+  }
+
+  initu = initializeSimlr(
+      mats,
+      nsimlr,
+      jointReduction = myjr,
+      zeroUpper = FALSE,
+      uAlgorithm = "pca",
+      addNoise = 0 )
+
+
+  if ( ! missing( connect_cog ) ) {
+    clist = list()
+    inflammNums=which(names(mats)=='cg')
+    for ( j in 1:length( mats ) ) clist[[j]] = inflammNums
+    for ( j in inflammNums )
+      clist[[j]] = (1:length(mats))[ -inflammNums ]
+    } else clist=NULL
+
+  simlrX = simlr( mats, regs, iterations=maxits, 
+    verbose= !doperm,
+    randomSeed = myseed,
+    mixAlg=mixer,
+    energyType=objectiver,
+    scale = prescaling,
+    sparsenessQuantiles=sparval,
+    expBeta = ebber,
+    positivities = pizzer, 
+    connectors=clist,
+    optimizationStyle=optimus,
+    initialUMatrix=initu )
+
+  for ( kk in 1:length(mats) ) {
+    temp = simlrX$v[[kk]]
+    if ( pizzer[kk] == 'positive' ) {
+#      for ( n in 1:ncol(temp)) temp[,n]=abs(temp[,n])/max(abs(temp[,n]))
+#      simlrX$v[[kk]]=eliminateNonUniqueColumns(temp)
+      }
+    }
+
+  #################
+  nsimx=nsimlr
+  nms = names( simlrX$v ) = names(mats)
+  simmat = data.matrix(matsFull[[1]] )%*% abs( simlrX$v[[1]] )
+  colnames( simmat ) = paste0(nms[1],colnames( simmat ))
+  for ( j in 2:length(mats)) {
+      if (names(mats)[j]=='cg' & pizzer[j] != 'positive' ) {
+        temp = data.matrix(matsFull[[j]] ) %*% ( simlrX$v[[j]])
+      } else temp = data.matrix(matsFull[[j]] ) %*% abs( simlrX$v[[j]] )
+      colnames( temp ) = paste0(nms[j],colnames( temp ))
+      simmat = cbind( simmat, temp )
+  }
+  blaster2sim = cbind( blaster2, simmat )
+  nsim = ncol( simlrX$v[[1]] )
+  simnames = colnames(simmat)
+  kk=1
+  nmats=1:length(matsFull)
+  matsB=mats
+  for ( kk in 1:length(mats)) matsB[[kk]]=data.matrix(matsB[[kk]])
+  kk=length(mats)
+  temp = predictSimlr( matsB, simlrX, targetMatrix=kk, 
+        sourceMatrices=nmats[nmats!=kk] )
+
+  return( list( demog=blaster2sim, mats=matsFull, simnames=simnames, simlrX=simlrX, energy=energy, temp=temp ) )
+  ################
+  }
