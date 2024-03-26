@@ -4962,6 +4962,7 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
   if ( returnidps ) return(idps)
   allnna=select_training_boolean[  blaster$T1Hier_resnetGrade >= resnetGradeThresh ]
   blaster2=blaster[  blaster$T1Hier_resnetGrade >= resnetGradeThresh, ]
+  stopifnot( min(dim(blaster2)) > 3 )
   #################################################
   nperms=0
   if ( missing( connect_cog ) ) {
@@ -5046,6 +5047,7 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
     for ( jj in 1:length(mats) ) {
       ctit=ctit+ncol(mats[[jj]])
       sparval[jj] = 1.0 - 20/ncol(mats[[jj]])
+      if ( sparval[jj] < 0 ) sparval[jj] = 0.5
     }
     nsimlr = round( ctit * nsimlr )
   }
