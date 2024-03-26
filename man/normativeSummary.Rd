@@ -4,7 +4,14 @@
 \alias{normativeSummary}
 \title{Normative Summary}
 \usage{
-normativeSummary(data, subjectRow, columns, zoom, verbose = TRUE)
+normativeSummary(
+  data,
+  subjectRow,
+  columns,
+  zoom,
+  idcolumn = "commonID",
+  verbose = TRUE
+)
 }
 \arguments{
 \item{data}{A data frame containing the dataset for analysis.}
@@ -14,6 +21,8 @@ normativeSummary(data, subjectRow, columns, zoom, verbose = TRUE)
 \item{columns}{A vector of column names in the dataset that should be summarized.}
 
 \item{zoom}{A parameter to specify the focus or zoom level of the summary.}
+
+\item{idcolumn}{column name for the unique subject ID}
 
 \item{verbose}{A logical flag indicating whether to print detailed output.}
 }

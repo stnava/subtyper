@@ -4695,6 +4695,7 @@ plotCategoricalData <- function(  datatoplot, columnName ) {
 #' @param subjectRow The row number or identifier for the subject of interest within the dataset.
 #' @param columns A vector of column names in the dataset that should be summarized.
 #' @param zoom A parameter to specify the focus or zoom level of the summary.
+#' @param idcolumn column name for the unique subject ID
 #' @param verbose A logical flag indicating whether to print detailed output.
 #'
 #' @return A summary object containing normative statistics for the specified columns of the subject.
@@ -4702,7 +4703,7 @@ plotCategoricalData <- function(  datatoplot, columnName ) {
 #'
 #' @examples
 #' # normativeSummary(myData, 1, c("Column1", "Column2"), zoom = 1, verbose = TRUE)
-normativeSummary <- function(data, subjectRow, columns, zoom, verbose=TRUE) {
+normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID', verbose=TRUE) {
   if(!is.data.frame(data)) stop("The 'data' input must be a data frame.")
   if(!all(columns %in% names(data))) stop("All specified columns must exist in the data frame.")
   if(subjectRow > nrow(data) || subjectRow < 1) stop("Subject row is out of bounds.")
@@ -4712,7 +4713,7 @@ normativeSummary <- function(data, subjectRow, columns, zoom, verbose=TRUE) {
     data = do.call(rbind, dataz)
     subjectRow=1
   }
-
+  succcolor='deepskyblue4'#  'dodgerblue1'
   summaryList <- list()
   histList = list()
   
@@ -4749,7 +4750,7 @@ normativeSummary <- function(data, subjectRow, columns, zoom, verbose=TRUE) {
 
       histList[[col]]=gghistogram(histdf, x = 'value',  
         add.params=list(size=1.25,linetype = "dashed"),
-        add = "mean", add_density = TRUE, title=ttl, fill='vid', legend='none')
+        add = "mean", add_density = FALSE, title=ttl, fill='vid', legend='none')
 
       summaryList[[col]] <- list(
         Mean = meanVal,
@@ -4804,7 +4805,7 @@ normativeSummary <- function(data, subjectRow, columns, zoom, verbose=TRUE) {
     cat("No numeric data for z-score plot.\n")
   }
 
-  grid.arrange(grobs=histList,ncol=round(sqrt(length(histList))),top=paste("Normative Results:",data[subjectRow,'commonID']))
+  grid.arrange(grobs=histList,ncol=round(sqrt(length(histList))),top=paste("Normative Results:",data[subjectRow,idcolumn]))
   return(summaryList)
 }
 
