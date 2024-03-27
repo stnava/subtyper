@@ -4525,7 +4525,7 @@ interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2sho
 #' @param outcome The name of the dependent variable (outcome) as a string.
 #' @param predictor The name of the main predictor variable as a string.
 #' @param fixed_effects A string specifying the fixed effects to be included in the model, excluding the main predictor.
-#' @param random_effects A string specifying the random effects to be included in the model. we assume this is a subject ID.
+#' @param random_effects A string specifying the random effects to be included in the model. we assume that a subject ID is the first entry if this is a vector.
 #' @param predictoroperator either a \code{+} or \code{*}
 #' @param verbose boolean
 #' @return A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
@@ -4562,7 +4562,7 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
     return(retval)
   }
   # Construct the model formulas directly
-  base_model_formula <- paste( outcome, "~", paste(" (1|", random_effects, ")"), "+", fixed_effects )
+  base_model_formula <- paste( outcome, "~", convert_to_random_effects(random_effects), "+", fixed_effects )
   if ( verbose ) {
     print("base_model_formula")
     print( base_model_formula )
@@ -4604,7 +4604,7 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   
   # Calculate effect sizes for the full model
   coefs <- summary(full_model)$coefficients
-  ndf <- length(unique(datasub[[random_effects]])) # Now using datasub for N calculation
+  ndf <- length(unique(datasub[[random_effects[1]]])) # Now using datasub for N calculation
   effect_sizes <- effectsize::t_to_d(coefs[, "t value"], rep(ndf, nrow(coefs)))
   effect_sizes <- data.frame(effect_sizes)
   rownames(effect_sizes) <- rownames(coefs)
@@ -4616,7 +4616,7 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
     model_comparison = model_comparison,
     effect_sizes = effect_sizes,
     coefficients = coefs,
-    n = length(unique(datasub[[random_effects]]))
+    n = length(unique(datasub[[random_effects[1]]]))
   )
   
   return(results)
@@ -4713,7 +4713,7 @@ convert_to_random_effects <- function(variables) {
   # Create the random effect terms
   random_effects <- paste0("(1|", variables, ")")
   
-  return(random_effects)
+  return( paste(random_effects,collapse="+"))
 }
 
 
