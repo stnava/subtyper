@@ -23,7 +23,7 @@ lmer_anv_p_and_d(
 
 \item{fixed_effects}{A string specifying the fixed effects to be included in the model, excluding the main predictor.}
 
-\item{random_effects}{A string specifying the random effects to be included in the model. we assume this is a subject ID.}
+\item{random_effects}{A string specifying the random effects to be included in the model. we assume that a subject ID is the first entry if this is a vector.}
 
 \item{predictoroperator}{either a \code{+} or \code{*}}
 
