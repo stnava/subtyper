@@ -4686,6 +4686,37 @@ plotCategoricalData <- function(  datatoplot, columnName ) {
 }
 
 
+#' Convert Character Vector to Random Effects Terms for lme4
+#'
+#' This function takes a vector of strings representing grouping factors and converts 
+#' each string into a random effect term formatted for use in lme4 model formulas. 
+#' Specifically, it formats them as random intercepts for the specified grouping factors.
+#'
+#' @param variables A character vector where each element is the name of a grouping factor
+#' for which a random intercept will be included in the model.
+#'
+#' @return A character vector of random effect terms, each formatted as `(1|group)`, 
+#' where `group` is replaced with each string from the input vector.
+#'
+#' @examples
+#' grouping_factors <- c("school", "class")
+#' random_effects <- convert_to_random_effects(grouping_factors)
+#' print(random_effects)
+#'
+#' @export
+convert_to_random_effects <- function(variables) {
+  # Check if the input is indeed a vector of strings
+  if (!is.character(variables)) {
+    stop("The input should be a character vector.")
+  }
+  
+  # Create the random effect terms
+  random_effects <- paste0("(1|", variables, ")")
+  
+  return(random_effects)
+}
+
+
 #' Normative Summary
 #'
 #' This function provides a normative summary for a given subject within a dataset. It can be configured
