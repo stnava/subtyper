@@ -4949,7 +4949,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param connect_cog Logical indicating whether cognitive data should be included. Defaults to FALSE.
 #' @param energy The type of energy model to use for similarity analysis. Defaults to 'reg'.
 #' @param nsimlr Number of similarity analyses to perform. Defaults to 5.
-#' @param covariates any covariates to adjust training matrices
+#' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.
 #' @param myseed Seed for random number generation to ensure reproducibility. Defaults to 3.
 #' @param doAsym Logical indicating whether asymmetry predictors should be included. Defaults to TRUE.
 #' @param returnidps Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.
@@ -5030,7 +5030,11 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
   regs0 = list()
 
   update_residuals <- function(mats, x, covariate, blaster2, allnna) {
-    formula <- as.formula(paste("data.matrix(mats[[", x, "]]) ~ ", covariate))
+    if ( covariate == 'mean' ) {
+      mymean=rowMeans(  data.matrix( mats[[x]] ) )
+      covariate2='mymean'
+    } else covariate2=covariate
+    formula <- as.formula(paste("data.matrix(mats[[", x, "]]) ~ ", covariate2))
     fit <- lm(formula, data = blaster2[allnna, ])
     residuals(fit)
     }
