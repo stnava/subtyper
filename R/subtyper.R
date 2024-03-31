@@ -3094,6 +3094,7 @@ shorten_pymm_names <-function(x){
     xx=gsub("central",'cent',xx,fixed=TRUE)
     xx=gsub("deep.cit168",'dp.',xx,fixed=TRUE)
     xx=gsub("cit168",'',xx,fixed=TRUE)
+    xx=gsub(".include",'',xx,fixed=TRUE)
     xx=gsub("mtg.sn",'',xx,fixed=TRUE)
     xx=gsub("rsfmri.fcnxpro122.",'rsf.',xx,fixed=TRUE)
     xx=gsub("dti.mean.fa.",'dti.fa.',xx,fixed=TRUE)
@@ -3124,9 +3125,9 @@ shorten_pymm_names <-function(x){
     xx=gsub("fornix.cres.stria.terminalis","fornix.",xx,fixed=TRUE)
     xx=gsub("capsule","",xx,fixed=TRUE)
     xx=gsub("..",'.',xx,fixed=TRUE)
-    for ( x in 1:length(xx) ) {
-      xx[x]=substr(xx[x],0,40)
-    }
+#    for ( x in 1:length(xx) ) {
+#      xx[x]=substr(xx[x],0,40)
+#    }
     return(xx)
 }
 
@@ -4999,19 +5000,19 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
   nperms=0
   if ( missing( connect_cog ) ) {
     matsFull = list(
-        t1=blaster2[,t1names],
-        rs=blaster2[,rsfnames],
-        dt=blaster2[,dtnames] )
+        t1=blaster[,t1names],
+        rs=blaster[,rsfnames],
+        dt=blaster[,dtnames] )
     mats = list(
         t1=antsrimpute(blaster2[allnna,t1names]),
         rs=antsrimpute(blaster2[allnna,rsfnames]),
         dt=antsrimpute(blaster2[allnna,dtnames]) )
   } else {
     matsFull = list(
-        t1=blaster2[,t1names],
-        rs=blaster2[,rsfnames],
-        dt=blaster2[,dtnames],
-        cg=blaster2[,connect_cog] )
+        t1=blaster[,t1names],
+        rs=blaster[,rsfnames],
+        dt=blaster[,dtnames],
+        cg=blaster[,connect_cog] )
     mats = list(
         t1=antsrimpute(blaster2[allnna,t1names]),
         rs=antsrimpute(blaster2[allnna,rsfnames]),
@@ -5086,6 +5087,9 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
       if ( sparval[jj] < 0 ) sparval[jj] = 0.5
     }
     nsimlr = round( ctit * nsimlr )
+    message(paste("nsimlr",nsimlr))
+#    print(paste("nsimlr",nsimlr))
+#    print(sparval)
   }
 
   initu = initializeSimlr(
@@ -5096,6 +5100,8 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
       uAlgorithm = "pca",
       addNoise = 0 )
 
+  # initu = initu[,(ncol(initu)-nsimlr):ncol(initu)]
+  # initu = initu[,1:nsimlr]
 
   if ( ! missing( connect_cog ) ) {
     clist = list()
@@ -5138,7 +5144,7 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
       colnames( temp ) = paste0(nms[j],colnames( temp ))
       simmat = cbind( simmat, temp )
   }
-  blaster2sim = cbind( blaster2, simmat )
+  blaster2sim = cbind( blaster, simmat )
   nsim = ncol( simlrX$v[[1]] )
   simnames = colnames(simmat)
   kk=1
