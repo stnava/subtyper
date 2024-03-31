@@ -3124,6 +3124,7 @@ shorten_pymm_names <-function(x){
     xx=gsub("of.internal.capsule",".int.cap",xx,fixed=TRUE)
     xx=gsub("fornix.cres.stria.terminalis","fornix.",xx,fixed=TRUE)
     xx=gsub("capsule","",xx,fixed=TRUE)
+    xx=gsub("and.inf.frnt.occ.fasciculus.","",xx,fixed=TRUE)
     xx=gsub("..",'.',xx,fixed=TRUE)
 #    for ( x in 1:length(xx) ) {
 #      xx[x]=substr(xx[x],0,40)
