@@ -34,7 +34,7 @@ antspymm_simlr(
 
 \item{myseed}{Seed for random number generation to ensure reproducibility. Defaults to 3.}
 
-\item{doAsym}{Logical indicating whether asymmetry predictors should be included. Defaults to TRUE.}
+\item{doAsym}{integer 0 for FALSE, 1 for TRUE and 2 for separate matrices for asymm variables.}
 
 \item{returnidps}{Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.}
 

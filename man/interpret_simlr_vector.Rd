@@ -4,7 +4,14 @@
 \alias{interpret_simlr_vector}
 \title{Interpret SiMLR Vector}
 \usage{
-interpret_simlr_vector(simlrResult, simlrMats, simlrVariable, n2show = 5)
+interpret_simlr_vector(
+  simlrResult,
+  simlrMats,
+  simlrVariable,
+  n2show = 5,
+  shortnames = TRUE,
+  return_dataframe = FALSE
+)
 }
 \arguments{
 \item{simlrResult}{A list containing SiMLR analysis results, which should include a matrix \code{v}
@@ -18,6 +25,10 @@ name should include both an identifier (e.g., "PC" for principal component) and 
 
 \item{n2show}{An integer specifying the number of top elements to show from the sorted, normalized vector.
 Defaults to 5. If \code{NULL} or greater than the length of the vector, all elements are shown.}
+
+\item{shortnames}{boolean}
+
+\item{return_dataframe}{boolean}
 }
 \value{
 A named vector of the top \code{n2show} elements (or all if \code{n2show} is \code{NULL} or too large),

@@ -75,7 +75,7 @@ standard deviation.</p>
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_variables_in_equation</span><span class="op">(</span><span class="va">mydf</span>, <span class="va">myeq</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">scale_variables_in_equation</span><span class="op">(</span><span class="va">mydf</span>, <span class="va">myeq</span>, <span class="va">variables_to_exclude</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -88,6 +88,10 @@ standard deviation.</p>
 <dd><p>An equation in the form of a string or an object of class
 <code>formula</code> specifying the variables to be scaled. Only the variables
 on the right-hand side of the equation are considered.</p></dd>
+
+
+<dt>variables_to_exclude</dt>
+<dd><p>vector of strings not to scale</p></dd>
 
 </dl></div>
     <div id="value">

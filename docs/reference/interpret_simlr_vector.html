@@ -75,7 +75,14 @@ This function is useful for understanding the contribution of different features
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">interpret_simlr_vector</span><span class="op">(</span><span class="va">simlrResult</span>, <span class="va">simlrMats</span>, <span class="va">simlrVariable</span>, n2show <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">interpret_simlr_vector</span><span class="op">(</span></span>
+<span>  <span class="va">simlrResult</span>,</span>
+<span>  <span class="va">simlrMats</span>,</span>
+<span>  <span class="va">simlrVariable</span>,</span>
+<span>  n2show <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  shortnames <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  return_dataframe <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -98,6 +105,14 @@ name should include both an identifier (e.g., "PC" for principal component) and 
 <dt>n2show</dt>
 <dd><p>An integer specifying the number of top elements to show from the sorted, normalized vector.
 Defaults to 5. If <code>NULL</code> or greater than the length of the vector, all elements are shown.</p></dd>
+
+
+<dt>shortnames</dt>
+<dd><p>boolean</p></dd>
+
+
+<dt>return_dataframe</dt>
+<dd><p>boolean</p></dd>
 
 </dl></div>
     <div id="value">

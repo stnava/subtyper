@@ -3087,6 +3087,7 @@ return( xcl )
 #' @export
 shorten_pymm_names <-function(x){
     xx=tolower(x)
+    xx=gsub( "sagittal_stratum_.include_inferior_longitidinal_fasciculus_and_inferior_fronto.occipital_fasciculus..","ilf_and_ifo",xx,fixed=TRUE)
     xx=gsub("_.cres..stria_terminalis_.can_not_be_resolved_with_current_resolution..","",xx,fixed=TRUE)
     xx=gsub("_",".",xx)
     xx=gsub("longitudinal.fasciculus",'l.fasc',xx,fixed=TRUE)
@@ -3125,6 +3126,7 @@ shorten_pymm_names <-function(x){
     xx=gsub("fornix.cres.stria.terminalis","fornix.",xx,fixed=TRUE)
     xx=gsub("capsule","",xx,fixed=TRUE)
     xx=gsub("and.inf.frnt.occ.fasciculus.","",xx,fixed=TRUE)
+    xx=gsub("crossing.tract.a.part.of.mcp.","",xx,fixed=TRUE)
     xx=gsub("..",'.',xx,fixed=TRUE)
 #    for ( x in 1:length(xx) ) {
 #      xx[x]=substr(xx[x],0,40)
@@ -4466,6 +4468,8 @@ eliminateNonUniqueColumns <- function(matrix) {
 #' name should include both an identifier (e.g., "PC" for principal component) and a numeric index.
 #' @param n2show An integer specifying the number of top elements to show from the sorted, normalized vector. 
 #' Defaults to 5. If `NULL` or greater than the length of the vector, all elements are shown.
+#' @param shortnames boolean
+#' @param return_dataframe boolean
 #' @return A named vector of the top `n2show` elements (or all if `n2show` is `NULL` or too large), 
 #' sorted in decreasing order of their absolute values. Elements are named according to their identifiers 
 #' in `simlrMats` and filtered to exclude non-significant values (absolute value > 0).
@@ -4479,7 +4483,7 @@ eliminateNonUniqueColumns <- function(matrix) {
 #' # print(interpretedVector)
 #' @importFrom stringr str_match str_extract
 #' @export
-interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2show = 5 ) {
+interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2show = 5, shortnames=TRUE, return_dataframe=FALSE ) {
 
   split_string_correctly <- function(input_string) {
     # Extract the leading alphabetic characters (possibly including numbers within the alphabetic segment)
@@ -4493,7 +4497,13 @@ interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2sho
   varparts = split_string_correctly( simlrVariable )
   varparts[1]=gsub("PC","",varparts[1])
   nmslist=list()
-  for ( k in 1:length(simlrMats) ) nmslist[[names(simlrMats)[k]]]=shorten_pymm_names(colnames(simlrMats[[k]]))
+  if ( shortnames ) {
+    for ( k in 1:length(simlrMats) ) 
+      nmslist[[names(simlrMats)[k]]]=shorten_pymm_names(colnames(simlrMats[[k]]))
+  } else {
+    for ( k in 1:length(simlrMats) ) 
+      nmslist[[names(simlrMats)[k]]]=colnames(simlrMats[[k]])
+  }
 
   # Extract the vector for the given modality and region, and normalize it
   t1vec <- abs(simlrResult$v[[varparts[1]]][, as.integer(varparts[2])])
@@ -4509,7 +4519,9 @@ interpret_simlr_vector <- function( simlrResult, simlrMats, simlrVariable, n2sho
   
   # Filter out non-significant values (absolute value > 0)
   t1vec_filtered <- t1vec_sorted[abs(t1vec_sorted) > 0]
-  
+  if ( return_dataframe ) {
+    t1vec_filtered=data.frame( anat=names(t1vec_filtered), values=t1vec_filtered)
+  }
   return(t1vec_filtered)
 }
 
@@ -4953,7 +4965,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param nsimlr Number of similarity analyses to perform. Defaults to 5.
 #' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.
 #' @param myseed Seed for random number generation to ensure reproducibility. Defaults to 3.
-#' @param doAsym Logical indicating whether asymmetry predictors should be included. Defaults to TRUE.
+#' @param doAsym integer 0 for FALSE, 1 for TRUE and 2 for separate matrices for asymm variables.
 #' @param returnidps Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.
 #' @param restrictDFN Logical indicating whether to restrict analysis to default network features. Defaults to FALSE.
 #' @param resnetGradeThresh image quality threshold (higher better).
@@ -4999,27 +5011,68 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
   stopifnot( min(dim(blaster2)) > 3 )
   #################################################
   nperms=0
-  if ( missing( connect_cog ) ) {
-    matsFull = list(
-        t1=blaster[,t1names],
-        rs=blaster[,rsfnames],
-        dt=blaster[,dtnames] )
-    mats = list(
-        t1=antsrimpute(blaster2[allnna,t1names]),
-        rs=antsrimpute(blaster2[allnna,rsfnames]),
-        dt=antsrimpute(blaster2[allnna,dtnames]) )
-  } else {
-    matsFull = list(
-        t1=blaster[,t1names],
-        rs=blaster[,rsfnames],
-        dt=blaster[,dtnames],
-        cg=blaster[,connect_cog] )
-    mats = list(
-        t1=antsrimpute(blaster2[allnna,t1names]),
-        rs=antsrimpute(blaster2[allnna,rsfnames]),
-        dt=antsrimpute(blaster2[allnna,dtnames]),
-        cg=antsrimpute(blaster2[allnna,connect_cog]))
+  if ( doAsym %in% c(0,TRUE,1) ) {
+    if ( missing( connect_cog ) ) {
+      matsFull = list(
+          t1=blaster[,t1names],
+          rs=blaster[,rsfnames],
+          dt=blaster[,dtnames] )
+      mats = list(
+          t1=antsrimpute(blaster2[allnna,t1names]),
+          rs=antsrimpute(blaster2[allnna,rsfnames]),
+          dt=antsrimpute(blaster2[allnna,dtnames]) )
+    } else {
+      matsFull = list(
+          t1=blaster[,t1names],
+          rs=blaster[,rsfnames],
+          dt=blaster[,dtnames],
+          cg=blaster[,connect_cog] )
+      mats = list(
+          t1=antsrimpute(blaster2[allnna,t1names]),
+          rs=antsrimpute(blaster2[allnna,rsfnames]),
+          dt=antsrimpute(blaster2[allnna,dtnames]),
+          cg=antsrimpute(blaster2[allnna,connect_cog]))
+    }
+  } else { ####################
+    verbose=T
+    t1nms = t1names
+    t1asymnames = t1nms[ grep("Asym",t1nms)]
+    t1nms = t1nms[ !( t1nms %in%  t1asymnames ) ]
+    dtnms = dtnames
+    dtasymnames = dtnms[ grep("Asym",dtnms) ]
+    dtnms = dtnms[ !( dtnms %in%  dtasymnames ) ]
+    if ( missing( connect_cog ) ) {
+      matsFull = list(
+          t1=blaster[,t1nms],
+          rs=blaster[,rsfnames],
+          dt=blaster[,dtnms],
+          t1a=blaster[,t1asymnames],
+          dta=blaster[,dtasymnames] )
+      mats = list(
+          t1=antsrimpute(blaster2[allnna,t1nms]),
+          rs=antsrimpute(blaster2[allnna,rsfnames]),
+          dt=antsrimpute(blaster2[allnna,dtnms]),
+          t1a=antsrimpute(blaster2[allnna,t1asymnames]),
+          dta=antsrimpute(blaster2[allnna,dtasymnames] ) )
+    } else {
+      matsFull = list(
+          t1=blaster[,t1nms],
+          rs=blaster[,rsfnames],
+          dt=blaster[,dtnms],
+          t1a=blaster[,t1asymnames],
+          dta=blaster[,dtasymnames],
+          cg=blaster[,connect_cog])
+      mats = list(
+          t1=antsrimpute(blaster2[allnna,t1nms]),
+          rs=antsrimpute(blaster2[allnna,rsfnames]),
+          dt=antsrimpute(blaster2[allnna,dtnms]),
+          t1a=antsrimpute(blaster2[allnna,t1asymnames]),
+          dta=antsrimpute(blaster2[allnna,dtasymnames] ),
+          cg=antsrimpute(blaster2[allnna,connect_cog]) )
+    }
+    ####################
   }
+
   if ( doperm ) {
     nada=setSeedBasedOnTime()
     sss=sample( 1:nrow( matsFull[[1]]  ))
@@ -5032,6 +5085,9 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
   regs0 = list()
 
   update_residuals <- function(mats, x, covariate, blaster2, allnna) {
+    if ( covariate == 'robust' ) {
+      return( robustMatrixTransform( data.matrix( mats[[x]] ) ) )
+    }
     if ( covariate == 'mean' ) {
       mymean=rowMeans(  data.matrix( mats[[x]] ) )
       covariate2='mymean'

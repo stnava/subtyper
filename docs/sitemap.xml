@@ -43,6 +43,9 @@
     <loc>/reference/antspymm_predictors.html</loc>
   </url>
   <url>
+    <loc>/reference/antspymm_simlr.html</loc>
+  </url>
+  <url>
     <loc>/reference/antspymm_vartype.html</loc>
   </url>
   <url>
@@ -85,6 +88,9 @@
     <loc>/reference/consensusSubtypingTrain.html</loc>
   </url>
   <url>
+    <loc>/reference/convert_to_random_effects.html</loc>
+  </url>
+  <url>
     <loc>/reference/dataPartition.html</loc>
   </url>
   <url>
@@ -110,6 +116,9 @@
   </url>
   <url>
     <loc>/reference/filterNAcolumns.html</loc>
+  </url>
+  <url>
+    <loc>/reference/find_closest_subjects.html</loc>
   </url>
   <url>
     <loc>/reference/fs.html</loc>
@@ -175,6 +184,9 @@
     <loc>/reference/nallspdma.html</loc>
   </url>
   <url>
+    <loc>/reference/normativeSummary.html</loc>
+  </url>
+  <url>
     <loc>/reference/nrgDateToRDate.html</loc>
   </url>
   <url>
@@ -182,6 +194,9 @@
   </url>
   <url>
     <loc>/reference/plinkVariantsDataFrame.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plotCategoricalData.html</loc>
   </url>
   <url>
     <loc>/reference/plotSubtypeChange.html</loc>
@@ -211,7 +226,13 @@
     <loc>/reference/replaceName.html</loc>
   </url>
   <url>
+    <loc>/reference/replace_values.html</loc>
+  </url>
+  <url>
     <loc>/reference/scale_variables_in_equation.html</loc>
+  </url>
+  <url>
+    <loc>/reference/setSeedBasedOnTime.html</loc>
   </url>
   <url>
     <loc>/reference/shorten_pymm_names.html</loc>
