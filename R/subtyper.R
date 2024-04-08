@@ -3945,7 +3945,6 @@ merge_ADNI_antspymm_by_closest_date <- function(dfA, dfB, patientidcol='subjectI
 merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf, pymversion, saa, verbose=TRUE ) {
   # Load required libraries
   library(dplyr)
-  library(subtyper)
   library(forcats)
   if ( missing( saa ) ) {
     saa = ppmidemog0[,c("PATNO","EVENT_ID","CSFSAA")]
