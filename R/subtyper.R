@@ -4043,11 +4043,11 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
       clin2[clin2sel,'age_BL']=min(ppmi[ ppmi$PATNO == as.character(u), 'age'],na.rm=T)
       suppas = unique(ppmi[ ppmi$PATNO == as.character(u), 'CSFSAA'])
       if ( 1 %in% suppas ) {
-        suppas='PosLBD'
+        suppas='Positive'
       } else if ( 3 %in% suppas ) {
         suppas='PosMSA'
       } else if ( 0 %in% suppas ) {
-        suppas='Neg'
+        suppas='Negative'
       } else suppas=NA
       clin2[clin2sel,'AsynStatus']=suppas
     }
