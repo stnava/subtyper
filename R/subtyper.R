@@ -3998,9 +3998,11 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
   ppmidx = ppmi[ , c("PATNO", 'COHORT', 'CONCOHORT', "subgroup")]
   ppmidx$CONCOHORT[ ppmidx$CONCOHORT == 1  ]='PD'
   ppmidx$CONCOHORT[ ppmidx$CONCOHORT == 2  ]='CN'
+  ppmidx$CONCOHORT[ ppmidx$CONCOHORT == 3  ]='SWEDD'
   ppmidx$CONCOHORT[ ppmidx$CONCOHORT == 4  ]='Prodromal'
   ppmidx$COHORT[ ppmidx$COHORT == 1  ]='PD'
   ppmidx$COHORT[ ppmidx$COHORT == 2  ]='CN'
+  ppmidx$COHORT[ ppmidx$COHORT == 3  ]='SWEDD'
   ppmidx$COHORT[ ppmidx$COHORT == 4  ]='Prodromal'
   paireddx = data.frame( PATNO=clin2ppmi )
   rownames(  paireddx )=clin2ppmi
@@ -4032,7 +4034,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
   # message("HERE WE DEAL WITH STATS ASYN")
   clin2$AsynStatus=NA
   clin2$age_BL=NA
-  ppmi$CSFSAA[ ppmi$CSFSAA %in% c(2,3)]=NA
+  ppmi$CSFSAA[ ppmi$CSFSAA %in% c(2)]=NA
   uids = as.character(unique( ppmi$PATNO ))
   clin2$PATNO=as.character(clin2$PATNO)
   for ( u in uids ) {
@@ -4041,9 +4043,11 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
       clin2[clin2sel,'age_BL']=min(ppmi[ ppmi$PATNO == as.character(u), 'age'],na.rm=T)
       suppas = unique(ppmi[ ppmi$PATNO == as.character(u), 'CSFSAA'])
       if ( 1 %in% suppas ) {
-        suppas='Positive'
+        suppas='PosLBD'
+      } else if ( 3 %in% suppas ) {
+        suppas='PosMSA'
       } else if ( 0 %in% suppas ) {
-        suppas='Negative'
+        suppas='Neg'
       } else suppas=NA
       clin2[clin2sel,'AsynStatus']=suppas
     }
