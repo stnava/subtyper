@@ -4165,7 +4165,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
   clin2b = fillBaselineColumn( clin2,
           c('brainVolume','hy','MOCA',updrsnames), 
           'commonID', 'yearsbl', 0, 
-          fast=T, verbose=F )[[1]]
+          fast=FALSE, verbose=F )[[1]]
 
   if ( verbose ) {
     print( table( 
