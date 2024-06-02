@@ -68,16 +68,17 @@ filterNAcolumns <- function(df, percentThreshold) {
 #' @importFrom dplyr filter
 #' @importFrom magrittr %>%
 antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
+  xcl=c("hier_id",'background','SNR','evr','mask','msk','smoothing','minutes', "RandBasis",'templateL1' )
   t1namesbst = getNamesFromDataframe( c("T1Hier",'brainstem','vol'), demog, exclusions=c("tissues","lobes"))[-1]
   testnames=c(
-          getNamesFromDataframe( "T1w_" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr')),
-          getNamesFromDataframe( "mtl" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr')),
-          getNamesFromDataframe( "cerebellum" , demog, exclusions=c("hier_id",'background','thk','area','vol','SNR','evr',"_cerebell")),
-          getNamesFromDataframe( "T1Hier_" , demog, exclusions=c("hier_id","[.]1","[.]2","[.]3",'background','tissue','dktregions','T1Hier_resnetGrade','hemisphere','lobes','SNR','evr','area')),
+          getNamesFromDataframe( "T1w_" , demog, exclusions=xcl),
+          getNamesFromDataframe( "mtl" , demog, exclusions=xcl),
+          getNamesFromDataframe( "cerebellum" , demog, exclusions=c(xcl,"_cerebell")),
+          getNamesFromDataframe( "T1Hier_" , demog, exclusions=c("hier_id","[.]1","[.]2","[.]3",'background','tissue','dktregions','T1Hier_resnetGrade','hemisphere','lobes','SNR','evr','area',xcl)),
           t1namesbst,
-          getNamesFromDataframe( "rsfMRI_fcnxpro" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean')),
-          getNamesFromDataframe( "perf_" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean')),
-          getNamesFromDataframe( "DTI_" , demog, exclusions=c("hier_id",'background','thk','area','vol','motion','FD','dvars','ssnr','tsnr','SNR','evr','cnx','relcn')) )
+          getNamesFromDataframe( "rsfMRI_fcnxpro" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean',xcl)),
+          getNamesFromDataframe( "perf_" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean',xcl)),
+          getNamesFromDataframe( "DTI_" , demog, exclusions=c("hier_id",'background','thk','area','vol','motion','FD','dvars','ssnr','tsnr','SNR','evr','cnx','relcn',xcl)) )
   testnames = unique( testnames )
   if ( return_colnames ) return( testnames )
 
