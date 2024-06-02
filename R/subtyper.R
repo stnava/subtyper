@@ -69,6 +69,7 @@ filterNAcolumns <- function(df, percentThreshold) {
 #' @importFrom magrittr %>%
 antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
   xcl=c("hier_id",'background','SNR','evr','mask','msk','smoothing','minutes', "RandBasis",'templateL1' )
+  if ( doasym & return_colnames ) xcl=c(xcl,'left','right')
   t1namesbst = getNamesFromDataframe( c("T1Hier",'brainstem','vol'), demog, exclusions=c("tissues","lobes"))[-1]
   testnames=c(
           getNamesFromDataframe( "T1w_" , demog, exclusions=xcl),
@@ -80,6 +81,7 @@ antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
           getNamesFromDataframe( "perf_" , demog, exclusions=c("hier_id",'background','thk','area','vol','FD','dvars','ssnr','tsnr','motion','SNR','evr','_alff','falff_sd','falff_mean',xcl)),
           getNamesFromDataframe( "DTI_" , demog, exclusions=c("hier_id",'background','thk','area','vol','motion','FD','dvars','ssnr','tsnr','SNR','evr','cnx','relcn',xcl)) )
   testnames = unique( testnames )
+  testnames = intersect( testnames, colnames(demog))
   if ( return_colnames ) return( testnames )
 
   if ( FALSE ) {
@@ -90,6 +92,11 @@ antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
     # special LR avg for falff
     falffnames = getNamesFromDataframe( c("falff"), demog, exclusions=c('mean','sd','Unk'))
   }
+
+  tempnames=colnames(demog)
+  tempnames=gsub("Right","right",tempnames)
+  tempnames=gsub("Left","left",tempnames)
+  colnames(demog)=tempnames
 
   if ( doasym )
     demog=mapAsymVar( demog, 
