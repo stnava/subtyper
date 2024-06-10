@@ -3142,6 +3142,8 @@ shorten_pymm_names <-function(x){
     xx=gsub("capsule","",xx,fixed=TRUE)
     xx=gsub("and.inf.frnt.occ.fasciculus.","",xx,fixed=TRUE)
     xx=gsub("crossing.tract.a.part.of.mcp.","",xx,fixed=TRUE)
+    xx=gsub("post.thalamic.radiation.optic.radiation","post.thalamic.radiation",xx,fixed=TRUE)
+    xx=gsub("adjusted",'adj',xx,fixed=TRUE)
     xx=gsub("..",'.',xx,fixed=TRUE)
 #    for ( x in 1:length(xx) ) {
 #      xx[x]=substr(xx[x],0,40)
@@ -5232,4 +5234,70 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
 
   return( list( demog=blaster2sim, mats=matsFull, simnames=simnames, simlrX=simlrX, energy=energy, temp=temp ) )
   ################
+  }
+
+
+#' Match Two Data Frames Based on Nearest Neighbor Matching
+#'
+#' This function matches two data frames on specified variables using the nearest neighbor
+#' matching method and checks if the key variable is statistically significantly different 
+#' between the matched data frames.
+#'
+#' @param df1 A data frame.
+#' @param df2 A data frame.
+#' @param match_vars A character vector of variable names to match on.
+#' @return A list containing the matched data frames and the result of the t-test.
+#' @import proxy
+#' @examples
+#' set.seed(123)
+#' df1 <- data.frame(
+#'   id = 1:100,
+#'   age = rnorm(100, mean = 30, sd = 5),
+#'   gender = sample(c("Male", "Female"), 100, replace = TRUE),
+#'   score = rnorm(100, mean = 75, sd = 10)
+#' )
+#'
+#' df2 <- data.frame(
+#'   id = 101:200,
+#'   age = rnorm(100, mean = 30, sd = 5),
+#'   gender = sample(c("Male", "Female"), 100, replace = TRUE),
+#'   score = rnorm(100, mean = 70, sd = 15)
+#' )
+#'
+#' result <- match_data_frames(df1, df2, match_vars = c("age", "gender"), key_var = "score")
+#' print(result$t_test)
+match_data_frames <- function(df1, df2, match_vars) {
+  ocolnames = intersect( colnames(df1), colnames(df2))
+  # Convert categorical variables to numeric
+  for (var in match_vars) {
+    if (is.factor(df1[[var]]) || is.character(df1[[var]])) {
+      levels <- unique(c(df1[[var]], df2[[var]]))
+      df1[[paste0(var, "_numeric")]] <- as.numeric(factor(df1[[var]], levels = levels))
+      df2[[paste0(var, "_numeric")]] <- as.numeric(factor(df2[[var]], levels = levels))
+    } else {
+      df1[[paste0(var, "_numeric")]] <- df1[[var]]
+      df2[[paste0(var, "_numeric")]] <- df2[[var]]
+    }
+  }
+
+  # Normalize the numeric variables
+  normalize <- function(x) {
+    return((x - min(x)) / (max(x) - min(x)))
+  }
+  
+  for (var in match_vars) {
+    norm_var <- paste0(var, "_numeric")
+    df1[[paste0(norm_var, "_normalized")]] <- normalize(df1[[norm_var]])
+    df2[[paste0(norm_var, "_normalized")]] <- normalize(df2[[norm_var]])
+  }
+  
+  
+  # Calculate distances and find the nearest neighbor
+  distance_vars <- paste0(match_vars, "_numeric_normalized")
+  distances <- proxy::dist(df1[, distance_vars], df2[, distance_vars], method = "Euclidean")
+  nearest_neighbors <- apply(as.matrix(distances), 1, which.min)
+  
+  # Create matched data frames based on nearest neighbors
+  matched_df2 <- df2[nearest_neighbors, ]
+  return(matched_df2[ ,ocolnames] )
   }
