@@ -5177,7 +5177,7 @@ exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
   myjr = T
   prescaling = c( 'center', 'np' )
   optimus = 'lineSearch'
-  maxits = 100
+  maxits = 1000
   ebber = 0.99
   pizzer = rep( "positive", length(mats) )
   objectiver='cca';mixer = 'pca'
