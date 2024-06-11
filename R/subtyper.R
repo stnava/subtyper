@@ -5053,6 +5053,9 @@ exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
     idps[ multigrep( c("mean_fa","DTI"),idps,intersect=TRUE)],
     idps[ multigrep( c("mean_md","DTI"),idps,intersect=TRUE)] ))
   idps=unique(c(t1names,dtnames,rsfnames))
+  if ( verbose ) {
+    print(sample(idps,10))
+  }
   if ( returnidps ) return(idps)
   allnna=select_training_boolean[  blaster$T1Hier_resnetGrade >= resnetGradeThresh ]
   blaster2=blaster[  blaster$T1Hier_resnetGrade >= resnetGradeThresh, ]
