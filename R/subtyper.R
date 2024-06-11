@@ -5282,7 +5282,12 @@ match_data_frames <- function(df1, df2, match_vars) {
 
   # Normalize the numeric variables
   normalize <- function(x) {
-    return((x - min(x)) / (max(x) - min(x)))
+    return((x - min(x,na.rm=T)) / (max(x,na.rm=T) - min(x,na.rm=T)))
+  }
+  normalize <- function(x) {
+    eps=0.001
+    myq = quantile(x,c(1.0-eps,eps), na.rm=T)
+    return((x - min(x,na.rm=T)) / (myq[1]-myq[2]))
   }
   
   for (var in match_vars) {
