@@ -5252,6 +5252,7 @@ resnetGradeThresh=1.02, doperm=FALSE ) {
 #' @param match_vars A character vector of variable names to match on.
 #' @return A list containing the matched data frames and the result of the t-test.
 #' @import proxy
+#' @export
 #' @examples
 #' set.seed(123)
 #' df1 <- data.frame(
