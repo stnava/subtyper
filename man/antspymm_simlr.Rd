@@ -18,7 +18,8 @@ antspymm_simlr(
   resnetGradeThresh = 1.02,
   doperm = FALSE,
   exclusions = NULL,
-  inclusions = NULL
+  inclusions = NULL,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -26,7 +27,7 @@ antspymm_simlr(
 
 \item{select_training_boolean}{boolean vector to define which entries are in training data}
 
-\item{connect_cog}{Logical indicating whether cognitive data should be included. Defaults to FALSE.}
+\item{connect_cog}{Vector of column names to be treated as a special target matrix;  often used for cognitive data and in a superivsed variant of simlr.  Exclude this argument if this is unclear.}
 
 \item{energy}{The type of energy model to use for similarity analysis. Defaults to 'reg'.}
 
@@ -49,6 +50,8 @@ antspymm_simlr(
 \item{exclusions}{vector of strings to exclude from predictors}
 
 \item{inclusions}{vector of strings to include in predictors}
+
+\item{verbose}{boolean}
 }
 \value{
 A list containing the results of the similarity analysis and related data.

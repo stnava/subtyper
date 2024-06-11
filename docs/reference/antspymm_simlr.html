@@ -87,7 +87,10 @@ data types, permutation testing, and more.</p>
 <span>  returnidps <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  restrictDFN <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  resnetGradeThresh <span class="op">=</span> <span class="fl">1.02</span>,</span>
-<span>  doperm <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  doperm <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  exclusions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  inclusions <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -139,6 +142,18 @@ data types, permutation testing, and more.</p>
 
 <dt>doperm</dt>
 <dd><p>Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.</p></dd>
+
+
+<dt>exclusions</dt>
+<dd><p>vector of strings to exclude from predictors</p></dd>
+
+
+<dt>inclusions</dt>
+<dd><p>vector of strings to include in predictors</p></dd>
+
+
+<dt>verbose</dt>
+<dd><p>boolean</p></dd>
 
 </dl></div>
     <div id="value">

@@ -4984,7 +4984,7 @@ replace_values <- function(vec, old_values, new_values) {
 #'
 #' @param blaster A dataframe containing multimodal data for analysis.
 #' @param select_training_boolean boolean vector to define which entries are in training data
-#' @param connect_cog Logical indicating whether cognitive data should be included. Defaults to FALSE.
+#' @param connect_cog Vector of column names to be treated as a special target matrix;  often used for cognitive data and in a superivsed variant of simlr.  Exclude this argument if this is unclear.
 #' @param energy The type of energy model to use for similarity analysis. Defaults to 'reg'.
 #' @param nsimlr Number of similarity analyses to perform. Defaults to 5.
 #' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.
@@ -4996,6 +4996,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param doperm Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.
 #' @param exclusions vector of strings to exclude from predictors
 #' @param inclusions vector of strings to include in predictors
+#' @param verbose boolean
 #' @return A list containing the results of the similarity analysis and related data.
 #' @export
 #' @examples
@@ -5003,7 +5004,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' # result <- antspymm_simlr(dataframe)
 antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, 
 resnetGradeThresh=1.02, doperm=FALSE, 
-exclusions=NULL, inclusions=NULL ) {
+exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
   safegrep <- function(pattern, x, ...) {
     result <- grep(pattern, x, ...)
     if (length(result) == 0) {
@@ -5035,7 +5036,7 @@ exclusions=NULL, inclusions=NULL ) {
   idps=safeclean("snseg",idps)
   idps=safeclean("_deep_",idps)
   idps=safeclean("fcnxpro134",idps)
-  idps=safeclean("fcnxpro129",idps)
+#  idps=safeclean("fcnxpro129",idps)
   idps=safeclean("peraf",idps)
   idps=safeclean("alff",idps)
   idps=safeclean("LRAVGcit168",idps)
@@ -5056,6 +5057,10 @@ exclusions=NULL, inclusions=NULL ) {
   allnna=select_training_boolean[  blaster$T1Hier_resnetGrade >= resnetGradeThresh ]
   blaster2=blaster[  blaster$T1Hier_resnetGrade >= resnetGradeThresh, ]
   stopifnot( min(dim(blaster2)) > 3 )
+  if ( verbose ) {
+    print("dim( subsetdataframe)")
+    print(dim(blaster2) )
+  }
   #################################################
   nperms=0
   if ( doAsym %in% c(0,TRUE,1) ) {
@@ -5292,8 +5297,7 @@ exclusions=NULL, inclusions=NULL ) {
 #'   score = rnorm(100, mean = 70, sd = 15)
 #' )
 #'
-#' result <- match_data_frames(df1, df2, match_vars = c("age", "gender"), key_var = "score")
-#' print(result$t_test)
+#' result <- match_data_frames(df1, df2, match_vars = c("age", "gender") )
 match_data_frames <- function(df1, df2, match_vars) {
   ocolnames = intersect( colnames(df1), colnames(df2))
   # Convert categorical variables to numeric

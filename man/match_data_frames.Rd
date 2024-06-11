@@ -37,6 +37,5 @@ df2 <- data.frame(
   score = rnorm(100, mean = 70, sd = 15)
 )
 
-result <- match_data_frames(df1, df2, match_vars = c("age", "gender"), key_var = "score")
-print(result$t_test)
+result <- match_data_frames(df1, df2, match_vars = c("age", "gender") )
 }
