@@ -4994,33 +4994,56 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param restrictDFN Logical indicating whether to restrict analysis to default network features. Defaults to FALSE.
 #' @param resnetGradeThresh image quality threshold (higher better).
 #' @param doperm Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.
+#' @param exclusions vector of strings to exclude from predictors
+#' @param inclusions vector of strings to include in predictors
 #' @return A list containing the results of the similarity analysis and related data.
 #' @export
 #' @examples
 #' # Example usage:
 #' # result <- antspymm_simlr(dataframe)
 antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, 
-resnetGradeThresh=1.02, doperm=FALSE ) {
+resnetGradeThresh=1.02, doperm=FALSE, 
+exclusions=NULL, inclusions=NULL ) {
+  safegrep <- function(pattern, x, ...) {
+    result <- grep(pattern, x, ...)
+    if (length(result) == 0) {
+      return(1:length(x))
+    }
+    return(result)
+  }
+  safeclean = function( pattern, x,fixed=FALSE, exclude=TRUE) {
+    mysub=grep(pattern,x,fixed=fixed)
+    if ( length(mysub) == 0 ) return( x )
+    if ( exclude ) return( x[-mysub] ) else return( x[mysub] )
+  }
   idps=antspymm_predictors(blaster,TRUE,TRUE)
+  if ( !is.null(exclusions)) {
+    for ( x in exclusions )
+      idps=safeclean(x,idps)
+  }
+  if ( !is.null(inclusions)) {
+    for ( x in inclusions )
+      idps=safeclean(x,idps,exclude=FALSE)
+  }
   idps=idps[ -multigrep(antspymm_nuisance_names()[-3],idps)]
   if ( ! doAsym ) {
-    idps=idps[ -grep("Asym",idps)]
+    idps=safeclean("Asym",idps)
     } else {
-    idps=idps[ -grep("Asymcit168",idps)]
+    idps=safeclean("Asymcit168",idps)
   }
-  idps=idps[ -grep("cleanup",idps)]
-  idps=idps[ -grep("snseg",idps)]
-  idps=idps[ -grep("_deep_",idps)]
-  idps=idps[ -grep("fcnxpro134",idps)]
-  idps=idps[ -grep("fcnxpro129",idps)]
-  idps=idps[ -grep("peraf",idps)]
-  idps=idps[ -grep("alff",idps)]
-  idps=idps[ -grep("LRAVGcit168",idps)]
-  idps=idps[ -grep("_l_",idps,fixed=TRUE)]
-  idps=idps[ -grep("_r_",idps,fixed=TRUE)]
-  rsfnames = idps[ grep("_2_",idps)]
+  idps=safeclean("cleanup",idps)
+  idps=safeclean("snseg",idps)
+  idps=safeclean("_deep_",idps)
+  idps=safeclean("fcnxpro134",idps)
+  idps=safeclean("fcnxpro129",idps)
+  idps=safeclean("peraf",idps)
+  idps=safeclean("alff",idps)
+  idps=safeclean("LRAVGcit168",idps)
+  idps=safeclean("_l_",idps,fixed=TRUE)
+  idps=safeclean("_r_",idps,fixed=TRUE)
+  rsfnames = idps[ safegrep("_2_",idps)]
   if ( restrictDFN ) {
-    rsfnames = rsfnames[ grep("Default",rsfnames)]
+    rsfnames = rsfnames[ safegrep("Default",rsfnames)]
   } else {
 #    rsfnames = rsfnames[ multigrep( c("imbic","TempPar"),rsfnames)]
   }

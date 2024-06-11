@@ -16,7 +16,9 @@ antspymm_simlr(
   returnidps = FALSE,
   restrictDFN = FALSE,
   resnetGradeThresh = 1.02,
-  doperm = FALSE
+  doperm = FALSE,
+  exclusions = NULL,
+  inclusions = NULL
 )
 }
 \arguments{
@@ -43,6 +45,10 @@ antspymm_simlr(
 \item{resnetGradeThresh}{image quality threshold (higher better).}
 
 \item{doperm}{Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.}
+
+\item{exclusions}{vector of strings to exclude from predictors}
+
+\item{inclusions}{vector of strings to include in predictors}
 }
 \value{
 A list containing the results of the similarity analysis and related data.
