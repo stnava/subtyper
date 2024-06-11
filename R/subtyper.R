@@ -3112,7 +3112,7 @@ shorten_pymm_names <-function(x){
     xx=gsub(".include",'',xx,fixed=TRUE)
     xx=gsub("mtg.sn",'',xx,fixed=TRUE)
     xx=gsub("brainstem",'.bst',xx,fixed=TRUE)
-    xx=gsub("rsfmri.fcnxpro122.",'rsf.',xx,fixed=TRUE)
+    xx=gsub("rsfmri.",'rsf.',xx,fixed=TRUE)
     xx=gsub("dti.mean.fa.",'dti.fa.',xx,fixed=TRUE)
     xx=gsub("perf.cbf.mean.",'cbf.',xx,fixed=TRUE)
     xx=gsub(".jhu.icbm.labels.1mm",'',xx,fixed=TRUE)
@@ -3145,6 +3145,10 @@ shorten_pymm_names <-function(x){
     xx=gsub("post.thalamic.radiation.optic.radiation","post.thalamic.radiation",xx,fixed=TRUE)
     xx=gsub("adjusted",'adj',xx,fixed=TRUE)
     xx=gsub("..",'.',xx,fixed=TRUE)
+    xx=gsub("t1w.mean","t1vth",xx,fixed=TRUE)
+    xx=gsub("fcnxpro129","p2",xx,fixed=TRUE)
+    xx=gsub("fcnxpro134","p3",xx,fixed=TRUE)
+    xx=gsub("fcnxpro122","p1",xx,fixed=TRUE)
 #    for ( x in 1:length(xx) ) {
 #      xx[x]=substr(xx[x],0,40)
 #    }

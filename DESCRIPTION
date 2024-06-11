@@ -45,6 +45,7 @@ Imports:
   wesanderson,
   Hmisc,
   plyr,
+  proxy,
   DDoutlier,
   data.table,
   lmerTest,
