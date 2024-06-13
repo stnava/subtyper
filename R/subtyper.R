@@ -1422,8 +1422,11 @@ antspymm_vartype <- function(x) {
   }
   
   # Define patterns and corresponding returns in a named list
-  patterns <- list(T1 = "T1", rsfMRI = "rsfMRI", DTI = "DTI", NM2 = "NM2DMT", T2="T2Flair", 
-    t1 = "T1", rsfmri = "rsfMRI", dti = "DTI", nm2 = "NM2DMT", t2="T2Flair", perf='perf')
+  patterns <- list(
+    T1 = "T1", rsfMRI = "rsfMRI", DTI = "DTI", NM2 = "NM2DMT", T2="T2Flair", 
+    t1 = "T1", rsfmri = "rsfMRI", dti = "DTI", nm2 = "NM2DMT", t2="T2Flair", 
+    t1 = "T1", rs = "rsfMRI", dt = "DTI", nm2 = "NM2DMT", t2="T2Flair", 
+    perf='perf')
   
   # Iterate through the patterns
   for (pattern in names(patterns)) {
@@ -4996,6 +4999,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param doperm Logical indicating whether to perform permutation tests. Defaults to FALSE.  Will randomize image features in the training data and thus leads to "randomized" but still regularized projections.
 #' @param exclusions vector of strings to exclude from predictors
 #' @param inclusions vector of strings to include in predictors
+#' @param sparseness vector or scalar value to set sparseness
 #' @param verbose boolean
 #' @return A list containing the results of the similarity analysis and related data.
 #' @export
@@ -5004,7 +5008,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' # result <- antspymm_simlr(dataframe)
 antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, 
 resnetGradeThresh=1.02, doperm=FALSE, 
-exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
+exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
   safegrep <- function(pattern, x, ...) {
     result <- grep(pattern, x, ...)
     if (length(result) == 0) {
@@ -5018,13 +5022,18 @@ exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
     if ( exclude ) return( x[-mysub] ) else return( x[mysub] )
   }
   idps=antspymm_predictors(blaster,TRUE,TRUE)
+  rsfnames = idps[ safegrep("_2_",idps)]
   if ( !is.null(exclusions)) {
-    for ( x in exclusions )
+    for ( x in exclusions ) {
       idps=safeclean(x,idps)
+      rsfnames=safeclean(x,rsfnames)
+    }
   }
   if ( !is.null(inclusions)) {
-    for ( x in inclusions )
+    for ( x in inclusions ) {
       idps=safeclean(x,idps,exclude=FALSE)
+      rsfnames=safeclean(x,rsfnames,exclude=FALSE)
+    }
   }
   idps=idps[ -multigrep(antspymm_nuisance_names()[-3],idps)]
   if ( ! doAsym ) {
@@ -5035,14 +5044,11 @@ exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
   idps=safeclean("cleanup",idps)
   idps=safeclean("snseg",idps)
   idps=safeclean("_deep_",idps)
-  idps=safeclean("fcnxpro134",idps)
-#  idps=safeclean("fcnxpro129",idps)
   idps=safeclean("peraf",idps)
   idps=safeclean("alff",idps)
   idps=safeclean("LRAVGcit168",idps)
   idps=safeclean("_l_",idps,fixed=TRUE)
   idps=safeclean("_r_",idps,fixed=TRUE)
-  rsfnames = idps[ safegrep("_2_",idps)]
   if ( restrictDFN ) {
     rsfnames = rsfnames[ safegrep("Default",rsfnames)]
   } else {
@@ -5140,6 +5146,7 @@ exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
   regs0 = list()
 
   update_residuals <- function(mats, x, covariate, blaster2, allnna) {
+    if ( is.null(covariate) ) return(mats[[x]])
     if ( covariate == 'robust' ) {
       return( robustMatrixTransform( data.matrix( mats[[x]] ) ) )
     }
@@ -5191,6 +5198,15 @@ exclusions=NULL, inclusions=NULL, verbose=FALSE ) {
     objectiver='lowRankRegression';mixer = 'pca'
   }
   sparval = rep( 0.8, length( mats ))
+  if ( ! is.null( sparseness ) ) {
+    if ( length( sparseness ) == length(mats) ) {
+      sparval = sparseness
+    } else sparval = rep( sparseness[1], length( mats ))
+    if ( verbose ) {
+      print('sparseness')
+      print(sparseness)
+    }
+  }
   if ( nsimlr < 1 ) {
     ctit=0
     for ( jj in 1:length(mats) ) {
