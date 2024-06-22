@@ -19,6 +19,7 @@ antspymm_simlr(
   doperm = FALSE,
   exclusions = NULL,
   inclusions = NULL,
+  sparseness = NULL,
   verbose = FALSE
 )
 }
@@ -50,6 +51,8 @@ antspymm_simlr(
 \item{exclusions}{vector of strings to exclude from predictors}
 
 \item{inclusions}{vector of strings to include in predictors}
+
+\item{sparseness}{vector or scalar value to set sparseness}
 
 \item{verbose}{boolean}
 }
