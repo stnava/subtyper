@@ -70,8 +70,8 @@ filterNAcolumns <- function(df, percentThreshold) {
 antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
   badcaud=getNamesFromDataframe("bn_str_ca",demog)
   badcaud=badcaud[ -grep("deep",badcaud)]
-  xcl=c("hier_id",'background','SNR','evr','mask','msk','smoothing','minutes', "RandBasis",'templateL1', 'upsampl', 'paramset', 'nc_wm', 'nc_csf', 'censor','bandpass', 'outlier', 'meanBold',
-  'unclassified', 'cleanup', badcaud )
+  xcl=c("hier_id",'background','SNR','evr','mask','msk','smoothing','minutes', "RandBasis",'templateL1', 'upsampl', 'paramset', 'nc_wm', 'nc_csf', 'censor','bandpass', 'outlier', 'meanBold', 'dimensionality', 'spc', 'org','andwidth',
+  'unclassified', 'cleanup', 'slice', badcaud )
   if ( doasym & return_colnames ) xcl=c(xcl,'left','right',"_l_","_r_")
   t1namesbst = getNamesFromDataframe( c("T1Hier",'brainstem','vol'), demog, exclusions=c("tissues","lobes"))[-1]
   testnames=c(
