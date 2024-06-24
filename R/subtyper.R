@@ -71,7 +71,7 @@ antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
   badcaud=getNamesFromDataframe("bn_str_ca",demog)
   badcaud=badcaud[ -grep("deep",badcaud)]
   xcl=c("hier_id",'background','SNR','evr','mask','msk','smoothing','minutes', "RandBasis",'templateL1', 'upsampl', 'paramset', 'nc_wm', 'nc_csf', 'censor','bandpass', 'outlier', 'meanBold', 'dimensionality', 'spc', 'org','andwidth',
-  'unclassified', 'cleanup', 'slice', badcaud, 'dimx', 'dimy', 'dimz','dimt' )
+  'unclassified', 'cleanup', 'slice', badcaud, 'dimx', 'dimy', 'dimz','dimt', 'modality' )
   if ( doasym & return_colnames ) xcl=c(xcl,'left','right',"_l_","_r_")
   t1namesbst = getNamesFromDataframe( c("T1Hier",'brainstem','vol'), demog, exclusions=c("tissues","lobes"))[-1]
   testnames=c(
@@ -5008,7 +5008,8 @@ replace_values <- function(vec, old_values, new_values) {
 #' # result <- antspymm_simlr(dataframe)
 antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, 
 resnetGradeThresh=1.02, doperm=FALSE, 
-exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
+exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) 
+{
   safegrep <- function(pattern, x, ...) {
     result <- grep(pattern, x, ...)
     if (length(result) == 0) {
@@ -5036,7 +5037,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
     }
   }
   idps=idps[ -multigrep(antspymm_nuisance_names()[-3],idps)]
-  if ( ! doAsym ) {
+  if ( doAsym == 0 ) {
     idps=safeclean("Asym",idps)
     } else {
     idps=safeclean("Asymcit168",idps)
@@ -5054,12 +5055,64 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
   } else {
 #    rsfnames = rsfnames[ multigrep( c("imbic","TempPar"),rsfnames)]
   }
+  perfnames = idps[ multigrep( c("perf_cbf_mean_"),idps,intersect=TRUE)]
   t1names = idps[ multigrep( c("T1Hier"),idps,intersect=TRUE)]
   dtnames = unique( c( 
     idps[ multigrep( c("mean_fa","DTI"),idps,intersect=TRUE)],
     idps[ multigrep( c("mean_md","DTI"),idps,intersect=TRUE)] ))
-  idps=unique(c(t1names,dtnames,rsfnames))
+
+  t1asymnames=c()
+  dtasymnames=c()
+  pfasymnames=c()
+  if ( doAsym == 2 ) {
+    t1nms = t1names
+    t1asymnames = t1nms[ grep("Asym",t1nms)]
+    t1names = t1nms[ !( t1nms %in%  t1asymnames ) ]
+
+    dtnms = dtnames
+    dtasymnames = dtnms[ grep("Asym",dtnms)]
+    dtnames = dtnames[ !( dtnames %in%  dtasymnames ) ]
+
+    pfnms = perfnames
+    pfasymnames = pfnms[ grep("Asym",pfnms)]
+    perfnames = pfnms[ !( pfnms %in%  pfasymnames ) ]
+    }
+
+  idps=unique(t1names)
+  idplist = list()
+  idplist[["t1"]]=t1names
+  if ( length(dtnames) > 0 ) {
+    idps = c( idps, unique(dtnames) )
+    idplist[["dt"]]=dtnames
+  }
+
+  if ( length(rsfnames) > 0 ) {
+    idps = c( idps, unique(rsfnames) )
+    idplist[["rsf"]]=rsfnames
+  }
+  if ( length(perfnames) > 0 ) {
+    idps = c( idps, unique(perfnames) )
+    idplist[["perf"]]=perfnames
+  }
+  if ( length(t1asymnames) > 0 ) {
+    idps = c( idps, unique(t1asymnames) )
+    idplist[["t1a"]]=t1asymnames
+  }
+
+  if ( length(dtasymnames) > 0 ) {
+    idps = c( idps, unique(dtasymnames) )
+    idplist[["dta"]]=dtasymnames
+  }
+
+  if ( length(pfasymnames) > 0 ) {
+    idps = c( idps, unique(pfasymnames) )
+    idplist[["pfa"]]=pfasymnames
+  }
+  if ( !missing( connect_cog ) ) { 
+    idplist[["cg"]]=connect_cog
+  }
   if ( verbose ) {
+    print(names(idplist))
     print(sample(idps,10))
   }
   if ( returnidps ) return(idps)
@@ -5072,68 +5125,13 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
   }
   #################################################
   nperms=0
-  if ( doAsym %in% c(0,TRUE,1) ) {
-    if ( missing( connect_cog ) ) {
-      matsFull = list(
-          t1=blaster[,t1names],
-          rs=blaster[,rsfnames],
-          dt=blaster[,dtnames] )
-      mats = list(
-          t1=antsrimpute(blaster2[allnna,t1names]),
-          rs=antsrimpute(blaster2[allnna,rsfnames]),
-          dt=antsrimpute(blaster2[allnna,dtnames]) )
-    } else {
-      matsFull = list(
-          t1=blaster[,t1names],
-          rs=blaster[,rsfnames],
-          dt=blaster[,dtnames],
-          cg=blaster[,connect_cog] )
-      mats = list(
-          t1=antsrimpute(blaster2[allnna,t1names]),
-          rs=antsrimpute(blaster2[allnna,rsfnames]),
-          dt=antsrimpute(blaster2[allnna,dtnames]),
-          cg=antsrimpute(blaster2[allnna,connect_cog]))
-    }
-  } else { ####################
-    verbose=T
-    t1nms = t1names
-    t1asymnames = t1nms[ grep("Asym",t1nms)]
-    t1nms = t1nms[ !( t1nms %in%  t1asymnames ) ]
-    dtnms = dtnames
-    dtasymnames = dtnms[ grep("Asym",dtnms) ]
-    dtnms = dtnms[ !( dtnms %in%  dtasymnames ) ]
-    if ( missing( connect_cog ) ) {
-      matsFull = list(
-          t1=blaster[,t1nms],
-          rs=blaster[,rsfnames],
-          dt=blaster[,dtnms],
-          t1a=blaster[,t1asymnames],
-          dta=blaster[,dtasymnames] )
-      mats = list(
-          t1=antsrimpute(blaster2[allnna,t1nms]),
-          rs=antsrimpute(blaster2[allnna,rsfnames]),
-          dt=antsrimpute(blaster2[allnna,dtnms]),
-          t1a=antsrimpute(blaster2[allnna,t1asymnames]),
-          dta=antsrimpute(blaster2[allnna,dtasymnames] ) )
-    } else {
-      matsFull = list(
-          t1=blaster[,t1nms],
-          rs=blaster[,rsfnames],
-          dt=blaster[,dtnms],
-          t1a=blaster[,t1asymnames],
-          dta=blaster[,dtasymnames],
-          cg=blaster[,connect_cog])
-      mats = list(
-          t1=antsrimpute(blaster2[allnna,t1nms]),
-          rs=antsrimpute(blaster2[allnna,rsfnames]),
-          dt=antsrimpute(blaster2[allnna,dtnms]),
-          t1a=antsrimpute(blaster2[allnna,t1asymnames]),
-          dta=antsrimpute(blaster2[allnna,dtasymnames] ),
-          cg=antsrimpute(blaster2[allnna,connect_cog]) )
-    }
-    ####################
-  }
-
+  matsFull = list()
+  mats = list()
+  for ( kk in 1:length(idplist)) {
+      matsFull[[ names(idplist)[kk] ]] = blaster[,idplist[[kk]]]
+      mats[[ names(idplist)[kk] ]] = antsrimpute( blaster2[allnna,idplist[[kk]]] )
+      }
+  if ( verbose ) print("mats done")
   if ( doperm ) {
     nada=setSeedBasedOnTime()
     sss=sample( 1:nrow( matsFull[[1]]  ))
@@ -5165,16 +5163,22 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
       mycor = cor( mats[[x]] )
       mycor[mycor < 0.8]=0
       regs0[[x]]=data.matrix(mycor)
-      }
-
+    }
+  if ( verbose) print("setting up regularization")
   names(regs0)=names(mats)
   regs = regularizeSimlr( mats, fraction=0.05, sigma=rep(2.0,length(mats)) )
+  if ( verbose ) print("regularizeSimlr done")
   names(regs0)=names(mats)
   names(regs)=names(mats)
-  if ( !missing( connect_cog ) ) 
+  if ( !missing( connect_cog ) ) {
     regs[["cg"]] = Matrix(regs0[["cg"]], sparse = TRUE) 
+    print("regularize cg")
+  }
+
   if ( !doperm )
     for ( pp in 1:length(regs)) plot(image(regs[[pp]]))
+
+  if ( verbose ) print("loop mat")
   for ( k in 1:length(mats)) {
     if ( ncol(mats[[k]]) != ncol(regs[[k]]) ) {
       regs[[k]]=Matrix(regs0[[k]], sparse = TRUE) 
@@ -5183,6 +5187,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
       # stop( )
       }
     }
+  if ( verbose ) print("loopmatdone")
   ########### zzz ############
   myjr = T
   prescaling = c( 'center', 'np' )
@@ -5197,6 +5202,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
   if ( energy == 'lrr') {
     objectiver='lowRankRegression';mixer = 'pca'
   }
+  if ( verbose ) print("sparseness begin")
   sparval = rep( 0.8, length( mats ))
   if ( ! is.null( sparseness ) ) {
     if ( length( sparseness ) == length(mats) ) {
@@ -5207,6 +5213,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
       print(sparseness)
     }
   }
+  
   if ( nsimlr < 1 ) {
     ctit=0
     for ( jj in 1:length(mats) ) {
@@ -5220,6 +5227,9 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
 #    print(sparval)
   }
 
+  if ( verbose ) {
+    print("initu begin")
+  }
   initu = initializeSimlr(
       mats,
       nsimlr,
@@ -5227,6 +5237,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
       zeroUpper = FALSE,
       uAlgorithm = "pca",
       addNoise = 0 )
+  if ( verbose ) print("initu done")
 
   # initu = initu[,(ncol(initu)-nsimlr):ncol(initu)]
   # initu = initu[,1:nsimlr]
@@ -5238,6 +5249,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) {
     for ( j in inflammNums )
       clist[[j]] = (1:length(mats))[ -inflammNums ]
     } else clist=NULL
+    
 
   simlrX = simlr( mats, regs, iterations=maxits, 
     verbose= !doperm,
