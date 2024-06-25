@@ -49,6 +49,9 @@
     <loc>/reference/antspymm_vartype.html</loc>
   </url>
   <url>
+    <loc>/reference/apply_simlr_matrices.html</loc>
+  </url>
+  <url>
     <loc>/reference/assembleTestRetest.html</loc>
   </url>
   <url>
@@ -217,6 +220,9 @@
     <loc>/reference/quantSquared.html</loc>
   </url>
   <url>
+    <loc>/reference/read_simlr_data_frames.html</loc>
+  </url>
+  <url>
     <loc>/reference/regressionBasedFeatureSelection.html</loc>
   </url>
   <url>
@@ -251,5 +257,8 @@
   </url>
   <url>
     <loc>/reference/visglm.html</loc>
+  </url>
+  <url>
+    <loc>/reference/write_simlr_data_frames.html</loc>
   </url>
 </urlset>

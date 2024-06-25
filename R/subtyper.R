@@ -5265,6 +5265,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE )
     initialUMatrix=initu )
 
   for ( kk in 1:length(mats) ) {
+    rownames(simlrX$v[[kk]])=idplist[[kk]]
     temp = simlrX$v[[kk]]
     if ( pizzer[kk] == 'positive' ) {
 #      for ( n in 1:ncol(temp)) temp[,n]=abs(temp[,n])/max(abs(temp[,n]))
@@ -5369,3 +5370,117 @@ match_data_frames <- function(df1, df2, match_vars) {
   matched_df2 <- df2[nearest_neighbors, ]
   return(matched_df2[ ,ocolnames] )
   }
+
+
+#' Write a list of data frames to disk with specific naming convention
+#'
+#' This function writes each data frame in a list to a separate CSV file on disk,
+#' using the names of each data frame to create unique filenames.
+#'
+#' @param data_list A list of data frames to write to disk.
+#' @param file_prefix A character string to use as the prefix for the filenames.
+#'
+#' @return No return value, called for side effects.
+#' @examples
+#' mysim <- list(simlrX = list(v = list(
+#'   data1 = data.frame(matrix(rnorm(147 * 171), nrow = 147, ncol = 171)),
+#'   data2 = data.frame(matrix(rnorm(156 * 171), nrow = 156, ncol = 171))
+#' )))
+#' write_simlr_data_frames(mysim$simlrX$v, "output")
+#' @export
+write_simlr_data_frames <- function(data_list, file_prefix) {
+  for (i in seq_along(data_list)) {
+    # Generate a filename using the index
+    file_name <- paste0(file_prefix, "_", names(data_list)[i], "_simlr.csv")
+    
+    # Write the data frame to disk
+    write.csv(data_list[[i]], file_name, row.names = TRUE)
+  }
+}
+
+#' Read a list of data frames from disk with specific naming convention
+#'
+#' This function reads a list of data frames from disk into a list,
+#' assuming the files are named with a common prefix and the names of the data frames.
+#' It converts the column named `X` to the row names of the read data frame.
+#'
+#' @param file_prefix A character string used as the prefix for the filenames.
+#' @param data_names A character vector of names for the data frames.
+#'
+#' @return A list of data frames read from disk with the column named `X` set as row names.
+#' @examples
+#' data_names <- c("data1", "data2")
+#' data_list <- read_simlr_data_frames(file_prefix = "output", data_names = data_names)
+#' dim(data_list[[1]])
+#' dim(data_list[[2]])
+#' @export
+read_simlr_data_frames <- function(file_prefix, data_names) {
+  data_list <- list()
+  
+  for (name in data_names) {
+    # Generate the filename using the prefix and data names
+    file_name <- paste0(file_prefix, "_", name, "_simlr.csv")
+    
+    # Read the data frame from disk
+    df <- read.csv(file_name, row.names = 1)
+    
+    # Convert the column named `X` to row names, if it exists
+    if ("X" %in% colnames(df)) {
+      rownames(df) <- df$X
+      df <- df[ , !colnames(df) %in% "X"]
+    }
+    
+    # Store the data frame in the list
+    data_list[[name]] <- df
+  }
+  
+  return(data_list)
+}
+
+
+
+#' Apply simlr matrices to an existing data frame and combine the results
+#'
+#' This function takes a list of matrices, applies each matrix via matrix multiplication
+#' to an existing data frame, and combines the resulting projections with the original data frame.
+#'
+#' @param existing_df An existing data frame to which the matrices will be applied.
+#' @param matrices_list A list of matrices read from CSV files.
+#' @param verbose boolean
+#'
+#' @return A list including (entry one) data frame with the original data frame combined with the projections (entry two) the new column names
+#' @examples
+#' matrices_list <- list(
+#'   matrix1 = matrix(rnorm(147 * 171), nrow = 147, ncol = 171),
+#'   matrix2 = matrix(rnorm(147 * 156), nrow = 147, ncol = 156)
+#' )
+#' existing_df <- data.frame(matrix(rnorm(147 * 5), nrow = 147, ncol = 5))
+#' # combined_df <- apply_simlr_matrices(existing_df, matrices_list)
+apply_simlr_matrices <- function(existing_df, matrices_list, verbose=FALSE ) {
+  newnames=c()
+  for (name in names(matrices_list)) {
+    if ( verbose ) print(name)
+    # Ensure the matrix multiplication is valid
+    locnames = rownames( matrices_list[[name]] ) 
+    if ( all( locnames %in% colnames(existing_df) ) ) {
+      # Perform matrix multiplication
+      projection <- as.data.frame(
+        data.matrix(existing_df[,locnames]) %*% data.matrix(matrices_list[[name]]))
+      ##################################################
+      # Update column names to reflect the matrix name #
+      colnames(projection) = paste0( name, colnames( matrices_list[[name]] ) )
+      # Combine the projections with the existing data frame
+      newnames=c(newnames,colnames(projection))
+      existing_df <- cbind(existing_df, projection)
+      if ( verbose ) {
+        print( locnames )
+        print( colnames(projection) )
+        print(tail(colnames(existing_df)))
+      }
+    } else {
+      warning(paste("Number of columns in existing data frame does not match number of rows in matrix", name))
+    }
+  }
+  
+  return( list(extendeddf=existing_df, newcolnames=newnames))
+}
