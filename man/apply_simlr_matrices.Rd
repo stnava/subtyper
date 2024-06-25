@@ -4,12 +4,19 @@
 \alias{apply_simlr_matrices}
 \title{Apply simlr matrices to an existing data frame and combine the results}
 \usage{
-apply_simlr_matrices(existing_df, matrices_list, verbose = FALSE)
+apply_simlr_matrices(
+  existing_df,
+  matrices_list,
+  n_limit = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{existing_df}{An existing data frame to which the matrices will be applied.}
 
 \item{matrices_list}{A list of matrices read from CSV files.}
+
+\item{n_limit}{NULL or integer that can limit the number of projections}
 
 \item{verbose}{boolean}
 }

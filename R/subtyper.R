@@ -5446,9 +5446,11 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #'
 #' @param existing_df An existing data frame to which the matrices will be applied.
 #' @param matrices_list A list of matrices read from CSV files.
+#' @param n_limit NULL or integer that can limit the number of projections
 #' @param verbose boolean
 #'
 #' @return A list including (entry one) data frame with the original data frame combined with the projections (entry two) the new column names
+#' @export
 #' @examples
 #' matrices_list <- list(
 #'   matrix1 = matrix(rnorm(147 * 171), nrow = 147, ncol = 171),
@@ -5456,7 +5458,7 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' )
 #' existing_df <- data.frame(matrix(rnorm(147 * 5), nrow = 147, ncol = 5))
 #' # combined_df <- apply_simlr_matrices(existing_df, matrices_list)
-apply_simlr_matrices <- function(existing_df, matrices_list, verbose=FALSE ) {
+apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, verbose=FALSE ) {
   newnames=c()
   for (name in names(matrices_list)) {
     if ( verbose ) print(name)
@@ -5470,6 +5472,9 @@ apply_simlr_matrices <- function(existing_df, matrices_list, verbose=FALSE ) {
       # Update column names to reflect the matrix name #
       colnames(projection) = paste0( name, colnames( matrices_list[[name]] ) )
       # Combine the projections with the existing data frame
+      if ( !is.null(n_limit )  ) {
+        projection=projection[,1:n_limit]
+      }
       newnames=c(newnames,colnames(projection))
       existing_df <- cbind(existing_df, projection)
       if ( verbose ) {
