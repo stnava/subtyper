@@ -5426,16 +5426,18 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
     file_name <- paste0(file_prefix, "_", name, "_simlr.csv")
     
     # Read the data frame from disk
-    df <- read.csv(file_name, row.names = 1)
-    
-    # Convert the column named `X` to row names, if it exists
-    if ("X" %in% colnames(df)) {
-      rownames(df) <- df$X
-      df <- df[ , !colnames(df) %in% "X"]
+    if ( file.exists( file_name ) ) {
+      df <- read.csv(file_name, row.names = 1)
+      
+      # Convert the column named `X` to row names, if it exists
+      if ("X" %in% colnames(df)) {
+        rownames(df) <- df$X
+        df <- df[ , !colnames(df) %in% "X"]
+      }
+      
+      # Store the data frame in the list
+      data_list[[name]] <- df
     }
-    
-    # Store the data frame in the list
-    data_list[[name]] <- df
   }
   
   return(data_list)
