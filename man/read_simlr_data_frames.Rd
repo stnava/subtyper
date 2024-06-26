@@ -20,8 +20,8 @@ assuming the files are named with a common prefix and the names of the data fram
 It converts the column named \code{X} to the row names of the read data frame.
 }
 \examples{
-data_names <- c("data1", "data2")
-data_list <- read_simlr_data_frames(file_prefix = "output", data_names = data_names)
-dim(data_list[[1]])
-dim(data_list[[2]])
+# data_names <- c("data1", "data2")
+# data_list <- read_simlr_data_frames(file_prefix = "output", data_names = data_names)
+# dim(data_list[[1]])
+# dim(data_list[[2]])
 }

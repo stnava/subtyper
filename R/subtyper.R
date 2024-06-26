@@ -5157,16 +5157,17 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE )
     residuals(fit)
     }
 
+  if ( verbose) print("setting up regularization")
   for ( x in 1:length(mats)) {
+      if ( verbose ) cat(paste0(names(mats)[x],"..."))
       mats[[x]]=update_residuals( mats, x, covariates, blaster2, allnna )
       mats[[x]]=data.matrix(mats[[x]])
       mycor = cor( mats[[x]] )
       mycor[mycor < 0.8]=0
       regs0[[x]]=data.matrix(mycor)
-    }
-  if ( verbose) print("setting up regularization")
+      }
   names(regs0)=names(mats)
-  regs = regularizeSimlr( mats, fraction=0.05, sigma=rep(2.0,length(mats)) )
+  regs = regs0 # regularizeSimlr( mats, fraction=0.05, sigma=rep(2.0,length(mats)) )
   if ( verbose ) print("regularizeSimlr done")
   names(regs0)=names(mats)
   names(regs)=names(mats)
@@ -5175,8 +5176,8 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE )
     print("regularize cg")
   }
 
-  if ( !doperm )
-    for ( pp in 1:length(regs)) plot(image(regs[[pp]]))
+#  if ( !doperm )
+#    for ( pp in 1:length(regs)) plot(image(regs[[pp]]))
 
   if ( verbose ) print("loop mat")
   for ( k in 1:length(mats)) {
@@ -5409,10 +5410,10 @@ write_simlr_data_frames <- function(data_list, file_prefix) {
 #'
 #' @return A list of data frames read from disk with the column named `X` set as row names.
 #' @examples
-#' data_names <- c("data1", "data2")
-#' data_list <- read_simlr_data_frames(file_prefix = "output", data_names = data_names)
-#' dim(data_list[[1]])
-#' dim(data_list[[2]])
+#' # data_names <- c("data1", "data2")
+#' # data_list <- read_simlr_data_frames(file_prefix = "output", data_names = data_names)
+#' # dim(data_list[[1]])
+#' # dim(data_list[[2]])
 #' @export
 read_simlr_data_frames <- function(file_prefix, data_names) {
   data_list <- list()
