@@ -5463,11 +5463,13 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, verbo
   for (name in names(matrices_list)) {
     if ( verbose ) print(name)
     # Ensure the matrix multiplication is valid
-    locnames = rownames( matrices_list[[name]] ) 
-    if ( all( locnames %in% colnames(existing_df) ) ) {
+    locnames = rownames( matrices_list[[name]] )
+    edfnames = colnames(existing_df) 
+    inames = intersect( locnames, edfnames )
+    if ( length(inames) > 0 ) {
       # Perform matrix multiplication
       projection <- as.data.frame(
-        data.matrix(existing_df[,locnames]) %*% data.matrix(matrices_list[[name]]))
+        data.matrix(existing_df[,inames]) %*% data.matrix(matrices_list[[name]][inames,]))
       ##################################################
       # Update column names to reflect the matrix name #
       colnames(projection) = paste0( name, colnames( matrices_list[[name]] ) )
@@ -5478,7 +5480,7 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, verbo
       newnames=c(newnames,colnames(projection))
       existing_df <- cbind(existing_df, projection)
       if ( verbose ) {
-        print( locnames )
+        print( inames )
         print( colnames(projection) )
         print(tail(colnames(existing_df)))
       }
