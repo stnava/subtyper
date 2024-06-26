@@ -8,6 +8,7 @@ apply_simlr_matrices(
   existing_df,
   matrices_list,
   n_limit = NULL,
+  robust = FALSE,
   verbose = FALSE
 )
 }
@@ -17,6 +18,8 @@ apply_simlr_matrices(
 \item{matrices_list}{A list of matrices read from CSV files.}
 
 \item{n_limit}{NULL or integer that can limit the number of projections}
+
+\item{robust}{boolean}
 
 \item{verbose}{boolean}
 }

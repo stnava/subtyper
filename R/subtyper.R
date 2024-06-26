@@ -5159,7 +5159,10 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE )
 
   if ( verbose) print("setting up regularization")
   for ( x in 1:length(mats)) {
-      if ( verbose ) cat(paste0(names(mats)[x],"..."))
+      if ( verbose ) {
+        if ( x == 1 ) print(paste("training n= ",nrow(mats[[x]])))
+        cat(paste0(names(mats)[x],"..."))
+      }
       mats[[x]]=update_residuals( mats, x, covariates, blaster2, allnna )
       mats[[x]]=data.matrix(mats[[x]])
       mycor = cor( mats[[x]] )
@@ -5448,6 +5451,7 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' @param existing_df An existing data frame to which the matrices will be applied.
 #' @param matrices_list A list of matrices read from CSV files.
 #' @param n_limit NULL or integer that can limit the number of projections
+#' @param robust boolean
 #' @param verbose boolean
 #'
 #' @return A list including (entry one) data frame with the original data frame combined with the projections (entry two) the new column names
@@ -5459,7 +5463,7 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' )
 #' existing_df <- data.frame(matrix(rnorm(147 * 5), nrow = 147, ncol = 5))
 #' # combined_df <- apply_simlr_matrices(existing_df, matrices_list)
-apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, verbose=FALSE ) {
+apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robust=FALSE, verbose=FALSE ) {
   newnames=c()
   for (name in names(matrices_list)) {
     if ( verbose ) print(name)
@@ -5469,8 +5473,10 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, verbo
     inames = intersect( locnames, edfnames )
     if ( length(inames) > 0 ) {
       # Perform matrix multiplication
+      imat = data.matrix(existing_df[,inames])
+      if ( robust ) imat = robustMatrixTransform( imat )
       projection <- as.data.frame(
-        data.matrix(existing_df[,inames]) %*% data.matrix(matrices_list[[name]][inames,]))
+        imat %*% data.matrix(matrices_list[[name]][inames,]))
       ##################################################
       # Update column names to reflect the matrix name #
       colnames(projection) = paste0( name, colnames( matrices_list[[name]] ) )
