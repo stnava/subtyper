@@ -5092,7 +5092,10 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
     if ( exclude ) return( x[-mysub] ) else return( x[mysub] )
   }
   idps=antspymm_predictors(blaster,TRUE,TRUE)
-  rsfnames = idps[ safegrep("_2_",idps)]
+  rsfnames = idps[ grepl("rsfMRI",idps) ]
+  if ( length(rsfnames) > 0 ) rsfnames = rsfnames[ safegrep("_2_",rsfnames)]
+  if ( !all(grepl("rsfMRI", rsfnames )) ) rsfnames=c()
+  if ( !all(grepl("rsfMRI", rsfnames )) ) rsfnames=c()
   if ( !is.null(exclusions)) {
     for ( x in exclusions ) {
       idps=safeclean(x,idps)
