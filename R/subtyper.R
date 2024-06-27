@@ -5068,6 +5068,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param exclusions vector of strings to exclude from predictors
 #' @param inclusions vector of strings to include in predictors
 #' @param sparseness vector or scalar value to set sparseness
+#' @param iterations int value to set max iterations
 #' @param verbose boolean
 #' @return A list containing the results of the similarity analysis and related data.
 #' @export
@@ -5076,7 +5077,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' # result <- antspymm_simlr(dataframe)
 antspymm_simlr = function( blaster, select_training_boolean, connect_cog,  energy=c('cca','reg','lrr'), nsimlr=5, covariates='1', myseed=3,  doAsym=TRUE, returnidps=FALSE, restrictDFN=FALSE, 
 resnetGradeThresh=1.02, doperm=FALSE, 
-exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE ) 
+exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALSE ) 
 {
   safegrep <- function(pattern, x, ...) {
     result <- grep(pattern, x, ...)
@@ -5265,6 +5266,8 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE )
   prescaling = c( 'center', 'np' )
   optimus = 'lineSearch'
   maxits = 1000
+  if ( ! is.null( iterations ) ) maxits = iterations
+  if ( verbose ) print( paste( "maxits",maxits) )
   ebber = 0.99
   pizzer = rep( "positive", length(mats) )
   objectiver='cca';mixer = 'pca'
@@ -5323,7 +5326,8 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, verbose=FALSE )
     } else clist=NULL
     
 
-  simlrX = simlr( mats, regs, iterations=maxits, 
+  simlrX = simlr( mats, regs, 
+    iterations=maxits, 
     verbose= !doperm,
     randomSeed = myseed,
     mixAlg=mixer,

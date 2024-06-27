@@ -20,6 +20,7 @@ antspymm_simlr(
   exclusions = NULL,
   inclusions = NULL,
   sparseness = NULL,
+  iterations = NULL,
   verbose = FALSE
 )
 }
@@ -53,6 +54,8 @@ antspymm_simlr(
 \item{inclusions}{vector of strings to include in predictors}
 
 \item{sparseness}{vector or scalar value to set sparseness}
+
+\item{iterations}{int value to set max iterations}
 
 \item{verbose}{boolean}
 }
