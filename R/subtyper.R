@@ -5095,7 +5095,6 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
   rsfnames = idps[ grepl("rsfMRI",idps) ]
   if ( length(rsfnames) > 0 ) rsfnames = rsfnames[ safegrep("_2_",rsfnames)]
   if ( !all(grepl("rsfMRI", rsfnames )) ) rsfnames=c()
-  if ( !all(grepl("rsfMRI", rsfnames )) ) rsfnames=c()
   if ( !is.null(exclusions)) {
     for ( x in exclusions ) {
       idps=safeclean(x,idps)
