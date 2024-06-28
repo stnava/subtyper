@@ -4231,9 +4231,11 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' @importFrom ciTools add_ci
 #' @import ciTools
 #' @export
-visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, xrange=NULL, verbose = FALSE) {  
+visglm <- function(demogmdl, qmdl, x, y, group=NULL, titlestring='',  varstoadd=NULL, groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, xrange=NULL, verbose = FALSE) {  
   .env <- environment() ## identify the environment of cv.step
-
+  if ( is.null( varstoadd ) ) {
+    varstoadd=all.vars( formula( qmdl ) )
+  }
   simulateJointDistribution <- function(exampleData, nSimulations, distribution='unf') {
     # Step 1: Compute covariance matrix and perform Cholesky decomposition
     covMatrix <- cov(data.matrix(exampleData))
@@ -4291,7 +4293,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
   verbfn('xrowname',verbose)
   tt=x[1]
   n2sim = 500
-  timeaxis0 = seq( min(demogmdl[,tt]), max(demogmdl[,tt]),length.out=n2sim)
+  timeaxis0 = seq( min(demogmdl[,tt],na.rm=T), max(demogmdl[,tt],na.rm=T),length.out=n2sim)
   if ( predictorsigns[x[1]] < 0 ) timeaxis0=rev(timeaxis0)
   verbfn('confint',verbose)
   myconf = confint(qmdl)
@@ -4299,11 +4301,14 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
   mycolor='magenta'
   mylev=group
   verbfn('group',verbose)
-  if ( group != 'control' ) mycolor='blue'
-  if ( group=='all') {
-    psel=rep(TRUE,nrow(demogmdl))
-    mylev=group
-  } else psel = demogmdl[,groupvar] == group
+  mycolor='blue'
+  if ( !is.null(group) ) {
+    if ( group != 'control' ) mycolor='blue'
+    if ( group=='all') {
+      psel=rep(TRUE,nrow(demogmdl))
+      mylev=group
+    } else psel = demogmdl[,groupvar] == group
+  } else psel = !is.na( demogmdl[,y] )
   atpreds = list( )
   verbfn('all.vars',verbose)
   if ( missing( varstoadd) ) {
@@ -4319,6 +4324,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
   } else loqhiq = xrange
   for ( zz in  varstoadd ) {
     n = length( atpreds ) + 1
+    if ( verbose ) print( paste( n,"of", length(varstoadd),zz))
     if ( zz %in% x ) {
         timeaxis = seq( loqhiq[1], loqhiq[2],length.out=length(timeaxis0))
         if ( predictorsigns[zz] < 0 ) timeaxis=rev(timeaxis)
@@ -4326,16 +4332,18 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
         if ( jdf_simulation )
           atpreds[[ n ]] = as.numeric(simmed[,zz])
     } else if ( is.numeric( demogmdl[psel,zz] )) {
-        atpreds[[ n ]] = rep( mean(demogmdl[psel,zz]), length(timeaxis0))
+        atpreds[[ n ]] = rep( mean(demogmdl[psel,zz],na.rm=T), length(timeaxis0))
     } else {
         mostfreqvar = mostfreq( demogmdl[psel,zz] )
         atpreds[[ n ]] = rep( mostfreqvar, length(timeaxis0))
     }
     names(atpreds)[[n]] = zz
   }
+  
   verbfn('x1',verbose)
   verbfn('Ypred',verbose)
   Y <- predict( qmdl, atpreds, type='response', se.fit=TRUE, env=.env )
+  
   verbfn('add_ci',verbose)
   demogmdl$imaging_protocol=mostfreq(demogmdl$imaging_protocol)
   demogmdl$commonID=mostfreq(demogmdl$commonID)
@@ -4348,10 +4356,10 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
   myyvars = c(demogmdl[psel,y],Y$ciminus, Y$ciplus)
   myyvars = demogmdl[,y]
   verbfn('myyvars',verbose)
-  rangerx = range(demogmdl[psel,x])
+  rangerx = range(demogmdl[psel,x],na.rm=T)
   scl = c(0.98,1.02)
   rangerx = rangerx * scl
-  rangery = range(myyvars) * scl
+  rangery = range(myyvars,na.rm=T) * scl
   verbfn('ranger',verbose)
   plot(timeaxis0, Y$fit, xlab = xrowname, ylab = y, type='l',
     xlim=loqhiq,
@@ -4368,6 +4376,7 @@ visglm <- function(demogmdl, qmdl, x, y, group, titlestring,  varstoadd, groupva
     xpoints = rowMeans( demogmdl[psel,x], na.rm=T )
   } else xpoints = demogmdl[psel,x]
   points( xpoints, demogmdl[psel,y], col=mycolor )
+  if ( !is.null( group ) )
   if ( group == 'all' ) {
     notexp=demogmdl[,groupvar]!=group
     points( (demogmdl[notexp,x]), demogmdl[notexp,y], col='magenta' )
