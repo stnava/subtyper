@@ -71,7 +71,13 @@ to an existing data frame, and combines the resulting projections with the origi
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">apply_simlr_matrices</span><span class="op">(</span><span class="va">existing_df</span>, <span class="va">matrices_list</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">apply_simlr_matrices</span><span class="op">(</span></span>
+<span>  <span class="va">existing_df</span>,</span>
+<span>  <span class="va">matrices_list</span>,</span>
+<span>  n_limit <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  robust <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -84,6 +90,14 @@ to an existing data frame, and combines the resulting projections with the origi
 <dd><p>A list of matrices read from CSV files.</p></dd>
 
 
+<dt>n_limit</dt>
+<dd><p>NULL or integer that can limit the number of projections</p></dd>
+
+
+<dt>robust</dt>
+<dd><p>boolean</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>boolean</p></dd>
 
@@ -92,7 +106,7 @@ to an existing data frame, and combines the resulting projections with the origi
     <h2>Value</h2>
     
 
-<p>A data frame with the original data frame combined with the projections.</p>
+<p>A list including (entry one) data frame with the original data frame combined with the projections (entry two) the new column names</p>
     </div>
 
     <div id="ref-examples">

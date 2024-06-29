@@ -151,6 +151,9 @@
     <loc>/reference/interpret_simlr_vector.html</loc>
   </url>
   <url>
+    <loc>/reference/interpret_simlr_vector2.html</loc>
+  </url>
+  <url>
     <loc>/reference/lmer_anv_p_and_d.html</loc>
   </url>
   <url>
@@ -239,6 +242,9 @@
   </url>
   <url>
     <loc>/reference/scale_variables_in_equation.html</loc>
+  </url>
+  <url>
+    <loc>/reference/select_important_variables.html</loc>
   </url>
   <url>
     <loc>/reference/setSeedBasedOnTime.html</loc>

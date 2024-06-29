@@ -95,12 +95,11 @@ It converts the column named <code>X</code> to the row names of the read data fr
 
     <div id="ref-examples">
     <h2>Examples</h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">data_names</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data1"</span>, <span class="st">"data2"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">data_list</span> <span class="op">&lt;-</span> <span class="fu">read_simlr_data_frames</span><span class="op">(</span>file_prefix <span class="op">=</span> <span class="st">"output"</span>, data_names <span class="op">=</span> <span class="va">data_names</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">data_list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 147 171</span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">data_list</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 156 171</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># data_names &lt;- c("data1", "data2")</span></span></span>
+<span class="r-in"><span><span class="co"># data_list &lt;- read_simlr_data_frames(file_prefix = "output", data_names = data_names)</span></span></span>
+<span class="r-in"><span><span class="co"># dim(data_list[[1]])</span></span></span>
+<span class="r-in"><span><span class="co"># dim(data_list[[2]])</span></span></span>
+<span class="r-in"></span>
 </code></pre></div>
     </div>
   </div>

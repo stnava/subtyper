@@ -5350,7 +5350,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
     connectors=clist,
     optimizationStyle=optimus,
     initialUMatrix=initu )
-
+  if ( verbose ) print('simlr done')
   for ( kk in 1:length(mats) ) {
     rownames(simlrX$v[[kk]])=idplist[[kk]]
     temp = simlrX$v[[kk]]
@@ -5582,4 +5582,47 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robus
   }
   
   return( list(extendeddf=existing_df, newcolnames=newnames))
+}
+
+
+
+#' Select Important Variables Using Partial Correlation Matrix
+#'
+#' This function computes the partial correlation matrix for the specified columns in a dataset and selects the most important variables based on the sum of absolute values of partial correlations.
+#'
+#' @param data A data frame containing the dataset.
+#' @param cols A vector of column names or indices to be included in the analysis.
+#' @param threshold A numeric value between 0 and 1 indicating the proportion of variables to retain. Defaults to 0.2 (20%).
+#'
+#' @return A vector of column names corresponding to the most important variables.
+#' @export
+#'
+#' @examples
+#' set.seed(123)
+#' qqq <- data.frame(matrix(rnorm(100 * 10), ncol = 10))
+#' colnames(qqq) <- paste0("Var", 1:10)
+#' tempcols <- colnames(qqq)
+#' important_vars <- select_important_variables(qqq, tempcols, threshold = 0.3)
+#' print(important_vars)
+select_important_variables <- function(data, cols, threshold = 0.2) {
+  # Compute the correlation matrix
+  mycor <- cor(na.omit(data[, cols]))
+  
+  # Compute the inverse of the correlation matrix (precision matrix)
+  precision_matrix <- solve(mycor)
+  
+  # Compute partial correlations from the precision matrix
+  partial_cor_matrix <- -cov2cor(precision_matrix)
+  diag(partial_cor_matrix) <- 1  # Set the diagonal to 1 for partial correlations
+  
+  # Sum the absolute values of partial correlations for each variable
+  variable_importance <- apply(abs(partial_cor_matrix), 1, sum)
+  
+  # Determine the threshold for selection
+  num_vars_to_select <- round(length(variable_importance) * threshold)
+  
+  # Select the most important variables
+  important_vars <- names(sort(variable_importance, decreasing = TRUE)[1:num_vars_to_select])
+  
+  return(important_vars)
 }
