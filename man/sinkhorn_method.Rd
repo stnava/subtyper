@@ -20,6 +20,6 @@ A Sinkhorn-stabilized correlation matrix.
 This function applies the Sinkhorn algorithm to stabilize a given correlation matrix.
 }
 \examples{
-mycor <- cor(data)
+mycor <- abs(cor( matrix(rnorm(100),nrow=10)))
 sinkhorn_corr <- sinkhorn_method(mycor)
 }

@@ -7,7 +7,7 @@
 select_important_variables(
   data,
   cols,
-  threshold = 0.2,
+  threshold = 0.5,
   epsilon = 0.001,
   max_iter = 100
 )

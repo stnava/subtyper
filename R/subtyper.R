@@ -5605,7 +5605,7 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
   if (!is.matrix(corr_matrix) || nrow(corr_matrix) != ncol(corr_matrix)) {
     stop("Input matrix must be a square matrix.")
   }
-  
+  nms = colnames(corr_matrix)
   # Initialize u and v vectors
   n <- nrow(corr_matrix)
   u <- rep(1/n, n)
@@ -5630,7 +5630,7 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
   # Construct Sinkhorn-stabilized correlation matrix
   temp = ( corr_matrix %*% diag(as.numeric(v)) )
   sinkhorn_corr <- diag(as.numeric(u)) %*% temp
-  
+  colnames(sinkhorn_corr)=nms
   return(sinkhorn_corr)
 }
 
@@ -5660,13 +5660,15 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
 #' )
 #' selected_vars <- select_important_variables(data, c("x1", "x2", "x3", "x4"), threshold = 0.3)
 #' print(selected_vars)
-select_important_variables <- function(data, cols, threshold = 0.2, epsilon = 1e-3, max_iter = 100) {
+select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e-3, max_iter = 100) {
   # Compute the correlation matrix
   mycor <- cor(na.omit(data[, cols]))
+  nms = colnames(mycor)
   
   # Compute the inverse of the Sinkhorn-corrected correlation matrix (precision matrix)
   precision_matrix <- MASS::ginv(mycor)
-  
+  rownames(precision_matrix)=nms
+  colnames(precision_matrix)=nms
   # Compute partial correlations from the precision matrix
   partial_cor_matrix <- -cov2cor(precision_matrix)
   diag(partial_cor_matrix) <- 1  # Set the diagonal to 1 for partial correlations
@@ -5677,10 +5679,9 @@ select_important_variables <- function(data, cols, threshold = 0.2, epsilon = 1e
   if ( max_iter > 0 ) {
     abs_partial_cor_matrix <- sinkhorn_method( abs_partial_cor_matrix, epsilon = epsilon, max_iter = max_iter)
   } 
-
   # Sum the absolute values of partial correlations for each variable
   variable_importance <- apply(abs_partial_cor_matrix, 1, sum)
-  
+  names(variable_importance)=colnames( abs_partial_cor_matrix )
   # Determine the threshold for selection
   num_vars_to_select <- round(length(variable_importance) * threshold)
   
