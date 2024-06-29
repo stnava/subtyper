@@ -5598,7 +5598,7 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robus
 #' @export
 #'
 #' @examples
-#' mycor <- cor(data)
+#' mycor <- abs(cor( matrix(rnorm(100),nrow=10)))
 #' sinkhorn_corr <- sinkhorn_method(mycor)
 sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
   # Ensure correlation matrix is square and symmetric
@@ -5628,7 +5628,8 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
   }
   
   # Construct Sinkhorn-stabilized correlation matrix
-  sinkhorn_corr <- diag(u) %*% corr_matrix %*% diag(v)
+  temp = ( corr_matrix %*% diag(as.numeric(v)) )
+  sinkhorn_corr <- diag(as.numeric(u)) %*% temp
   
   return(sinkhorn_corr)
 }
