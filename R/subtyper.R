@@ -5350,7 +5350,6 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
     connectors=clist,
     optimizationStyle=optimus,
     initialUMatrix=initu )
-  if ( verbose ) print('simlr done')
   for ( kk in 1:length(mats) ) {
     rownames(simlrX$v[[kk]])=idplist[[kk]]
     temp = simlrX$v[[kk]]
@@ -5360,6 +5359,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
       }
     }
 
+  if ( verbose ) print('simlr done')
   #################
   nsimx=nsimlr
   nms = names( simlrX$v ) = names(mats)
@@ -5373,6 +5373,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
       simmat = cbind( simmat, temp )
   }
   blaster2sim = cbind( blaster, simmat )
+  if ( verbose ) print('bound')
   nsim = ncol( simlrX$v[[1]] )
   simnames = colnames(simmat)
   kk=1
@@ -5380,10 +5381,9 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
   matsB=mats
   for ( kk in 1:length(mats)) matsB[[kk]]=data.matrix(matsB[[kk]])
   kk=length(mats)
-  temp = predictSimlr( matsB, simlrX, targetMatrix=kk, 
-        sourceMatrices=nmats[nmats!=kk] )
-
-  return( list( demog=blaster2sim, mats=matsFull, simnames=simnames, simlrX=simlrX, energy=energy, temp=temp ) )
+  # temp = predictSimlr( matsB, simlrX, targetMatrix=kk, 
+  #      sourceMatrices=nmats[nmats!=kk] )
+  return( list( demog=blaster2sim, mats=matsFull, simnames=simnames, simlrX=simlrX, energy=energy ) )
   ################
   }
 
