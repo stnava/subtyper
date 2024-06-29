@@ -5664,7 +5664,7 @@ select_important_variables <- function(data, cols, threshold = 0.2, epsilon = 1e
   mycor <- cor(na.omit(data[, cols]))
   
   # Compute the inverse of the Sinkhorn-corrected correlation matrix (precision matrix)
-  precision_matrix <- solve(sinkhorn_corr)
+  precision_matrix <- MASS::ginv(mycor)
   
   # Compute partial correlations from the precision matrix
   partial_cor_matrix <- -cov2cor(precision_matrix)
@@ -5676,7 +5676,7 @@ select_important_variables <- function(data, cols, threshold = 0.2, epsilon = 1e
   if ( max_iter > 0 ) {
     abs_partial_cor_matrix <- sinkhorn_method( abs_partial_cor_matrix, epsilon = epsilon, max_iter = max_iter)
   } 
-  
+
   # Sum the absolute values of partial correlations for each variable
   variable_importance <- apply(abs_partial_cor_matrix, 1, sum)
   
