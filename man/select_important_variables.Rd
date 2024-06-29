@@ -2,28 +2,42 @@
 % Please edit documentation in R/subtyper.R
 \name{select_important_variables}
 \alias{select_important_variables}
-\title{Select Important Variables Using Partial Correlation Matrix}
+\title{Select important variables based on stabilized correlations}
 \usage{
-select_important_variables(data, cols, threshold = 0.2)
+select_important_variables(
+  data,
+  cols,
+  threshold = 0.2,
+  epsilon = 0.001,
+  max_iter = 100
+)
 }
 \arguments{
-\item{data}{A data frame containing the dataset.}
+\item{data}{A data frame containing the variables.}
 
-\item{cols}{A vector of column names or indices to be included in the analysis.}
+\item{cols}{A character vector specifying which columns (variables) to consider.}
 
-\item{threshold}{A numeric value between 0 and 1 indicating the proportion of variables to retain. Defaults to 0.2 (20\%).}
+\item{threshold}{Proportion of variables to select based on importance (default: 0.2).}
+
+\item{epsilon}{Convergence threshold for Sinkhorn iterations (default: 1e-3).}
+
+\item{max_iter}{Maximum number of Sinkhorn iterations (default: 100).}
 }
 \value{
-A vector of column names corresponding to the most important variables.
+A character vector of selected variable names.
 }
 \description{
-This function computes the partial correlation matrix for the specified columns in a dataset and selects the most important variables based on the sum of absolute values of partial correlations.
+This function selects important variables from a dataset based on stabilized correlations
+computed using the Sinkhorn method.
 }
 \examples{
 set.seed(123)
-qqq <- data.frame(matrix(rnorm(100 * 10), ncol = 10))
-colnames(qqq) <- paste0("Var", 1:10)
-tempcols <- colnames(qqq)
-important_vars <- select_important_variables(qqq, tempcols, threshold = 0.3)
-print(important_vars)
+data <- data.frame(
+  x1 = rnorm(100),
+  x2 = rnorm(100),
+  x3 = rnorm(100),
+  x4 = rnorm(100)
+)
+selected_vars <- select_important_variables(data, c("x1", "x2", "x3", "x4"), threshold = 0.3)
+print(selected_vars)
 }

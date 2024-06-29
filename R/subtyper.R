@@ -5586,37 +5586,99 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robus
 
 
 
-#' Select Important Variables Using Partial Correlation Matrix
+
+#' Apply Sinkhorn method to stabilize a correlation matrix
 #'
-#' This function computes the partial correlation matrix for the specified columns in a dataset and selects the most important variables based on the sum of absolute values of partial correlations.
+#' This function applies the Sinkhorn algorithm to stabilize a given correlation matrix.
+#' 
+#' @param corr_matrix A square correlation matrix to be stabilized.
+#' @param epsilon Convergence threshold for Sinkhorn iterations (default: 1e-3).
+#' @param max_iter Maximum number of Sinkhorn iterations (default: 100).
+#' @return A Sinkhorn-stabilized correlation matrix.
+#' @export
 #'
-#' @param data A data frame containing the dataset.
-#' @param cols A vector of column names or indices to be included in the analysis.
-#' @param threshold A numeric value between 0 and 1 indicating the proportion of variables to retain. Defaults to 0.2 (20%).
+#' @examples
+#' mycor <- cor(data)
+#' sinkhorn_corr <- sinkhorn_method(mycor)
+sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
+  # Ensure correlation matrix is square and symmetric
+  if (!is.matrix(corr_matrix) || nrow(corr_matrix) != ncol(corr_matrix)) {
+    stop("Input matrix must be a square matrix.")
+  }
+  
+  # Initialize u and v vectors
+  n <- nrow(corr_matrix)
+  u <- rep(1/n, n)
+  v <- rep(1/n, n)
+  
+  # Sinkhorn iteration
+  iter <- 0
+  while (iter < max_iter) {
+    u_new <- 1 / (corr_matrix %*% v + epsilon)
+    v_new <- 1 / (t(corr_matrix) %*% u_new + epsilon)
+    
+    # Check convergence
+    if (max(abs(u_new - u)) < epsilon && max(abs(v_new - v)) < epsilon) {
+      break
+    }
+    
+    u <- u_new
+    v <- v_new
+    iter <- iter + 1
+  }
+  
+  # Construct Sinkhorn-stabilized correlation matrix
+  sinkhorn_corr <- diag(u) %*% corr_matrix %*% diag(v)
+  
+  return(sinkhorn_corr)
+}
+
+
+
+
+#' Select important variables based on stabilized correlations
 #'
-#' @return A vector of column names corresponding to the most important variables.
+#' This function selects important variables from a dataset based on stabilized correlations
+#' computed using the Sinkhorn method.
+#' 
+#' @param data A data frame containing the variables.
+#' @param cols A character vector specifying which columns (variables) to consider.
+#' @param threshold Proportion of variables to select based on importance (default: 0.2).
+#' @param epsilon Convergence threshold for Sinkhorn iterations (default: 1e-3).
+#' @param max_iter Maximum number of Sinkhorn iterations (default: 100).
+#' @return A character vector of selected variable names.
 #' @export
 #'
 #' @examples
 #' set.seed(123)
-#' qqq <- data.frame(matrix(rnorm(100 * 10), ncol = 10))
-#' colnames(qqq) <- paste0("Var", 1:10)
-#' tempcols <- colnames(qqq)
-#' important_vars <- select_important_variables(qqq, tempcols, threshold = 0.3)
-#' print(important_vars)
-select_important_variables <- function(data, cols, threshold = 0.2) {
+#' data <- data.frame(
+#'   x1 = rnorm(100),
+#'   x2 = rnorm(100),
+#'   x3 = rnorm(100),
+#'   x4 = rnorm(100)
+#' )
+#' selected_vars <- select_important_variables(data, c("x1", "x2", "x3", "x4"), threshold = 0.3)
+#' print(selected_vars)
+select_important_variables <- function(data, cols, threshold = 0.2, epsilon = 1e-3, max_iter = 100) {
   # Compute the correlation matrix
   mycor <- cor(na.omit(data[, cols]))
   
-  # Compute the inverse of the correlation matrix (precision matrix)
-  precision_matrix <- solve(mycor)
+  # Compute the inverse of the Sinkhorn-corrected correlation matrix (precision matrix)
+  precision_matrix <- solve(sinkhorn_corr)
   
   # Compute partial correlations from the precision matrix
   partial_cor_matrix <- -cov2cor(precision_matrix)
   diag(partial_cor_matrix) <- 1  # Set the diagonal to 1 for partial correlations
   
+  # Ensure we work with absolute values for partial correlations
+  abs_partial_cor_matrix <- abs(partial_cor_matrix)
+
+  if ( max_iter > 0 ) {
+    abs_partial_cor_matrix <- sinkhorn_method( abs_partial_cor_matrix, epsilon = epsilon, max_iter = max_iter)
+  } 
+  
   # Sum the absolute values of partial correlations for each variable
-  variable_importance <- apply(abs(partial_cor_matrix), 1, sum)
+  variable_importance <- apply(abs_partial_cor_matrix, 1, sum)
   
   # Determine the threshold for selection
   num_vars_to_select <- round(length(variable_importance) * threshold)
