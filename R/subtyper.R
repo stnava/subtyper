@@ -5687,7 +5687,7 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
   } 
   # Sum the absolute values of partial correlations for each variable
   diag(abs_partial_cor_matrix)=0
-  variable_importance <- apply(abs_partial_cor_matrix, 1, sum)
+  variable_importance <- apply(abs_partial_cor_matrix, 1, mean)
   names(variable_importance)=colnames( abs_partial_cor_matrix )
   if ( return_raw_importance ) {
     return( sort(variable_importance, decreasing = TRUE) )
