@@ -9,7 +9,9 @@ select_important_variables(
   cols,
   threshold = 0.5,
   epsilon = 0.001,
-  max_iter = 100
+  max_iter = 0,
+  use_glasso = 0.1,
+  return_raw_importance = FALSE
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ select_important_variables(
 \item{epsilon}{Convergence threshold for Sinkhorn iterations (default: 1e-3).}
 
 \item{max_iter}{Maximum number of Sinkhorn iterations (default: 100).}
+
+\item{use_glasso}{set a scalar greater than zero to use graphical LASSO; this parameter relates to sparseness levels}
+
+\item{return_raw_importance}{boolean}
 }
 \value{
 A character vector of selected variable names.

@@ -66,6 +66,7 @@ filterNAcolumns <- function(df, percentThreshold) {
 #' @export
 #'
 #' @importFrom dplyr filter
+#' @importFrom glasso glasso
 #' @importFrom magrittr %>%
 antspymm_predictors <- function( demog, doasym=FALSE, return_colnames=FALSE ) {
   badcaud=getNamesFromDataframe("bn_str_ca",demog)
@@ -5647,6 +5648,8 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
 #' @param threshold Proportion of variables to select based on importance (default: 0.2).
 #' @param epsilon Convergence threshold for Sinkhorn iterations (default: 1e-3).
 #' @param max_iter Maximum number of Sinkhorn iterations (default: 100).
+#' @param use_glasso set a scalar greater than zero to use graphical LASSO; this parameter relates to sparseness levels
+#' @param return_raw_importance boolean
 #' @return A character vector of selected variable names.
 #' @export
 #'
@@ -5660,13 +5663,16 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
 #' )
 #' selected_vars <- select_important_variables(data, c("x1", "x2", "x3", "x4"), threshold = 0.3)
 #' print(selected_vars)
-select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e-3, max_iter = 100) {
+select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e-3, max_iter = 0, use_glasso=0.1, return_raw_importance=FALSE ) {
   # Compute the correlation matrix
   mycor <- cor(na.omit(data[, cols]))
   nms = colnames(mycor)
   
   # Compute the inverse of the Sinkhorn-corrected correlation matrix (precision matrix)
-  precision_matrix <- MASS::ginv(mycor)
+  if ( use_glasso > 0 ) {
+    glasso_result <- glasso(mycor, rho = use_glasso)
+    precision_matrix <- glasso_result$wi  # Precision matrix
+  } else precision_matrix <- MASS::ginv(mycor)
   rownames(precision_matrix)=nms
   colnames(precision_matrix)=nms
   # Compute partial correlations from the precision matrix
@@ -5680,8 +5686,12 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
     abs_partial_cor_matrix <- sinkhorn_method( abs_partial_cor_matrix, epsilon = epsilon, max_iter = max_iter)
   } 
   # Sum the absolute values of partial correlations for each variable
+  diag(abs_partial_cor_matrix)=0
   variable_importance <- apply(abs_partial_cor_matrix, 1, sum)
   names(variable_importance)=colnames( abs_partial_cor_matrix )
+  if ( return_raw_importance ) {
+    return( sort(variable_importance, decreasing = TRUE) )
+  }
   # Determine the threshold for selection
   num_vars_to_select <- round(length(variable_importance) * threshold)
   
