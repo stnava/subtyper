@@ -4731,7 +4731,8 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   effect_sizes <- effectsize::t_to_d(coefs[, "t value"], rep(ndf, nrow(coefs)))
   effect_sizes <- data.frame(effect_sizes)
   rownames(effect_sizes) <- rownames(coefs)
-  effect_sizes <- effect_sizes[grep(predictor, rownames(effect_sizes)), ]
+  searchpred = all.vars(formula( paste0("z~",predictor)))[-1]
+  effect_sizes <- effect_sizes[multigrep(searchpred, rownames(effect_sizes)), ]
 
   # Prepare and return the results
   results <- list(
