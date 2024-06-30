@@ -35,6 +35,7 @@ Imports:
   ggthemes,
   ggstatsplot,
   ggbeeswarm,
+  glasso,
   globaltest,
   gridExtra,
   imbalance,

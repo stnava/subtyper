@@ -4707,12 +4707,16 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   base_model = tryCatch({
       lmer(base_model_formula, data = datasub, REML = FALSE)
     }, error = function(e) {
+      print("ERROR")
+      print(e)
       NULL
     })
   if ( is.null(base_model) ) return(NULL)
   full_model = tryCatch({
     lmer(full_model_formula, data = datasub, REML = FALSE)
     }, error = function(e) {
+      print("ERROR")
+      print(e)
       NULL
     })
   if ( is.null(full_model)  ) return(NULL)
