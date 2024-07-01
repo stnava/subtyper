@@ -11,7 +11,7 @@ select_important_variables(
   epsilon = 0.001,
   max_iter = 0,
   use_glasso = 0.1,
-  least = TRUE,
+  least = FALSE,
   return_raw_importance = FALSE
 )
 }

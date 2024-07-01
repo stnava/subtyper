@@ -5669,7 +5669,7 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
 #' )
 #' selected_vars <- select_important_variables(data, c("x1", "x2", "x3", "x4"), threshold = 0.3)
 #' print(selected_vars)
-select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e-3, max_iter = 0, use_glasso=0.1, least=TRUE, return_raw_importance=FALSE ) {
+select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e-3, max_iter = 0, use_glasso=0.1, least=FALSE, return_raw_importance=FALSE ) {
   # Compute the correlation matrix
   mycor <- cor(na.omit(data[, cols]))
   nms = colnames(mycor)
