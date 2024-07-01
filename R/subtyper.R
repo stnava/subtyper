@@ -5654,6 +5654,7 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
 #' @param epsilon Convergence threshold for Sinkhorn iterations (default: 1e-3).
 #' @param max_iter Maximum number of Sinkhorn iterations (default: 100).
 #' @param use_glasso set a scalar greater than zero to use graphical LASSO; this parameter relates to sparseness levels
+#' @param least boolean take least explanatory (most uncorrelated) variables
 #' @param return_raw_importance boolean
 #' @return A character vector of selected variable names.
 #' @export
@@ -5668,7 +5669,7 @@ sinkhorn_method <- function(corr_matrix, epsilon = 1e-3, max_iter = 100) {
 #' )
 #' selected_vars <- select_important_variables(data, c("x1", "x2", "x3", "x4"), threshold = 0.3)
 #' print(selected_vars)
-select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e-3, max_iter = 0, use_glasso=0.1, return_raw_importance=FALSE ) {
+select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e-3, max_iter = 0, use_glasso=0.1, least=TRUE, return_raw_importance=FALSE ) {
   # Compute the correlation matrix
   mycor <- cor(na.omit(data[, cols]))
   nms = colnames(mycor)
@@ -5695,13 +5696,13 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
   variable_importance <- apply(abs_partial_cor_matrix, 1, mean)
   names(variable_importance)=colnames( abs_partial_cor_matrix )
   if ( return_raw_importance ) {
-    return( sort(variable_importance, decreasing = TRUE) )
+    return( sort(variable_importance, decreasing = !least) )
   }
   # Determine the threshold for selection
   num_vars_to_select <- round(length(variable_importance) * threshold)
   
   # Select the most important variables
-  important_vars <- names(sort(variable_importance, decreasing = TRUE)[1:num_vars_to_select])
+  important_vars <- names(sort(variable_importance, decreasing = !least)[1:num_vars_to_select])
   
   return(important_vars)
 }

@@ -11,6 +11,7 @@ select_important_variables(
   epsilon = 0.001,
   max_iter = 0,
   use_glasso = 0.1,
+  least = TRUE,
   return_raw_importance = FALSE
 )
 }
@@ -26,6 +27,8 @@ select_important_variables(
 \item{max_iter}{Maximum number of Sinkhorn iterations (default: 100).}
 
 \item{use_glasso}{set a scalar greater than zero to use graphical LASSO; this parameter relates to sparseness levels}
+
+\item{least}{boolean take least explanatory (most uncorrelated) variables}
 
 \item{return_raw_importance}{boolean}
 }
