@@ -9,6 +9,7 @@ apply_simlr_matrices(
   matrices_list,
   n_limit = NULL,
   robust = FALSE,
+  absolute_value = TRUE,
   verbose = FALSE
 )
 }
@@ -20,6 +21,8 @@ apply_simlr_matrices(
 \item{n_limit}{NULL or integer that can limit the number of projections}
 
 \item{robust}{boolean}
+
+\item{absolute_value}{boolean take abs of feature matrices}
 
 \item{verbose}{boolean}
 }

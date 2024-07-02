@@ -5543,6 +5543,7 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' @param matrices_list A list of matrices read from CSV files.
 #' @param n_limit NULL or integer that can limit the number of projections
 #' @param robust boolean
+#' @param absolute_value boolean take abs of feature matrices
 #' @param verbose boolean
 #'
 #' @return A list including (entry one) data frame with the original data frame combined with the projections (entry two) the new column names
@@ -5554,7 +5555,7 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' )
 #' existing_df <- data.frame(matrix(rnorm(147 * 5), nrow = 147, ncol = 5))
 #' # combined_df <- apply_simlr_matrices(existing_df, matrices_list)
-apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robust=FALSE, verbose=FALSE ) {
+apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robust=FALSE, absolute_value=TRUE, verbose=FALSE ) {
   newnames=c()
   for (name in names(matrices_list)) {
     if ( verbose ) print(name)
@@ -5566,8 +5567,9 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robus
       # Perform matrix multiplication
       imat = data.matrix(existing_df[,inames])
       if ( robust ) imat = robustMatrixTransform( imat )
-      projection <- as.data.frame(
-        imat %*% data.matrix(matrices_list[[name]][inames,]))
+      features = data.matrix(matrices_list[[name]][inames,])
+      if ( absolute_value ) features = abs( features )
+      projection <- as.data.frame( imat %*% features)
       ##################################################
       # Update column names to reflect the matrix name #
       colnames(projection) = paste0( name, colnames( matrices_list[[name]] ) )
@@ -5688,7 +5690,7 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
   # Ensure we work with absolute values for partial correlations
   abs_partial_cor_matrix <- abs(partial_cor_matrix)
 
-  if ( max_iter > 0 ) {
+  if ( max_iter > 0 ) { # this is to aid variable selection
     abs_partial_cor_matrix <- sinkhorn_method( abs_partial_cor_matrix, epsilon = epsilon, max_iter = max_iter)
   } 
   # Sum the absolute values of partial correlations for each variable
