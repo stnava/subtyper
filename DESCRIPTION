@@ -38,6 +38,8 @@ Imports:
   glasso,
   globaltest,
   gridExtra,
+  gt, 
+  gtsummary,
   imbalance,
   MASS,
   mlr3,

@@ -5708,3 +5708,89 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
   
   return(important_vars)
 }
+
+
+
+#' Create a Table 1 for Population Characteristics
+#'
+#' This function generates a "Table 1" for summarizing population characteristics
+#' in an academic paper. It uses the `gtsummary` package for summarizing and 
+#' the `gt` package for table customization, including adding stripes.
+#'
+#' @param data A data frame containing the dataset.
+#' @param summary_vars A character vector of variable names to include in the summary.
+#' @param group_var A character string of the variable name to group by.
+#' @param title A character string for the table title. Default is "Table 1: Population Characteristics".
+#' @return A `gt` table object.
+#' @import dplyr
+#' @import gtsummary
+#' @import gt
+#' @examples
+#' data(mtcars)
+#' mtcars$cyl <- as.factor(mtcars$cyl)
+#' summary_vars <- c("mpg", "hp", "wt")
+#' group_var <- "cyl"
+#' continuous_vars <- c("mpg", "hp", "wt")
+#' categorical_vars <- NULL
+#' table1 <- create_table1(data = mtcars, 
+#'                         summary_vars = summary_vars, 
+#'                         group_var = group_var, 
+#'                         title = "Table 1: Population Characteristics by Cylinder")
+#' print(table1)
+#' @export
+create_table1 <- function(data, summary_vars, group_var, 
+                          title = "Table 1: Population Characteristics") {
+  library(gt)
+  library(gtsummary)
+  # Check if group_var is a factor, if not convert it to a factor
+  if (!is.factor(data[[group_var]])) {
+    data[[group_var]] <- as.factor(data[[group_var]])
+  }
+  
+  is_categorical <- function(df) {
+    sapply(df, function(x) is.factor(x) || is.character(x))
+    }
+
+  categorical_vars=NULL
+  continuous_vars=NULL
+  categorical_vars_bool <- is_categorical(data[,summary_vars])
+  if ( sum(categorical_vars_bool ) > 0 ) {
+    categorical_vars = summary_vars[categorical_vars_bool]
+  }
+  if ( sum(!categorical_vars_bool ) > 0 ) {
+    continuous_vars = summary_vars[!categorical_vars_bool]
+  }
+  # Create summary table using gtsummary
+  table1 <- data %>%
+    select(all_of(c(summary_vars, group_var))) %>%
+    tbl_summary(by = !!rlang::sym(group_var), 
+                type = list(all_of(continuous_vars) ~ "continuous",
+                            all_of(categorical_vars) ~ "categorical"),
+                statistic = list(all_continuous() ~ "{mean} ({sd})", 
+                                 all_categorical() ~ "{n} ({p}%)"),
+                missing = "no") %>%
+    add_p() %>%
+    modify_header(label ~ "**Variable**") %>%
+    bold_labels()
+
+  # Convert to gt table for further customization
+  gt_table1 <- as_gt(table1)
+
+  # Add stripes to the gt table
+  gt_table1 <- gt_table1 %>%
+    tab_style(
+      style = cell_fill(color = "lightgrey"),
+      locations = cells_body(
+        rows = seq(1, nrow(data %>%
+                             select(all_of(group_var)) %>%
+                             distinct()) + 1, by = 2)
+      )
+    ) %>%
+    tab_header(
+      title = title
+    )
+
+  # Return the customized Table 1
+  return(gt_table1)
+}
+###

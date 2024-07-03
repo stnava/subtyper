@@ -76,7 +76,10 @@ computed using the Sinkhorn method.</p>
 <span>  <span class="va">cols</span>,</span>
 <span>  threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  epsilon <span class="op">=</span> <span class="fl">0.001</span>,</span>
-<span>  max_iter <span class="op">=</span> <span class="fl">100</span></span>
+<span>  max_iter <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  use_glasso <span class="op">=</span> <span class="fl">0.1</span>,</span>
+<span>  least <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  return_raw_importance <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -100,6 +103,18 @@ computed using the Sinkhorn method.</p>
 
 <dt>max_iter</dt>
 <dd><p>Maximum number of Sinkhorn iterations (default: 100).</p></dd>
+
+
+<dt>use_glasso</dt>
+<dd><p>set a scalar greater than zero to use graphical LASSO; this parameter relates to sparseness levels</p></dd>
+
+
+<dt>least</dt>
+<dd><p>boolean take least explanatory (most uncorrelated) variables</p></dd>
+
+
+<dt>return_raw_importance</dt>
+<dd><p>boolean</p></dd>
 
 </dl></div>
     <div id="value">
