@@ -10,6 +10,8 @@ normativeSummary(
   columns,
   zoom,
   idcolumn = "commonID",
+  sexcol = "commonSex",
+  agecol = "commonAge",
   verbose = TRUE
 )
 }
@@ -23,6 +25,10 @@ normativeSummary(
 \item{zoom}{A parameter to specify the focus or zoom level of the summary.}
 
 \item{idcolumn}{column name for the unique subject ID}
+
+\item{sexcol}{name of the sex column}
+
+\item{agecol}{name of the age column}
 
 \item{verbose}{A logical flag indicating whether to print detailed output.}
 }

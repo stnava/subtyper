@@ -4851,6 +4851,8 @@ convert_to_random_effects <- function(variables) {
 #' @param columns A vector of column names in the dataset that should be summarized.
 #' @param zoom A parameter to specify the focus or zoom level of the summary.
 #' @param idcolumn column name for the unique subject ID
+#' @param sexcol name of the sex column
+#' @param agecol name of the age column
 #' @param verbose A logical flag indicating whether to print detailed output.
 #'
 #' @return A summary object containing normative statistics for the specified columns of the subject.
@@ -4858,13 +4860,13 @@ convert_to_random_effects <- function(variables) {
 #'
 #' @examples
 #' # normativeSummary(myData, 1, c("Column1", "Column2"), zoom = 1, verbose = TRUE)
-normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID', verbose=TRUE) {
+normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID', sexcol='commonSex', agecol='commonAge', verbose=TRUE) {
   if(!is.data.frame(data)) stop("The 'data' input must be a data frame.")
   if(!all(columns %in% names(data))) stop("All specified columns must exist in the data frame.")
   if(subjectRow > nrow(data) || subjectRow < 1) stop("Subject row is out of bounds.")
   
   if ( ! missing( zoom ) ) {
-    dataz=find_closest_subjects( data[subjectRow,], data, k=zoom, 'commonSex', 'commonAge')
+    dataz=find_closest_subjects( data[subjectRow,], data, k=zoom, sexcol, agecol )
     data = do.call(rbind, dataz)
     subjectRow=1
   }
