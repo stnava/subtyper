@@ -4849,7 +4849,7 @@ convert_to_random_effects <- function(variables) {
 #' @param data A data frame containing the dataset for analysis.
 #' @param subjectRow The row number or identifier for the subject of interest within the dataset.
 #' @param columns A vector of column names in the dataset that should be summarized.
-#' @param zoom A parameter to specify the focus or zoom level of the summary.
+#' @param zoom A parameter to specify the focus or zoom level of the summary.  zoom (integer) specifies the number of nearest neighbors to use.
 #' @param idcolumn column name for the unique subject ID
 #' @param sexcol name of the sex column
 #' @param agecol name of the age column
