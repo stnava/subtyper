@@ -22,7 +22,7 @@ normativeSummary(
 
 \item{columns}{A vector of column names in the dataset that should be summarized.}
 
-\item{zoom}{A parameter to specify the focus or zoom level of the summary.}
+\item{zoom}{A parameter to specify the focus or zoom level of the summary.  zoom (integer) specifies the number of nearest neighbors to use.}
 
 \item{idcolumn}{column name for the unique subject ID}
 

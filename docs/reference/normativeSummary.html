@@ -77,6 +77,8 @@ to focus on specific columns and can be zoomed into particular data points.</p>
 <span>  <span class="va">columns</span>,</span>
 <span>  <span class="va">zoom</span>,</span>
 <span>  idcolumn <span class="op">=</span> <span class="st">"commonID"</span>,</span>
+<span>  sexcol <span class="op">=</span> <span class="st">"commonSex"</span>,</span>
+<span>  agecol <span class="op">=</span> <span class="st">"commonAge"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -96,11 +98,19 @@ to focus on specific columns and can be zoomed into particular data points.</p>
 
 
 <dt>zoom</dt>
-<dd><p>A parameter to specify the focus or zoom level of the summary.</p></dd>
+<dd><p>A parameter to specify the focus or zoom level of the summary.  zoom (integer) specifies the number of nearest neighbors to use.</p></dd>
 
 
 <dt>idcolumn</dt>
 <dd><p>column name for the unique subject ID</p></dd>
+
+
+<dt>sexcol</dt>
+<dd><p>name of the sex column</p></dd>
+
+
+<dt>agecol</dt>
+<dd><p>name of the age column</p></dd>
 
 
 <dt>verbose</dt>
