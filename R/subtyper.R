@@ -5795,4 +5795,48 @@ create_table1 <- function(data, summary_vars, group_var,
   # Return the customized Table 1
   return(gt_table1)
 }
+
+#' Log Parameters of a Function Call
+#'
+#' This function logs the parameters and the call time of a specified function to a log file.
+#'
+#' @param func The function to be called and logged.
+#' @param logfile The name of the log file where the function call information will be saved. The actual file will be named `logfile_function_calls.log`.
+#' @param ... Additional arguments to be passed to the function `func`.
+#'
+#' @return The result of the function `func`.
+#' @export
+#'
+#' @examples
+#' my_function <- function(a, b, c = 10) {
+#'   return(a + b + c)
+#' }
+#' result <- log_parameters(my_function, "my_log", a = 1, b = 2, c = 3)
+#' print(result)
+log_parameters <- function(func, logfile, ...) {
+  call <- match.call()
+  call_time <- Sys.time()
+  
+  # Extract function name and arguments
+  func_name <- as.character(call[[2]])
+  args <- list(...)
+  
+  # Log to console or file
+  log_entry <- paste0("[", call_time, "] ", func_name, " called with: ", 
+                      paste(names(args), unlist(args), sep = " = ", collapse = ", "), "\n")
+  
+  # Append log entry to a file
+  cat(log_entry, file = paste0(logfile, "_function_calls.log"), append = TRUE)
+  
+  # Call the original function
+  result <- do.call(func, args)
+  
+  # Return result
+  return(result)
+}
+
+
 ###
+
+
+
