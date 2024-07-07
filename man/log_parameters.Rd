@@ -18,6 +18,7 @@ The result of the function \code{func}.
 }
 \description{
 This function logs the parameters and the call time of a specified function to a log file.
+If any of the parameters are matrices or vectors longer than 5 elements, their values will not be printed in the log.
 }
 \examples{
 my_function <- function(a, b, c = 10) {
