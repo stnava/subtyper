@@ -35,7 +35,7 @@ antspymm_simlr(
 
 \item{nsimlr}{Number of similarity analyses to perform. Defaults to 5.}
 
-\item{covariates}{any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.}
+\item{covariates}{any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. \code{c('center','scale','rank')}}
 
 \item{myseed}{Seed for random number generation to ensure reproducibility. Defaults to 3.}
 

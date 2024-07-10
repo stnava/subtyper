@@ -5075,7 +5075,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param connect_cog Vector of column names to be treated as a special target matrix;  often used for cognitive data and in a superivsed variant of simlr.  Exclude this argument if this is unclear.
 #' @param energy The type of energy model to use for similarity analysis. Defaults to 'reg'.
 #' @param nsimlr Number of similarity analyses to perform. Defaults to 5.
-#' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.
+#' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. \code{c('center','scale','rank')}
 #' @param myseed Seed for random number generation to ensure reproducibility. Defaults to 3.
 #' @param doAsym integer 0 for FALSE, 1 for TRUE and 2 for separate matrices for asymm variables.
 #' @param returnidps Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.
@@ -5230,11 +5230,31 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
   }
   nms = names(mats)
   regs0 = list()
-
+  rank_and_scale <- function(mat) {
+    # Function to rank transform and scale a single column
+    rank_and_scale_col <- function(col) {
+      ranked_col <- rank(col, ties.method = "average") # Rank the column
+      scaled_col <- 2 * ((ranked_col - min(ranked_col)) / (max(ranked_col) - min(ranked_col))) - 1 # Scale to range -1 to 1
+      return(scaled_col)
+    }
+    
+    # Apply the rank_and_scale_col function to each column of the matrix
+    result <- apply(mat, 2, rank_and_scale_col)
+    return(result)
+  }
   update_residuals <- function(mats, x, covariate, blaster2, allnna) {
     if ( is.null(covariate) ) return(mats[[x]])
     if ( covariate == 'robust' ) {
       return( robustMatrixTransform( data.matrix( mats[[x]] ) ) )
+    }
+    if ( covariate == 'center' ) {
+      return( scale( data.matrix( mats[[x]] ), center=TRUE,  scale=FALSE ))
+    }
+    if ( covariate == 'rank' ) {
+      return( rank_and_scale( data.matrix( mats[[x]] ) ) )
+    }
+    if ( covariate == 'scale' ) {
+      return( scale( data.matrix( mats[[x]] ), center=FALSE,  scale=TRUE ))
     }
     if ( covariate == 'mean' ) {
       mymean=rowMeans(  data.matrix( mats[[x]] ) )
@@ -5246,13 +5266,17 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
     }
 
   if ( verbose) print("setting up regularization")
+  for ( mycov in covariates ) {
+    print(paste("adjust by:",mycov))
   for ( x in 1:length(mats)) {
       if ( verbose ) {
         if ( x == 1 ) print(paste("training n= ",nrow(mats[[x]])))
         cat(paste0(names(mats)[x],"..."))
       }
-      mats[[x]]=update_residuals( mats, x, covariates, blaster2, allnna )
+      mats[[x]]=update_residuals( mats, x, mycov, blaster2, allnna )
       mats[[x]]=data.matrix(mats[[x]])
+  }}
+  for ( x in 1:length(mats)) {
       mycor = cor( mats[[x]] )
       mycor[mycor < 0.8]=0
       regs0[[x]]=data.matrix(mycor)
