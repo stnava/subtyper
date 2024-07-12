@@ -5839,31 +5839,30 @@ create_table1 <- function(data, summary_vars, group_var,
 #' }
 #' result <- log_parameters(my_function, "my_log", a = 1, b = 2, c = 3)
 #' print(result)
+#' 
 log_parameters <- function(func, logfile, ...) {
   call <- match.call()
   call_time <- Sys.time()
-  verbose=TRUE
-  if ( verbose ) print(call_time)
+  verbose <- TRUE
+  if (verbose) print(call_time)
   
   # Extract function name and arguments
   func_name <- as.character(call[[2]])
   args <- list(...)
-  if ( verbose ) {
+  if (verbose) {
     print(func_name)
-    print( paste( "logging ... ", length( args ) ))
+    print(paste("logging ... ", length(args)))
   }
-
-  # Prepare log entry with appropriate handling of matrix and long vector arguments
 
   # Prepare log entry with appropriate handling of matrix and long vector arguments
   args_logged <- sapply(names(args), function(arg_name) {
     arg_value <- args[[arg_name]]
     arg_type <- class(arg_value)[1]
     
-    if (is.matrix(arg_value) | is.data.frame( arg_value )) {
-      paste0(arg_name, " = <matrix>, type = ", arg_type)
+    if (is.matrix(arg_value) | is.data.frame(arg_value)) {
+      paste0(arg_name, " = <matrix>, type = ", arg_type, ", dim = ", paste(dim(arg_value), collapse = "x"))
     } else if (is.vector(arg_value) && length(arg_value) > 5) {
-      paste0(arg_name, " = <long vector>, type = ", arg_type)
+      paste0(arg_name, " = <long vector>, type = ", arg_type, ", length = ", length(arg_value))
     } else {
       paste0(arg_name, " = ", arg_value, ", type = ", arg_type)
     }
@@ -5872,7 +5871,7 @@ log_parameters <- function(func, logfile, ...) {
   log_entry <- paste0("[", call_time, "] ", func_name, " called with: ", 
                       paste(args_logged, collapse = ", "), "\n")
 
-  if ( verbose ) print( log_entry )
+  if (verbose) print(log_entry)
   
   # Append log entry to a file
   cat(log_entry, file = paste0(logfile, "_function_calls.log"), append = TRUE)
@@ -5883,8 +5882,6 @@ log_parameters <- function(func, logfile, ...) {
   # Return result
   return(result)
 }
-
-###
 
 
 
