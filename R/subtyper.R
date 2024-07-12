@@ -5074,7 +5074,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param select_training_boolean boolean vector to define which entries are in training data
 #' @param connect_cog Vector of column names to be treated as a special target matrix;  often used for cognitive data and in a superivsed variant of simlr.  Exclude this argument if this is unclear.
 #' @param energy The type of energy model to use for similarity analysis. Defaults to 'reg'.
-#' @param nsimlr Number of similarity analyses to perform. Defaults to 5.
+#' @param nsimlr Number of components.
 #' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. \code{c('center','scale','rank')}
 #' @param myseed Seed for random number generation to ensure reproducibility. Defaults to 3.
 #' @param doAsym integer 0 for FALSE, 1 for TRUE and 2 for separate matrices for asymm variables.
@@ -5242,8 +5242,11 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
     result <- apply(mat, 2, rank_and_scale_col)
     return(result)
   }
-  update_residuals <- function(mats, x, covariate, blaster2, allnna) {
+  update_residuals <- function(mats, x, covariate, blaster2, allnna, n.comp ) {
     if ( is.null(covariate) ) return(mats[[x]])
+    if ( covariate == 'whiten' ) {
+      return( icawhiten( data.matrix( mats[[x]] ), n.comp=n.comp ) )
+    }
     if ( covariate == 'robust' ) {
       return( robustMatrixTransform( data.matrix( mats[[x]] ) ) )
     }
@@ -5273,7 +5276,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
         if ( x == 1 ) print(paste("training n= ",nrow(mats[[x]])))
         cat(paste0(names(mats)[x],"..."))
       }
-      mats[[x]]=update_residuals( mats, x, mycov, blaster2, allnna )
+      mats[[x]]=update_residuals( mats, x, mycov, blaster2, allnna, n.comp=nsimlr )
       mats[[x]]=data.matrix(mats[[x]])
   }}
   for ( x in 1:length(mats)) {
