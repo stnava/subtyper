@@ -115,11 +115,11 @@ data types, permutation testing, and more.</p>
 
 
 <dt>nsimlr</dt>
-<dd><p>Number of similarity analyses to perform. Defaults to 5.</p></dd>
+<dd><p>Number of components.</p></dd>
 
 
 <dt>covariates</dt>
-<dd><p>any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. <code>c('center','scale','rank')</code></p></dd>
+<dd><p>any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. <code>c('center','scale','rank')</code>. pass the name opt to antspymm_simlr_update_residuals to have the function print the options.</p></dd>
 
 
 <dt>myseed</dt>

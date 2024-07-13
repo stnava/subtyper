@@ -33,9 +33,9 @@ antspymm_simlr(
 
 \item{energy}{The type of energy model to use for similarity analysis. Defaults to 'reg'.}
 
-\item{nsimlr}{Number of similarity analyses to perform. Defaults to 5.}
+\item{nsimlr}{Number of components.}
 
-\item{covariates}{any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. \code{c('center','scale','rank')}}
+\item{covariates}{any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. \code{c('center','scale','rank')}. pass the name opt to antspymm_simlr_update_residuals to have the function print the options.}
 
 \item{myseed}{Seed for random number generation to ensure reproducibility. Defaults to 3.}
 

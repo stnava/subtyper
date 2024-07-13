@@ -5060,8 +5060,72 @@ replace_values <- function(vec, old_values, new_values) {
 }
 
 
-
-
+#' Update Residuals for SIMLR
+#'
+#' This function updates residuals for SIMLR by applying different covariate transformations.
+#'
+#' @param mats A list of matrices.
+#' @param x An index to select a matrix from the list.
+#' @param covariate A character string specifying the covariate transformation to apply.
+#' @param blaster2 A data frame containing additional covariate data.
+#' @param allnna A logical vector indicating non-missing data points.
+#' @param n.comp An integer specifying the number of components.
+#' @param opt A character string. If set to "opt", the function will print available covariate options.
+#'
+#' @return The residual matrix after applying the specified covariate transformation.
+#' If `opt` is set to "opt", the function will print available covariate options and return NULL.
+#'
+#' @examples
+#' \dontrun{
+#' antspymm_simlr_update_residuals(mats, 1, "whiten", blaster2, allnna, 5)
+#' antspymm_simlr_update_residuals(opt = "opt")
+#' }
+#' @export
+antspymm_simlr_update_residuals <- function(mats, x, covariate, blaster2, allnna, n.comp, opt = NULL) {
+  covariate_options <- c(
+    "whiten", "lowrank", "robust", "center", "rank", "scale", "mean",
+    "formula such as T1Hier_resnetGrade + snr + EVR + psnr"
+  )
+  
+  if (!is.null(opt) && opt == "opt") {
+    print("Available covariate options:")
+    print(covariate_options)
+    return(invisible(NULL))
+  }
+  
+  if (is.null(covariate)) return(mats[[x]])
+  
+  nc <- min(c(n.comp * 2, nrow(mats[[x]]) - 1))
+  
+  if (covariate == "whiten") {
+    return(icawhiten(data.matrix(mats[[x]]), n.comp = nc))
+  }
+  if (covariate == "lowrank") {
+    return(lowrankRowMatrix(data.matrix(mats[[x]]), nc))
+  }
+  if (covariate == "robust") {
+    return(robustMatrixTransform(data.matrix(mats[[x]])))
+  }
+  if (covariate == "center") {
+    return(scale(data.matrix(mats[[x]]), center = TRUE, scale = FALSE))
+  }
+  if (covariate == "rank") {
+    return(rank_and_scale(data.matrix(mats[[x]])))
+  }
+  if (covariate == "scale") {
+    return(scale(data.matrix(mats[[x]]), center = FALSE, scale = TRUE))
+  }
+  if (covariate == "mean") {
+    mymean <- rowMeans(data.matrix(mats[[x]]))
+    covariate2 <- "mymean"
+  } else {
+    covariate2 <- covariate
+  }
+  
+  formula <- as.formula(paste("data.matrix(mats[[", x, "]]) ~ ", covariate2))
+  fit <- lm(formula, data = blaster2[allnna, ])
+  residuals(fit)
+}
 
 #' Perform SiMLR Analysis on Multimodal ANTsPyMM Data
 #'
@@ -5075,7 +5139,7 @@ replace_values <- function(vec, old_values, new_values) {
 #' @param connect_cog Vector of column names to be treated as a special target matrix;  often used for cognitive data and in a superivsed variant of simlr.  Exclude this argument if this is unclear.
 #' @param energy The type of energy model to use for similarity analysis. Defaults to 'reg'.
 #' @param nsimlr Number of components.
-#' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. \code{c('center','scale','rank')}
+#' @param covariates any covariates to adjust training matrices. if covariates is set to 'mean' then the rowwise mean will be factored out of each matrix.  this can be a vector e.g. \code{c('center','scale','rank')}. pass the name opt to antspymm_simlr_update_residuals to have the function print the options.
 #' @param myseed Seed for random number generation to ensure reproducibility. Defaults to 3.
 #' @param doAsym integer 0 for FALSE, 1 for TRUE and 2 for separate matrices for asymm variables.
 #' @param returnidps Logical indicating whether to return the intermediate processing steps' results. Defaults to FALSE.
@@ -5242,35 +5306,6 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
     result <- apply(mat, 2, rank_and_scale_col)
     return(result)
   }
-  update_residuals <- function(mats, x, covariate, blaster2, allnna, n.comp ) {
-    if ( is.null(covariate) ) return(mats[[x]])
-    nc = min( c(n.comp*2, nrow(mats[[x]])-1))
-    if ( covariate == 'whiten' ) {
-      return( icawhiten( data.matrix( mats[[x]] ), n.comp=nc ) )
-    }
-    if ( covariate == 'lowrank' ) {
-      return( lowrankRowMatrix( data.matrix( mats[[x]] ), nc ) )
-    }
-    if ( covariate == 'robust' ) {
-      return( robustMatrixTransform( data.matrix( mats[[x]] ) ) )
-    }
-    if ( covariate == 'center' ) {
-      return( scale( data.matrix( mats[[x]] ), center=TRUE,  scale=FALSE ))
-    }
-    if ( covariate == 'rank' ) {
-      return( rank_and_scale( data.matrix( mats[[x]] ) ) )
-    }
-    if ( covariate == 'scale' ) {
-      return( scale( data.matrix( mats[[x]] ), center=FALSE,  scale=TRUE ))
-    }
-    if ( covariate == 'mean' ) {
-      mymean=rowMeans(  data.matrix( mats[[x]] ) )
-      covariate2='mymean'
-    } else covariate2=covariate
-    formula <- as.formula(paste("data.matrix(mats[[", x, "]]) ~ ", covariate2))
-    fit <- lm(formula, data = blaster2[allnna, ])
-    residuals(fit)
-    }
 
   if ( verbose) print("setting up regularization")
   for ( mycov in covariates ) {
@@ -5280,7 +5315,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
         if ( x == 1 ) print(paste("training n= ",nrow(mats[[x]])))
         cat(paste0(names(mats)[x],"..."))
       }
-      mats[[x]]=update_residuals( mats, x, mycov, blaster2, allnna, n.comp=nsimlr )
+      mats[[x]]=antspymm_simlr_update_residuals( mats, x, mycov, blaster2, allnna, n.comp=nsimlr )
       mats[[x]]=data.matrix(mats[[x]])
   }}
   for ( x in 1:length(mats)) {

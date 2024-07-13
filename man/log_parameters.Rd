@@ -26,4 +26,5 @@ my_function <- function(a, b, c = 10) {
 }
 result <- log_parameters(my_function, "my_log", a = 1, b = 2, c = 3)
 print(result)
+
 }
