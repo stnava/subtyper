@@ -5244,8 +5244,12 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
   }
   update_residuals <- function(mats, x, covariate, blaster2, allnna, n.comp ) {
     if ( is.null(covariate) ) return(mats[[x]])
+    nc = min( c(n.comp*2, nrow(mats[[x]])-1))
     if ( covariate == 'whiten' ) {
-      return( icawhiten( data.matrix( mats[[x]] ), n.comp=n.comp ) )
+      return( icawhiten( data.matrix( mats[[x]] ), n.comp=nc ) )
+    }
+    if ( covariate == 'lowrank' ) {
+      return( lowrankRowMatrix( data.matrix( mats[[x]] ), nc ) )
     }
     if ( covariate == 'robust' ) {
       return( robustMatrixTransform( data.matrix( mats[[x]] ) ) )
