@@ -4746,6 +4746,106 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   return(results)
 }
 
+#' Linear Regression Analysis with ANOVA and Effect Size Calculation
+#'
+#' This function fits two linear regression models: a base model without the main predictor of interest
+#' and a full model including the main predictor. It then compares these models using ANOVA to test the
+#' significance of adding the main predictor. Additionally, it calculates the effect sizes for the predictor
+#' in the full model. This function is designed to facilitate the analysis of data.
+#' NOTE: this function will scale variables internally to aid coefficient estimate visualization.
+#'
+#' @param data A data frame containing the variables referenced in the model formulas.
+#' @param outcome The name of the dependent variable (outcome) as a string.
+#' @param predictor The name of the main predictor variable as a string.
+#' @param fixed_effects A string specifying the fixed effects to be included in the model, excluding the main predictor.
+#' @param predictoroperator either a \code{+} or \code{*}
+#' @param verbose boolean
+#' @return A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
+#' predictor, coefficients of the full model, and the sample size (n).
+#' @examples
+#' # Assuming 'data' is your dataset with columns 'outcome', 'predictor', and 'fixed_var1', ...
+#' # results <- lm_anv_p_and_d(data, "outcome", "predictor", "fixed_var1 + fixed_var2")
+#' # summary(results$full_model) # Full model summary
+#' # results$model_comparison # ANOVA comparison
+#' # results$effect_sizes # Effect sizes
+#' @importFrom stats lm anova
+#' @importFrom effectsize t_to_d
+#' @export
+lm_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, predictoroperator='*', verbose=FALSE) {
+  # Validate input to ensure variables exist in the data frame
+  stopifnot(is.character(outcome), is.character(predictor), is.character(fixed_effects))
+  
+  # Construct the model formulas directly
+  base_model_formula <- paste(outcome, "~", fixed_effects)
+  if (verbose) {
+    print("base_model_formula")
+    print(base_model_formula)
+  }
+  full_model_formula <- paste(base_model_formula, predictoroperator, predictor)
+  base_model_formula <- as.formula(base_model_formula)
+  full_model_formula <- as.formula(full_model_formula)
+  all_vars <- all.vars(full_model_formula)
+  missing_vars <- setdiff(all_vars, colnames(data))
+  if (verbose) {
+    print(full_model_formula)
+  }
+  if (length(missing_vars) > 0) {
+    stop("The following variables are missing in the data: ", paste(missing_vars, collapse = ", "), ".")
+  }
+  
+  # Subset data to exclude rows with NA values for relevant variables
+  datasub <- na.omit(data[, all_vars])
+  
+  # Scale the variables internally
+  scale_variables <- function(df, formula) {
+    terms <- all.vars(formula)
+    df[terms] <- scale(df[terms])
+    return(df)
+  }
+  datasub <- scale_variables(datasub, full_model_formula)
+  
+  # Fit the linear models using lm
+  base_model <- tryCatch({
+    lm(base_model_formula, data = datasub)
+  }, error = function(e) {
+    print("ERROR")
+    print(e)
+    NULL
+  })
+  if (is.null(base_model)) return(NULL)
+  
+  full_model <- tryCatch({
+    lm(full_model_formula, data = datasub)
+  }, error = function(e) {
+    print("ERROR")
+    print(e)
+    NULL
+  })
+  if (is.null(full_model)) return(NULL)
+  
+  # Perform ANOVA to compare the models
+  model_comparison <- anova(base_model, full_model)
+  
+  # Calculate effect sizes for the full model
+  coefs <- summary(full_model)$coefficients
+  ndf <- nrow(datasub)
+  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], rep(ndf, nrow(coefs)))
+  effect_sizes <- data.frame(effect_sizes)
+  rownames(effect_sizes) <- rownames(coefs)
+  searchpred <- all.vars(formula(paste0("z~", predictor)))[-1]
+  effect_sizes <- effect_sizes[multigrep(searchpred, rownames(effect_sizes)), ]
+  
+  # Prepare and return the results
+  results <- list(
+    full_model = full_model,
+    model_comparison = model_comparison,
+    effect_sizes = effect_sizes,
+    coefficients = coefs,
+    n = ndf
+  )
+  
+  return(results)
+}
 
 
 #' Set Seed Based on Current Time
