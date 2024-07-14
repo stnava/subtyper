@@ -5927,3 +5927,80 @@ log_parameters <- function(func, logfile, ...) {
 
 
 
+
+
+
+
+#' Bipartite Variable Match
+#'
+#' This function matches two sets of variables using a bipartite graph and returns a data frame of the matched pairs.
+#'
+#' @param data A data frame containing the required columns for matching.
+#' @param cog_col Character. The name of the first variable column. Default is "cog".
+#' @param voi_col Character. The name of the second variable column. Default is "voi".
+#' @param plot Logical. If TRUE, plots the resulting bipartite graph. Default is FALSE.
+#' @param weight_type Character. Defines the edge weight type for the bipartite graph. Options are "d" (distance), "-log(p)" (negative log p-value). Default is "-log(p)".
+#' @param edge_width_multiplier Numeric. Multiplier for the edge width in the plot. Default is 11.
+#' @param directed Logical. If TRUE, creates a directed graph. Default is FALSE.
+#'
+#' @return A data frame with matched pairs of variables and their associated data.
+#' @import igraph
+#' @export
+#'
+#' @examples
+#' # Example usage:
+#' df <- data.frame(cog = c("cog1", "cog2"), voi = c(1, 2), d = c(0.1, 0.2), p = c(0.05, 0.01), multi = c(1, 2))
+#' bipartite_variable_match(df, plot = TRUE)
+bipartite_variable_match <- function(data, cog_col = "cog", voi_col = "voi", plot = FALSE, weight_type = "-log(p)", edge_width_multiplier = 11, directed = FALSE) {
+  
+  # Expected columns
+  expected_columns <- c(cog_col, voi_col, "d", "p", "multi")
+  
+  # Check for missing columns
+  missing_columns <- setdiff(expected_columns, names(data))
+  if (length(missing_columns) > 0) {
+    warning("The following expected columns are missing from the data: ", paste(missing_columns, collapse = ", "))
+    return(NULL)
+  }
+  
+  df <- data[, expected_columns]
+  g <- graph_from_data_frame(df, directed = directed)
+  
+  # Set vertex types
+  V(g)$type <- names(V(g)) %in% df[[cog_col]]
+  
+  # Set edge weights based on user-defined weight_type
+  if (weight_type == "d") {
+    E(g)$weight <- df$d
+  } else if (weight_type == "-log(p)") {
+    E(g)$weight <- -log(df$p)
+  } else {
+    stop("Invalid weight_type. Choose either 'd' or '-log(p)'.")
+  }
+  
+  # Compute the maximum bipartite match
+  matching <- max_bipartite_match(g, weights = E(g)$weight)
+  cogmatching <- na.omit(matching$matching[unique(df[[cog_col]])])
+  resultdataframe <- data.frame(
+    cog = names(cogmatching), 
+    voi = as.integer(cogmatching)
+  )
+  
+  # Add additional data to resultdataframe
+  for (k in 1:nrow(resultdataframe)) {
+    losel <- df[[cog_col]] == resultdataframe$cog[k] & df[[voi_col]] == resultdataframe$voi[k]
+    for (j in c("d", "p", "multi")) {
+      resultdataframe[k, j] <- df[losel, j]
+    }
+  }
+  
+  # Create a subgraph for plotting
+  subg <- graph_from_data_frame(resultdataframe, directed = directed)
+  E(subg)$weight <- resultdataframe$d
+  
+  if (plot) {
+    plot(subg, edge.width = E(subg)$weight * edge_width_multiplier)
+  }
+  
+  return(resultdataframe)
+}
