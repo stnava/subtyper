@@ -3,6 +3,7 @@
 export(VarSelLCMproba.post)
 export(adjustByCovariates)
 export(adjustByCovariatesUni)
+export(adjust_p_values)
 export(antspymm_nuisance_names)
 export(antspymm_predictors)
 export(antspymm_simlr)

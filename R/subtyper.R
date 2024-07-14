@@ -6004,3 +6004,31 @@ bipartite_variable_match <- function(data, cog_col = "cog", voi_col = "voi", plo
   
   return(resultdataframe)
 }
+
+
+
+#' Adjust p-values and return subsetted dataframe
+#'
+#' This function adjusts p-values using the BY, BH, or uncorrected methods and 
+#' returns a subset of the input dataframe where the adjusted p-values are significant.
+#'
+#' @param resdf A dataframe containing p-values in a column named 'p'.
+#' @param alpha The significance level (default is 0.05).
+#' @return A subset of 'resdf' dataframe containing rows with significant p-values.
+#' @export
+#' @examples
+#' resdf <- data.frame(p = c(0.01, 0.05, 0.2, 0.3))
+#' adjust_p_values(resdf)
+adjust_p_values <- function(resdf, alpha = 0.05) {
+  qsel <- p.adjust(resdf$p, method = 'BY') <= alpha
+  if (sum(qsel) == 0) {
+    qsel <- p.adjust(resdf$p, method = 'BH') <= alpha
+  }
+  if (sum(qsel) == 0) {
+    qsel <- p.adjust(resdf$p, method = 'none') <= alpha
+  }
+  if (sum(qsel) == 0) {
+    qsel <- p.adjust(resdf$p, method = 'none') <= 0.2
+  }
+  return(resdf[qsel, ])
+}
