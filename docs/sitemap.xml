@@ -37,6 +37,9 @@
     <loc>/reference/adjustByCovariatesUni.html</loc>
   </url>
   <url>
+    <loc>/reference/adjust_p_values.html</loc>
+  </url>
+  <url>
     <loc>/reference/antspymm_nuisance_names.html</loc>
   </url>
   <url>
@@ -74,6 +77,9 @@
   </url>
   <url>
     <loc>/reference/biclusterMatrixFactorization.html</loc>
+  </url>
+  <url>
+    <loc>/reference/bipartite_variable_match.html</loc>
   </url>
   <url>
     <loc>/reference/clearcolname.html</loc>
@@ -158,6 +164,9 @@
   </url>
   <url>
     <loc>/reference/interpret_simlr_vector2.html</loc>
+  </url>
+  <url>
+    <loc>/reference/lm_anv_p_and_d.html</loc>
   </url>
   <url>
     <loc>/reference/lmer_anv_p_and_d.html</loc>

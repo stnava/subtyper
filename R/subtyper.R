@@ -4796,14 +4796,6 @@ lm_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, predictorope
   # Subset data to exclude rows with NA values for relevant variables
   datasub <- na.omit(data[, all_vars])
   
-  # Scale the variables internally
-  scale_variables <- function(df, formula) {
-    terms <- all.vars(formula)
-    df[terms] <- scale(df[terms])
-    return(df)
-  }
-  datasub <- scale_variables(datasub, full_model_formula)
-  
   # Fit the linear models using lm
   base_model <- tryCatch({
     lm(base_model_formula, data = datasub)
@@ -6107,28 +6099,93 @@ bipartite_variable_match <- function(data, cog_col = "cog", voi_col = "voi", plo
 
 
 
-#' Adjust p-values and return subsetted dataframe
+#' Adjust P-values and Return Subsetted Dataframe
 #'
-#' This function adjusts p-values using the BY, BH, or uncorrected methods and 
-#' returns a subset of the input dataframe where the adjusted p-values are significant.
+#' This function adjusts p-values using a specified method and alpha level. 
+#' It successively tests each method along with each alpha value, and if 
+#' the sum is zero, it continues to the next method. Otherwise, it returns 
+#' the subsetted dataframe.
 #'
-#' @param resdf A dataframe containing p-values in a column named 'p'.
-#' @param alpha The significance level (default is 0.05).
-#' @return A subset of 'resdf' dataframe containing rows with significant p-values.
-#' @export
+#' @param resdf A data frame containing at least a column named \code{p} with p-values.
+#' @param methods A character vector specifying the methods for p-value adjustment. Default is \code{c('BY', 'BH', 'none', 'none')}.
+#' @param alpha A numeric vector specifying the alpha levels for p-value adjustment. Default is \code{c(0.05, 0.05, 0.05, 0.2)}.
+#' @return A subsetted dataframe where the adjusted p-values are less than or equal to the corresponding alpha levels.
+#' @details The function checks that the lengths of \code{methods} and \code{alpha} are equivalent and that all alpha values are in the range (0, 1). It iterates over the provided methods and alpha values, adjusting the p-values using the \code{p.adjust} function from the \code{stats} package. If the sum of selected values is greater than zero, it returns the subsetted dataframe.
 #' @examples
-#' resdf <- data.frame(p = c(0.01, 0.05, 0.2, 0.3))
-#' adjust_p_values(resdf)
-adjust_p_values <- function(resdf, alpha = 0.05) {
-  qsel <- p.adjust(resdf$p, method = 'BY') <= alpha
-  if (sum(qsel) == 0) {
-    qsel <- p.adjust(resdf$p, method = 'BH') <= alpha
+#' # Example dataset
+#' set.seed(123)
+#' resdf <- data.frame(
+#'   p = runif(100, min = 0, max = 1)
+#' )
+#'
+#' # Example usage of adjust_p_values
+#' adjusted_df <- adjust_p_values(resdf, methods = c('BY', 'BH', 'none', 'none'), alpha = c(0.05, 0.05, 0.05, 0.2))
+#' head(adjusted_df)
+#' @importFrom stats p.adjust
+#' @export
+adjust_p_values <- function(resdf, methods = c('BY', 'BH', 'none', 'none'), 
+                            alpha = c(0.05, 0.05, 0.05, 0.2)) {
+  # Check if lengths of methods and alpha are equivalent
+  if (length(methods) != length(alpha)) {
+    stop("The lengths of 'methods' and 'alpha' must be equivalent.")
   }
-  if (sum(qsel) == 0) {
-    qsel <- p.adjust(resdf$p, method = 'none') <= alpha
+  
+  # Check if all alpha values are in the valid range (0, 1)
+  if (any(alpha <= 0 | alpha >= 1)) {
+    stop("All alpha values must be in the range (0, 1).")
   }
-  if (sum(qsel) == 0) {
-    qsel <- p.adjust(resdf$p, method = 'none') <= 0.2
+  
+  # Iterate over the provided methods and alpha values
+  for (i in seq_along(methods)) {
+    qsel <- p.adjust(resdf$p, method = methods[i]) <= alpha[i]
+    if (sum(qsel) > 0) {
+      return(resdf[qsel, ])
+    }
   }
-  return(resdf[qsel, ])
+  
+  # If no method produces a non-zero subset, return an empty dataframe
+  return(resdf[FALSE, ])
+}
+
+
+#' Identify Best Variable of Interest (VOI)
+#'
+#' This function identifies the best Variable of Interest (VOI) based on the minimum or maximum value of a specified column. 
+#' It groups the data by a specified column and selects rows with the minimum or maximum value in another specified column.
+#'
+#' @param data A data frame containing the dataset.
+#' @param group_var A symbol specifying the column name to group by. Defaults to the first column of the data.
+#' @param value_var A symbol specifying the column name to use for selecting the minimum or maximum value. Defaults to the second column of the data.
+#' @param select_vars A vector of column names to select in the final output. Defaults to all columns.
+#' @param selection A character string specifying whether to select the "min" or "max" value. Defaults to "min".
+#' 
+#' @return A data frame with the best VOIs based on the specified criteria.
+#' 
+#' @import dplyr
+#' @importFrom rlang enquo
+#' @export
+#'
+#' @examples
+#' data <- data.frame(cog = c('A', 'A', 'B', 'B'), 
+#'                    voi = c('X1', 'X2', 'Y1', 'Y2'), 
+#'                    d = c(0.5, 0.7, 0.3, 0.9), 
+#'                    p = c(0.01, 0.05, 0.02, 0.03), 
+#'                    multi = c(TRUE, FALSE, TRUE, FALSE))
+#' identify_best_voi(data, group_var = cog, value_var = p, select_vars = c("cog", "voi", "d", "p", "multi"), selection = "min")
+identify_best_voi <- function(data, group_var = names(data)[1], value_var = names(data)[2], select_vars = names(data), selection = c("min", "max")) {
+  # Convert input columns to symbols
+  group_var <- rlang::enquo(group_var)
+  value_var <- rlang::enquo(value_var)
+  
+  # Match selection argument to ensure it's either "min" or "max"
+  selection <- match.arg(selection)
+  
+  # Group by specified variable and select the rows with the minimum or maximum value of the specified column
+  best_vois <- data %>%
+    group_by(!!group_var) %>%
+    filter(if (selection == "min") !!value_var == min(!!value_var, na.rm = TRUE) else !!value_var == max(!!value_var, na.rm = TRUE)) %>%
+    select(all_of(select_vars)) %>%
+    ungroup()
+  
+  return(best_vois)
 }
