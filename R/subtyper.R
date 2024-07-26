@@ -5716,6 +5716,29 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' existing_df <- data.frame(matrix(rnorm(147 * 5), nrow = 147, ncol = 5))
 #' # combined_df <- apply_simlr_matrices(existing_df, matrices_list)
 apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robust=FALSE, absolute_value=TRUE, verbose=FALSE ) {
+
+  replbind <- function(df1, df2) {
+    # Find the common and unique columns
+    common_cols <- intersect(names(df1), names(df2))
+    unique_cols_df1 <- setdiff(names(df1), common_cols)
+    unique_cols_df2 <- setdiff(names(df2), common_cols)
+    
+    # Replace values in common columns with those from df2
+    if (length(common_cols) > 0) {
+      for (col in common_cols) {
+        df1[[col]] <- df2[[col]]
+      }
+    }
+    
+    # Bind the unique columns from both data frames
+    if (length(unique_cols_df2) > 0) {
+      result <- cbind(df1, df2[, unique_cols_df2, drop = FALSE])
+    } else {
+      result <- df1
+    }
+    
+    return(result)
+  }
   newnames=c()
   for (name in names(matrices_list)) {
     if ( verbose ) print(name)
@@ -5738,7 +5761,8 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robus
         projection=projection[,1:n_limit]
       }
       newnames=c(newnames,colnames(projection))
-      existing_df <- cbind(existing_df, projection)
+
+      existing_df <- replbind(existing_df, projection)
       if ( verbose ) {
         print( inames )
         print( colnames(projection) )
