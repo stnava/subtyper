@@ -46,6 +46,9 @@
     <loc>/reference/antspymm_predictors.html</loc>
   </url>
   <url>
+    <loc>/reference/antspymm_qc_names.html</loc>
+  </url>
+  <url>
     <loc>/reference/antspymm_simlr.html</loc>
   </url>
   <url>
@@ -152,6 +155,9 @@
   </url>
   <url>
     <loc>/reference/highestQualityRepeat.html</loc>
+  </url>
+  <url>
+    <loc>/reference/identify_best_voi.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>

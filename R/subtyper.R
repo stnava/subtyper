@@ -6213,3 +6213,39 @@ identify_best_voi <- function(data, group_var = names(data)[1], value_var = name
   
   return(best_vois)
 }
+
+
+
+#' Get Quality Control (QC) Metric Names
+#'
+#' This function returns a vector of quality control (QC) metric names used in the \code{antspymm} package. 
+#' These metrics include volume measures, reflection errors, PSNR (Peak Signal-to-Noise Ratio), CNR (Contrast-to-Noise Ratio), 
+#' and various metrics related to motion correction in rsfMRI and DTI.
+#'
+#' @return A character vector containing the names of QC metrics.
+#' @examples
+#' qc_names <- antspymm_qc_names()
+#' print(qc_names)
+#' @export
+antspymm_qc_names <- function() {
+  zz <- c(
+    'T1Hier_resnetGrade',
+    "msk_vol", "T2Flair_msk_vol", "NM1_msk_vol", "NM2_msk_vol", "NM3_msk_vol", "NM4_msk_vol", "NM5_msk_vol", "DTI1_msk_vol", "DTI2_msk_vol", 
+    "rsf1_msk_vol", "rsf2_msk_vol", "rsf3_msk_vol", "reflection_err", "T2Flair_reflection_err", "T2Flair_score_reflection_err", "NM1_reflection_err", 
+    "NM1_score_reflection_err", "NM2_reflection_err", "NM2_score_reflection_err", "NM3_reflection_err", "NM3_score_reflection_err", 
+    "NM4_reflection_err", "NM4_score_reflection_err", "NM5_reflection_err", "NM5_score_reflection_err", "DTI1_reflection_err", "DTI2_reflection_err", 
+    "rsf1_reflection_err", "rsf2_reflection_err", "rsf3_reflection_errpsnr", "T2Flair_psnr", "NM1_psnr", "NM2_psnr", "NM3_psnr", "NM4_psnr", 
+    "NM5_psnr", "DTI1_psnr", "DTI2_psnr", "rsf1_psnr", "rsf2_psnr", "rsf3_psnr", "T1Hier_evratio", "T2Flair_wmh_evr", "rsfMRI_fcnxpro134_bold_evr", 
+    "rsfMRI_fcnxpro122_bold_evr", "rsfMRI_fcnxpro129_bold_evr", "NM2DMT_NM_evr", "T2Flair_flair_evr", "DTI_dti_fa_evr", "cnr", "T2Flair_cnr", 
+    "NM1_cnr", "NM2_cnr", "NM3_cnr", "NM4_cnr", "NM5_cnr", "DTI1_cnr", "DTI2_cnr", "rsf1_cnr", "rsf2_cnr", "rsf3_cnr", 
+    "rsfMRI_fcnxpro134_motion_corrected_mean", "rsfMRI_fcnxpro134_high_motion_count", "rsfMRI_fcnxpro134_high_motion_pct", 
+    "rsfMRI_fcnxpro122_motion_corrected_mean", "rsfMRI_fcnxpro122_high_motion_count", "rsfMRI_fcnxpro122_high_motion_pct", 
+    "rsfMRI_fcnxpro129_motion_corrected_mean", "rsfMRI_fcnxpro129_high_motion_count", "rsfMRI_fcnxpro129_high_motion_pct", 
+    "DTI_dti_high_motion_count", "rsfMRI_fcnxpro134_minutes_original_data", "rsfMRI_fcnxpro134_minutes_censored_data", 
+    "rsfMRI_fcnxpro122_minutes_original_data", "rsfMRI_fcnxpro122_minutes_censored_data", "rsfMRI_fcnxpro129_minutes_original_data", 
+    "rsfMRI_fcnxpro129_minutes_censored_data"
+  )
+  zz <- zz[ -grep("score", zz) ]
+  zz <- zz[ zz != "" ]
+  return( unique( zz ) )
+}
