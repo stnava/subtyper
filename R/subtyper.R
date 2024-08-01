@@ -6249,3 +6249,83 @@ antspymm_qc_names <- function() {
   zz <- zz[ zz != "" ]
   return( unique( zz ) )
 }
+
+
+
+#' Impute missing data using GLM models
+#'
+#' @param dataframe A data frame containing the data to impute.
+#' @param columns_to_impute A vector of column names to impute.
+#' @param predictor_columns A vector of column names to use as predictors.
+#' @param family A string specifying the GLM family (default is 'gaussian').
+#' @return A data frame with imputed values.
+#' @examples
+#' set.seed(123)
+#' df <- data.frame(
+#'   age = c(25, 30, 35, NA, 45, 50, NA, 40, 35, NA),
+#'   income = c(50000, 60000, 70000, 80000, 90000, 100000, 110000, NA, 120000, 130000),
+#'   education = c(12, 16, 14, 12, NA, 18, 20, 16, 14, 12)
+#' )
+#' columns_to_impute <- c("age", "income", "education")
+#' predictor_columns <- c("age", "income", "education")
+#' imputed_data <- glm_impute(df, columns_to_impute, predictor_columns, family = 'gaussian')
+#' print(imputed_data)
+glm_impute <- function(dataframe, columns_to_impute, predictor_columns, family = 'gaussian') {
+  for (column in columns_to_impute) {
+    # Create the formula for the GLM
+    formula <- as.formula(paste(column, "~", paste(predictor_columns, collapse = "+")))
+    
+    # Identify rows where neither the target nor predictors are missing
+    complete_cases <- complete.cases(dataframe[, c(column, predictor_columns)])
+    
+    # Fit the GLM model on the complete cases
+    model <- glm(formula, data = dataframe[complete_cases, ], family = family)
+    
+    # Identify rows where the target is missing but predictors are available
+    rows_to_impute <- is.na(dataframe[[column]]) & complete.cases(dataframe[, predictor_columns])
+    
+    # Predict the missing values using the fitted model
+    predictions <- predict(model, newdata = dataframe[rows_to_impute, ])
+    
+    # Replace the missing values with the predictions
+    dataframe[rows_to_impute, column] <- predictions
+  }
+  
+  return(dataframe)
+}
+
+#' Impute missing SiMLR data in a specified column based on other columns
+#'
+#' @param dataframe A data frame containing the data to impute.
+#' @param nms A vector of base column names.
+#' @param vecnum A numeric value to append to the column names.
+#' @param toimpute The base name of the target column to be imputed.
+#' @param family A string specifying the GLM family (default is 'gaussian').
+#' @return A data frame with imputed values.
+#' @examples
+#' set.seed(123)
+#' expartdfsim <- data.frame(
+#'   t1PC1 = c(1, 2, NA, 4, 5),
+#'   t1aPC1 = c(5, 4, 3, NA, 1),
+#'   dtPC1 = c(2, NA, 3, 4, 5),
+#'   dtaPC1 = c(NA, 3, 2, 1, 5),
+#'   rsfPC1 = c(1, 2, 3, 4, NA),
+#'   perfPC1 = c(NA, 2, 3, 4, 5)
+#' )
+#' nms <- c("t1", "t1a", "dt", "dta", "rsf", "perf")
+#' vecnum <- 1
+#' toimpute <- "perf"
+#' imputed_expartdfsim <- simlr_impute(expartdfsim, nms, vecnum, toimpute, family = 'gaussian')
+#' print(imputed_expartdfsim)
+simlr_impute <- function(dataframe, nms, vecnum, toimpute, family = 'gaussian') {
+  # Create the list of predictor columns excluding the target column to be imputed
+  predictor_columns <- as.vector(sapply(nms[nms != toimpute], function(x) paste0(x, paste0("PC", vecnum))))
+  
+  # Specify the target column to be imputed
+  columns_to_impute <- paste0(toimpute, "PC", vecnum)
+  
+  # Use the glm_impute function to impute missing values
+  imputed_dataframe <- glm_impute(dataframe, columns_to_impute, predictor_columns, family)
+  
+  return(imputed_dataframe)
+}
