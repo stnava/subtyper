@@ -6,6 +6,15 @@
 \usage{
 shorten_pymm_names(x)
 }
+\arguments{
+\item{x}{string or strings}
+}
+\value{
+string
+}
 \description{
 shorter antspymm names
+}
+\author{
+Avants BB
 }

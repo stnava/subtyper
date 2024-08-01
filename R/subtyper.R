@@ -2776,7 +2776,7 @@ quantSquared  <- function(
 #' @param color_palette A vector of colors, corresponding to the factor levels of
 #'   the specified column. The number of colors must match the number of unique
 #'   factor levels in the column.
-#'
+#' @param color_palette_name optional named color palette
 #' @return A data frame identical to `df` but with an additional column 
 #'   'custom_color', which contains the color mappings.
 #'
@@ -3095,12 +3095,15 @@ mlr3classifiers <- function( twoclass=TRUE, all=FALSE ) {
 #' either include or exclude nuisance variables.
 #' 
 #' @export
-antspymm_nuisance_names <-function(x){
+antspymm_nuisance_names <-function(){
 xcl = c("snr_","bandp","_mean","censor","smooth","outlier","motion","FD","despik","_nc_","_evr","minut","left","right","paramset","_sd","upsampling","mhdist","RandBasis","templateL1")
 return( xcl )
 }
 
 #' shorter antspymm names
+#' @param x string or strings 
+#' @return string
+#' @author Avants BB
 #' 
 #' @export
 shorten_pymm_names <-function(x){
@@ -4216,6 +4219,7 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' @param y The name of the response variable.
 #' @param group The name of the group variable or specific group to be analyzed.
 #' @param titlestring Title of the plot indicating the focus of the visualization.
+#' @param varstoadd optional additional variables to add into the model; otherwise just extract from the equation
 #' @param groupvar Optional; the name of the variable in `demogmdl` that defines group membership. Default is 'group'.
 #' @param predictorsigns Optional; a named numeric vector indicating the direction of the effect of each predictor.
 #' @param jdf_simulation boolean
@@ -6270,6 +6274,7 @@ antspymm_qc_names <- function() {
 #' predictor_columns <- c("age", "income", "education")
 #' imputed_data <- glm_impute(df, columns_to_impute, predictor_columns, family = 'gaussian')
 #' print(imputed_data)
+#' @export
 glm_impute <- function(dataframe, columns_to_impute, predictor_columns, family = 'gaussian') {
   for (column in columns_to_impute) {
     # Create the formula for the GLM
@@ -6317,6 +6322,7 @@ glm_impute <- function(dataframe, columns_to_impute, predictor_columns, family =
 #' toimpute <- "perf"
 #' imputed_expartdfsim <- simlr_impute(expartdfsim, nms, vecnum, toimpute, family = 'gaussian')
 #' print(imputed_expartdfsim)
+#' @export
 simlr_impute <- function(dataframe, nms, vecnum, toimpute, family = 'gaussian') {
   # Create the list of predictor columns excluding the target column to be imputed
   predictor_columns <- as.vector(sapply(nms[nms != toimpute], function(x) paste0(x, paste0("PC", vecnum))))

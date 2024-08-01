@@ -32,6 +32,8 @@ visglm(
 
 \item{titlestring}{Title of the plot indicating the focus of the visualization.}
 
+\item{varstoadd}{optional additional variables to add into the model; otherwise just extract from the equation}
+
 \item{groupvar}{Optional; the name of the variable in \code{demogmdl} that defines group membership. Default is 'group'.}
 
 \item{predictorsigns}{Optional; a named numeric vector indicating the direction of the effect of each predictor.}

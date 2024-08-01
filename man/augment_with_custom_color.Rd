@@ -21,6 +21,8 @@ convertible to a factor.}
 \item{color_palette}{A vector of colors, corresponding to the factor levels of
 the specified column. The number of colors must match the number of unique
 factor levels in the column.}
+
+\item{color_palette_name}{optional named color palette}
 }
 \value{
 A data frame identical to \code{df} but with an additional column

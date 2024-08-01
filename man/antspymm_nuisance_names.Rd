@@ -4,7 +4,7 @@
 \alias{antspymm_nuisance_names}
 \title{return nuisance variable strings}
 \usage{
-antspymm_nuisance_names(x)
+antspymm_nuisance_names()
 }
 \description{
 these strings can be used with getNamesFromDataFrame or multigrep to
