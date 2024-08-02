@@ -33,8 +33,8 @@ df <- data.frame(
   income = c(50000, 60000, 70000, 80000, 90000, 100000, 110000, NA, 120000, 130000),
   education = c(12, 16, 14, 12, NA, 18, 20, 16, 14, 12)
 )
-columns_to_impute <- c("age", "income", "education")
-predictor_columns <- c("age", "income", "education")
+columns_to_impute <- c("age")
+predictor_columns <- c( "income", "education")
 imputed_data <- glm_impute(df, columns_to_impute, predictor_columns, family = 'gaussian')
 print(imputed_data)
 }

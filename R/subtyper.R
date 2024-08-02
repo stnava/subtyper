@@ -6270,8 +6270,8 @@ antspymm_qc_names <- function() {
 #'   income = c(50000, 60000, 70000, 80000, 90000, 100000, 110000, NA, 120000, 130000),
 #'   education = c(12, 16, 14, 12, NA, 18, 20, 16, 14, 12)
 #' )
-#' columns_to_impute <- c("age", "income", "education")
-#' predictor_columns <- c("age", "income", "education")
+#' columns_to_impute <- c("age")
+#' predictor_columns <- c( "income", "education")
 #' imputed_data <- glm_impute(df, columns_to_impute, predictor_columns, family = 'gaussian')
 #' print(imputed_data)
 #' @export
@@ -6309,19 +6309,20 @@ glm_impute <- function(dataframe, columns_to_impute, predictor_columns, family =
 #' @return A data frame with imputed values.
 #' @examples
 #' set.seed(123)
-#' expartdfsim <- data.frame(
-#'   t1PC1 = c(1, 2, NA, 4, 5),
-#'   t1aPC1 = c(5, 4, 3, NA, 1),
-#'   dtPC1 = c(2, NA, 3, 4, 5),
-#'   dtaPC1 = c(NA, 3, 2, 1, 5),
-#'   rsfPC1 = c(1, 2, 3, 4, NA),
-#'   perfPC1 = c(NA, 2, 3, 4, 5)
+#' n=50
+#' df <- data.frame(
+#'   t1PC1 = rnorm(n),
+#'   t1aPC1 = rnorm(n),
+#'   dtPC1 = rnorm(n),
+#'   dtaPC1 = rnorm(n),
+#'   rsfPC1 = rnorm(n),
+#'   perfPC1 = rnorm(n)
 #' )
+#' df[ sample(1:nrow(df),20),6 ]=NA
 #' nms <- c("t1", "t1a", "dt", "dta", "rsf", "perf")
 #' vecnum <- 1
 #' toimpute <- "perf"
-#' imputed_expartdfsim <- simlr_impute(expartdfsim, nms, vecnum, toimpute, family = 'gaussian')
-#' print(imputed_expartdfsim)
+#' df = simlr_impute(df, nms, vecnum, toimpute, family = 'gaussian')
 #' @export
 simlr_impute <- function(dataframe, nms, vecnum, toimpute, family = 'gaussian') {
   # Create the list of predictor columns excluding the target column to be imputed
