@@ -5158,9 +5158,9 @@ replace_values <- function(vec, old_values, new_values) {
 }
 
 
-#' Update Residuals for SIMLR
+#' Update Residuals for SiMLR
 #'
-#' This function updates residuals for SIMLR by applying different covariate transformations.
+#' This function updates residuals for SiMLR by applying different covariate transformations.
 #'
 #' @param mats A list of matrices.
 #' @param x An index to select a matrix from the list.
@@ -6337,4 +6337,48 @@ simlr_impute <- function(dataframe, nms, vecnum, toimpute, family = 'gaussian') 
   imputed_dataframe <- glm_impute(dataframe, columns_to_impute, predictor_columns, family)
   
   return(imputed_dataframe)
+}
+
+
+#' Visualize Permutation Test Results
+#'
+#' This function visualizes the results of a permutation test by plotting a histogram of the
+#' permutation test statistics. A red dotted line indicates the location of the original unpermuted
+#' test statistic.
+#'
+#' @param permutation_results A numeric vector of permutation test statistics.
+#' @param original_stat A numeric value representing the original unpermuted test statistic.
+#' @param stat_name A character string representing the name of the test statistic.
+#' @param plot_title string for plot title
+#' @param bin_width optional bin width for the histogram
+#'
+#' @return A ggplot object showing the histogram of permutation test statistics with the original
+#' test statistic marked.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' set.seed(123)
+#' n_perms <- 1000
+#' permutation_results <- rnorm(n_perms, mean = 0, sd = 1)
+#' original_stat <- 2
+#' visualize_permutation_test(permutation_results, original_stat, "Simulated Statistic")
+#' }
+visualize_permutation_test <- function(permutation_results, original_stat, stat_name, plot_title, bin_width=0.1 ) {
+  # Create a data frame for plotting
+  plot_data <- data.frame(statistic = permutation_results)
+  if ( missing( plot_title ) ) plot_title = paste("Permutation Test Results for", stat_name)
+  # Generate the plot
+  # if ( missing( bin_width ) ) {
+  #  p <- ggplot(plot_data, aes(x = statistic)) +
+  #    geom_histogram( fill = "blue", color = "black", alpha = 0.7) 
+  # } else  p <- ggplot(plot_data, aes(x = statistic)) +
+  #  geom_histogram( binwidth = bin_width, fill = "blue", color = "black", alpha = 0.7) 
+#  p = p + geom_vline(xintercept = original_stat, color = "red", linetype = "dotted", linewidth = 1.2) +    labs(title = plot_title,
+ #        x = paste(stat_name, "Statistic"),
+  #       y = "Frequency") + theme_minimal()
+
+  p <- gghistogram(plot_data, x = 'statistic', bins = 50, title=plot_title) +
+        geom_vline(xintercept = original_stat, linetype = "dotted", color='red' )
+  return( p )
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{antspymm_simlr_update_residuals}
 \alias{antspymm_simlr_update_residuals}
-\title{Update Residuals for SIMLR}
+\title{Update Residuals for SiMLR}
 \usage{
 antspymm_simlr_update_residuals(
   mats,
@@ -34,7 +34,7 @@ The residual matrix after applying the specified covariate transformation.
 If \code{opt} is set to "opt", the function will print available covariate options and return NULL.
 }
 \description{
-This function updates residuals for SIMLR by applying different covariate transformations.
+This function updates residuals for SiMLR by applying different covariate transformations.
 }
 \examples{
 \dontrun{
