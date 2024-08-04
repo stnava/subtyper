@@ -6382,3 +6382,89 @@ visualize_permutation_test <- function(permutation_results, original_stat, stat_
         geom_vline(xintercept = original_stat, linetype = "dotted", color='red' )
   return( p )
 }
+
+
+#' Exploratory Clustering and Visualization
+#'
+#' This function performs automated clustering using PAM and silhouette method,
+#' and visualizes the results using ggplot2 and ggdendro.
+#'
+#' @param data A data frame with numeric columns.
+#' @param verbose boolean
+#' @return A list containing the combined plot and the optimal k value.
+#' @export
+exploratory_visualization <- function(data, verbose=FALSE ) {
+  # Load necessary libraries
+  library(ggplot2)
+  library(GGally)
+  library(tsne)
+  library(fpc)
+  library(ggdendro)
+  library(patchwork)
+
+  if ( verbose ) print("clustering")
+  # Find optimal k using pamk
+  pamk_result <- pamk(scale(data), krange = 2:10)
+  optimal_k <- pamk_result$nc
+
+  # Perform PAM clustering with optimal k
+  pam_cluster <- pam(scale(data), k = optimal_k)
+
+  if ( verbose ) print("pairwise correlations")
+  # Create plots
+  p1 <- ggpairs(data, columns = 1:ncol(data), 
+                upper = list(continuous = "points"), 
+                lower = list(continuous = "cor"))
+
+  if ( verbose ) print("tsne")
+  tsne_data <- tsne(data, k = 2)
+  tsne_data <- data.frame(X1 = tsne_data[, 1], X2 = tsne_data[, 2], cluster = pam_cluster$clustering)
+  p2 <- ggplot(tsne_data, aes(x = X1, y = X2, color = factor(cluster))) +
+    geom_point() +
+    theme_minimal() + ggtitle("TSNE projection")
+
+  if ( verbose ) print("dendrogram")
+  data_dist <- dist(scale(t(data)))
+  data_cluster <- hclust(data_dist, method = "ward.D2")
+  p3 <- ggdendrogram(data_cluster, rotate = TRUE) +
+    theme_minimal() + ggtitle("Dendrogram")
+
+  if ( verbose ) print("join plots")
+  # Combine plots into a single page display
+  p_combined <- p2 + wrap_elements(ggmatrix_gtable(p1)) + p3
+
+  # Return combined plot and optimal k
+  list( plot = p_combined, optimal_k = optimal_k)
+}
+
+
+#' Truncate or Remove High Values
+#'
+#' Truncates or removes high values in a given column of a data frame.
+#'
+#' @param df The input data frame.
+#' @param x The column name to truncate or remove high values from.
+#' @param t The threshold value (default is 4).
+#' @param removeit Logical indicating whether to remove or truncate high values (default is FALSE).
+#'
+#' @return The modified data frame.
+#' @export
+truncatehi <- function(df, x, t = 4, removeit = FALSE) {
+  # Sort the column in descending order
+  sortvec <- sort(df[, x], decreasing = TRUE)
+  
+  # Get the threshold value
+  t <- sortvec[t]
+  
+  # Truncate high values if removeit is FALSE
+  if (!removeit) {
+    df[df[, x] > t, x] <- t
+  }
+  # Remove high values if removeit is TRUE
+  else {
+    df <- df[df[, x] < t, ]
+  }
+  
+  # Return the modified data frame
+  return(df)
+}

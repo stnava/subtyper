@@ -118,6 +118,9 @@
     <loc>/reference/eliminateNonUniqueColumns.html</loc>
   </url>
   <url>
+    <loc>/reference/exploratory_visualization.html</loc>
+  </url>
+  <url>
     <loc>/reference/featureImportanceForSubtypes.html</loc>
   </url>
   <url>
@@ -149,6 +152,9 @@
   </url>
   <url>
     <loc>/reference/getNamesFromDataframe.html</loc>
+  </url>
+  <url>
+    <loc>/reference/glm_impute.html</loc>
   </url>
   <url>
     <loc>/reference/hierarchicalSubtypePlots.html</loc>
@@ -277,6 +283,9 @@
     <loc>/reference/shorten_pymm_names.html</loc>
   </url>
   <url>
+    <loc>/reference/simlr_impute.html</loc>
+  </url>
+  <url>
     <loc>/reference/sinkhorn_method.html</loc>
   </url>
   <url>
@@ -289,7 +298,13 @@
     <loc>/reference/trainSubtypeUni.html</loc>
   </url>
   <url>
+    <loc>/reference/truncatehi.html</loc>
+  </url>
+  <url>
     <loc>/reference/visglm.html</loc>
+  </url>
+  <url>
+    <loc>/reference/visualize_permutation_test.html</loc>
   </url>
   <url>
     <loc>/reference/write_simlr_data_frames.html</loc>
