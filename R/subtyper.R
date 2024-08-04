@@ -6567,6 +6567,7 @@ plot_features <- function(data_list, take_abs=TRUE) {
 #' names <- c("npsy_BDI_Total", "npsy_BSI.18_TotalRaw", "npsy_CVLTShortDelayFreeRecall_Raw")
 #' shortened_names <- shorten_names(names)
 #' print(shortened_names)
+#' @export
 shorten_names <- function(names, max_length = 20, custom_replacements = NULL) {
   # Default replacements
   default_replacements <- list(
