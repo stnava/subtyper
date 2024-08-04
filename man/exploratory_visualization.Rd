@@ -4,10 +4,12 @@
 \alias{exploratory_visualization}
 \title{Exploratory Clustering and Visualization}
 \usage{
-exploratory_visualization(data, verbose = FALSE)
+exploratory_visualization(data, dotsne = FALSE, verbose = FALSE)
 }
 \arguments{
 \item{data}{A data frame with numeric columns.}
+
+\item{dotsne}{boolean}
 
 \item{verbose}{boolean}
 }

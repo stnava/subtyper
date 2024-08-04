@@ -6390,10 +6390,11 @@ visualize_permutation_test <- function(permutation_results, original_stat, stat_
 #' and visualizes the results using ggplot2 and ggdendro.
 #'
 #' @param data A data frame with numeric columns.
+#' @param dotsne boolean
 #' @param verbose boolean
 #' @return A list containing the combined plot and the optimal k value.
 #' @export
-exploratory_visualization <- function(data, verbose=FALSE ) {
+exploratory_visualization <- function(data, dotsne=FALSE, verbose=FALSE ) {
   # Load necessary libraries
   library(ggplot2)
   library(GGally)
@@ -6416,12 +6417,14 @@ exploratory_visualization <- function(data, verbose=FALSE ) {
                 upper = list(continuous = "points"), 
                 lower = list(continuous = "cor"))
 
-  if ( verbose ) print("tsne")
-  tsne_data <- tsne(data, k = 2)
-  tsne_data <- data.frame(X1 = tsne_data[, 1], X2 = tsne_data[, 2], cluster = pam_cluster$clustering)
-  p2 <- ggplot(tsne_data, aes(x = X1, y = X2, color = factor(cluster))) +
-    geom_point() +
-    theme_minimal() + ggtitle("TSNE projection")
+  if ( dotsne ) {
+    if ( verbose ) print("tsne")
+    tsne_data <- tsne(data, k = 2)
+    tsne_data <- data.frame(X1 = tsne_data[, 1], X2 = tsne_data[, 2], cluster = pam_cluster$clustering)
+    p2 <- ggplot(tsne_data, aes(x = X1, y = X2, color = factor(cluster))) +
+      geom_point() +
+      theme_minimal() + ggtitle("TSNE projection")
+  }
 
   if ( verbose ) print("dendrogram")
   data_dist <- dist(scale(t(data)))
@@ -6431,8 +6434,9 @@ exploratory_visualization <- function(data, verbose=FALSE ) {
 
   if ( verbose ) print("join plots")
   # Combine plots into a single page display
-  p_combined <- p2 + wrap_elements(ggmatrix_gtable(p1)) + p3
-
+  if ( dotsne ) {
+    p_combined <- p2 + wrap_elements(ggmatrix_gtable(p1)) + p3
+  } else p_combined <- wrap_elements(ggmatrix_gtable(p1)) + p3
   # Return combined plot and optimal k
   list( plot = p_combined, optimal_k = optimal_k)
 }
@@ -6467,4 +6471,69 @@ truncatehi <- function(df, x, t = 4, removeit = FALSE) {
   
   # Return the modified data frame
   return(df)
+}
+
+
+
+#' Plot Features
+#'
+#' Create bar plots for each column in each data frame, showing only non-zero values.  Normalize each feature s.t. max is one.
+#'
+#' @param data_list A list of data frames.
+#' @param boolean 
+#'
+#' @return A list of ggplot objects.
+#'
+#' @examples
+#' # Simulate data
+#' set.seed(123)
+#' feature_names <- paste("Feature", 1:10)
+#' data_list <- list(
+#'   df1 = data.frame(matrix(ifelse(runif(100) < 0.5, 0, runif(100)), nrow = 10)),
+#'   df2 = data.frame(matrix(ifelse(runif(100) < 0.5, 0, runif(100)), nrow = 10))
+#' )
+#'
+#' # Set rownames
+#' rownames(data_list$df1) <- feature_names
+#' rownames(data_list$df2) <- feature_names
+#'
+#' # Use the function
+#' plots <- plot_features(data_list)
+#'
+#' # Display the plots
+#' for (i in 1:length(plots)) {
+#'   print(plots[[i]])
+#' }
+plot_features <- function(data_list, take_abs=TRUE) {
+  plots <- list()
+  
+  for (i in 1:length(data_list)) {
+    df <- data_list[[i]]
+    if ( take_abs ) df = abs( df )
+    df_name <- names(data_list)[i]
+    
+    for (j in 1:ncol(df)) {
+      col_name <- colnames(df)[j]
+      values <- df[, j]
+      
+      # Filter out zero values
+      non_zero_values <- values[values != 0]
+      non_zero_features <- rownames(df)[values != 0]
+      non_zero_values = non_zero_values/max(non_zero_values)
+      
+      # Create a data frame for the non-zero values
+      non_zero_df <- data.frame(feature_names = non_zero_features, values = non_zero_values)
+      
+      # Create the plot
+      plot <- ggbarplot(non_zero_df, x = "feature_names", y = "values", 
+                        main = paste('features !=0:',df_name, col_name), xlab = "Feature", ylab = "Value", 
+                        rotate.x.text = 45, sort.val = "desc", fill = "lightblue") +
+        theme_pubr()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+      
+      plots[[paste(df_name, col_name)]] <- plot
+    }
+  }
+  
+  return(plots)
 }
