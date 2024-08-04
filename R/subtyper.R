@@ -6516,6 +6516,7 @@ truncatehi <- function(df, x, t = 4, removeit = FALSE) {
 #' for (i in 1:length(plots)) {
 #'   print(plots[[i]])
 #' }
+#' @export
 plot_features <- function(data_list, take_abs=TRUE) {
   plots <- list()
   
