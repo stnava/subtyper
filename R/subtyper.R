@@ -363,6 +363,18 @@ fs <- function( x ) {
   x
 }
 
+
+#' Convert NA to false
+#'
+#' @param x a vector of bool
+#' @return fixed x
+#' @author Avants BB
+#' @export
+na2f <- function( x ) {
+  x[ is.na(x)]=FALSE
+  x
+}
+
 #' Grep entries with a vector search parameters
 #'
 #' @param x a vector of search terms
@@ -6459,14 +6471,14 @@ truncatehi <- function(df, x, t = 4, removeit = FALSE) {
   
   # Get the threshold value
   t <- sortvec[t]
-  
+  selection = na2f(df[, x] > t)
   # Truncate high values if removeit is FALSE
   if (!removeit) {
-    df[df[, x] > t, x] <- t
+    df[selection, x] <- t
   }
   # Remove high values if removeit is TRUE
   else {
-    df <- df[df[, x] < t, ]
+    df <- df[!selection, ]
   }
   
   # Return the modified data frame
@@ -6536,4 +6548,70 @@ plot_features <- function(data_list, take_abs=TRUE) {
   }
   
   return(plots)
+}
+
+
+
+#' Shorten Names
+#'
+#' Shorten a vector of names by removing common substrings, applying custom replacements, 
+#' replacing "__" with "_", then "_" with ".", removing duplicates, and truncating to a maximum length.
+#'
+#' @param names A vector of names to shorten.
+#' @param max_length The maximum length of the shortened names. Defaults to 20.
+#' @param custom_replacements A list of custom replacements to apply. Defaults to NULL.
+#'
+#' @return A vector of shortened names.
+#'
+#' @examples
+#' names <- c("npsy_BDI_Total", "npsy_BSI.18_TotalRaw", "npsy_CVLTShortDelayFreeRecall_Raw")
+#' shortened_names <- shorten_names(names)
+#' print(shortened_names)
+shorten_names <- function(names, max_length = 20, custom_replacements = NULL) {
+  # Default replacements
+  default_replacements <- list(
+    "score" = "scr",
+    "composite" = "comp",
+    "recall" = "rcl",
+    "total" = "tot",
+    "raw" = "",
+    "free" = "",
+    "delay" = "del",
+    'npsy_' = ''
+  )
+  
+  # Use custom replacements if provided, otherwise use default
+  replacements <- if (is.null(custom_replacements)) default_replacements else custom_replacements
+  
+  # Find common substrings
+  common_substrings <- names %>%
+    strsplit(split = "") %>%
+    unlist() %>%
+    table() %>%
+    sort(decreasing = TRUE) %>%
+    names()
+  
+  # Replace common substrings
+  for (i in 1:length(common_substrings)) {
+    if (nchar(common_substrings[i]) > 2) {
+      names <- gsub(common_substrings[i], "", names)
+    }
+  }
+  
+  # Convert to lower case
+  names <- tolower(names)
+  
+  # Apply replacements
+  for (i in names(replacements)) {
+    names <- gsub(i, replacements[[i]], names, ignore.case = TRUE)
+  }
+  
+  # Replace "__" with "_", then "_" with ".", and remove duplicates
+  names <- gsub("__", "_", names)
+  names <- gsub("_", ".", names)
+  names <- gsub("(.)\\1+", "\\1", names)
+  
+  # Shorten names to max_length
+  names <- substr(names, 1, max_length)
+  return(names)
 }
