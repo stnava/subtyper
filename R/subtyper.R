@@ -1992,11 +1992,11 @@ predictSubtypeClusterMulti  <- function(
 #' @return a matrix with label identities; 0 indicates not in a cluster.
 #' @author Avants BB
 #' @examples
-#' mydf = generateSubtyperData( 100 )
+#' mydf = generateSubtyperData( 10 )
 #' rbfnames = names(mydf)[grep("Random",names(mydf))]
 #' mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
 #' @importFrom magrittr %>%
-#' @importFrom ggpubr ggboxplot ggdotplot
+#' @importFrom ggpubr ggboxplot ggdotplot ggbarplot theme_pubr
 #' @importFrom mlr3 lrn msr as_task_classif as_learner
 #' @importFrom mlr3pipelines po selector_type %>>%
 #' @importFrom fastICA fastICA
