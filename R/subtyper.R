@@ -6656,12 +6656,13 @@ create_radar_chart <- function(data, group_color, meansd = TRUE ) {
       group_color_new = c( group_color_new, tt )
     }
     colnames(max_min) <- colnames(data)
-    radarchart( max_min, axistype = 1,
+    radarchartcirc( max_min, axistype = 1,
              pcol = group_color_new,
              pfcol = scales::alpha(group_color, 0.25),
              plwd = 4, plty = 1,
-             cglcol = "grey", cglty = 1, axislabcol = "grey", caxislabels = seq(0, 20, 5), cglwd = 0.8, 
-             vlcex = 0.8, maxmin=FALSE )
+             cglcol = "grey", cglty = 1, axislabcol = "grey", 
+             caxislabels = seq(0, 20, 5), cglwd = 0.8, 
+             vlcex = 1.5, maxmin=FALSE, palcex=2 )
   
         colortbl0=table(names(group_color_new))
         colortbl1=table(group_color_new)
@@ -6684,12 +6685,12 @@ create_radar_chart <- function(data, group_color, meansd = TRUE ) {
   group_color=c(NA,NA,group_color)
   
   # Plot the radar chart for the specified observation
-  radarchart(data_for_plot[c(1, 2, 3:nrow(data_for_plot)), ], axistype = 1,
+  radarchartcirc(data_for_plot[c(1, 2, 3:nrow(data_for_plot)), ], axistype = 1,
              pcol = group_color,
              pfcol = scales::alpha(group_color, 0.25),
              plwd = 4, plty = 1,
              cglcol = "grey", cglty = 1, axislabcol = "grey", caxislabels = seq(0, 20, 5), cglwd = 0.8,
-             vlcex = 0.8)
+             vlcex = 1.5)
   
   colortbl0=table(names(group_color))
   colortbl1=table(group_color)
