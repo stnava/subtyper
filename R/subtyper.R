@@ -6656,7 +6656,6 @@ create_radar_chart <- function(data, group_color, meansd = TRUE ) {
       group_color_new = c( group_color_new, tt )
     }
     colnames(max_min) <- colnames(data)
-    print(max_min)
     radarchart( max_min, axistype = 1,
              pcol = group_color_new,
              pfcol = scales::alpha(group_color, 0.25),
