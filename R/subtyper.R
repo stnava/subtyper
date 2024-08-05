@@ -6617,3 +6617,79 @@ shorten_names <- function(names, max_length = 20, custom_replacements = NULL) {
   names <- substr(names, 1, max_length)
   return(names)
 }
+
+
+#' Create a Radar Chart
+#'
+#' This function creates a radar chart for the specified data.
+#'
+#' @param data A data frame containing the data to be plotted.
+#' @param group_color A named vector of colors to be used for each group in the radar chart.
+#' @param meansd A logical value indicating whether to use mean + 2SD and mean as range (default is FALSE).
+#'
+#' @return A radar chart plot.
+#'
+#' @examples
+#' # group_color <- c("Group 1" = "red", "Group 2" = "blue", "Group 3" = "green")
+#' # create_radar_chart(data, group_color)
+#' @export
+#' @importFrom fmsb radarchart
+create_radar_chart <- function(data, group_color, meansd = TRUE ) {
+  # Ensure all columns are numeric
+  data <- data.frame(lapply(data, as.numeric))
+  
+  # Prepare the data for radar chart
+  if (meansd) {
+# Calculate mean + SD and mean - SD for each group
+    max_min <- data.frame()
+    group_color_new=c()
+    for (group in unique(names(group_color))) {
+      group_data <- data[names(group_color) == group, ]
+      mn=colMeans( group_data, na.rm=T )
+      sdit=apply( group_data, FUN=sd, MARGIN=2, na.rm=T )
+      max_min <- rbind( max_min,mn+sdit*1,mn )
+      tt=rep( unique(group_color[group] ),2)
+      names(tt)=rep(group,2)
+      group_color_new = c( group_color_new, tt )
+    }
+    colnames(max_min) <- colnames(data)
+    print(max_min)
+    radarchart( max_min, axistype = 1,
+             pcol = group_color_new,
+             pfcol = scales::alpha(group_color, 0.25),
+             plwd = 4, plty = 1,
+             cglcol = "grey", cglty = 1, axislabcol = "grey", caxislabels = seq(0, 20, 5), cglwd = 0.8, 
+             vlcex = 0.8, maxmin=FALSE )
+  
+        colortbl0=table(names(group_color_new))
+        colortbl1=table(group_color_new)
+      legend(x = "topright", legend = names(colortbl0), col = group_color_new[names(colortbl0)], lty = 1, lwd = 4, bty = "n")
+      return(NULL)
+  } else {
+    # Set the range for each variable (minimum and maximum)
+    max_min <- apply(data, 2, function(x) c(max(x, na.rm = TRUE), min(x, na.rm = TRUE)))
+  }
+  max_min <- as.data.frame((max_min))
+  
+  # Add column names to the max_min data frame (only if max_min has the same number of columns as data)
+  if (ncol(max_min) != ncol(data)) {
+    stop(paste("The number of columns in max_min (", ncol(max_min), ") does not match the number of columns in data (", ncol(data), ")."))
+  }
+  colnames(max_min) <- colnames(data)
+  
+  # Add the range to the data
+  data_for_plot <- rbind(max_min, data)
+  group_color=c(NA,NA,group_color)
+  
+  # Plot the radar chart for the specified observation
+  radarchart(data_for_plot[c(1, 2, 3:nrow(data_for_plot)), ], axistype = 1,
+             pcol = group_color,
+             pfcol = scales::alpha(group_color, 0.25),
+             plwd = 4, plty = 1,
+             cglcol = "grey", cglty = 1, axislabcol = "grey", caxislabels = seq(0, 20, 5), cglwd = 0.8,
+             vlcex = 0.8)
+  
+  colortbl0=table(names(group_color))
+  colortbl1=table(group_color)
+  legend(x = "topright", legend = names(colortbl0), col = group_color[names(colortbl0)], lty = 1, lwd = 4, bty = "n")
+}

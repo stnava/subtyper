@@ -22,7 +22,7 @@ a matrix with label identities; 0 indicates not in a cluster.
 Cluster both rows and columns.  Return the joint cluster membership.
 }
 \examples{
-mydf = generateSubtyperData( 100 )
+mydf = generateSubtyperData( 10 )
 rbfnames = names(mydf)[grep("Random",names(mydf))]
 mybic = biclusterMatrixFactorization( mydf, rbfnames, k = 2 )
 }
