@@ -9,7 +9,9 @@ apply_simlr_matrices(
   matrices_list,
   n_limit = NULL,
   robust = FALSE,
-  absolute_value = TRUE,
+  center = FALSE,
+  scale = FALSE,
+  absolute_value = FALSE,
   verbose = FALSE
 )
 }
@@ -21,6 +23,10 @@ apply_simlr_matrices(
 \item{n_limit}{NULL or integer that can limit the number of projections}
 
 \item{robust}{boolean}
+
+\item{center}{boolean center the data before applying}
+
+\item{scale}{boolean scale the data before applying}
 
 \item{absolute_value}{boolean take abs of feature matrices}
 

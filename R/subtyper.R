@@ -5721,6 +5721,8 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' @param matrices_list A list of matrices read from CSV files.
 #' @param n_limit NULL or integer that can limit the number of projections
 #' @param robust boolean
+#' @param center boolean center the data before applying
+#' @param scale boolean scale the data before applying
 #' @param absolute_value boolean take abs of feature matrices
 #' @param verbose boolean
 #'
@@ -5733,7 +5735,7 @@ read_simlr_data_frames <- function(file_prefix, data_names) {
 #' )
 #' existing_df <- data.frame(matrix(rnorm(147 * 5), nrow = 147, ncol = 5))
 #' # combined_df <- apply_simlr_matrices(existing_df, matrices_list)
-apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robust=FALSE, absolute_value=TRUE, verbose=FALSE ) {
+apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robust=FALSE, center=FALSE, scale=FALSE, absolute_value=FALSE, verbose=FALSE ) {
 
   replbind <- function(df1, df2) {
     # Find the common and unique columns
@@ -5768,6 +5770,7 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robus
       # Perform matrix multiplication
       imat = data.matrix(existing_df[,inames])
       if ( robust ) imat = robustMatrixTransform( imat )
+      if ( center | scale ) imat=scale(imat,center=center,scale=scale)
       features = data.matrix(matrices_list[[name]][inames,])
       if ( absolute_value ) features = abs( features )
       projection <- as.data.frame( imat %*% features)
