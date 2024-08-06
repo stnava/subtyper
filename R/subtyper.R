@@ -6495,7 +6495,7 @@ truncatehi <- function(df, x, t = 4, removeit = FALSE) {
 #' Create bar plots for each column in each data frame, showing only non-zero values.  Normalize each feature s.t. max is one.
 #'
 #' @param data_list A list of data frames.
-#' @param boolean 
+#' @param take_abs boolean 
 #'
 #' @return A list of ggplot objects.
 #'
