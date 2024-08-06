@@ -6496,6 +6496,7 @@ truncatehi <- function(df, x, t = 4, removeit = FALSE) {
 #'
 #' @param data_list A list of data frames.
 #' @param take_abs boolean 
+#' @param n_limit Integer, limit features to top n_limit with highest value
 #'
 #' @return A list of ggplot objects.
 #'
@@ -6520,12 +6521,12 @@ truncatehi <- function(df, x, t = 4, removeit = FALSE) {
 #'   print(plots[[i]])
 #' }
 #' @export
-plot_features <- function(data_list, take_abs=TRUE) {
+plot_features <- function(data_list, take_abs = TRUE, n_limit = 12 ) {
   plots <- list()
   
   for (i in 1:length(data_list)) {
     df <- data_list[[i]]
-    if ( take_abs ) df = abs( df )
+    if (take_abs) df <- abs(df)
     df_name <- names(data_list)[i]
     
     for (j in 1:ncol(df)) {
@@ -6535,17 +6536,17 @@ plot_features <- function(data_list, take_abs=TRUE) {
       # Filter out zero values
       non_zero_values <- values[values != 0]
       non_zero_features <- rownames(df)[values != 0]
-      non_zero_values = non_zero_values/max(non_zero_values)
+      non_zero_values <- non_zero_values / max(non_zero_values)
       
-      # Create a data frame for the non-zero values
-      non_zero_df <- data.frame(feature_names = non_zero_features, values = non_zero_values)
+      # Select top n_limit features
+      top_features <- head(data.frame(feature_names = non_zero_features, values = non_zero_values), n_limit)
       
       # Create the plot
-      plot <- ggbarplot(non_zero_df, x = "feature_names", y = "values", 
-                        main = paste('features !=0:',df_name, col_name), xlab = "Feature", ylab = "Value", 
+      plot <- ggbarplot(top_features, x = "feature_names", y = "values", 
+                        main = paste('features !=0:', df_name, col_name), xlab = "Feature", ylab = "Value", 
                         rotate.x.text = 45, sort.val = "desc", fill = "lightblue") +
-        theme_pubr()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        theme_pubr() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
       
       plots[[paste(df_name, col_name)]] <- plot
     }
@@ -6553,7 +6554,6 @@ plot_features <- function(data_list, take_abs=TRUE) {
   
   return(plots)
 }
-
 
 
 #' Shorten Names

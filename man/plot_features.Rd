@@ -4,12 +4,14 @@
 \alias{plot_features}
 \title{Plot Features}
 \usage{
-plot_features(data_list, take_abs = TRUE)
+plot_features(data_list, take_abs = TRUE, n_limit = 12)
 }
 \arguments{
 \item{data_list}{A list of data frames.}
 
-\item{boolean}{}
+\item{take_abs}{boolean}
+
+\item{n_limit}{Integer, limit features to top n_limit with highest value}
 }
 \value{
 A list of ggplot objects.
