@@ -5772,7 +5772,7 @@ apply_simlr_matrices <- function(existing_df, matrices_list, n_limit=NULL, robus
       if ( robust ) imat = robustMatrixTransform( imat )
       if ( center | scale ) imat=scale(imat,center=center,scale=scale)
       features = data.matrix(matrices_list[[name]][inames,])
-      if ( absolute_value ) features = abs( features )
+      if ( absolute_value ) features = take_abs_unsigned( features )
       projection <- as.data.frame( imat %*% features)
       ##################################################
       # Update column names to reflect the matrix name #
