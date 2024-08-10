@@ -5532,6 +5532,7 @@ exclusions=NULL, inclusions=NULL, sparseness=NULL, iterations=NULL, verbose=FALS
     expBeta = ebber,
     positivities = pizzer, 
     connectors=clist,
+    constraint='Grassmannx500x500',
     optimizationStyle=optimus,
     initialUMatrix=initu )
   for ( kk in 1:length(mats) ) {
