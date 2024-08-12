@@ -13,3 +13,5 @@ inst/doc/*.html
 inst/doc
 docs/articles/pd_imaging_genetics_files
 docs/articles/pd_imaging_genetics.html
+/doc/
+/Meta/
