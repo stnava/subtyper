@@ -36,5 +36,6 @@ data <- data.frame(cog = c('A', 'A', 'B', 'B'),
                    d = c(0.5, 0.7, 0.3, 0.9), 
                    p = c(0.01, 0.05, 0.02, 0.03), 
                    multi = c(TRUE, FALSE, TRUE, FALSE))
-identify_best_voi(data, group_var = cog, value_var = p, select_vars = c("cog", "voi", "d", "p", "multi"), selection = "min")
+identify_best_voi(data, group_var = cog, value_var = p, 
+  select_vars = c("cog", "voi", "d", "p", "multi"), selection = "min")
 }

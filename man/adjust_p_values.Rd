@@ -37,6 +37,8 @@ resdf <- data.frame(
 )
 
 # Example usage of adjust_p_values
-adjusted_df <- adjust_p_values(resdf, methods = c('BY', 'BH', 'none', 'none'), alpha = c(0.05, 0.05, 0.05, 0.2))
+adjusted_df <- adjust_p_values(resdf, 
+ methods = c('BY', 'BH', 'none', 'none'), 
+ alpha = c(0.05, 0.05, 0.05, 0.2))
 head(adjusted_df)
 }

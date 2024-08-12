@@ -106,6 +106,9 @@
     <loc>/reference/convert_to_random_effects.html</loc>
   </url>
   <url>
+    <loc>/reference/create_radar_chart.html</loc>
+  </url>
+  <url>
     <loc>/reference/create_table1.html</loc>
   </url>
   <url>
@@ -220,6 +223,9 @@
     <loc>/reference/multigrep.html</loc>
   </url>
   <url>
+    <loc>/reference/na2f.html</loc>
+  </url>
+  <url>
     <loc>/reference/nallspdma.html</loc>
   </url>
   <url>
@@ -239,6 +245,9 @@
   </url>
   <url>
     <loc>/reference/plotSubtypeChange.html</loc>
+  </url>
+  <url>
+    <loc>/reference/plot_features.html</loc>
   </url>
   <url>
     <loc>/reference/predictSubtypeClusterMulti.html</loc>
@@ -278,6 +287,9 @@
   </url>
   <url>
     <loc>/reference/setSeedBasedOnTime.html</loc>
+  </url>
+  <url>
+    <loc>/reference/shorten_names.html</loc>
   </url>
   <url>
     <loc>/reference/shorten_pymm_names.html</loc>

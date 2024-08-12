@@ -47,6 +47,7 @@ data <- data.frame(
   x3 = rnorm(100),
   x4 = rnorm(100)
 )
-selected_vars <- select_important_variables(data, c("x1", "x2", "x3", "x4"), threshold = 0.3)
+selected_vars <- select_important_variables(data, 
+ c("x1", "x2", "x3", "x4"), threshold = 0.3)
 print(selected_vars)
 }

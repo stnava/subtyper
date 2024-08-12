@@ -37,6 +37,7 @@ This function matches two sets of variables using a bipartite graph and returns 
 }
 \examples{
 # Example usage:
-df <- data.frame(cog = c("cog1", "cog2"), voi = c(1, 2), d = c(0.1, 0.2), p = c(0.05, 0.01), multi = c(1, 2))
+df <- data.frame(cog = c("cog1", "cog2"), voi = c(1, 2), 
+ d = c(0.1, 0.2), p = c(0.05, 0.01), multi = c(1, 2))
 bipartite_variable_match(df, plot = TRUE)
 }

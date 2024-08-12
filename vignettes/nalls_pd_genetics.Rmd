@@ -48,7 +48,7 @@ associated with pleiotropic properties.  See [this review](https://www.frontiers
 
 First, we generate the association data.
 
-```{r functionalenrichment,echo=FALSE,eval=TRUE,fig.width=24,fig.height=12,message=FALSE}
+```{r functionalenrichment,echo=FALSE,eval=FALSE,fig.width=24,fig.height=12,message=FALSE}
 data( nallspdma, package = 'subtyper' )
 myq = nallspdma$SNP[  ]
 myq = myq[ -grep("Note",myq)]
@@ -140,7 +140,7 @@ gsnpenseres = gsnpense( query = myq, filter_na = TRUE )
 
 Next, we explicitly perform clustering.  First, cluster based on SNPs.
 
-```{r stfeasnpclusters,echo=FALSE,eval=TRUE}
+```{r stfeasnpclusters,echo=FALSE,eval=FALSE}
 bcdata = -1.0 * t( myviz2 )
 bcdata[ is.na( bcdata ) ] = 0.0
 myclusts = trainSubtypeClusterMulti( bcdata,
@@ -152,7 +152,7 @@ bcdatac = predictSubtypeClusterMulti( bcdata, colnames(bcdata), myclusts,
 
 Second, cluster based on function.
 
-```{r stfeagoclusters,echo=FALSE,eval=TRUE}
+```{r stfeagoclusters,echo=FALSE,eval=FALSE}
 bcdata2 = 1.0 * ( myviz2 )
 bcdata2[ is.na( bcdata2 ) ] = 0.0
 myclusts2 = trainSubtypeClusterMulti( bcdata2,
@@ -168,7 +168,7 @@ bcdata2c = predictSubtypeClusterMulti( bcdata2, colnames(bcdata2), myclusts2,
 
 * provide evidence that joint clusters are valid (TODO)
 
-```{r simple,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
+```{r simple,echo=FALSE,eval=FALSE,fig.width=12,fig.height=8}
 mysnps = rownames( myviz2 )
 myfunc = colnames( myviz2 )
 jointClusterMatrix = matrix( "", nrow = nrow(myviz2), ncol = ncol(myviz2) )
@@ -231,7 +231,7 @@ for ( j in 1:nv ) {
 ```
 
 
-```{r nmf,echo=FALSE,eval=TRUE,fig.width=12,fig.height=8}
+```{r nmf,echo=FALSE,eval=FALSE,fig.width=12,fig.height=8}
 mybic = biclusterMatrixFactorization( myviz2 * ( -1.0 ), colnames(myviz2), k = 5 )
 colnames(mybic$jointClusters)=substr( colnames(mybic$jointClusters), 0, 12 )
 pheatmap::pheatmap( mybic$jointClusters, cluster_cols=F, cluster_rows=T, show_rownames=T, show_colnames=T )
