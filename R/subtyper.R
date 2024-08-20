@@ -5530,3 +5530,113 @@ create_radar_chart <- function(data, group_color, meansd = TRUE ) {
   colortbl1=table(group_color)
   legend(x = "topright", legend = names(colortbl0), col = group_color[names(colortbl0)], lty = 1, lwd = 4, bty = "n")
 }
+
+
+#' Replace Multiple Columns in Dataframe Based on a Matching Key
+#'
+#' This function replaces values in multiple columns of a target dataframe 
+#' with values from a source dataframe based on a matching key. The function 
+#' takes two dataframes, a key column, and a vector of columns to be updated, 
+#' and returns the updated target dataframe.
+#'
+#' @param target_df A dataframe containing the original values.
+#' @param source_df A dataframe containing the new values to replace in the target dataframe.
+#' @param key The column name (as a string) that is used as the key for matching rows in both dataframes.
+#' @param columns_to_update A character vector of column names in `target_df` whose values will be replaced.
+#' 
+#' @return A dataframe with the specified columns' values updated based on the matching key.
+#' 
+#' @export
+replace_values_by_key <- function(target_df, source_df, key, columns_to_update) {
+  # Ensure key exists in both dataframes
+  if (!key %in% names(target_df)) {
+    stop(paste("Key column", key, "not found in target_df."))
+  }
+  if (!key %in% names(source_df)) {
+    stop(paste("Key column", key, "not found in source_df."))
+  }
+
+  # Find the intersection of columns to update that exist in both dataframes
+  valid_columns <- intersect(columns_to_update, intersect(names(target_df), names(source_df)))
+  
+  # Select only the key and valid columns from the source_df
+  source_df_subset <- source_df %>%
+    select(all_of(c(key, valid_columns)))
+  
+  # Join the dataframes
+  merged_df <- left_join(target_df, source_df_subset, by = key, suffix = c("", ".new"))
+  
+  # Iterate over each valid column to update
+  for (col in valid_columns) {
+    new_col <- paste0(col, ".new")
+    merged_df <- merged_df %>%
+      mutate(
+        !!col := ifelse(!is.na(.data[[new_col]]), 
+                        .data[[new_col]], 
+                        .data[[col]])
+      )
+  }
+  
+  # Remove the temporary new columns
+  merged_df <- merged_df %>%
+    select(-matches("\\.new$"))
+  
+  return(merged_df)
+}
+
+
+#' Row-wise linear adjustments to variables in a dataframe
+#'
+#' Trains linear models on a given dataframe and applies them to predict values.
+#'
+#' This function loops through each row in the dataframe, trains a linear model using the predictor values,
+#' and applies the model to predict the values for the specified variables. It handles both simple (one predictor)
+#' and multiple predictor cases, adapting the modeling approach accordingly.
+#'
+#' @param tempNM The input dataframe containing the data to be processed.
+#'
+#' @param intvars A vector of column names in tempNM representing the predictor variables.
+#'
+#' @param fixvars A vector of column names in tempNM representing the variables to be predicted.
+#'
+#' @param tarints A vector of target values corresponding to the predictor variables.
+#'
+#' @return A dataframe with the predicted values added as new columns. The new columns are named by appending "_pred"
+#' to the original column names specified in fixvars.
+#'
+#' @details
+#' The function uses a simple linear model for prediction, which may not be suitable for complex relationships between variables.
+#' It assumes that the input dataframe has the same structure and column names as expected, and does not perform any error checking
+#' or handling. Therefore, it may fail if the input data is not properly formatted or if there are missing values.
+#'
+#' @examples
+#' rowwise_linear_variable_adjustments(mtcars, c("mpg", "cyl"), "disp", c(1, 2))
+#' @export
+rowwise_linear_variable_adjustments <- function(tempNM, intvars, fixvars, tarints) {
+  # Create a copy of the dataframe to store predictions
+  result_df <- tempNM
+  
+  # Loop over each row in the dataframe
+  for (i in 1:nrow(tempNM)) {
+    # Extract the current row's predictor values
+    current_row <- as.numeric(tempNM[i, intvars])
+    
+    # Check if there is more than one predictor
+    if (length(intvars) > 1) {
+      # Fit a linear model to map intvars to tarints
+      model <- lm(tarints ~ current_row)
+      
+      # Apply the learned model to the fixvars columns
+      fix_values <- as.numeric(tempNM[i, fixvars])
+      predictions <- coef(model)[1] + coef(model)[2] * fix_values
+    } else {
+      # If there's only one predictor, simply scale by the ratio of target to input
+      predictions <- tarints * tempNM[i, fixvars] / current_row
+    }
+    
+    # Store the predictions in the result dataframe
+    result_df[i, paste0(fixvars, "_pred")] <- predictions
+  }
+  
+  return(result_df)
+}
