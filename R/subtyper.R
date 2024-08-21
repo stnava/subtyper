@@ -5587,22 +5587,27 @@ replace_values_by_key <- function(target_df, source_df, key, columns_to_update) 
 
 #' Row-wise linear adjustments to variables in a dataframe
 #'
-#' Trains linear models on a given dataframe and applies them to predict values.
+#' Trains linear models on a given dataframe row by row and applies the learned parameters 
+#' to perform subject-specific adjustment to other variables.  
 #'
-#' This function loops through each row in the dataframe, trains a linear model using the predictor values,
+#' This function loops through each row in the dataframe, trains a linear model using trainvalues,
 #' and applies the model to predict the values for the specified variables. It handles both simple (one predictor)
-#' and multiple predictor cases, adapting the modeling approach accordingly.
+#' and multiple predictor cases, adapting the modeling approach accordingly and allows for 
+#' both linear and polynomial adjustment.
 #'
 #' @param tempNM The input dataframe containing the data to be processed.
 #'
-#' @param intvars A vector of column names in tempNM representing the predictor variables.
+#' @param trainvalues A vector of target values corresponding to the predictor variables. this 
+#' should be a vector of values with column names in tempNM representing the predictor variables.
 #'
-#' @param fixvars A vector of column names in tempNM representing the variables to be predicted.
+#' @param varstoadjust A vector of column names in tempNM representing the variables to be predicted.
 #'
-#' @param tarints A vector of target values corresponding to the predictor variables.
+#' @param poly_order An integer specifying the polynomial order to be used in the fit. Defaults to 1.
+#' @param post_fix an extension to add to the modified variable name - can be an empty string
+#' @param verbose boolean
 #'
-#' @return A dataframe with the predicted values added as new columns. The new columns are named by appending "_pred"
-#' to the original column names specified in fixvars.
+#' @return A dataframe with the predicted values added as new columns. The new columns are named by appending post_fix
+#' to the original column names specified in varstoadjust.
 #'
 #' @details
 #' The function uses a simple linear model for prediction, which may not be suitable for complex relationships between variables.
@@ -5610,33 +5615,71 @@ replace_values_by_key <- function(target_df, source_df, key, columns_to_update) 
 #' or handling. Therefore, it may fail if the input data is not properly formatted or if there are missing values.
 #'
 #' @examples
-#' rowwise_linear_variable_adjustments(mtcars, c("mpg", "cyl"), "disp", c(1, 2))
+#' trainvec = colMeans(mtcars[,1:7])
+#' mtadj = rowwise_linear_variable_adjustments(mtcars, trainvec, c("mpg", "cyl","disp") )
+#' # plot( mtadj[,'disp_pred'], mtcars[,'disp'] )
 #' @export
-rowwise_linear_variable_adjustments <- function(tempNM, intvars, fixvars, tarints) {
+rowwise_linear_variable_adjustments <- function(tempNM, trainvalues, varstoadjust,
+  poly_order=1, post_fix = '_pred', verbose=FALSE ) {
+
+  learn_linear_mapping <- function(ground_truth, variation, new_vector = NULL, poly_order = 2) {
+    # Create a polynomial design matrix
+    poly_design <- stats::poly(variation, degree = poly_order, raw = FALSE)
+    
+    # Fit a linear model using the polynomial design matrix and the ground truth
+    model <- lm(ground_truth ~ poly_design)
+    
+    # If a new vector is provided, apply the learned coefficients to transform it
+    if (!is.null(new_vector)) {
+      new_poly_design <- stats::poly(new_vector, degree = poly_order, raw = FALSE)
+      transformed_new_vector2 <- coef(model)[1] + as.matrix(new_poly_design) %*% coef(model)[-1]
+      return( as.numeric(transformed_new_vector2 ))
+    } else {
+      return(model)
+    }
+  }
+
   # Create a copy of the dataframe to store predictions
-  result_df <- tempNM
-  
+  result_df <- data.frame()
+  intvars = names( trainvalues )
   # Loop over each row in the dataframe
+  nth = round( nrow(tempNM)/100)
   for (i in 1:nrow(tempNM)) {
+    if ( verbose & i %% nth == 0 ) cat(paste0(i,'...'))
     # Extract the current row's predictor values
     current_row <- as.numeric(tempNM[i, intvars])
-    
-    # Check if there is more than one predictor
-    if (length(intvars) > 1) {
-      # Fit a linear model to map intvars to tarints
-      model <- lm(tarints ~ current_row)
-      
-      # Apply the learned model to the fixvars columns
-      fix_values <- as.numeric(tempNM[i, fixvars])
-      predictions <- coef(model)[1] + coef(model)[2] * fix_values
-    } else {
-      # If there's only one predictor, simply scale by the ratio of target to input
-      predictions <- tarints * tempNM[i, fixvars] / current_row
-    }
-    
+    current_test <- as.numeric(tempNM[i, varstoadjust])
     # Store the predictions in the result dataframe
-    result_df[i, paste0(fixvars, "_pred")] <- predictions
+    learnedmap = learn_linear_mapping( trainvalues, current_row, current_test, poly_order=poly_order )
+    result_df[i, paste0(varstoadjust, post_fix )] = as.numeric(learnedmap)
   }
+  cat("\n")
   
   return(result_df)
+}
+
+
+
+
+
+
+
+#' Create a new vector with a specified correlation to an input vector
+#'
+#' @param a Input vector
+#' @param rho Desired correlation between a and the new vector
+#'
+#' @return A new vector with the desired correlation to a
+#'
+#' @examples
+#' a <- rnorm(100)
+#' rho <- 0.7
+#' b <- create_correlated_vector(a, rho)
+#' cor(a, b)
+#' @export
+create_correlated_vector <- function(a, rho) {
+  stopifnot(rho >= -1, rho <= 1)
+  e <- rnorm(length(a))
+  b <- rho * (a - mean(a)) / sd(a) + sqrt(1 - rho^2) * e
+  mean(a) + sd(a) * b / sd(b)
 }

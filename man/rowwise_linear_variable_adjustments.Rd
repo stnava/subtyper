@@ -4,33 +4,49 @@
 \alias{rowwise_linear_variable_adjustments}
 \title{Row-wise linear adjustments to variables in a dataframe}
 \usage{
-rowwise_linear_variable_adjustments(tempNM, intvars, fixvars, tarints)
+rowwise_linear_variable_adjustments(
+  tempNM,
+  trainvalues,
+  varstoadjust,
+  poly_order = 1,
+  post_fix = "_pred",
+  verbose = FALSE
+)
 }
 \arguments{
 \item{tempNM}{The input dataframe containing the data to be processed.}
 
-\item{intvars}{A vector of column names in tempNM representing the predictor variables.}
+\item{trainvalues}{A vector of target values corresponding to the predictor variables. this
+should be a vector of values with column names in tempNM representing the predictor variables.}
 
-\item{fixvars}{A vector of column names in tempNM representing the variables to be predicted.}
+\item{varstoadjust}{A vector of column names in tempNM representing the variables to be predicted.}
 
-\item{tarints}{A vector of target values corresponding to the predictor variables.}
+\item{poly_order}{An integer specifying the polynomial order to be used in the fit. Defaults to 1.}
+
+\item{post_fix}{an extension to add to the modified variable name - can be an empty string}
+
+\item{verbose}{boolean}
 }
 \value{
-A dataframe with the predicted values added as new columns. The new columns are named by appending "_pred"
-to the original column names specified in fixvars.
+A dataframe with the predicted values added as new columns. The new columns are named by appending post_fix
+to the original column names specified in varstoadjust.
 }
 \description{
-Trains linear models on a given dataframe and applies them to predict values.
+Trains linear models on a given dataframe row by row and applies the learned parameters
+to perform subject-specific adjustment to other variables.
 }
 \details{
-This function loops through each row in the dataframe, trains a linear model using the predictor values,
+This function loops through each row in the dataframe, trains a linear model using trainvalues,
 and applies the model to predict the values for the specified variables. It handles both simple (one predictor)
-and multiple predictor cases, adapting the modeling approach accordingly.
+and multiple predictor cases, adapting the modeling approach accordingly and allows for
+both linear and polynomial adjustment.
 
 The function uses a simple linear model for prediction, which may not be suitable for complex relationships between variables.
 It assumes that the input dataframe has the same structure and column names as expected, and does not perform any error checking
 or handling. Therefore, it may fail if the input data is not properly formatted or if there are missing values.
 }
 \examples{
-rowwise_linear_variable_adjustments(mtcars, c("mpg", "cyl"), "disp", c(1, 2))
+trainvec = colMeans(mtcars[,1:7])
+mtadj = rowwise_linear_variable_adjustments(mtcars, trainvec, c("mpg", "cyl","disp") )
+# plot( mtadj[,'disp_pred'], mtcars[,'disp'] )
 }
