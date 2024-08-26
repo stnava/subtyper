@@ -5,6 +5,52 @@
     invisible()
 }
 
+#' Select Top k Rows Based on a Criterion
+#'
+#' This function selects the top `k` rows of a dataframe according to a specified 
+#' column and criterion (either maximizing or minimizing the values). It returns 
+#' a logical vector indicating which rows are among the top `k`.
+#'
+#' @param df A dataframe from which to select the top rows.
+#' @param column A string specifying the column name to base the selection on.
+#' @param k An integer specifying the number of top rows to select.
+#' @param maximize A logical value indicating whether to maximize (`TRUE`) or 
+#' minimize (`FALSE`) the criterion. Default is `TRUE`.
+#' 
+#' @return A logical vector of the same length as the number of rows in `df`. 
+#' `TRUE` indicates that the row is one of the top `k`.
+#'
+#' @examples
+#' df <- data.frame(
+#'   id = 1:10,
+#'   value = c(5, 2, 9, 4, 7, 3, 6, 10, 8, 1)
+#' )
+#' 
+#' # Select the top 3 rows based on maximizing the 'value' column
+#' topk(df, "value", 3, maximize = TRUE)
+#'
+#' # Select the top 3 rows based on minimizing the 'value' column
+#' topk(df, "value", 3, maximize = FALSE)
+#'
+#' @export
+topk <- function(df, column, k, maximize = TRUE) {
+  if (!(column %in% names(df))) {
+    stop("The specified column does not exist in the dataframe.")
+  }
+  
+  if (maximize) {
+    ranking <- order(df[[column]], decreasing = TRUE)
+  } else {
+    ranking <- order(df[[column]], decreasing = FALSE)
+  }
+  
+  selected_rows <- ranking[1:k]
+  
+  result <- rep(FALSE, nrow(df))
+  result[selected_rows] <- TRUE
+  
+  return(result)
+}
 
 #' Filter Columns by Percentage of NA Values
 #'
