@@ -5,6 +5,120 @@
     invisible()
 }
 
+
+#' Extract Complete Cases from a Data Frame Based on a Model Equation
+#'
+#' This function takes a data frame and a model equation as input, and returns
+#' a boolean vector indicating which rows of the data frame have complete cases
+#' for the variables specified in the equation.
+#'
+#' @param df A data frame containing the variables specified in the equation.
+#' @param equation A model equation specifying the variables of interest.
+#' @return A boolean vector indicating which rows of the data frame have complete cases.
+#' @examples
+#' df <- data.frame(
+#'   x = c(1, 2, NA, 4),
+#'   y = c(NA, 2, 3, 4),
+#'   z = c(1, 2, 3, NA)
+#' )
+#' equation <- y ~ x + z
+#' complete_index <- complete_cases_from_equation(df, equation)
+#' print(complete_index)  # Output: FALSE TRUE FALSE FALSE
+#' @export
+complete_cases_from_equation <- function(df, equation) {
+  # Extract variable names from the equation using all.vars
+  vars <- all.vars(equation)
+  
+  # Subset the dataframe to include only the relevant variables
+  relevant_data <- df[, vars, drop = FALSE]
+  
+  # Use complete.cases to get a boolean vector indicating complete cases
+  complete_cases <- complete.cases(relevant_data)
+  
+  return(complete_cases)
+}
+
+
+#' Select Longitudinal Subjects
+#'
+#' Select subjects that have at least a minimum number of visits and
+#' have occurrences at each instance of the time column. Optionally,
+#' return only subjects where the time column equals a user-specified
+#' baseline value.
+#'
+#' @param dataframe The input dataframe.
+#' @param subjectID_column The column name of the subject IDs.
+#' @param time_column The column name of the time variable.
+#' @param min_visits The minimum number of visits required.
+#' @param baseline Optional baseline value to filter by. If specified,
+#'   only subjects with a time column value equal to this baseline will
+#'   be returned.
+#'
+#' @return A dataframe containing the selected subjects.
+#'
+#' @examples
+#' dataframe <- data.frame(
+#'   subject_id = c(1, 1, 1, 2, 2, 3, 3, 3),
+#'   time = c(0, 1, 2, 0, 1, 0, 1, 2),
+#'   value = rnorm(8)
+#' )
+#'
+#' # Select subjects with at least 3 visits and occurrences at each time point
+#' selected_subjects <- select_longitudinal_subjects(dataframe, "subject_id", "time", 3)
+#'
+#' # Select subjects with at least 2 visits and occurrences at each time point,
+#' # and return only subjects with a time column value equal to 0
+#' selected_subjects <- select_longitudinal_subjects(dataframe, "subject_id", "time", 2, baseline = 0)
+#' @export
+select_longitudinal_subjects <- function(dataframe, subjectID_column, time_column, min_visits, baseline = NULL) {
+  # Create a contingency table (cross-tabulation) of subjects by time points
+  subject_time_table <- table(dataframe[[subjectID_column]], dataframe[[time_column]])
+  
+  # Initialize an empty vector to store the IDs of valid subjects
+  valid_subjects <- c()
+  
+  # Get the expected number of time points (columns in the contingency table)
+  expected_time_points <- ncol(subject_time_table)
+  
+  # Loop through each subject to check if they meet the criteria
+  for (subject in rownames(subject_time_table)) {
+    # Get the number of visits at each time point for the current subject
+    visits_per_time_point <- subject_time_table[subject, ]
+    
+    # Check if the subject has visits at every time point
+    has_all_time_points <- all(visits_per_time_point > 0)
+    
+    # Check if the subject has at least the minimum number of visits
+    total_visits <- sum(visits_per_time_point)
+    has_min_visits <- total_visits >= min_visits
+    
+    # If a baseline is specified, check if the subject has a visit at the baseline time point
+    if (!is.null(baseline)) {
+      has_baseline_visit <- visits_per_time_point[as.character(baseline)] > 0
+    } else {
+      has_baseline_visit <- TRUE
+    }
+    
+    # If the subject meets all the criteria, add them to the list of valid subjects
+    if ( has_min_visits && has_baseline_visit) {
+      valid_subjects <- c(valid_subjects, subject)
+    }
+  }
+  
+  # Filter the original dataframe to return only the rows corresponding to the valid subjects
+  selected_data <- dataframe[dataframe[[subjectID_column]] %in% valid_subjects, ]
+  
+  # Explicit check: Ensure that each selected subject has at least min_visits
+  subject_visit_counts <- table(selected_data[[subjectID_column]])
+  valid_subjects_final <- names(subject_visit_counts[subject_visit_counts >= min_visits])
+  
+  # Filter again to ensure only subjects with at least min_visits are returned
+  selected_data <- selected_data[selected_data[[subjectID_column]] %in% valid_subjects_final, ]
+  
+  return(selected_data)
+}
+
+
 #' Select Top k Rows Based on a Criterion
 #'
 #' This function selects the top `k` rows of a dataframe according to a specified 
