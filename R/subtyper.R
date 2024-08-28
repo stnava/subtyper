@@ -39,6 +39,117 @@ complete_cases_from_equation <- function(df, equation) {
 }
 
 
+#' Compare Model Predictions with True Values
+#'
+#' This function takes in two models and produces two ggplots in a list that show the predictions
+#' of the models versus the true response variable. For mixed models, it allows the user to ignore random effects.
+#' It also displays the R-squared (R²) value within each plot.
+#'
+#' @param model1 A fitted model object (either a standard regression or a mixed model).
+#' @param model2 A second fitted model object (either a standard regression or a mixed model).
+#' @param data A data frame containing the variables used in the models.
+#' @param response The name of the response variable as a string.
+#' @param re.form A formula specifying which random effects to include in predictions, or `NA` to exclude them. Defaults to including all random effects. Only applies if the model is a mixed model.
+#' @param custom_title string for a custom title - should be a vector of two titles, one for each plot
+#' @return A list of two ggplot objects, each comparing the predictions of a model with the true response variable.
+#' @import ggplot2
+#' @importFrom stats predict
+#' @importFrom methods is
+#' @examples
+#' \dontrun{
+#'   mdl1 <- lm(Sepal.Length ~ Sepal.Width + Petal.Length, data = iris)
+#'   mdl2 <- lm(Sepal.Length ~ Sepal.Width + Petal.Width, data = iris)
+#'   plots <- compare_model_predictions(mdl1, mdl2, data = iris, response = "Sepal.Length")
+#'   plots[[1]] # Plot for model 1
+#'   plots[[2]] # Plot for model 2
+#' }
+#' @export
+compare_model_predictions <- function(model1, model2, data, response, re.form = NULL, custom_title=NULL ) {
+  # Ensure response is in the data
+  if (!response %in% colnames(data)) {
+    stop("The specified response variable is not in the data frame.")
+  }
+  
+  # Determine if the models are mixed models
+  is_mixed_model1 <- is(model1, "merMod") # lme4 models return class "merMod"
+  is_mixed_model2 <- is(model2, "merMod")
+  
+  # Get predictions from model 1
+  if (is_mixed_model1) {
+    preds1 <- predict(model1, newdata = data, re.form = re.form)
+    r_squared1 <- round( as.numeric(rsq( model1 )[2]), 3 )# round(cor(data[[response]], preds1)^2, 3)
+  } else {
+    preds1 <- predict(model1, newdata = data)
+    r_squared1 <- round( as.numeric(rsq( model1 )[1]), 3 )# round(cor(data[[response]], preds1)^2, 3)
+  }
+  
+  # Get predictions from model 2
+  if (is_mixed_model2) {
+    preds2 <- predict(model2, newdata = data, re.form = re.form)
+    r_squared2 <- round( as.numeric(rsq( model2 )[2]), 3 )# round(cor(data[[response]], preds2)^2, 3)
+  } else {
+    preds2 <- predict(model2, newdata = data)
+    r_squared2 <- round( as.numeric(rsq( model2 )[1]), 3 )# round(cor(data[[response]], preds2)^2, 3)
+  }
+  
+  # Calculate R-squared for both models
+  
+  # Create data frame for plotting
+  plot_data <- data.frame(
+    True = data[[response]],
+    Pred1 = preds1,
+    Pred2 = preds2
+  )
+  if ( is.null( custom_title ) ) {
+    custom_title = c( 
+      paste("Model 1 Predictions vs True", response)  ,
+      paste("Model 2 Predictions vs True", response)  
+      )
+    custom_title = c( 
+      paste("Base Model vs True")  ,
+      paste("Ext. Model vs True")  
+      )
+  }
+  
+  # Find the minimum and maximum values for the axis limits
+  min_val <- min(c(plot_data$True, plot_data$Pred1, plot_data$Pred2))
+  max_val <- max(c(plot_data$True, plot_data$Pred1, plot_data$Pred2))
+  
+  # Create plots with informative titles, axis labels, and R-squared values within the plot
+  plot1 <- ggplot(plot_data, aes(x = True, y = Pred1)) +
+    geom_point() +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      title = custom_title[1],
+      x = paste("True", response),
+      y = paste("Predicted", response)
+    ) +
+    annotate("text", x = Inf, y = Inf, label = paste("R² =", r_squared1),
+             hjust = 1.1, vjust = 1.5, size = 5, color = "blue") +
+    coord_equal(ratio = 1) +
+    scale_x_continuous(limits = c(min_val, max_val)) +
+    scale_y_continuous(limits = c(min_val, max_val)) +
+    theme_minimal()
+  
+  plot2 <- ggplot(plot_data, aes(x = True, y = Pred2)) +
+    geom_point() +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+    labs(
+      title = custom_title[2],
+      x = paste("True", response),
+      y = paste("Predicted", response)
+    ) +
+    annotate("text", x = Inf, y = Inf, label = paste("R² =", r_squared2),
+             hjust = 1.1, vjust = 1.5, size = 5, color = "blue") +
+    coord_equal(ratio = 1) +
+    scale_x_continuous(limits = c(min_val, max_val)) +
+    scale_y_continuous(limits = c(min_val, max_val)) +
+    theme_minimal()
+  
+  # Return the plots in a list
+  return(list(plot1, plot2))
+}
+
 #' Select Longitudinal Subjects
 #'
 #' Select subjects that have at least a minimum number of visits and
@@ -4594,6 +4705,48 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   return(results)
 }
 
+
+#' Forcefully Unload a Package in R
+#'
+#' This function forcefully unloads a package from R by detaching it from the search path,
+#' unloading its namespace, and trying to remove it from all environments.
+#'
+#' @param pkg The name of the package to unload as a string.
+#' @return Logical TRUE if the package was successfully unloaded, FALSE otherwise.
+#' @examples
+#' \dontrun{
+#'   force_unload_package("ggplot2")
+#' }
+force_unload_package <- function(pkg) {
+  # Check if the package is loaded
+  if (!pkg %in% loadedNamespaces()) {
+    message(paste("Package", pkg, "is not loaded."))
+    return(FALSE)
+  }
+  
+  # Detach the package from the search path
+  search_pkg <- paste("package", pkg, sep = ":")
+  while (search_pkg %in% search()) {
+    detach(search_pkg, unload = TRUE, character.only = TRUE)
+  }
+  
+  # Try to unload the namespace
+  if (pkg %in% loadedNamespaces()) {
+    tryCatch({
+      unloadNamespace(pkg)
+      message(paste("Package", pkg, "unloaded successfully."))
+      return(TRUE)
+    }, error = function(e) {
+      message(paste("Failed to unload package:", pkg))
+      return(FALSE)
+    })
+  } else {
+    message(paste("Package", pkg, "was detached but the namespace was not loaded."))
+    return(TRUE)
+  }
+}
+
+
 #' Linear Regression Analysis with ANOVA and Effect Size Calculation
 #'
 #' This function fits two linear regression models: a base model without the main predictor of interest
@@ -4681,7 +4834,8 @@ lm_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, predictorope
     model_comparison = model_comparison,
     effect_sizes = effect_sizes,
     coefficients = coefs,
-    n = ndf
+    n = ndf,
+    base_model=base_model
   )
   
   return(results)
