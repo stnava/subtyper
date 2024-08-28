@@ -46,6 +46,7 @@ Imports:
   lmerTest,
   lme4,
   MASS,
+  methods,
   mlr3,
   mlr3cluster,
   mlr3pipelines,
