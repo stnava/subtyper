@@ -126,7 +126,7 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
     ) +
     annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared1),
              hjust = 1.1, vjust = -0.5, size = 5, color = "blue", fill = 'white') +
-    coord_equal(ratio = 1) +
+#    coord_equal(ratio = 1) +
     scale_x_continuous(limits = c(min_val, max_val)) +
     scale_y_continuous(limits = c(min_val, max_val)) +
     theme_minimal()
@@ -144,7 +144,7 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
    # geom_label(aes(x = Inf, y = Inf, label = paste("R² =", r_squared2)),
    #            hjust = 1.1, vjust = 1.5, size = 5, color = "white", fill = "blue") +
     theme_minimal() +
-    coord_equal(ratio = 1) +
+#    coord_equal(ratio = 1) +
     scale_x_continuous(limits = c(min_val, max_val)) +
     scale_y_continuous(limits = c(min_val, max_val)) +
     theme_minimal()
