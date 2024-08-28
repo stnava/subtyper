@@ -1598,7 +1598,8 @@ scale_variables_in_equation <- function( mydf, myeq, variables_to_exclude ) {
   myterms = intersect(myterms, colnames(mydf))
   for ( x in myterms ) {
     if ( is.numeric( mydf[,x] )) {
-      mydf[,x] = c(scale(mydf[,x]))
+      if ( var( mydf[,x], na.rm=T ) > 0 )
+        mydf[,x] = c(scale(mydf[,x]))
     }
   }
   return(mydf)
