@@ -4,7 +4,14 @@
 \alias{compare_model_predictions}
 \title{Compare Model Predictions with True Values}
 \usage{
-compare_model_predictions(model1, model2, data, response, re.form = NULL)
+compare_model_predictions(
+  model1,
+  model2,
+  data,
+  response,
+  re.form = NULL,
+  custom_title = NULL
+)
 }
 \arguments{
 \item{model1}{A fitted model object (either a standard regression or a mixed model).}
@@ -16,6 +23,8 @@ compare_model_predictions(model1, model2, data, response, re.form = NULL)
 \item{response}{The name of the response variable as a string.}
 
 \item{re.form}{A formula specifying which random effects to include in predictions, or \code{NA} to exclude them. Defaults to including all random effects. Only applies if the model is a mixed model.}
+
+\item{custom_title}{string for a custom title - should be a vector of two titles, one for each plot}
 }
 \value{
 A list of two ggplot objects, each comparing the predictions of a model with the true response variable.
@@ -23,6 +32,7 @@ A list of two ggplot objects, each comparing the predictions of a model with the
 \description{
 This function takes in two models and produces two ggplots in a list that show the predictions
 of the models versus the true response variable. For mixed models, it allows the user to ignore random effects.
+It also displays the R-squared (R²) value within each plot.
 }
 \examples{
 \dontrun{
