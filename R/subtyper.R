@@ -43,14 +43,15 @@ complete_cases_from_equation <- function(df, equation) {
 #'
 #' This function takes in two models and produces two ggplots in a list that show the predictions
 #' of the models versus the true response variable. For mixed models, it allows the user to ignore random effects.
-#' It also displays the R-squared (R²) value within each plot.
+#' It also displays the R-squared (R²) value and the difference in R-squared (ΔR²) between the two models within each plot.
 #'
 #' @param model1 A fitted model object (either a standard regression or a mixed model).
 #' @param model2 A second fitted model object (either a standard regression or a mixed model).
 #' @param data A data frame containing the variables used in the models.
 #' @param response The name of the response variable as a string.
 #' @param re.form A formula specifying which random effects to include in predictions, or `NA` to exclude them. Defaults to including all random effects. Only applies if the model is a mixed model.
-#' @param custom_title string for a custom title - should be a vector of two titles, one for each plot
+#' @param custom_title An optional vector of custom titles for the plots.
+#' @param annot_size optional size for text annotation (default 5)
 #' @return A list of two ggplot objects, each comparing the predictions of a model with the true response variable.
 #' @import ggplot2
 #' @importFrom stats predict
@@ -64,7 +65,7 @@ complete_cases_from_equation <- function(df, equation) {
 #'   plots[[2]] # Plot for model 2
 #' }
 #' @export
-compare_model_predictions <- function(model1, model2, data, response, re.form = NULL, custom_title=NULL ) {
+compare_model_predictions <- function(model1, model2, data, response, re.form = NULL, custom_title=NULL, annot_size=5 ) {
   # Ensure response is in the data
   if (!response %in% colnames(data)) {
     stop("The specified response variable is not in the data frame.")
@@ -77,22 +78,23 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
   # Get predictions from model 1
   if (is_mixed_model1) {
     preds1 <- predict(model1, newdata = data, re.form = re.form)
-    r_squared1 <- round( as.numeric(rsq( model1 )[2]), 3 )# round(cor(data[[response]], preds1)^2, 3)
+    r_squared1 <- round( as.numeric(rsq( model1 )[2]), 3 )
   } else {
     preds1 <- predict(model1, newdata = data)
-    r_squared1 <- round( as.numeric(rsq( model1 )[1]), 3 )# round(cor(data[[response]], preds1)^2, 3)
+    r_squared1 <- round( as.numeric(rsq( model1 )[1]), 3 )
   }
   
   # Get predictions from model 2
   if (is_mixed_model2) {
     preds2 <- predict(model2, newdata = data, re.form = re.form)
-    r_squared2 <- round( as.numeric(rsq( model2 )[2]), 3 )# round(cor(data[[response]], preds2)^2, 3)
+    r_squared2 <- round( as.numeric(rsq( model2 )[2]), 3 )
   } else {
     preds2 <- predict(model2, newdata = data)
-    r_squared2 <- round( as.numeric(rsq( model2 )[1]), 3 )# round(cor(data[[response]], preds2)^2, 3)
+    r_squared2 <- round( as.numeric(rsq( model2 )[1]), 3 )
   }
   
-  # Calculate R-squared for both models
+  # Calculate delta R-squared
+  delta_r_squared <- round(r_squared2 - r_squared1, 3)
   
   # Create data frame for plotting
   plot_data <- data.frame(
@@ -100,51 +102,45 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
     Pred1 = preds1,
     Pred2 = preds2
   )
-  if ( is.null( custom_title ) ) {
+  
+  if ( is.null( custom_title ) & FALSE ) {
     custom_title = c( 
-      paste("Model 1 Predictions vs True", response)  ,
-      paste("Model 2 Predictions vs True", response)  
-      )
-    custom_title = c( 
-      paste("Base Model vs True")  ,
-      paste("Ext. Model vs True")  
-      )
+      paste("Base Model vs True", response)  ,
+      paste("Ext. Model vs True", response)  
+    )
   }
   
   # Find the minimum and maximum values for the axis limits
   min_val <- min(c(plot_data$True, plot_data$Pred1, plot_data$Pred2))
   max_val <- max(c(plot_data$True, plot_data$Pred1, plot_data$Pred2))
   
-  # Create plots with informative titles, axis labels, and R-squared values within the plot
+  # Create plots with informative titles, axis labels, R-squared values, delta R-squared, and best-fit regression lines
   plot1 <- ggplot(plot_data, aes(x = True, y = Pred1)) +
     geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "solid") +  # Best-fit regression line
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
     labs(
       title = custom_title[1],
       x = paste("True", response),
       y = paste("Pred.", response)
     ) +
-    annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared1),
-             hjust = 1.1, vjust = -0.5, size = 5, color = "blue", fill = 'white') +
-#    coord_equal(ratio = 1) +
+    annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared1, "\nΔR² =", delta_r_squared),
+             hjust = 1.1, vjust = -0.5, size = annot_size, color = "blue", fill = 'white') +
     scale_x_continuous(limits = c(min_val, max_val)) +
     scale_y_continuous(limits = c(min_val, max_val)) +
     theme_minimal()
   
   plot2 <- ggplot(plot_data, aes(x = True, y = Pred2)) +
     geom_point() +
+    geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "solid") +  # Best-fit regression line
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
     labs(
       title = custom_title[2],
       x = paste("True", response),
       y = paste("Pred.", response)
     ) + 
-    annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared2),
-             hjust = 1.1, vjust = -0.5, size = 5, color = "blue", fill = 'white') +
-   # geom_label(aes(x = Inf, y = Inf, label = paste("R² =", r_squared2)),
-   #            hjust = 1.1, vjust = 1.5, size = 5, color = "white", fill = "blue") +
-    theme_minimal() +
-#    coord_equal(ratio = 1) +
+    annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared2, "\nΔR² =", delta_r_squared),
+             hjust = 1.1, vjust = -0.5, size = annot_size, color = "blue", fill = 'white') +
     scale_x_continuous(limits = c(min_val, max_val)) +
     scale_y_continuous(limits = c(min_val, max_val)) +
     theme_minimal()

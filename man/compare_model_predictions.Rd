@@ -10,7 +10,8 @@ compare_model_predictions(
   data,
   response,
   re.form = NULL,
-  custom_title = NULL
+  custom_title = NULL,
+  annot_size = 5
 )
 }
 \arguments{
@@ -24,7 +25,9 @@ compare_model_predictions(
 
 \item{re.form}{A formula specifying which random effects to include in predictions, or \code{NA} to exclude them. Defaults to including all random effects. Only applies if the model is a mixed model.}
 
-\item{custom_title}{string for a custom title - should be a vector of two titles, one for each plot}
+\item{custom_title}{An optional vector of custom titles for the plots.}
+
+\item{annot_size}{optional size for text annotation (default 5)}
 }
 \value{
 A list of two ggplot objects, each comparing the predictions of a model with the true response variable.
@@ -32,7 +35,7 @@ A list of two ggplot objects, each comparing the predictions of a model with the
 \description{
 This function takes in two models and produces two ggplots in a list that show the predictions
 of the models versus the true response variable. For mixed models, it allows the user to ignore random effects.
-It also displays the R-squared (R²) value within each plot.
+It also displays the R-squared (R²) value and the difference in R-squared (ΔR²) between the two models within each plot.
 }
 \examples{
 \dontrun{
