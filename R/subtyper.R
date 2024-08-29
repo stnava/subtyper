@@ -122,7 +122,7 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
     labs(
       title = custom_title[1],
       x = paste("True", response),
-      y = paste("Predicted", response)
+      y = paste("Pred.", response)
     ) +
     annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared1),
              hjust = 1.1, vjust = -0.5, size = 5, color = "blue", fill = 'white') +
@@ -137,7 +137,7 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
     labs(
       title = custom_title[2],
       x = paste("True", response),
-      y = paste("Predicted", response)
+      y = paste("Pred.", response)
     ) + 
     annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared2),
              hjust = 1.1, vjust = -0.5, size = 5, color = "blue", fill = 'white') +
