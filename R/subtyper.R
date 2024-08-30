@@ -121,8 +121,8 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
     labs(
       title = custom_title[1],
-      x = paste("True", response),
-      y = paste("Pred.", response)
+      x = paste("T.", response),
+      y = paste("P.", response)
     ) +
     annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared1, "\nΔR² =", delta_r_squared),
              hjust = 1.1, vjust = -0.5, size = annot_size, color = "blue", fill = 'white') +
@@ -136,8 +136,8 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
     labs(
       title = custom_title[2],
-      x = paste("True", response),
-      y = paste("Pred.", response)
+      x = paste("T.", response),
+      y = paste("P.", response)
     ) + 
     annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared2, "\nΔR² =", delta_r_squared),
              hjust = 1.1, vjust = -0.5, size = annot_size, color = "blue", fill = 'white') +
