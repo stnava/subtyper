@@ -4717,6 +4717,7 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
 #' \dontrun{
 #'   force_unload_package("ggplot2")
 #' }
+#' @export
 force_unload_package <- function(pkg) {
   # Check if the package is loaded
   if (!pkg %in% loadedNamespaces()) {
