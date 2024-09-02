@@ -5998,3 +5998,123 @@ create_correlated_vector <- function(a, rho) {
   b <- rho * (a - mean(a)) / sd(a) + sqrt(1 - rho^2) * e
   mean(a) + sd(a) * b / sd(b)
 }
+
+
+#' Generate a Table 1 summary of demographic and clinical characteristics
+#' faceted by a target grouping variable.
+#'
+#' @param df Data frame containing the data.
+#' @param vars Vector of variable names to include in the summary.
+#' @param facet_var Name of the facet variable.
+#'
+#' @return A data frame with the summary statistics for each variable faceted
+#' by the target grouping variable.
+#'
+#' @examples
+#' \dontrun{
+#' table_1(df, vars, facet_var)
+#' }
+#' @export
+table_1 <- function(df, vars, facet_var) {
+  # Define a function to format the output
+  format_output <- function(x) {
+    if (is.numeric(x)) {
+      x <- x[!is.na(x)]
+      if (length(x) == 0) {
+        return("NA (NA)")
+      } else {
+        mean_sd <- paste0(round(mean(x), 2), " (", round(sd(x), 2), ")")
+        return(mean_sd)
+      }
+    } else {
+      x <- x[!is.na(x)]
+      if (length(x) == 0) {
+        return("NA (NA)")
+      } else {
+        freq <- table(x)
+        return(paste0(freq[1], " (", round(freq[1] / sum(freq) * 100, 2), "%)"))
+      }
+    }
+  }
+  
+  # Split the data by the facet variable
+  df_split <- split(df, df[, facet_var])
+  
+  # Apply the format_output function to each split data frame
+  results <- lapply(df_split, function(x) {
+    c(paste0("N = ", nrow(x)), sapply(x[, vars], format_output))
+  })
+  
+  # Combine the results into a single data frame
+  df_results <- as.data.frame(results)
+  
+  # Add row names
+  rownames(df_results) <- c("Sample Size", vars)
+  
+  # Return the data frame
+  return(df_results)
+}
+
+
+#' Generate a table summarizing the data in a linear model formula.
+#'
+#' @param formula Model formula.
+#' @param data Data frame containing the data.
+#' @param facet_var Name of the facet variable.
+#'
+#' @return A data frame summarizing the data in the formula.
+#'
+#' @examples
+#' \dontrun{
+#' table_1_from_formula(formula, data, facet_var)
+#' }
+#' @export
+table_1_from_formula <- function(formula, data, facet_var) {
+  # Extract the variables from the formula
+  terms <- terms(formula)
+  vars <- attr(terms, "term.labels")
+  
+  # Remove random effects
+  vars <- vars[!grepl("\\|", vars)]
+  
+  # Remove the facet variable
+  vars <- setdiff(vars, facet_var)
+  
+  # Call table_1_facet to summarize the data
+  table_1(data, vars, facet_var)
+}
+
+#' Format a table for publication using LaTeX.
+#'
+#' @param df Data frame containing the table data.
+#' @param caption Caption for the table.
+#' @param label Label for the table.
+#'
+#' @return A LaTeX-formatted table.
+#'
+#' @examples
+#' \dontrun{
+#' table_1_presentation(df, caption = "Demographic and Clinical Characteristics",
+#'                          label = "table:demographics")
+#' }
+#' @export
+table_1_presentation <- function(df, caption = "", label = "", format = "latex") {
+  # Load necessary libraries
+  library(knitr)
+  library(kableExtra)
+  
+  # Format the table
+  if (format == "latex") {
+    df %>%
+      kable(format = "latex", booktabs = TRUE, 
+            caption = caption, label = label) %>%
+      kable_styling(latex_options = c("striped", "hold_position")) %>%
+      column_spec(1, width = "3cm") %>%
+      row_spec(0, bold = TRUE, font_size = 12) %>%
+      row_spec(1, italic = TRUE, font_size = 10)
+  } else if (format == "html") {
+    df %>%
+      kable(format = "html", caption = caption) %>%
+      kable_styling(bootstrap_options = c("striped", "hover"))
+  }
+}

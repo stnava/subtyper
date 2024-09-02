@@ -88,6 +88,12 @@
     <loc>/reference/clearcolname.html</loc>
   </url>
   <url>
+    <loc>/reference/compare_model_predictions.html</loc>
+  </url>
+  <url>
+    <loc>/reference/complete_cases_from_equation.html</loc>
+  </url>
+  <url>
     <loc>/reference/consensusSubtypingCOCA.html</loc>
   </url>
   <url>
@@ -104,6 +110,9 @@
   </url>
   <url>
     <loc>/reference/convert_to_random_effects.html</loc>
+  </url>
+  <url>
+    <loc>/reference/create_correlated_vector.html</loc>
   </url>
   <url>
     <loc>/reference/create_radar_chart.html</loc>
@@ -143,6 +152,9 @@
   </url>
   <url>
     <loc>/reference/find_closest_subjects.html</loc>
+  </url>
+  <url>
+    <loc>/reference/force_unload_package.html</loc>
   </url>
   <url>
     <loc>/reference/fs.html</loc>
@@ -277,10 +289,19 @@
     <loc>/reference/replace_values.html</loc>
   </url>
   <url>
+    <loc>/reference/replace_values_by_key.html</loc>
+  </url>
+  <url>
+    <loc>/reference/rowwise_linear_variable_adjustments.html</loc>
+  </url>
+  <url>
     <loc>/reference/scale_variables_in_equation.html</loc>
   </url>
   <url>
     <loc>/reference/select_important_variables.html</loc>
+  </url>
+  <url>
+    <loc>/reference/select_longitudinal_subjects.html</loc>
   </url>
   <url>
     <loc>/reference/setSeedBasedOnTime.html</loc>
@@ -298,7 +319,19 @@
     <loc>/reference/sinkhorn_method.html</loc>
   </url>
   <url>
+    <loc>/reference/table_1.html</loc>
+  </url>
+  <url>
+    <loc>/reference/table_1_from_formula.html</loc>
+  </url>
+  <url>
+    <loc>/reference/table_1_presentation.html</loc>
+  </url>
+  <url>
     <loc>/reference/threewayinteraction.html</loc>
+  </url>
+  <url>
+    <loc>/reference/topk.html</loc>
   </url>
   <url>
     <loc>/reference/trainSubtypeClusterMulti.html</loc>
