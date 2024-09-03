@@ -2,10 +2,9 @@
 % Please edit documentation in R/subtyper.R
 \name{table_1}
 \alias{table_1}
-\title{Generate a Table 1 summary of demographic and clinical characteristics
-faceted by a target grouping variable.}
+\title{Generate a table summarizing the data in a data frame.}
 \usage{
-table_1(df, vars, facet_var)
+table_1(df, vars, facet_var, col_names = NULL, factor_rows = FALSE)
 }
 \arguments{
 \item{df}{Data frame containing the data.}
@@ -13,14 +12,16 @@ table_1(df, vars, facet_var)
 \item{vars}{Vector of variable names to include in the summary.}
 
 \item{facet_var}{Name of the facet variable.}
+
+\item{col_names}{Vector of custom column names (optional).}
+
+\item{factor_rows}{Logical indicating whether to display factor variables in rows (default = FALSE).}
 }
 \value{
-A data frame with the summary statistics for each variable faceted
-by the target grouping variable.
+A data frame summarizing the data in the formula.
 }
 \description{
-Generate a Table 1 summary of demographic and clinical characteristics
-faceted by a target grouping variable.
+Generate a table summarizing the data in a data frame.
 }
 \examples{
 \dontrun{

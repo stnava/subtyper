@@ -6000,22 +6000,24 @@ create_correlated_vector <- function(a, rho) {
 }
 
 
-#' Generate a Table 1 summary of demographic and clinical characteristics
-#' faceted by a target grouping variable.
+#' Generate a table summarizing the data in a data frame.
 #'
 #' @param df Data frame containing the data.
 #' @param vars Vector of variable names to include in the summary.
 #' @param facet_var Name of the facet variable.
+#' @param col_names Vector of custom column names (optional).
+#' @param factor_rows Logical indicating whether to display factor variables in rows (default = FALSE).
 #'
-#' @return A data frame with the summary statistics for each variable faceted
-#' by the target grouping variable.
+#' @return A data frame summarizing the data in the formula.
 #'
 #' @examples
 #' \dontrun{
 #' table_1(df, vars, facet_var)
 #' }
+#' @importFrom stats sd
+#' @importFrom utils table
 #' @export
-table_1 <- function(df, vars, facet_var) {
+table_1 <- function(df, vars, facet_var, col_names = NULL, factor_rows = FALSE) {
   # Define a function to format the output
   format_output <- function(x) {
     if (is.numeric(x)) {
@@ -6032,29 +6034,142 @@ table_1 <- function(df, vars, facet_var) {
         return("NA (NA)")
       } else {
         freq <- table(x)
-        return(paste0(freq[1], " (", round(freq[1] / sum(freq) * 100, 2), "%)"))
+        result <- paste0(freq, " (", round(freq / sum(freq) * 100, 2), "%)")
+        return(result)
       }
+    }
+  }
+  
+  # Define a function to format the output for factors
+  format_factor <- function(x) {
+    x <- x[!is.na(x)]
+    if (length(x) == 0) {
+      return("NA")
+    } else {
+      freq <- table(x)
+      result <- paste0(round(freq / sum(freq) * 100, 2), collapse = "/")
+      return(paste0(result, "%"))
     }
   }
   
   # Split the data by the facet variable
   df_split <- split(df, df[, facet_var])
   
-  # Apply the format_output function to each split data frame
-  results <- lapply(df_split, function(x) {
-    c(paste0("N = ", nrow(x)), sapply(x[, vars], format_output))
-  })
-  
-  # Combine the results into a single data frame
-  df_results <- as.data.frame(results)
-  
-  # Add row names
-  rownames(df_results) <- c("Sample Size", vars)
-  
-  # Return the data frame
-  return(df_results)
+  if (factor_rows) {
+    # Initialize results
+    results <- matrix(nrow = length(vars), ncol = length(df_split))
+    
+    # Loop through each variable
+    for (i in 1:length(vars)) {
+      var <- vars[i]
+      if (is.factor(df[, var]) | is.character(df[, var])) {
+        for (j in 1:length(df_split)) {
+          x <- df_split[[j]]
+          results[i, j] <- format_factor(x[, var])
+        }
+      } else {
+        for (j in 1:length(df_split)) {
+          x <- df_split[[j]]
+          results[i, j] <- format_output(x[, var])
+        }
+      }
+    }
+    
+    # Convert results to data frame
+    df_results <- as.data.frame(results)
+    
+    # Use custom column names if provided
+    if (!is.null(col_names)) {
+      colnames(df_results) <- col_names
+    } else {
+      # Generate default column names
+      col_names <- paste0(facet_var, " = ", names(df_split))
+      colnames(df_results) <- col_names
+    }
+    
+    # Add row names
+    rownames(df_results) <- sapply(vars, function(x) {
+      if (is.factor(df[, x]) | is.character(df[, x])) {
+        levels <- unique(df[, x])
+        levels <- levels[!is.na(levels)]
+        return(paste0(x, ".", paste(levels, collapse = "/")))
+      } else {
+        return(x)
+      }
+    })
+    
+    # Return the data frame
+    return(df_results)
+  } else {
+    # Initialize results
+    results <- list()
+    
+    # Get the unique levels for each factor variable
+    factor_levels <- lapply(df[, vars, drop = FALSE], function(x) {
+      if (is.factor(x) | is.character(x)) {
+        return(unique(x[!is.na(x)]))
+      } else {
+        return(NULL)
+      }
+    })
+    
+    # Loop through each split data frame
+    for (i in 1:length(df_split)) {
+      x <- df_split[[i]]
+      
+      # Initialize result for this split data frame
+      result <- c(paste0("N = ", sum(!is.na(x[, facet_var]))))
+      
+      # Loop through each variable
+      for (j in 1:length(vars)) {
+        var <- vars[j]
+        if (is.numeric(x[, var])) {
+          result <- c(result, format_output(x[, var]))
+        } else {
+          levels <- factor_levels[[j]]
+          for (level in levels) {
+            result <- c(result, format_output(x[x[, var] == level, var]))
+          }
+        }
+      }
+      
+      # Add result to results
+      results[[i]] <- result
+    }
+    
+    # Combine the results into a single data frame
+    df_results <- as.data.frame(results)
+    
+    # Use custom column names if provided
+    if (!is.null(col_names)) {
+      colnames(df_results) <- col_names
+    } else {
+      # Generate default column names
+      col_names <- paste0(facet_var, " = ", names(df_split))
+      col_names <- paste0(names(df_split))
+      colnames(df_results) <- col_names
+    }
+    
+    # Add row names
+    row_names <- c("Sample Size")
+    for (var in vars) {
+      if (is.numeric(df[, var])) {
+        row_names <- c(row_names, var)
+      } else {
+        levels <- unique(df[, var][!is.na(df[, var])])
+        for (level in levels) {
+          row_names <- c(row_names, paste0(var, ": ", level))
+        }
+      }
+    }
+    rownames(df_results) <- row_names
+    
+    df_results = df_results[ , df_results['Sample Size',] != "N = 0" ]
+    
+    # Return the data frame
+    return(df_results)
+  }
 }
-
 
 #' Generate a table summarizing the data in a linear model formula.
 #'
