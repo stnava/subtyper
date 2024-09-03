@@ -6017,25 +6017,14 @@ create_correlated_vector <- function(a, rho) {
 #' @importFrom stats sd
 #' @export
 table_1 <- function(df, vars, facet_var, col_names = NULL, factor_rows = FALSE) {
-  # Define a function to format the output
+  # Define a function to format the output for numeric variables
   format_output <- function(x) {
-    if (is.numeric(x)) {
-      x <- x[!is.na(x)]
-      if (length(x) == 0) {
-        return("NA (NA)")
-      } else {
-        mean_sd <- paste0(round(mean(x), 2), " (", round(sd(x), 2), ")")
-        return(mean_sd)
-      }
+    x <- x[!is.na(x)]
+    if (length(x) == 0) {
+      return("NA (NA)")
     } else {
-      x <- x[!is.na(x)]
-      if (length(x) == 0) {
-        return("NA (NA)")
-      } else {
-        freq <- table(x)
-        result <- paste0(freq, " (", round(freq / sum(freq) * 100, 2), "%)")
-        return(result)
-      }
+      mean_sd <- paste0(round(mean(x), 2), " (", round(sd(x), 2), ")")
+      return(mean_sd)
     }
   }
   
@@ -6054,121 +6043,82 @@ table_1 <- function(df, vars, facet_var, col_names = NULL, factor_rows = FALSE) 
   # Split the data by the facet variable
   df_split <- split(df, df[, facet_var])
   
-  if (factor_rows) {
-    # Initialize results
-    results <- matrix(nrow = length(vars), ncol = length(df_split))
-    
-    # Loop through each variable
-    for (i in 1:length(vars)) {
-      var <- vars[i]
-      if (is.factor(df[, var]) | is.character(df[, var])) {
+  # Initialize results
+  row_names <- c("Sample.Size")
+  results <- list()
+  
+  # Add sample size row
+  sample_sizes <- sapply(df_split, function(x) sum(!is.na(x[, facet_var])))
+  results[[1]] <- as.character(sample_sizes)
+  
+  # Loop through each variable
+  row_counter <- 2
+  for (var in vars) {
+    if (is.factor(df[, var]) | is.character(df[, var])) {
+      # Add the factor name
+      row_names <- c(row_names, var)
+      results[[row_counter]] <- rep("", length(df_split))
+      row_counter <- row_counter + 1
+      
+      factor_levels <- unique(df[, var])
+      factor_levels <- factor_levels[!is.na(factor_levels)]
+      
+      if (factor_rows) {
+        # Add a row for the factor levels with indentation
+        row_names <- c(row_names, paste0("    ", paste(factor_levels, collapse = "/")))
+        results[[row_counter]] <- rep("", length(df_split))
+        row_counter <- row_counter + 1
+        
         for (j in 1:length(df_split)) {
           x <- df_split[[j]]
-          results[i, j] <- format_factor(x[, var])
+          results[[row_counter]] <- format_factor(x[, var])
         }
+        row_counter <- row_counter + 1
       } else {
-        for (j in 1:length(df_split)) {
-          x <- df_split[[j]]
-          results[i, j] <- format_output(x[, var])
-        }
-      }
-    }
-    
-    # Convert results to data frame
-    df_results <- as.data.frame(results)
-    
-    # Use custom column names if provided
-    if (!is.null(col_names)) {
-      colnames(df_results) <- col_names
-    } else {
-      # Generate default column names
-      col_names <- paste0(facet_var, " = ", names(df_split))
-      col_names <- paste0(names(df_split))
-      colnames(df_results) <- col_names
-    }
-    
-    # Add row names
-    rownames(df_results) <- sapply(vars, function(x) {
-      if (is.factor(df[, x]) | is.character(df[, x])) {
-        levels <- unique(df[, x])
-        levels <- levels[!is.na(levels)]
-        return(paste0(x, ".", paste(levels, collapse = "/")))
-      } else {
-        return(x)
-      }
-    })
-    
-    # Return the data frame
-    return(df_results)
-  } else {
-    # Initialize results
-    results <- list()
-    
-    # Get the unique levels for each factor variable
-    factor_levels <- lapply(df[, vars, drop = FALSE], function(x) {
-      if (is.factor(x) | is.character(x)) {
-        return(unique(x[!is.na(x)]))
-      } else {
-        return(NULL)
-      }
-    })
-    
-    # Loop through each split data frame
-    for (i in 1:length(df_split)) {
-      x <- df_split[[i]]
-      
-      # Initialize result for this split data frame
-      result <- c(paste0("N = ", sum(!is.na(x[, facet_var]))))
-      
-      # Loop through each variable
-      for (j in 1:length(vars)) {
-        var <- vars[j]
-        if (is.numeric(x[, var])) {
-          result <- c(result, format_output(x[, var]))
-        } else {
-          levels <- factor_levels[[j]]
-          for (level in levels) {
-            result <- c(result, format_output(x[x[, var] == level, var]))
+        # Add a row for each level and its percentage
+        for (level in factor_levels) {
+          row_names <- c(row_names, paste0("    ", level))  # Indent factor level names
+          result_row <- c()
+          for (j in 1:length(df_split)) {
+            x <- df_split[[j]]
+            level_freq <- sum(x[, var] == level, na.rm = TRUE)
+            level_percent <- round((level_freq / nrow(x)) * 100, 2)
+            result_row <- c(result_row, paste0(level_percent, "%"))
           }
+          results[[row_counter]] <- result_row
+          row_counter <- row_counter + 1
         }
       }
-      
-      # Add result to results
-      results[[i]] <- result
-    }
-    
-    # Combine the results into a single data frame
-    df_results <- as.data.frame(results)
-    
-    # Use custom column names if provided
-    if (!is.null(col_names)) {
-      colnames(df_results) <- col_names
     } else {
-      # Generate default column names
-      col_names <- paste0(facet_var, " = ", names(df_split))
-      col_names <- paste0(names(df_split))
-      colnames(df_results) <- col_names
-    }
-    
-    # Add row names
-    row_names <- c("Sample Size")
-    for (var in vars) {
-      if (is.numeric(df[, var])) {
-        row_names <- c(row_names, var)
-      } else {
-        levels <- unique(df[, var][!is.na(df[, var])])
-        for (level in levels) {
-          row_names <- c(row_names, paste0(var, ": ", level))
-        }
+      # For non-factor variables, just add one row
+      row_names <- c(row_names, var)
+      result_row <- c()
+      for (j in 1:length(df_split)) {
+        x <- df_split[[j]]
+        result_row <- c(result_row, format_output(x[, var]))
       }
+      results[[row_counter]] <- result_row
+      row_counter <- row_counter + 1
     }
-    rownames(df_results) <- row_names
-    
-    df_results = df_results[ , df_results['Sample Size',] != "N = 0" ]
-    
-    # Return the data frame
-    return(df_results)
   }
+  
+  # Convert results to a data frame
+  df_results <- as.data.frame(do.call(rbind, results))
+  
+  # Set row names
+  rownames(df_results) <- row_names
+  
+  # Format column names with sample sizes
+  if (!is.null(col_names)) {
+    colnames(df_results) <- paste0(col_names, " (N=", sample_sizes, ")")
+  } else {
+    # Generate default column names with sample sizes
+    col_names <- paste0(names(df_split))
+    colnames(df_results) <- paste0(col_names, " (N=", sample_sizes, ")")
+  }
+  
+  # Return the data frame
+  return(df_results[-1,])
 }
 
 #' Generate a table summarizing the data in a linear model formula.
@@ -6196,8 +6146,10 @@ table_1_from_formula <- function(formula, data, facet_var) {
   vars <- setdiff(vars, facet_var)
   
   # Call table_1_facet to summarize the data
-  table_1(data, vars, facet_var,factor_rows=TRUE)
+  table_1(data, vars, facet_var,factor_rows=FALSE)
 }
+
+
 
 #' Format a table for publication using LaTeX or html
 #'
@@ -6215,6 +6167,14 @@ table_1_from_formula <- function(formula, data, facet_var) {
 #' }
 #' @export
 table_1_presentation <- function(df, caption = "", label = "", format = "latex", html_font='Arial') {
+  if (!is.data.frame(df)) {
+    stop("Input must be a data frame")
+  }
+  
+  # Check if required libraries are installed and loaded
+  if (!requireNamespace("knitr") || !requireNamespace("kableExtra")) {
+    stop("Required libraries not installed or loaded. Please install and load 'knitr' and 'kableExtra'.")
+  }
   # Load necessary libraries
   library(knitr)
   library(kableExtra)
@@ -6231,6 +6191,56 @@ table_1_presentation <- function(df, caption = "", label = "", format = "latex",
   } else if (format == "html") {
     df %>%
       kable(format = "html", caption = caption) %>%
-      kable_styling(bootstrap_options = c("striped", "hover"), html_font = html_font )
+      kable_styling(bootstrap_options = c("striped", "hover"), html_font = html_font ) %>%
+      row_spec(0, bold = TRUE)
   }
+}
+
+
+
+#' Count Unique Subjects per Diagnosis
+#'
+#' This function counts the number of unique subjects for each diagnosis in a dataframe.
+#' If `format_counts` is `TRUE`, it returns a formatted string of counts.
+#'
+#' @param df A dataframe containing the data.
+#' @param diagnosis_col A string specifying the column name for diagnoses.
+#' @param subject_col A string specifying the column name for subjects.
+#' @param format_counts A boolean indicating whether to format counts as a single string
+#'   in the format "x/y/z/q" where x, y, z, q represent the counts for each diagnosis. Defaults to FALSE.
+#'
+#' @return A dataframe with two columns: Diagnosis and Unique_Subjects. If `format_counts` is TRUE,
+#'   only the formatted counts are returned.
+#'
+#' @examples
+#' \dontrun{
+#' df <- data.frame(
+#'   diagnosis = c('A', 'A', 'B', 'A', 'B', 'C', 'C', 'C'),
+#'   subject_id = c(1, 2, 2, 3, 4, 5, 6, 6)
+#' )
+#' count_unique_subjects_per_diagnosis(df, 'diagnosis', 'subject_id')
+#' count_unique_subjects_per_diagnosis(df, 'diagnosis', 'subject_id', format_counts = TRUE)
+#' }
+#' @export
+count_unique_subjects_per_diagnosis <- function(df, diagnosis_col, subject_col, format_counts = FALSE) {
+  # Ensure the input columns are present in the dataframe
+  if (!(diagnosis_col %in% names(df)) | !(subject_col %in% names(df))) {
+    stop("The specified columns are not present in the dataframe.")
+  }
+  
+  # Group by diagnosis and count unique subjects
+  result <- df %>%
+    dplyr::group_by(dplyr::across(all_of(diagnosis_col))) %>%
+    dplyr::summarise(Unique_Subjects = dplyr::n_distinct(.data[[subject_col]]), .groups = 'drop') %>%
+    dplyr::rename(Diagnosis = !!sym(diagnosis_col)) %>%
+    dplyr::arrange(Diagnosis)
+  
+  # Return only formatted counts if format_counts is TRUE
+  if (format_counts) {
+    formatted_counts <- paste(result$Unique_Subjects, collapse = "/")
+    return(data.frame(Unique_Subjects = formatted_counts))
+  }
+  
+  # Return the result with both Diagnosis and Unique_Subjects
+  return(result)
 }
