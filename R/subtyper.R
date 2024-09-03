@@ -6015,7 +6015,6 @@ create_correlated_vector <- function(a, rho) {
 #' table_1(df, vars, facet_var)
 #' }
 #' @importFrom stats sd
-#' @importFrom utils table
 #' @export
 table_1 <- function(df, vars, facet_var, col_names = NULL, factor_rows = FALSE) {
   # Define a function to format the output
@@ -6084,6 +6083,7 @@ table_1 <- function(df, vars, facet_var, col_names = NULL, factor_rows = FALSE) 
     } else {
       # Generate default column names
       col_names <- paste0(facet_var, " = ", names(df_split))
+      col_names <- paste0(names(df_split))
       colnames(df_results) <- col_names
     }
     
@@ -6196,14 +6196,15 @@ table_1_from_formula <- function(formula, data, facet_var) {
   vars <- setdiff(vars, facet_var)
   
   # Call table_1_facet to summarize the data
-  table_1(data, vars, facet_var)
+  table_1(data, vars, facet_var,factor_rows=TRUE)
 }
 
-#' Format a table for publication using LaTeX.
+#' Format a table for publication using LaTeX or html
 #'
 #' @param df Data frame containing the table data.
 #' @param caption Caption for the table.
 #' @param label Label for the table.
+#' @param html_font character eg Arial
 #'
 #' @return A LaTeX-formatted table.
 #'
@@ -6213,7 +6214,7 @@ table_1_from_formula <- function(formula, data, facet_var) {
 #'                          label = "table:demographics")
 #' }
 #' @export
-table_1_presentation <- function(df, caption = "", label = "", format = "latex") {
+table_1_presentation <- function(df, caption = "", label = "", format = "latex", html_font='Arial') {
   # Load necessary libraries
   library(knitr)
   library(kableExtra)
@@ -6230,6 +6231,6 @@ table_1_presentation <- function(df, caption = "", label = "", format = "latex")
   } else if (format == "html") {
     df %>%
       kable(format = "html", caption = caption) %>%
-      kable_styling(bootstrap_options = c("striped", "hover"))
+      kable_styling(bootstrap_options = c("striped", "hover"), html_font = html_font )
   }
 }
