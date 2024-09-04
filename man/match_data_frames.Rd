@@ -2,40 +2,32 @@
 % Please edit documentation in R/subtyper.R
 \name{match_data_frames}
 \alias{match_data_frames}
-\title{Match Two Data Frames Based on Nearest Neighbor Matching}
+\title{Match Data Frames Using Greedy K-Nearest Neighbors}
 \usage{
 match_data_frames(df1, df2, match_vars)
 }
 \arguments{
-\item{df1}{A data frame.}
+\item{df1}{A dataframe that is the smaller set to match from.}
 
-\item{df2}{A data frame.}
+\item{df2}{A dataframe that is the larger set to match to.}
 
-\item{match_vars}{A character vector of variable names to match on.}
+\item{match_vars}{A character vector of column names to match on. These columns should be
+numerical or convertible to numerical.}
 }
 \value{
-A list containing the matched data frames and the result of the t-test.
+A dataframe containing the rows from \code{df2} that are matched to each row in \code{df1}.
+The returned dataframe will contain only the columns that are common to both input dataframes.
 }
 \description{
-This function matches two data frames on specified variables using the nearest neighbor
-matching method and checks if the key variable is statistically significantly different
-between the matched data frames.
+This function matches rows from a smaller dataframe to rows in a larger dataframe based on
+specified numerical variables. The matching is performed using a greedy algorithm that
+maximizes uniqueness in the matched subset.
 }
 \examples{
-set.seed(123)
-df1 <- data.frame(
-  id = 1:100,
-  age = rnorm(100, mean = 30, sd = 5),
-  gender = sample(c("Male", "Female"), 100, replace = TRUE),
-  score = rnorm(100, mean = 75, sd = 10)
-)
+\dontrun{
+df1 <- data.frame(age_BL = c(30, 40, 50), commonSex = c("M", "F", "M"), MOCA = c(25, 28, 27))
+df2 <- data.frame(age_BL = c(31, 39, 51, 60), commonSex = c("M", "F", "F", "M"), MOCA = c(26, 27, 29, 28))
+matched_df <- match_data_frames(df1, df2, c("age_BL", "commonSex", "MOCA"))
+}
 
-df2 <- data.frame(
-  id = 101:200,
-  age = rnorm(100, mean = 30, sd = 5),
-  gender = sample(c("Male", "Female"), 100, replace = TRUE),
-  score = rnorm(100, mean = 70, sd = 15)
-)
-
-result <- match_data_frames(df1, df2, match_vars = c("age", "gender") )
 }

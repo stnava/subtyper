@@ -30,6 +30,7 @@ Imports:
   Evacluster,
   flexclust,
   fmsb,
+  FNN,
   fpc,
   gaston,
   ggpubr,
