@@ -5185,47 +5185,53 @@ replace_values <- function(vec, old_values, new_values) {
 #'
 #' result <- match_data_frames(df1, df2, match_vars = c("age", "gender") )
 match_data_frames <- function(df1, df2, match_vars) {
-  ocolnames = intersect( colnames(df1), colnames(df2))
-  # Convert categorical variables to numeric
-  for (var in match_vars) {
-    if (is.factor(df1[[var]]) || is.character(df1[[var]])) {
-      levels <- unique(c(df1[[var]], df2[[var]]))
-      df1[[paste0(var, "_numeric")]] <- as.numeric(factor(df1[[var]], levels = levels))
-      df2[[paste0(var, "_numeric")]] <- as.numeric(factor(df2[[var]], levels = levels))
-    } else {
-      df1[[paste0(var, "_numeric")]] <- df1[[var]]
-      df2[[paste0(var, "_numeric")]] <- df2[[var]]
+  ocolnames <- intersect(colnames(df1), colnames(df2))
+  
+  # Convert categorical variables to numeric and handle NA values
+  convert_to_numeric <- function(df, match_vars) {
+    df_num <- as.data.frame(lapply(df[match_vars], function(var) {
+      if (is.factor(var) || is.character(var)) {
+        var <- as.numeric(factor(var))
+      }
+      return(as.numeric(var))
+    }))
+    return(df_num)
+  }
+  
+  df1_num <- convert_to_numeric(df1, match_vars)
+  df2_num <- convert_to_numeric(df2, match_vars)
+  
+  # Standardize the columns to have mean = 0 and sd = 1
+  df1_std <- scale(df1_num)
+  df2_std <- scale(df2_num)
+  
+  # Perform KNN to find all neighbors
+  knn_result <- get.knnx(data = df2_std, query = df1_std, k = nrow(df2))
+  
+  # Initialize an empty vector to store matched indices
+  matched_indices <- integer(nrow(df1))
+  used_indices <- rep(FALSE, nrow(df2))
+  
+  # Greedily select the best match for each row in df1
+  for (i in 1:nrow(df1)) {
+    distances <- knn_result$nn.dist[i, ]
+    candidates <- knn_result$nn.index[i, ]
+    
+    # Find the first candidate that hasn't been used yet
+    for (j in 1:length(candidates)) {
+      if (!used_indices[candidates[j]]) {
+        matched_indices[i] <- candidates[j]
+        used_indices[candidates[j]] <- TRUE
+        break
+      }
     }
   }
-
-  # Normalize the numeric variables
-  normalize <- function(x) {
-    return((x - min(x,na.rm=T)) / (max(x,na.rm=T) - min(x,na.rm=T)))
-  }
-  normalize <- function(x) {
-    eps=0.001
-    myq = quantile(x,c(1.0-eps,eps), na.rm=T)
-    return((x - min(x,na.rm=T)) / (myq[1]-myq[2]))
-  }
   
-  for (var in match_vars) {
-    norm_var <- paste0(var, "_numeric")
-    df1[[paste0(norm_var, "_normalized")]] <- normalize(df1[[norm_var]])
-    df2[[paste0(norm_var, "_normalized")]] <- normalize(df2[[norm_var]])
-  }
+  # Select the matched rows from df2
+  matched_df2 <- df2[matched_indices, ]
   
-  
-  # Calculate distances and find the nearest neighbor
-  distance_vars <- paste0(match_vars, "_numeric_normalized")
-  distances <- proxy::dist(df1[, distance_vars], df2[, distance_vars], method = "Euclidean")
-  nearest_neighbors <- apply(as.matrix(distances), 1, which.min)
-  
-  # Create matched data frames based on nearest neighbors
-  matched_df2 <- df2[nearest_neighbors, ]
-  return(matched_df2[ ,ocolnames] )
-  }
-
-
+  return(matched_df2[, ocolnames])
+}
 
 #' Apply Sinkhorn method to stabilize a correlation matrix
 #'
