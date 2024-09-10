@@ -6244,3 +6244,142 @@ count_unique_subjects_per_diagnosis <- function(df, diagnosis_col, subject_col, 
   # Return the result with both Diagnosis and Unique_Subjects
   return(result)
 }
+
+
+
+
+#' Compute ASymmetry-Adjusted Mean (ASAM) for Asymmetry Analysis
+#'
+#' This function computes the Symmetry-Adjusted Mean (SAM) between two values, typically representing 
+#' the left and right measurements of a structure. SAM is a combined metric that incorporates both 
+#' the average value and the asymmetry between the two sides.
+#'
+#' The formula is: 
+#' \deqn{ASAM = \frac{Left + Right}{2} - |Left - Right|}
+#'
+#' This metric captures both the overall size (average) and the degree of asymmetry between the two sides.
+#' 
+#' ## Thought Experiment Explanation:
+#' Consider a comparison between two groups (e.g., Control and Disease) where you want to assess 
+#' differences in both the size and symmetry of a structure, such as the left and right hippocampus:
+#'
+#' - In the **Control** group, where symmetry is expected, SAM will be close to the average of the two sides.
+#' - In the **Disease** group, where asymmetry is expected, SAM will be lower due to the subtraction of the absolute difference between the left and right sides.
+#'
+#' This metric is insightful because it combines information about both the structure's size and symmetry, 
+#' allowing it to reflect differences in both characteristics.
+#'
+#' @param left Numeric. The value representing the left side of the measurement.
+#' @param right Numeric. The value representing the right side of the measurement.
+#' @param weight Numeric. increase weight on asymmetry portion of equation.
+#' 
+#' @return Numeric value representing the Symmetry-Adjusted Mean (SAM).
+#'
+#' @examples
+#' # Example usage:
+#' left <- 5
+#' right <- 3
+#' asam(left, right)
+#' 
+#' # For a symmetric case:
+#' asam(5, 5)
+#'
+#' @export
+asam <- function(left, right, weight = 1) {
+  # Compute the average of Left and Right
+  averaged <- 0.5 * (left + right)
+  
+  # Compute the absolute difference between Left and Right
+  asymmetry <- abs(left - right)
+  
+  # Compute the Symmetry-Adjusted Mean (SAM)
+  sam <- averaged - asymmetry * weight
+  
+  return(sam)
+}
+
+
+
+
+#' Asymmetry index for asymmetry analysis
+#'
+#' The formula is: 
+#' \deqn{asymind = \frac{2|A-B|}{(A+B)} }
+#'
+#' @param left Numeric. The value representing the left side of the measurement.
+#' @param right Numeric. The value representing the right side of the measurement.
+#' 
+#' @return Numeric value representing the Symmetry-Adjusted Mean (SAM).
+#'
+#' @examples
+#' # Example usage:
+#' left <- 5
+#' right <- 3
+#' asymind(left, right)
+#' 
+#' # For a symmetric case:
+#' asymind(5, 5)
+#'
+#' @export
+asymind <- function(left, right) {
+  # Compute the average of Left and Right
+  averaged <- 0.5 * (left + right)
+  
+  # Compute the absolute difference between Left and Right
+  asymmetry <- abs(left - right)
+  
+  # Compute the Symmetry-Adjusted Mean (SAM)
+  sam <- asymmetry/averaged
+  
+  return(sam)
+}
+
+
+
+#' Compute Various Asymmetry Metrics Between Two Sides
+#'
+#' This function computes different types of asymmetry metrics given left and right side measurements.
+#' It can return standard asymmetry indices, including the absolute difference, symmetry-adjusted mean,
+#' proportional asymmetry, and more.
+#'
+#' @param left Numeric. The value representing the left side of the measurement.
+#' @param right Numeric. The value representing the right side of the measurement.
+#' @param name_of_measurement Character. The name of the asymmetry measure to compute. Options include:
+#' \itemize{
+#'   \item "absolute_difference": Absolute difference between left and right.
+#'   \item "proportional_asymmetry": Proportional asymmetry.
+#'   \item "symmetry_adjusted_mean": Symmetry-adjusted mean (SAM).
+#'   \item "relative_asymmetry": (Left - Right) / (Left + Right).
+#'   \item "asymmetry_index": (|Left - Right|) / ((Left + Right) / 2).
+#' }
+#'
+#' @return Numeric value of the computed asymmetry measure.
+#' @examples
+#' asymmetry(5, 3, "absolute_difference")
+#' asymmetry(10, 8, "symmetry_adjusted_mean")
+#'
+#' @export
+asymmetry <- function(left, right, name_of_measurement) {
+  
+  # Compute different asymmetry metrics based on the user input
+  switch(name_of_measurement,
+         
+         # Absolute difference
+         "absolute_difference" = abs(left - right),
+         
+         # Proportional asymmetry: (Left - Right) / ((Left + Right) / 2)
+         "proportional_asymmetry" = abs(left - right) / ((left + right) / 2),
+         
+         # Symmetry-Adjusted Mean (SAM): (Left + Right) / 2 - |Left - Right|
+         "symmetry_adjusted_mean" = (left + right) / 2 - abs(left - right),
+         
+         # Relative asymmetry: (Left - Right) / (Left + Right)
+         "relative_asymmetry" = (left - right) / (left + right),
+         
+         # Asymmetry index: |Left - Right| / ((Left + Right) / 2)
+         "asymmetry_index" = abs(left - right) / ((left + right) / 2),
+         
+         stop("Invalid name_of_measurement. Choose from: 'absolute_difference', 'proportional_asymmetry', 'symmetry_adjusted_mean', 'relative_asymmetry', or 'asymmetry_index'.")
+  )
+}
+
