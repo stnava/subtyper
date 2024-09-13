@@ -118,25 +118,33 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-in"><span>                        summary_vars <span class="op">=</span> <span class="va">summary_vars</span>, </span></span>
 <span class="r-in"><span>                        group_var <span class="op">=</span> <span class="va">group_var</span>, </span></span>
 <span class="r-in"><span>                        title <span class="op">=</span> <span class="st">"Table 1: Population Characteristics by Cylinder"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>package ‘gt’ was built under R version 4.3.1</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>package ‘gt’ was built under R version 4.3.3</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>package ‘gtsummary’ was built under R version 4.3.3</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The following <span style="color: #BB0000;">errors</span> were returned during `modify_header()`:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> For variable `hp` (`cyl`) and <span style="color: #0000BB;">"p.value"</span> statistic: <span style="color: #BB0000;">The package "cardx" (&gt;=</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #BB0000;">0.2.1) is required.</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> For variable `mpg` (`cyl`) and <span style="color: #0000BB;">"p.value"</span> statistic: <span style="color: #BB0000;">The package "cardx" (&gt;=</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #BB0000;">0.2.1) is required.</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> For variable `wt` (`cyl`) and <span style="color: #0000BB;">"p.value"</span> statistic: <span style="color: #BB0000;">The package "cardx" (&gt;=</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   <span style="color: #BB0000;">0.2.1) is required.</span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">table1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div id="afhkeenhyw" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;style&gt;#afhkeenhyw table {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div id="tafhkeenhy" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;style&gt;#tafhkeenhy table {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   -webkit-font-smoothing: antialiased;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   -moz-osx-font-smoothing: grayscale;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw thead, #afhkeenhyw tbody, #afhkeenhyw tfoot, #afhkeenhyw tr, #afhkeenhyw td, #afhkeenhyw th {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy thead, #tafhkeenhy tbody, #tafhkeenhy tfoot, #tafhkeenhy tr, #tafhkeenhy td, #tafhkeenhy th {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-style: none;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw p {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy p {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   margin: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_table {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_table {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   display: table;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-collapse: collapse;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   line-height: normal;</span>
@@ -162,12 +170,12 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-left-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_caption {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_caption {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 4px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-bottom: 4px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_title {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_title {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 125%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-weight: initial;</span>
@@ -179,7 +187,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-width: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_subtitle {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_subtitle {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 85%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-weight: initial;</span>
@@ -191,7 +199,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-width: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_heading {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_heading {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-align: center;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-color: #FFFFFF;</span>
@@ -203,13 +211,13 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-right-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_bottom_border {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_bottom_border {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-style: solid;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-width: 2px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_col_headings {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_col_headings {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-style: solid;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-width: 2px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-color: #D3D3D3;</span>
@@ -224,7 +232,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-right-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_col_heading {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_col_heading {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 100%;</span>
@@ -244,7 +252,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   overflow-x: hidden;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_column_spanner_outer {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_column_spanner_outer {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 100%;</span>
@@ -256,15 +264,15 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-right: 4px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_column_spanner_outer:first-child {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_column_spanner_outer:first-child {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-left: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_column_spanner_outer:last-child {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_column_spanner_outer:last-child {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-right: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_column_spanner {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_column_spanner {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-style: solid;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-width: 2px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-color: #D3D3D3;</span>
@@ -276,11 +284,11 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   width: 100%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_spanner_row {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_spanner_row {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-style: hidden;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_group_heading {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_group_heading {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-bottom: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-left: 5px;</span>
@@ -306,7 +314,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-align: left;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_empty_group_heading {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_empty_group_heading {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding: 0.5px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
@@ -321,15 +329,15 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   vertical-align: middle;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_from_md &gt; :first-child {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_from_md &gt; :first-child {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   margin-top: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_from_md &gt; :last-child {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_from_md &gt; :last-child {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   margin-bottom: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_row {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_row {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-bottom: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-left: 5px;</span>
@@ -348,7 +356,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   overflow-x: hidden;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_stub {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_stub {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 100%;</span>
@@ -361,7 +369,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-right: 5px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_stub_row_group {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_stub_row_group {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 100%;</span>
@@ -375,15 +383,15 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   vertical-align: top;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_row_group_first td {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_row_group_first td {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-width: 2px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_row_group_first th {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_row_group_first th {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-width: 2px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_summary_row {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_summary_row {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-transform: inherit;</span>
@@ -393,16 +401,16 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-right: 5px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_first_summary_row {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_first_summary_row {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-style: solid;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_first_summary_row.thick {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_first_summary_row.thick {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-width: 2px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_last_summary_row {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_last_summary_row {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-bottom: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-left: 5px;</span>
@@ -412,7 +420,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_grand_summary_row {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_grand_summary_row {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-transform: inherit;</span>
@@ -422,7 +430,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-right: 5px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_first_grand_summary_row {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_first_grand_summary_row {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-bottom: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-left: 5px;</span>
@@ -432,7 +440,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_last_grand_summary_row_top {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_last_grand_summary_row_top {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-bottom: 8px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-left: 5px;</span>
@@ -442,11 +450,11 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_striped {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_striped {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: rgba(128, 128, 128, 0.05);</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_table_body {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_table_body {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-style: solid;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-width: 2px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-top-color: #D3D3D3;</span>
@@ -455,7 +463,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_footnotes {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_footnotes {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-style: none;</span>
@@ -469,7 +477,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-right-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_footnote {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_footnote {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   margin: 0px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 90%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 4px;</span>
@@ -478,7 +486,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-right: 5px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_sourcenotes {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_sourcenotes {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   color: #333333;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   background-color: #FFFFFF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-bottom-style: none;</span>
@@ -492,7 +500,7 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   border-right-color: #D3D3D3;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_sourcenote {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_sourcenote {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 90%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-top: 4px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-bottom: 4px;</span>
@@ -500,64 +508,73 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>   padding-right: 5px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_left {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_left {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-align: left;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_center {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_center {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-align: center;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_right {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_right {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-align: right;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-variant-numeric: tabular-nums;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_font_normal {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_font_normal {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-weight: normal;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_font_bold {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_font_bold {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-weight: bold;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_font_italic {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_font_italic {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-style: italic;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_super {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_super {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 65%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_footnote_marks {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_footnote_marks {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 75%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   vertical-align: 0.4em;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   position: initial;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_asterisk {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_asterisk {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   font-size: 100%;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   vertical-align: 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_indent_1 {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_indent_1 {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-indent: 5px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_indent_2 {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_indent_2 {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-indent: 10px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_indent_3 {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_indent_3 {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-indent: 15px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_indent_4 {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_indent_4 {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-indent: 20px;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> #afhkeenhyw .gt_indent_5 {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .gt_indent_5 {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   text-indent: 25px;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy .katex-display {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   display: inline-flex !important;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   margin-bottom: 0.75em !important;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> #tafhkeenhy div.Reactable &gt; div.rt-table &gt; div.rt-thead &gt; div.rt-tr.rt-tr-group-header &gt; div.rt-th-group:after {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   height: 0px !important;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/style&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false"&gt;</span>
@@ -567,11 +584,14 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;/tr&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;tr class="gt_col_headings"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="&amp;lt;strong&amp;gt;Variable&amp;lt;/strong&amp;gt;"&gt;&lt;strong&gt;Variable&lt;/strong&gt;&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;strong&amp;gt;4&amp;lt;/strong&amp;gt;, N = 11&amp;lt;span class=&amp;quot;gt_footnote_marks&amp;quot; style=&amp;quot;white-space:nowrap;font-style:italic;font-weight:normal;&amp;quot;&amp;gt;&amp;lt;sup&amp;gt;1&amp;lt;/sup&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;strong&gt;4&lt;/strong&gt;, N = 11&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;strong&amp;gt;6&amp;lt;/strong&amp;gt;, N = 7&amp;lt;span class=&amp;quot;gt_footnote_marks&amp;quot; style=&amp;quot;white-space:nowrap;font-style:italic;font-weight:normal;&amp;quot;&amp;gt;&amp;lt;sup&amp;gt;1&amp;lt;/sup&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;strong&gt;6&lt;/strong&gt;, N = 7&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;strong&amp;gt;8&amp;lt;/strong&amp;gt;, N = 14&amp;lt;span class=&amp;quot;gt_footnote_marks&amp;quot; style=&amp;quot;white-space:nowrap;font-style:italic;font-weight:normal;&amp;quot;&amp;gt;&amp;lt;sup&amp;gt;1&amp;lt;/sup&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;strong&gt;8&lt;/strong&gt;, N = 14&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;strong&amp;gt;p-value&amp;lt;/strong&amp;gt;&amp;lt;span class=&amp;quot;gt_footnote_marks&amp;quot; style=&amp;quot;white-space:nowrap;font-style:italic;font-weight:normal;&amp;quot;&amp;gt;&amp;lt;sup&amp;gt;2&amp;lt;/sup&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;strong&gt;p-value&lt;/strong&gt;&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/span&gt;&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="&amp;lt;span class='gt_from_md'&amp;gt;&amp;lt;strong&amp;gt;Variable&amp;lt;/strong&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;span class='gt_from_md'&gt;&lt;strong&gt;Variable&lt;/strong&gt;&lt;/span&gt;&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;span class='gt_from_md'&amp;gt;&amp;lt;strong&amp;gt;4&amp;lt;/strong&amp;gt;&amp;lt;br /&amp;gt;&amp;#10;N = 11&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;gt_footnote_marks&amp;quot; style=&amp;quot;white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;&amp;quot;&amp;gt;&amp;lt;sup&amp;gt;1&amp;lt;/sup&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;span class='gt_from_md'&gt;&lt;strong&gt;4&lt;/strong&gt;&lt;br /&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> N = 11&lt;/span&gt;&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;span class='gt_from_md'&amp;gt;&amp;lt;strong&amp;gt;6&amp;lt;/strong&amp;gt;&amp;lt;br /&amp;gt;&amp;#10;N = 7&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;gt_footnote_marks&amp;quot; style=&amp;quot;white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;&amp;quot;&amp;gt;&amp;lt;sup&amp;gt;1&amp;lt;/sup&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;span class='gt_from_md'&gt;&lt;strong&gt;6&lt;/strong&gt;&lt;br /&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> N = 7&lt;/span&gt;&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;span class='gt_from_md'&amp;gt;&amp;lt;strong&amp;gt;8&amp;lt;/strong&amp;gt;&amp;lt;br /&amp;gt;&amp;#10;N = 14&amp;lt;/span&amp;gt;&amp;lt;span class=&amp;quot;gt_footnote_marks&amp;quot; style=&amp;quot;white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;&amp;quot;&amp;gt;&amp;lt;sup&amp;gt;1&amp;lt;/sup&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;span class='gt_from_md'&gt;&lt;strong&gt;8&lt;/strong&gt;&lt;br /&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> N = 14&lt;/span&gt;&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt;&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="&amp;lt;span class='gt_from_md'&amp;gt;&amp;lt;strong&amp;gt;p-value&amp;lt;/strong&amp;gt;&amp;lt;/span&amp;gt;"&gt;&lt;span class='gt_from_md'&gt;&lt;strong&gt;p-value&lt;/strong&gt;&lt;/span&gt;&lt;/th&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;/tr&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;/thead&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;tbody class="gt_table_body"&gt;</span>
@@ -579,25 +599,22 @@ the <code>gt</code> package for table customization, including adding stripes.</
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_1" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;26.7 (4.5)&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_2" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;19.7 (1.5)&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_3" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;15.1 (2.6)&lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="p.value" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;&lt;0.001&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="p.value" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;&lt;br /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;tr&gt;&lt;td headers="label" class="gt_row gt_left" style="font-weight: bold;"&gt;hp&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_1" class="gt_row gt_center"&gt;83 (21)&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_2" class="gt_row gt_center"&gt;122 (24)&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_3" class="gt_row gt_center"&gt;209 (51)&lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="p.value" class="gt_row gt_center"&gt;&lt;0.001&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="p.value" class="gt_row gt_center"&gt;&lt;br /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;tr&gt;&lt;td headers="label" class="gt_row gt_left" style="font-weight: bold; background-color: #D3D3D3;"&gt;wt&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_1" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;2.29 (0.57)&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_2" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;3.12 (0.36)&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="stat_3" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;4.00 (0.76)&lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="p.value" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;&lt;0.001&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;td headers="p.value" class="gt_row gt_center" style="background-color: #D3D3D3;"&gt;&lt;br /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;/tbody&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;tfoot class="gt_footnotes"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;td class="gt_footnote" colspan="5"&gt;&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt; Mean (SD)&lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;/tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;td class="gt_footnote" colspan="5"&gt;&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;"&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/span&gt; Kruskal-Wallis rank sum test&lt;/td&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;td class="gt_footnote" colspan="5"&gt;&lt;span class="gt_footnote_marks" style="white-space:nowrap;font-style:italic;font-weight:normal;line-height: 0;"&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/span&gt; &lt;span class='gt_from_md'&gt;Mean (SD)&lt;/span&gt;&lt;/td&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;/tr&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;/tfoot&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/table&gt;</span>

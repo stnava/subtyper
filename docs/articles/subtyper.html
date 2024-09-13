@@ -137,10 +137,6 @@ section.</p>
 <span><span class="co">#&gt; loading 'subtyper'</span></span>
 <span><span class="co">#&gt; Warning: replacing previous import 'dplyr::union' by 'igraph::union' when</span></span>
 <span><span class="co">#&gt; loading 'subtyper'</span></span>
-<span><span class="co">#&gt; Registered S3 methods overwritten by 'registry':</span></span>
-<span><span class="co">#&gt;   method               from </span></span>
-<span><span class="co">#&gt;   print.registry_field proxy</span></span>
-<span><span class="co">#&gt;   print.registry_entry proxy</span></span>
 <span><span class="co">#&gt; Warning: replacing previous import 'gtsummary::add_ci' by 'ciTools::add_ci'</span></span>
 <span><span class="co">#&gt; when loading 'subtyper'</span></span>
 <span><span class="co">#&gt; Registered S3 methods overwritten by 'fmsb':</span></span>
@@ -151,9 +147,6 @@ section.</p>
 <span><span class="co">#&gt; 'subtyper'</span></span>
 <span><span class="co">#&gt; Warning: replacing previous import 'dplyr::rename' by 'plyr::rename' when</span></span>
 <span><span class="co">#&gt; loading 'subtyper'</span></span>
-<span><span class="co">#&gt; Registered S3 method overwritten by 'wesanderson':</span></span>
-<span><span class="co">#&gt;   method        from     </span></span>
-<span><span class="co">#&gt;   print.palette DescTools</span></span>
 <span><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/generateSubtyperData.html">generateSubtyperData</a></span><span class="op">(</span> <span class="fl">100</span> <span class="op">)</span></span>
 <span><span class="va">rbfnames</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"Random"</span>,<span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">mydf</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="va">mydf</span> <span class="op">=</span> <span class="fu"><a href="../reference/outlierness.html">outlierness</a></span><span class="op">(</span> <span class="va">mydf</span>, <span class="va">rbfnames</span> <span class="op">)</span></span>

@@ -7,9 +7,10 @@ documentation page [here](https://stnava.github.io/subtyper/)
 ## Subtype and staging analyses in disease modeling
 
 Common tasks for subtyping include making measurements of data consistency,
-filtering for subjects with good/high quality data, training the
-subtyping algorithm, predicting the subtypes in new data and
-visualizing results, often over time.
+filtering for subjects with good/high quality data, training the subtyping 
+algorithm, predicting the subtypes in new data and visualizing results, 
+often over time.  Many helper functions of data exploration, manuscript 
+preparation, model checking, covariate or site/confound control etc.
 
 This package expects population-level data frames with longitudinal data.
 
@@ -21,9 +22,16 @@ The pre-release version of the package can be pulled from GitHub using the [devt
 ```r
     # install.packages("devtools")
     devtools::install_github("stnava/subtyper", build_vignettes=TRUE)
+    remotes::install_github("stnava/subtyper", build_vignettes=TRUE)
 ```
 
-See the file `.circleci/config.yml` for hints about installing the many dependencies.  A few other hints below.
+or the smaller `remotes` package:
+
+```r
+    remotes::install_github("stnava/subtyper", build_vignettes=TRUE)
+```
+
+See the file `.circleci/config.yml` for hints about installing the many dependencies.  A few other hints below that you may encounter depending on your system, version of R, etc.
 
 ```r
 if (!requireNamespace("BiocManager", quietly = TRUE))

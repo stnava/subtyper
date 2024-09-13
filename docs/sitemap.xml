@@ -262,6 +262,9 @@
     <loc>/reference/outlierness.html</loc>
   </url>
   <url>
+    <loc>/reference/oversample_minority.html</loc>
+  </url>
+  <url>
     <loc>/reference/plinkVariantsDataFrame.html</loc>
   </url>
   <url>
@@ -353,6 +356,9 @@
   </url>
   <url>
     <loc>/reference/truncatehi.html</loc>
+  </url>
+  <url>
+    <loc>/reference/undersample_majority.html</loc>
   </url>
   <url>
     <loc>/reference/visglm.html</loc>
