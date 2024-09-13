@@ -725,6 +725,66 @@ generateSubtyperData <-function( n = 100,
 }
 
 
+#' Undersample a majority class in a data frame
+#'
+#' This function undersamples the majority class in a data frame to match the size of the minority class.
+#'
+#' @param x data frame containing the data to be undersampled
+#' @param vname character string specifying the name of the column containing the class labels
+#'
+#' @return data frame with the majority class undersampled to match the size of the minority class
+#'
+#' @examples
+#' data <- data.frame(class = c(rep("A", 10), rep("B", 100)), 
+#'                    feature1 = rnorm(110), 
+#'                    feature2 = rnorm(110))
+#' undersampled_data <- undersample_majority(data, "class")
+#' @export 
+undersample_majority <- function(x, vname) {
+  # Calculate the proportion of the minority class
+  p <- sort(prop.table(table(x[, vname])))[1]
+  
+  # Split the data into minority and majority classes
+  xsmall <- x[x[, vname] == names(p), ]
+  xbig <- x[x[, vname] != names(p), ]
+  
+  # Undersample the majority class to match the size of the minority class
+  xbig_undersampled <- xbig[sample(nrow(xbig), size = nrow(xsmall), replace = FALSE), ]
+  
+  # Combine the minority class with the undersampled majority class
+  return(rbind(xsmall, xbig_undersampled))
+}
+
+#' Oversample a minority class in a data frame
+#'
+#' This function oversamples the minority class in a data frame to match the size of the majority class.
+#'
+#' @param x data frame containing the data to be oversampled
+#' @param vname character string specifying the name of the column containing the class labels
+#'
+#' @return data frame with the minority class oversampled to match the size of the majority class
+#'
+#' @examples
+#' data <- data.frame(class = c(rep("A", 10), rep("B", 100)), 
+#'                    feature1 = rnorm(110), 
+#'                    feature2 = rnorm(110))
+#' oversampled_data <- oversample_minority(data, "class")
+#' @export 
+oversample_minority <- function(x, vname) {
+  # Calculate the proportion of the minority class
+  p <- sort(prop.table(table(x[, vname])))[1]
+  
+  # Split the data into majority and minority classes
+  xbig <- x[x[, vname] != names(p), ]
+  xsmall <- x[x[, vname] == names(p), ]
+  
+  # Oversample the minority class to match the size of the majority class
+  xsmall_oversampled <- xsmall[sample(nrow(xsmall), size = nrow(xbig), replace = TRUE), ]
+  
+  # Combine the oversampled minority class with the majority class
+  return(rbind(xbig, xsmall_oversampled))
+}
+
 #' Plot longitudinal trajectories across subtypes
 #'
 #' Uses `ggplot2` to visualize differences between subtypes over time.
@@ -753,7 +813,6 @@ generateSubtyperData <-function( n = 100,
 #' @importFrom visreg visreg
 #' @importFrom dplyr sym bind_rows
 #' @importFrom caret createDataPartition 
-#' @importFrom ModTools OverSample UnderSample
 #' @importFrom pheatmap pheatmap
 #' @importFrom gprofiler2 gost gsnpense
 #' @importFrom NMF nmf basismap
@@ -3105,10 +3164,10 @@ balancedDataframe <- function( x, variable, method ) {
     temptbl = table( x[,variable] )
     myinstsize = max( temptbl ) - min( temptbl )
     if ( method == 'over') {
-        return( ModTools::OverSample( x, variable ) )
+        return( oversample_minority( x, variable ) )
     }
     if ( method == 'under') {
-        return( ModTools::UnderSample( x, variable ) )
+        return( undersample_majority( x, variable ) )
     }
     if ( method == 'mwmote')
         balDF = mwmote( dataset = x, numInstances = myinstsize, classAttr = variable)
@@ -4686,8 +4745,10 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   
   # Calculate effect sizes for the full model
   coefs <- summary(full_model)$coefficients
-  ndf <- length(unique(datasub[[random_effects[1]]])) # Now using datasub for N calculation
-  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], rep(ndf, nrow(coefs)))
+#  ndf <- length(unique(datasub[[random_effects[1]]])) # Now using datasub for N calculation
+#  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], rep(ndf, nrow(coefs)))
+  ndf <- round( coefs[, "df"] )
+  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], ndf )
   effect_sizes <- data.frame(effect_sizes)
   rownames(effect_sizes) <- rownames(coefs)
   searchpred = all.vars(formula( paste0("z~",predictor)))[-1]
