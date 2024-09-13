@@ -51,7 +51,7 @@ R CMD INSTALL . # FIXME not on arm64 yet
 
 ```R
 install.packages( 
-c("ggplot2", "caret", "ClusterR", "coca", "dCUR", "dplyr", "effectsize", "Evacluster", "flexclust", "fpc", "gaston", "ggpubr", "ggthemes", "ggstatsplot", "ggbeeswarm", "globaltest", "gridExtra", "imbalance", "mlr3", "mlr3cluster", "mlr3pipelines", "wesanderson", "Hmisc", "plyr", "DDoutlier", "data.table", "mclust", "NMF", "pheatmap", "gprofiler2", "magrittr", "ModTools", "fastICA", "pgenlibr", "VarSelLCM", "visreg"))
+c("ggplot2", "caret", "ClusterR", "coca", "dCUR", "dplyr", "effectsize", "Evacluster", "flexclust", "fpc", "gaston", "ggpubr", "ggthemes", "ggstatsplot", "ggbeeswarm", "globaltest", "gridExtra", "imbalance", "mlr3", "mlr3cluster", "mlr3pipelines", "wesanderson", "Hmisc", "plyr", "DDoutlier", "data.table", "mclust", "NMF", "pheatmap", "gprofiler2", "magrittr",  "fastICA", "pgenlibr", "VarSelLCM", "visreg"))
 ```
 
 ## For developers
