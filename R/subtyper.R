@@ -6444,3 +6444,81 @@ asymmetry <- function(left, right, name_of_measurement) {
   )
 }
 
+
+#' Collect and Zip Images Based on Subject-Date List
+#'
+#' This function collects image files from subfolders based on a list of subject-date IDs 
+#' and zips them into a single archive. The user specifies the root directory, 
+#' the modality folder, and the file extension. The zip file name is also user-defined.
+#'
+#' @param subjectIDdate_list A list of subjectIDdate values, where each entry is in the format "subjectID-date" (e.g., "12345-20220101").
+#' @param root_path The root directory where the subject and date folders are stored.
+#' @param modality The modality folder to search for images (e.g., "MRI", "CT").
+#' @param extension The file extension to search for (default is "png").
+#' @param zip_filename The name of the output zip file (default is "images.zip").
+#'
+#' @return Invisibly returns the name of the zip file that was created.
+#' If no images are found, the function stops with an error.
+#'
+#' @examples
+#' \dontrun{
+#' # Example usage:
+#' subjectIDdate_list <- c("121771-20220818", "42444-20210507", "56789-20210429")
+#' root_path <- "/path/to/images"
+#' modality <- "MRI"
+#' zip_file <- collect_and_zip_images(subjectIDdate_list, root_path, modality, "png", "collected_images.zip")
+#' }
+#'
+#' @export
+collect_and_zip_images <- function(subjectIDdate_list, root_path, modality, extension = "png", zip_filename = "images.zip") {
+  # Function to collect images based on subjectIDdate and modality, then zip them into a single file
+  # subjectIDdate_list: list of subjectIDdate values like "12345-20220101"
+  # root_path: root directory where images are stored
+  # modality: the modality folder to look into (e.g., "MRI", "CT", etc.)
+  # extension: file extension (default is "png")
+  # zip_filename: name of the output zip file
+  
+  # Helper function to parse subject ID and date
+  parse_subject_date <- function(id_date) {
+    parts <- unlist(strsplit(id_date, "-"))
+    subject <- parts[1]
+    date <- parts[2]
+    return(list(subject = subject, date = date))
+  }
+
+  # Initialize a list to store found file paths
+  image_paths <- list()
+
+  # Iterate over the subjectIDdate list
+  for (id_date in subjectIDdate_list) {
+    parsed_info <- parse_subject_date(id_date)
+    subject <- parsed_info$subject
+    date <- parsed_info$date
+
+    # Construct the full path to the images folder
+    image_dir <- file.path(root_path, subject, date, modality, '*', '*' )
+
+    # Collect all files with the chosen extension in that folder
+    image_files = Sys.glob( paste0(image_dir, '*', extension) )
+
+    # Add the found files to the list
+    if (length(image_files) > 0) {
+      image_paths[[id_date]] <- image_files
+    } else {
+      message(paste("No", extension, "files found for", id_date, "in", image_dir))
+    }
+  }
+
+  # Flatten the list into a vector of file paths
+  all_files <- unlist(image_paths)
+  
+  if (length(all_files) == 0) {
+    stop("No files found to zip.")
+  }
+
+  # Create the zip archive
+  zip(zipfile = zip_filename, files = all_files)
+
+  message(paste("Files zipped into", zip_filename))
+  return(invisible(zip_filename))
+}
