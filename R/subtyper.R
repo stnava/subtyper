@@ -5470,11 +5470,12 @@ create_table1 <- function(data, summary_vars, group_var,
   if (sum(!categorical_vars_bool) > 0) {
     continuous_vars <- summary_vars[!categorical_vars_bool]
   }
-  
   # Create summary table using gtsummary
   table1 <- data %>%
     select(all_of(c(summary_vars, group_var)))
-  
+  for ( x in continuous_vars ) {
+    table1[,x]=table1[,x]+rnorm(length(table1[,x]),0,1e-6*var(table1[,x],na.rm=T))
+    }
   table1_summary <- tbl_summary(table1, by = all_of(group_var), 
                                 missing = "no") %>%
     add_p() %>%
