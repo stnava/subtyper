@@ -6586,7 +6586,7 @@ kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = 
   # Create the basic LaTeX table
   table <- kable(data, format = "latex", caption = caption, booktabs = TRUE,
                  row.names = row.names, digits = digits, scale_down=scl ) %>%
-    add_header_above(c(table_size_tag)) %>%
+#    add_header_above(c(table_size_tag)) %>%
     kable_styling(latex_options = latex_options)
   
   # Apply striped styling if requested
