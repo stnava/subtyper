@@ -5478,7 +5478,7 @@ create_table1 <- function(data, summary_vars, group_var,
       type = list(where(is.numeric) ~ "continuous"),
       missing = "no" ) %>%
     add_p() %>%
-    modify_header(label ~ "**Variable**") %>%
+    modify_header(label ~ paste0("**",group_var,"**")) %>%
     bold_labels()
   
   # Convert to gt table for further customization
