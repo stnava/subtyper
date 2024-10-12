@@ -5495,7 +5495,7 @@ create_table1 <- function(data, summary_vars, group_var,
     # Convert the gtsummary table to LaTeX
     latex_table1 <- table1_summary %>% as_gt() %>% as_latex()
     latex_table1 <- gsub("Variable", group_var, latex_table1)
-    
+    latex_table1 = gsub("_"," ",latex_table1,fixed=TRUE)
     # Adjust font sizes
     for (font_size in names(latex_font_size)) {
       latex_table1 <- gsub(font_size, latex_font_size[[font_size]], latex_table1)
@@ -5512,6 +5512,58 @@ create_table1 <- function(data, summary_vars, group_var,
   return(gt_table1)
 }
 
+
+#' Rename Columns in a Data Frame
+#'
+#' This function renames specified columns in a data frame based on a named vector of new column names.
+#' It performs checks to ensure that the new names are valid and that the columns to rename exist in the data frame.
+#'
+#' @param df A data frame in which columns are to be renamed.
+#' @param new_names A named vector where the names correspond to the existing column names and the values are the new column names.
+#' 
+#' @return The data frame with renamed columns.
+#' 
+#' @examples
+#' # Create a sample data frame
+#' df <- data.frame(
+#'   old_col1 = c(1, 2, 3),
+#'   old_col2 = c(4, 5, 6),
+#'   old_col3 = c(7, 8, 9)
+#' )
+#' 
+#' # Define the new column names
+#' new_names <- c("old_col1" = "new_col1", "old_col2" = "new_col2")
+#' 
+#' # Rename the columns
+#' renamed_df <- rename_columns(df, new_names)
+#' print(renamed_df)
+#' 
+#' @export
+rename_columns <- function(df, new_names) {
+  # Check if new_names is a named vector
+  if (is.null(names(new_names))) {
+    stop("new_names must be a named vector")
+  }
+  
+  # Check if columns to rename exist in the data frame
+  if (!all(names(new_names) %in% colnames(df))) {
+    stop("Some columns to rename do not exist in the data frame")
+  }
+  
+  # Check if new names are not empty
+  if (any(new_names == "")) {
+    stop("New names cannot be empty")
+  }
+  
+  # Get the indices of the columns to rename
+  idx <- match(names(new_names), colnames(df))
+  
+  # Rename the columns
+  colnames(df)[idx] <- new_names
+  
+  # Return the modified data frame
+  df
+}
 
 #' Log Parameters of a Function Call
 #'
@@ -6603,4 +6655,79 @@ kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = 
   }
   
   return(table)
+}
+
+
+
+#' Rank Rows Based on Weighted Scores of Specified Columns
+#'
+#' This function ranks rows in a data frame based on the weighted scores of selected columns.
+#' The function normalizes the specified columns (using Min-Max normalization), computes a weighted score for each row, and assigns a rank based on these scores.
+#' If no weights are provided, the function defaults to equal weighting for the columns.
+#'
+#' @param df A data frame containing the columns to be ranked.
+#' @param columns_to_maximize A character vector of column names that should be maximized and used for ranking.
+#' @param weights A numeric vector of weights for the columns. The length of this vector must match the number of columns in `columns_to_maximize`. Defaults to `NULL`, in which case equal weights are applied.
+#' 
+#' @return A data frame with the original columns, the normalized columns, the weighted score for each row, and the rank based on the weighted score.
+#' 
+#' @examples
+#' # Create a sample data frame
+#' df <- data.frame(
+#'   A = c(1, 2, 3, 4),
+#'   B = c(2, 3, 4, 5),
+#'   C = c(3, 4, 5, 6)
+#' )
+#' 
+#' # Specify columns to maximize
+#' columns_to_maximize <- c("A", "B")
+#' 
+#' # Rank the rows based on the specified columns
+#' ranked_df <- rank_results(df, columns_to_maximize, weights = c(0.7, 0.3))
+#' 
+#' # View the ranked data frame
+#' print(ranked_df)
+#' 
+#' @export
+rank_results <- function(df, columns_to_maximize, weights = NULL) {
+  # Ensure the columns_to_maximize exist in the dataframe
+  if (!all(columns_to_maximize %in% colnames(df))) {
+    stop("Some columns_to_maximize do not exist in the dataframe.")
+  }
+  
+  # Normalize the selected columns (Min-Max normalization)
+  normalize <- function(x) {
+    (x - min(x)) / (max(x) - min(x))
+  }
+  
+  # Apply normalization to the columns that should be maximized
+  normalized_df <- df %>%
+    mutate(across(all_of(columns_to_maximize), normalize, .names = "norm_{col}"))
+  
+  # Prepare a list of normalized columns
+  normalized_columns <- paste0("norm_", columns_to_maximize)
+  
+  # If no weights provided, default to equal weighting
+  if (is.null(weights)) {
+    weights <- rep(1, length(normalized_columns))
+  }
+  
+  # Ensure weights match the number of columns
+  if (length(weights) != length(normalized_columns)) {
+    stop("Number of weights must match the number of columns to maximize.")
+  }
+  
+  # Compute the weighted score for each row
+  normalized_df <- normalized_df %>%
+    rowwise() %>%
+    mutate(weighted_score = sum(c_across(all_of(normalized_columns)) * weights)) %>%
+    ungroup()
+  
+  # Rank the rows based on the weighted score (higher is better)
+  normalized_df <- normalized_df %>%
+    arrange(desc(weighted_score)) %>%
+    mutate(rank = row_number())
+  
+  # Return the dataframe with rankings and scores
+  return(normalized_df)
 }
