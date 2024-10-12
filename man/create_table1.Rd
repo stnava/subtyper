@@ -8,7 +8,8 @@ create_table1(
   data,
   summary_vars,
   group_var,
-  title = "Table 1: Population Characteristics"
+  title = "Table 1: Population Characteristics",
+  output_format = "gt"
 )
 }
 \arguments{
@@ -19,25 +20,34 @@ create_table1(
 \item{group_var}{A character string of the variable name to group by.}
 
 \item{title}{A character string for the table title. Default is "Table 1: Population Characteristics".}
+
+\item{output_format}{A character string indicating the desired output format, either "gt" or "latex". Default is "gt".}
 }
 \value{
-A \code{gt} table object.
+A \code{gt} table object or LaTeX code depending on the \code{output_format}.
 }
 \description{
 This function generates a "Table 1" for summarizing population characteristics
 in an academic paper. It uses the \code{gtsummary} package for summarizing and
 the \code{gt} package for table customization, including adding stripes.
+Additionally, if the output format is LaTeX, it generates the corresponding LaTeX code.
 }
 \examples{
 data(mtcars)
 mtcars$cyl <- as.factor(mtcars$cyl)
 summary_vars <- c("mpg", "hp", "wt")
 group_var <- "cyl"
-continuous_vars <- c("mpg", "hp", "wt")
-categorical_vars <- NULL
-table1 <- create_table1(data = mtcars, 
-                        summary_vars = summary_vars, 
-                        group_var = group_var, 
-                        title = "Table 1: Population Characteristics by Cylinder")
-print(table1)
+table1_gt <- create_table1(data = mtcars, 
+                           summary_vars = summary_vars, 
+                           group_var = group_var, 
+                           title = "Table 1: Population Characteristics by Cylinder",
+                           output_format = "gt")
+print(table1_gt)
+
+table1_latex <- create_table1(data = mtcars, 
+                               summary_vars = summary_vars, 
+                               group_var = group_var, 
+                               title = "Table 1: Population Characteristics by Cylinder",
+                               output_format = "latex")
+cat(table1_latex)
 }
