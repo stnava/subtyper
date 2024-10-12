@@ -5494,7 +5494,6 @@ create_table1 <- function(data, summary_vars, group_var,
   if (output_format == "latex") {
     # Convert the gtsummary table to LaTeX
     latex_table1 <- table1_summary %>% as_gt() %>% as_latex()
-    latex_table1 <- gsub("Variable", group_var, latex_table1)
     latex_table1 = gsub("_"," ",latex_table1,fixed=TRUE)
     # Adjust font sizes
     for (font_size in names(latex_font_size)) {
