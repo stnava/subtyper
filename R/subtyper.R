@@ -6522,3 +6522,64 @@ collect_and_zip_images <- function(subjectIDdate_list, root_path, modality, exte
   message(paste("Files zipped into", zip_filename))
   return(invisible(zip_filename))
 }
+
+
+
+#' Create a Styled LaTeX Table with Adjustable Size and Orientation
+#'
+#' This function generates a LaTeX table from a data frame using the `kableExtra` package, 
+#' with options to adjust the table size, apply striped styling, and set the table orientation 
+#' to landscape or portrait mode.
+#'
+#' @param data A data frame to be displayed in the table.
+#' @param caption A character string for the table caption.
+#' @param scl A numeric value to scale the table size. Defaults to 0.75.
+#' @param row.names Logical, whether to include row names in the table. Defaults to FALSE.
+#' @param striped Logical, whether to apply striped styling to the table. Defaults to TRUE.
+#' @param landscape Logical, whether to rotate the table to landscape mode. Defaults to TRUE.
+#' @param table_size A character string for adjusting the overall size of the table. Options include "small", "medium", "large". Defaults to "medium".
+#' @param digits An integer specifying the number of decimal places for numeric values. Defaults to 3.
+#' @param latex_options A character vector for specifying additional LaTeX styling options. Defaults to `c("striped")`.
+#'
+#' @return A LaTeX table generated with `kableExtra`, ready for inclusion in an RMarkdown or LaTeX document.
+#' @examples
+#' data <- mtcars[1:5, 1:5]
+#' kable_table(data, caption = "Sample Table", scl = 0.8, row.names = TRUE, striped = TRUE, landscape = FALSE, table_size = "large")
+#'
+#' @export
+kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = TRUE, landscape = TRUE, 
+                        table_size = "medium", digits = 3, latex_options = c("striped")) {
+  
+  library(kableExtra)
+  
+  # Define the table size based on input
+  size_map <- list(small = "\\small", medium = "\\normalsize", large = "\\large")
+  table_size_tag <- size_map[[table_size]]
+  if (is.null(table_size_tag)) {
+    stop("Invalid table_size argument. Choose from 'small', 'medium', or 'large'.")
+  }
+  
+  # Create the basic LaTeX table
+  table <- kable(data, format = "latex", caption = caption, booktabs = TRUE,
+                 row.names = row.names, digits = digits) %>%
+    add_header_above(c(table_size_tag)) %>%
+    kable_styling(latex_options = latex_options)
+  
+  # Apply striped styling if requested
+  if (striped) {
+    table <- table %>%
+      kable_styling(latex_options = c("striped"), stripe_color = "gray!22")
+  }
+  
+  # Adjust table scale
+  table <- table %>%
+    kable_styling(scale_down = scl)
+  
+  # Rotate to landscape if requested
+  if (landscape) {
+    table <- table %>%
+      landscape()
+  }
+  
+  return(table)
+}
