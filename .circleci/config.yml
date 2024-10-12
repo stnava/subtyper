@@ -21,7 +21,7 @@ steps: &steps
         command: R -e "devtools::install_deps(dep = TRUE)"
     - run:
         name: Install package dependencies manually
-        command: Rscript -e "install.packages(c( 'fmsb', 'nmfbin',  'glasso',  'FRESA.CAD', 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot','ciTools'))"
+        command: Rscript -e "install.packages(c( 'fmsb', 'kableExtra',  'nmfbin',  'glasso',  'FRESA.CAD', 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot','ciTools'))"
     - run:
         no_output_timeout: 30m
         name: Build package
