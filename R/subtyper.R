@@ -5473,11 +5473,10 @@ create_table1 <- function(data, summary_vars, group_var,
   # Create summary table using gtsummary
   table1 <- data %>%
     select(all_of(c(summary_vars, group_var)))
-  for ( x in continuous_vars ) {
-    table1[,x]=table1[,x]+rnorm(length(table1[,x]),0,1e-6*var(table1[,x],na.rm=T))
-    }
-  table1_summary <- tbl_summary(table1, by = all_of(group_var), 
-                                missing = "no") %>%
+  table1_summary <- tbl_summary(table1, 
+      by = all_of(group_var), 
+      type = list(where(is.numeric) ~ "continuous"),
+      missing = "no" ) %>%
     add_p() %>%
     modify_header(label ~ "**Variable**") %>%
     bold_labels()
