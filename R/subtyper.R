@@ -5415,6 +5415,8 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
 #' @param group_var A character string of the variable name to group by.
 #' @param title A character string for the table title. Default is "Table 1: Population Characteristics".
 #' @param output_format A character string indicating the desired output format, either "gt" or "latex". Default is "gt".
+#' @param landscape boolean
+#' @param latex_font_size optional font size changes
 #' @return A `gt` table object or LaTeX code depending on the `output_format`.
 #' @import dplyr
 #' @import gtsummary
@@ -5439,9 +5441,10 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
 #' cat(table1_latex)
 #' @export
 create_table1 <- function(data, summary_vars, group_var, 
-                          title = "Table 1: Population Characteristics",
-                          output_format = "gt") {
-  
+                          title = "Table 1: Population Characteristics", 
+                          output_format = "gt",
+                          landscape = TRUE,
+                          latex_font_size = c("12.0pt" = "8.0pt", "14.4pt" = "10.0pt")) {
   library(gt)
   library(gtsummary)
   
@@ -5491,12 +5494,24 @@ create_table1 <- function(data, summary_vars, group_var,
   if (output_format == "latex") {
     # Convert the gtsummary table to LaTeX
     latex_table1 <- table1_summary %>% as_gt() %>% as_latex()
+    latex_table1 <- gsub("Variable", group_var, latex_table1)
+    
+    # Adjust font sizes
+    for (font_size in names(latex_font_size)) {
+      latex_table1 <- gsub(font_size, latex_font_size[[font_size]], latex_table1)
+    }
+    
+    if ( landscape ) {
+      # Add landscape environment
+      latex_table1 <- paste0("\\begin{landscape}\n", latex_table1, "\n\\end{landscape}")
+    }
     return(latex_table1)
   }
   
   # If output_format is "gt", return the gt table
   return(gt_table1)
 }
+
 
 #' Log Parameters of a Function Call
 #'
@@ -6570,7 +6585,7 @@ kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = 
   
   # Create the basic LaTeX table
   table <- kable(data, format = "latex", caption = caption, booktabs = TRUE,
-                 row.names = row.names, digits = digits) %>%
+                 row.names = row.names, digits = digits, scale_down=scl ) %>%
     add_header_above(c(table_size_tag)) %>%
     kable_styling(latex_options = latex_options)
   
@@ -6580,9 +6595,6 @@ kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = 
       kable_styling(latex_options = c("striped"), stripe_color = "gray!22")
   }
   
-  # Adjust table scale
-  table <- table %>%
-    kable_styling(scale_down = scl)
   
   # Rotate to landscape if requested
   if (landscape) {

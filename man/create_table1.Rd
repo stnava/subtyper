@@ -9,7 +9,9 @@ create_table1(
   summary_vars,
   group_var,
   title = "Table 1: Population Characteristics",
-  output_format = "gt"
+  output_format = "gt",
+  landscape = TRUE,
+  latex_font_size = c(`12.0pt` = "8.0pt", `14.4pt` = "10.0pt")
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ create_table1(
 \item{title}{A character string for the table title. Default is "Table 1: Population Characteristics".}
 
 \item{output_format}{A character string indicating the desired output format, either "gt" or "latex". Default is "gt".}
+
+\item{landscape}{boolean}
+
+\item{latex_font_size}{optional font size changes}
 }
 \value{
 A \code{gt} table object or LaTeX code depending on the \code{output_format}.
