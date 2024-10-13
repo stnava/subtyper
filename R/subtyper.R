@@ -6615,6 +6615,7 @@ collect_and_zip_images <- function(subjectIDdate_list, root_path, modality, exte
 #' @param table_size A character string for adjusting the overall size of the table. Options include "small", "medium", "large". Defaults to "medium".
 #' @param digits An integer specifying the number of decimal places for numeric values. Defaults to 3.
 #' @param latex_options A character vector for specifying additional LaTeX styling options. Defaults to `c("striped")`.
+#' @param format either latex or html
 #'
 #' @return A LaTeX table generated with `kableExtra`, ready for inclusion in an RMarkdown or LaTeX document.
 #' @examples
@@ -6623,7 +6624,7 @@ collect_and_zip_images <- function(subjectIDdate_list, root_path, modality, exte
 #'
 #' @export
 kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = TRUE, landscape = TRUE, 
-                        table_size = "medium", digits = 3, latex_options = c("striped")) {
+                        table_size = "medium", digits = 3, latex_options = c("striped"), format='latex') {
   
   library(kableExtra)
   
@@ -6635,7 +6636,7 @@ kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = 
   }
   
   # Create the basic LaTeX table
-  table <- kable(data, format = "latex", caption = caption, booktabs = TRUE,
+  table <- kable(data, format = format, caption = caption, booktabs = TRUE,
                  row.names = row.names, digits = digits, scale_down=scl ) %>%
 #    add_header_above(c(table_size_tag)) %>%
     kable_styling(latex_options = latex_options)

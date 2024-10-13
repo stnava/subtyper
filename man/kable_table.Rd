@@ -13,7 +13,8 @@ kable_table(
   landscape = TRUE,
   table_size = "medium",
   digits = 3,
-  latex_options = c("striped")
+  latex_options = c("striped"),
+  format = "latex"
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ kable_table(
 \item{digits}{An integer specifying the number of decimal places for numeric values. Defaults to 3.}
 
 \item{latex_options}{A character vector for specifying additional LaTeX styling options. Defaults to \code{c("striped")}.}
+
+\item{format}{either latex or html}
 }
 \value{
 A LaTeX table generated with \code{kableExtra}, ready for inclusion in an RMarkdown or LaTeX document.
