@@ -6635,11 +6635,13 @@ kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = 
     stop("Invalid table_size argument. Choose from 'small', 'medium', or 'large'.")
   }
   
+
   # Create the basic LaTeX table
   table <- kable(data, format = format, caption = caption, booktabs = TRUE,
                  row.names = row.names, digits = digits, scale_down=scl ) %>%
 #    add_header_above(c(table_size_tag)) %>%
-    kable_styling(latex_options = latex_options)
+    kable_styling(latex_options = latex_options, full_width = FALSE) %>%
+      column_spec(1, bold = TRUE)
   
   # Apply striped styling if requested
   if (striped) {
@@ -6730,4 +6732,44 @@ rank_results <- function(df, columns_to_maximize, weights = NULL) {
   
   # Return the dataframe with rankings and scores
   return(normalized_df)
+}
+
+
+#' Subset Dataframe for Subjects with Multiple Unique Visits
+#'
+#' This function subsets a dataframe to return only subjects who have more than one unique visit.
+#' It takes in the column names for the subject identifier and the visit identifier, then filters
+#' the dataframe to include only rows corresponding to subjects with multiple distinct visits.
+#'
+#' @param data A dataframe containing the data to be subset.
+#' @param subject_identifier A string specifying the column name used to identify subjects.
+#' @param visit_identifier A string specifying the column name used to identify visits.
+#'
+#' @return A dataframe containing only subjects with more than one unique visit.
+#'
+#' @examples
+#' # Example dataframe
+#' df <- data.frame(
+#'   subjectID = c(1, 1, 2, 2, 3, 3, 4),
+#'   visitID = c(1, 2, 1, 1, 1, 3, 1)
+#' )
+#' 
+#' # Subset for subjects with multiple unique visits
+#' result <- subset_multiple_visits(df, "subjectID", "visitID")
+#' print(result)
+#'
+#' @export
+subset_multiple_visits <- function(data, subject_identifier, visit_identifier) {
+  # Ensure the columns are in the dataframe
+  if (!all(c(subject_identifier, visit_identifier) %in% names(data))) {
+    stop("Specified columns not found in the dataframe.")
+  }
+  
+  # Find subjects with more than one unique visit
+  subjects_with_multiple_visits <- data %>%
+    group_by_at(subject_identifier) %>%
+    filter(n_distinct(!!sym(visit_identifier)) > 1) %>%
+    ungroup()
+  
+  return(subjects_with_multiple_visits)
 }
