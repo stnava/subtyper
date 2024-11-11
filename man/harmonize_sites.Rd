@@ -30,10 +30,12 @@ other diagnostic categories at each site.
 set.seed(123)
 data <- data.frame(
   site = rep(c("Site1", "Site2", "Site3"), each = 100),
-  diagnosis = rep(c("Control", "Disease1", "Disease2"), times = c(50, 25, 25), each = 2),
+  diagnosis = rep(c("Control", "Disease1", "Disease2"), each = 100),
   feature1 = rnorm(300, mean = rep(c(10, 12, 15), each = 100), sd = 3),
   feature2 = rnorm(300, mean = rep(c(20, 22, 25), each = 100), sd = 4)
 )
 # Harmonize the data
+data$site=sample(data$site)
 harmonized_data <- harmonize_sites(data, "site", "diagnosis", "Control", c("feature1", "feature2"))
+# check the regression with data and hdata
 }

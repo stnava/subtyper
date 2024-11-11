@@ -6801,7 +6801,9 @@ subset_multiple_visits <- function(data, subject_identifier, visit_identifier) {
 #'   feature2 = rnorm(300, mean = rep(c(20, 22, 25), each = 100), sd = 4)
 #' )
 #' # Harmonize the data
+#' data$site=sample(data$site)
 #' harmonized_data <- harmonize_sites(data, "site", "diagnosis", "Control", c("feature1", "feature2"))
+#' # check the regression with data and hdata
 #' @export
 harmonize_sites <- function(data, site_col, diagnosis_col, control_label, feature_cols) {
   # Check inputs
