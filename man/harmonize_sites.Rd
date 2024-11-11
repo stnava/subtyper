@@ -2,40 +2,43 @@
 % Please edit documentation in R/subtyper.R
 \name{harmonize_sites}
 \alias{harmonize_sites}
-\title{Harmonize Multi-Site Data by Matching Controls}
+\title{Harmonize Multiple Features Across Sites with Progress Indicator}
 \usage{
-harmonize_sites(data, site_col, diagnosis_col, control_label, feature_cols)
+harmonize_sites(
+  data,
+  site_col,
+  diagnosis_col,
+  control_label,
+  feature_cols,
+  reference_site
+)
 }
 \arguments{
-\item{data}{A data frame containing site, diagnosis, and feature columns.}
+\item{data}{A data frame containing the data.}
 
-\item{site_col}{A string specifying the column name for the site.}
+\item{site_col}{A string indicating the column name for site identifiers.}
 
-\item{diagnosis_col}{A string specifying the column name for the diagnosis.}
+\item{diagnosis_col}{A string indicating the column name for diagnosis identifiers.}
 
-\item{control_label}{A string specifying the label for the control group in the diagnosis column.}
+\item{control_label}{The label in the diagnosis column identifying the control group.}
 
 \item{feature_cols}{A vector of strings specifying the feature columns to be harmonized.}
+
+\item{reference_site}{The site identifier to use as the reference site for control means.}
 }
 \value{
-A data frame with harmonized features for each diagnostic category across sites.
+A list containing:
+\itemize{
+\item \code{harmonized_data}: the data frame with features adjusted across sites
+\item \code{summary_stats}: a data frame with original control means by site and reference means for each feature
+}
 }
 \description{
-This function adjusts the data from multiple sites such that the control data has consistent
-mean and standard deviation values across all sites. This adjustment is then applied to all
-other diagnostic categories at each site.
+Adjusts specified features across sites so that the control group within each site
+matches the mean of the control group in a reference site. The transformation is applied
+to all data within each site, regardless of diagnosis, for each feature separately.
 }
 \examples{
-# Simulate example data
-set.seed(123)
-data <- data.frame(
-  site = rep(c("Site1", "Site2", "Site3"), each = 100),
-  diagnosis = rep(c("Control", "Disease1", "Disease2"), each = 100),
-  feature1 = rnorm(300, mean = rep(c(10, 12, 15), each = 100), sd = 3),
-  feature2 = rnorm(300, mean = rep(c(20, 22, 25), each = 100), sd = 4)
-)
-# Harmonize the data
-data$site=sample(data$site)
-harmonized_data <- harmonize_sites(data, "site", "diagnosis", "Control", c("feature1", "feature2"))
-# check the regression with data and hdata
+harmonize_sites(df, site_col = "Site", diagnosis_col = "Diagnosis", 
+                control_label = "Control", feature_cols = c("Feature1", "Feature2"), reference_site = "SiteA")
 }

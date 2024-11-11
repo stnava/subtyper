@@ -6779,57 +6779,212 @@ subset_multiple_visits <- function(data, subject_identifier, visit_identifier) {
 
 
 
-#' Harmonize Multi-Site Data by Matching Controls
+#' Harmonize Multiple Features Across Sites with Progress Indicator
 #'
-#' This function adjusts the data from multiple sites such that the control data has consistent
-#' mean and standard deviation values across all sites. This adjustment is then applied to all 
-#' other diagnostic categories at each site.
+#' Adjusts specified features across sites so that the control group within each site
+#' matches the mean of the control group in a reference site. The transformation is applied
+#' to all data within each site, regardless of diagnosis, for each feature separately.
 #'
-#' @param data A data frame containing site, diagnosis, and feature columns.
-#' @param site_col A string specifying the column name for the site.
-#' @param diagnosis_col A string specifying the column name for the diagnosis.
-#' @param control_label A string specifying the label for the control group in the diagnosis column.
+#' @param data A data frame containing the data.
+#' @param site_col A string indicating the column name for site identifiers.
+#' @param diagnosis_col A string indicating the column name for diagnosis identifiers.
+#' @param control_label The label in the diagnosis column identifying the control group.
 #' @param feature_cols A vector of strings specifying the feature columns to be harmonized.
-#' @return A data frame with harmonized features for each diagnostic category across sites.
+#' @param reference_site The site identifier to use as the reference site for control means.
+#'
+#' @return A list containing:
+#'   - `harmonized_data`: the data frame with features adjusted across sites
+#'   - `summary_stats`: a data frame with original control means by site and reference means for each feature
 #' @examples
-#' # Simulate example data
-#' set.seed(123)
-#' data <- data.frame(
-#'   site = rep(c("Site1", "Site2", "Site3"), each = 100),
-#'   diagnosis = rep(c("Control", "Disease1", "Disease2"), each = 100),
-#'   feature1 = rnorm(300, mean = rep(c(10, 12, 15), each = 100), sd = 3),
-#'   feature2 = rnorm(300, mean = rep(c(20, 22, 25), each = 100), sd = 4)
-#' )
-#' # Harmonize the data
-#' data$site=sample(data$site)
-#' harmonized_data <- harmonize_sites(data, "site", "diagnosis", "Control", c("feature1", "feature2"))
-#' # check the regression with data and hdata
-#' @export
-harmonize_sites <- function(data, site_col, diagnosis_col, control_label, feature_cols) {
-  # Check inputs
+#' harmonize_sites(df, site_col = "Site", diagnosis_col = "Diagnosis", 
+#'                 control_label = "Control", feature_cols = c("Feature1", "Feature2"), reference_site = "SiteA")
+harmonize_sites <- function(data, site_col, diagnosis_col, control_label, feature_cols, reference_site) {
+  # Check if specified columns exist
   if (!all(c(site_col, diagnosis_col, feature_cols) %in% colnames(data))) {
-    stop("Specified columns must exist in the data frame.")
+    stop("One or more specified columns do not exist in the data.")
   }
   
-  # Calculate overall mean and SD of control group for each feature
-  control_data <- data[data[[diagnosis_col]] == control_label, ]
-  global_means <- sapply(feature_cols, function(col) mean(control_data[[col]], na.rm = TRUE))
-  global_sds <- sapply(feature_cols, function(col) sd(control_data[[col]], na.rm = TRUE))
+  # Filter control group data in the reference site and calculate the reference means for each feature
+  ref_control_data <- data[data[[site_col]] == reference_site & data[[diagnosis_col]] == control_label, ]
+  if (nrow(ref_control_data) == 0) stop("No control data found for the specified reference site.")
+  ref_means <- sapply(feature_cols, function(col) mean(ref_control_data[[col]], na.rm = TRUE))
   
-  # Function to scale each site to match global control stats
-  adjust_site <- function(subdata) {
-    site_controls <- subdata[subdata[[diagnosis_col]] == control_label, ]
-    site_means <- sapply(feature_cols, function(col) mean(site_controls[[col]], na.rm = TRUE))
-    site_sds <- sapply(feature_cols, function(col) sd(site_controls[[col]], na.rm = TRUE))
+  # Initialize a data frame to store original control means by site for each feature
+  summary_stats <- data.frame(Site = unique(data[[site_col]]))
+  for (col in feature_cols) {
+    summary_stats[[paste0("Original_Control_Mean_", col)]] <- NA
+  }
+  summary_stats <- cbind(summary_stats, Reference_Control_Mean = ref_means)
+  
+  # Harmonized data frame to store transformed data
+  harmonized_data <- data
+  
+  # Set up progress bar
+  total_tasks <- length(unique(data[[site_col]])) * length(feature_cols)
+  pb <- txtProgressBar(min = 0, max = total_tasks, style = 3)
+  task_count <- 0
+  
+  # Adjust each feature column separately by site
+  for (current_site in unique(data[[site_col]])) {
+    # Filter data for the current site
+    site_data <- harmonized_data[harmonized_data[[site_col]] == current_site, ]
+    site_controls <- site_data[site_data[[diagnosis_col]] == control_label, ]
     
-    # Apply scaling to all subjects in this site
-    for (col in feature_cols) {
-      subdata[[col]] <- (subdata[[col]] - site_means[col]) / site_sds[col] * global_sds[col] + global_means[col]
+    # Check if site has control data
+    if (nrow(site_controls) > 0) {
+      for (feature in feature_cols) {
+        # Calculate the site-specific mean for the control group for the current feature
+        site_mean <- mean(site_controls[[feature]], na.rm = TRUE)
+        # Store the original control mean for the feature in summary_stats
+        summary_stats[summary_stats$Site == current_site, paste0("Original_Control_Mean_", feature)] <- site_mean
+        
+        # Apply transformation to all subjects in the site for this feature
+        harmonized_data[harmonized_data[[site_col]] == current_site, feature] <-
+          harmonized_data[harmonized_data[[site_col]] == current_site, feature] + (ref_means[feature] - site_mean)
+        
+        # Update progress bar
+        task_count <- task_count + 1
+        setTxtProgressBar(pb, task_count)
+      }
+    } else {
+      warning("No control data for site ", current_site, ". Skipping adjustment for this site.")
     }
-    subdata
   }
   
-  # Apply adjustment across each site
-  harmonized_data <- do.call(rbind, lapply(split(data, data[[site_col]]), adjust_site))
-  return(harmonized_data)
+  # Close progress bar
+  close(pb)
+  
+  return(list(harmonized_data = harmonized_data, summary_stats = summary_stats))
+}
+
+
+#' Harmonize Multiple Features Across Sites with Quantile Matching
+#'
+#' Adjusts specified features across sites to match the quantiles (e.g., 25th, 50th, and 75th) of the control group
+#' in the reference site. The transformation is applied to all data within each site, regardless of diagnosis, for each feature separately.
+#'
+#' @param data A data frame containing the data.
+#' @param site_col A string indicating the column name for site identifiers.
+#' @param diagnosis_col A string indicating the column name for diagnosis identifiers.
+#' @param control_label The label in the diagnosis column identifying the control group.
+#' @param feature_cols A vector of strings specifying the feature columns to be harmonized.
+#' @param reference_site The site identifier to use as the reference site for control quantiles.
+#'
+#' @return A list containing:
+#'   - `harmonized_data`: the data frame with features adjusted across sites.
+#'   - `summary_stats`: a data frame with quantiles (e.g., 25th, 50th, and 75th) by site for each feature.
+#' @examples
+#' harmonize_sites_quantiles(df, site_col = "Site", diagnosis_col = "Diagnosis", 
+#'                           control_label = "Control", feature_cols = c("Feature1", "Feature2"), 
+#'                           reference_site = "SiteA")
+harmonize_sites_quantiles <- function(data, site_col, diagnosis_col, control_label, feature_cols, reference_site) {
+  # Check if specified columns exist
+  if (!all(c(site_col, diagnosis_col, feature_cols) %in% colnames(data))) {
+    stop("One or more specified columns do not exist in the data.")
+  }
+  
+  # Filter control group data in the reference site and calculate the quantiles (25th, 50th, 75th) for each feature
+  ref_control_data <- data[data[[site_col]] == reference_site & data[[diagnosis_col]] == control_label, ]
+  if (nrow(ref_control_data) == 0) stop("No control data found for the specified reference site.")
+  
+  # Calculate quantiles (25th, 50th, 75th) for each feature in the reference site's control group
+  ref_quantiles <- sapply(feature_cols, function(col) {
+    quantile(ref_control_data[[col]], probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+  })
+  
+  # Initialize a data frame to store original control quantiles by site for each feature
+  summary_stats <- data.frame(Site = unique(data[[site_col]]))
+  for (col in feature_cols) {
+    summary_stats[[paste0("Original_Control_25th_", col)]] <- NA
+    summary_stats[[paste0("Original_Control_50th_", col)]] <- NA
+    summary_stats[[paste0("Original_Control_75th_", col)]] <- NA
+  }
+  summary_stats <- cbind(summary_stats, Reference_Control_25th = ref_quantiles[1,],
+                         Reference_Control_50th = ref_quantiles[2,],
+                         Reference_Control_75th = ref_quantiles[3,])
+  
+  # Harmonized data frame to store transformed data
+  harmonized_data <- data
+  
+  # Set up progress bar
+  total_tasks <- length(unique(data[[site_col]])) * length(feature_cols)
+  pb <- txtProgressBar(min = 0, max = total_tasks, style = 3)
+  task_count <- 0
+  
+  # Adjust each feature column separately by site
+  for (current_site in unique(data[[site_col]])) {
+    # Filter data for the current site
+    site_data <- harmonized_data[harmonized_data[[site_col]] == current_site, ]
+    site_controls <- site_data[site_data[[diagnosis_col]] == control_label, ]
+    
+    # Check if site has control data
+    if (nrow(site_controls) > 0) {
+      for (feature in feature_cols) {
+        # Calculate the quantiles for the control group in the current site for the feature
+        site_quantiles <- quantile(site_controls[[feature]], probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+        
+        # Store the original control quantiles for the feature in summary_stats
+        summary_stats[summary_stats$Site == current_site, paste0("Original_Control_25th_", feature)] <- site_quantiles[1]
+        summary_stats[summary_stats$Site == current_site, paste0("Original_Control_50th_", feature)] <- site_quantiles[2]
+        summary_stats[summary_stats$Site == current_site, paste0("Original_Control_75th_", feature)] <- site_quantiles[3]
+        
+        # Apply transformation to align quantiles (25th, 50th, and 75th) with the reference site
+        harmonized_data[harmonized_data[[site_col]] == current_site, feature] <-
+          (harmonized_data[harmonized_data[[site_col]] == current_site, feature] - site_quantiles[2]) / (site_quantiles[3] - site_quantiles[1]) * (ref_quantiles[3, feature] - ref_quantiles[1, feature]) + ref_quantiles[2, feature]
+        
+        # Update progress bar
+        task_count <- task_count + 1
+        setTxtProgressBar(pb, task_count)
+      }
+    } else {
+      warning("No control data for site ", current_site, ". Skipping adjustment for this site.")
+    }
+  }
+  
+  # Close progress bar
+  close(pb)
+  
+  return(list(harmonized_data = harmonized_data, summary_stats = summary_stats))
+}
+
+
+
+#' Apply ComBat Batch Correction While Preserving Missing Data
+#'
+#' This function performs batch effect correction using the ComBat method from the \code{sva} package. It applies ComBat to the data after imputing missing values, but preserves the missing data (NA values) in the output.
+#'
+#' @param df A numeric matrix or data frame with missing values (NA) that you want to adjust for batch effects.
+#' @param batch A numeric or character vector containing the batch assignments (must have the same length as the number of samples in \code{df}).
+#' 
+#' @return A numeric matrix or data frame with batch effects corrected, while preserving the original NA values from \code{df}.
+#'
+#' @examples
+#' # Assuming 'df' is your data frame with missing values and 'batch' is a vector of batch assignments
+#' adjusted_data <- combat_with_na(df, batch)
+#'
+#' @import sva
+#' @export
+combat_with_na <- function(df, batch) {
+  # Check if the length of batch matches the number of columns in df
+  if (length(batch) != nrow(df)) {
+    stop("The length of batch must match the number of columns in df.")
+  }
+  
+  # Step 1: Impute the data and transpose it
+  imputed_data <- t(antsrimpute(df))  # Transpose after imputation
+  
+  # Step 2: Identify the locations of the original NAs in the df data
+  na_indices <- is.na(df)
+  
+  # Step 3: Apply ComBat to the imputed data
+  cbt <- sva::ComBat(dat = imputed_data, batch = as.numeric(batch))
+  
+  # Step 4: Convert the ComBat output back to the same shape as the original data
+  cbt_transposed <- t(cbt)  # Transpose back to match original data shape
+  
+  # Step 5: Preserve NAs from the original data by setting those values back to NA
+  cbt_transposed[na_indices] <- NA
+  
+  # Return the ComBat-adjusted data with NAs preserved
+  return(cbt_transposed)
 }
