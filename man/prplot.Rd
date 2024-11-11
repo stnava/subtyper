@@ -39,9 +39,6 @@ prplot(
 the quantile transformed vector
 }
 \description{
-partial residual regression plot using ggpubr for display
+Partial residual regression plot using ggpubr for display
 and visreg for partial residual calculation
-}
-\author{
-Avants BB
 }

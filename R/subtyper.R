@@ -3048,7 +3048,7 @@ augment_with_custom_color <- function(df, column_name, color_palette, color_pale
 
 #' prplot
 #' 
-#' partial residual regression plot using ggpubr for display 
+#' Partial residual regression plot using ggpubr for display 
 #' and visreg for partial residual calculation 
 #'
 #' @param mdl input fitted model
@@ -3061,89 +3061,91 @@ augment_with_custom_color <- function(df, column_name, color_palette, color_pale
 #' @param colorvar string
 #' @param extradata dataframe with additional information to be rendered
 #' @return the quantile transformed vector
-#' @author Avants BB
 #' @export
-prplot  <- function(
-  mdl, xvariable, byvariable, titlestring='', ystring='', addpoints=0, palette='npg', colorvar='', extradata=NULL ) {
-  addthepoints=FALSE
-  colorvarnotempty=TRUE
-  if ( colorvar=='') {
-    colorvarnotempty=FALSE
-    colorvar='black'
+prplot <- function(
+  mdl, xvariable, byvariable, titlestring = '', ystring = '', 
+  addpoints = 0, palette = 'npg', colorvar = '', extradata = NULL
+) {
+  addthepoints <- FALSE
+  colorvarnotempty <- TRUE
+  if (colorvar == '') {
+    colorvarnotempty <- FALSE
+    colorvar <- 'black'
   }
-  if ( !is.null( extradata ) ) {
-    extradata=extradata[ names(predict(mdl)), ]
+  if (!is.null(extradata)) {
+    extradata <- extradata[names(predict(mdl)), ]
   }
-  if ( addpoints > 0 ) addthepoints=TRUE
-  if ( ! missing( byvariable ) ) {
-    vv=visreg::visreg( mdl, xvariable, by=byvariable, plot=FALSE)
-    if ( colorvar %in% model.frame(mdl) ) {
-        vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
-      } else if ( !is.null( extradata ) ) {
-        if ( colorvar %in% colnames( extradata ))
-          vv$res[,colorvar]=extradata[,colorvar]
+  if (addpoints > 0) addthepoints <- TRUE
+  
+  if (!missing(byvariable)) {
+    vv <- visreg::visreg(mdl, xvariable, by = byvariable, plot = FALSE)
+    
+    # Ensure all levels of byvariable are preserved
+    vv$res[, byvariable] <- factor(vv$res[, byvariable], levels = levels(model.frame(mdl)[, byvariable]))
+    
+    # Handle colorvar levels in the data
+    if (colorvar %in% names(model.frame(mdl))) {
+      vv$res[, colorvar] <- model.frame(mdl)[names(predict(mdl)), colorvar]
+    } else if (!is.null(extradata)) {
+      if (colorvar %in% colnames(extradata)) {
+        vv$res[, colorvar] <- factor(extradata[, colorvar], levels = levels(model.frame(mdl)[, colorvar]))
       }
-#    vv$res=augment_with_custom_color(vv$res, colorvar, color_palette_name=palette)
-    if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
-      return( ggdotplot(vv$res, x = xvariable, y = 'visregRes', 
-                    size=addpoints, palette=palette,
-                    conf.int=T,
-                    point=addthepoints,
-                    facet.by=byvariable,
-                    cor.coef=TRUE ) +  
-                    theme(text = element_text(size=12))+ ylab(ystring) + 
-                    ggtitle( titlestring ) )
+    }
+    
+    if (is.factor(vv$res[, xvariable]) | is.character(vv$res[, xvariable])) {
+      return(
+        ggdotplot(
+          vv$res, x = xvariable, y = 'visregRes', size = addpoints, palette = palette,
+          conf.int = TRUE, point = addthepoints, facet.by = byvariable, cor.coef = TRUE
+        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring)
+      )
     } else {
-      myaddparams = list(color = "blue", fill = "cyan")
-      myaddparams = list()
-      mypp = predict( mdl )
-      mylims = range(mypp) * c( 1.3, 1. )
-      return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
-                    size=addpoints, palette=palette,
-                    point=addthepoints, add='reg.line', conf.int=T,
-                    color=colorvar, facet.by=byvariable,
-                    add.params = myaddparams,
-                    cor.coef=TRUE ) +  
-                    theme(text = element_text(size=12))+ ylab(ystring) + 
-                    ggtitle( titlestring ) +
-                    theme(legend.position = "top", legend.title = element_blank())  )
+      myaddparams <- list(color = "blue", fill = "cyan")
+      mypp <- predict(mdl)
+      mylims <- range(mypp) * c(1.3, 1.0)
+      return(
+        ggscatter(
+          vv$res, x = xvariable, y = 'visregRes', size = addpoints, palette = palette,
+          point = addthepoints, add = 'reg.line', conf.int = TRUE, color = colorvar, facet.by = byvariable,
+          add.params = myaddparams, cor.coef = TRUE
+        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring) +
+          theme(legend.position = "top", legend.title = element_blank())
+      )
     }
   }
-  if ( missing( byvariable ) ) {
-    vv=visreg::visreg( mdl, xvariable, plot=FALSE)
-    if ( colorvar %in% model.frame(mdl) ) {
-      vv$res[,colorvar]=model.frame(mdl)[ names(predict(mdl)), colorvar ]
-    } else if ( !is.null( extradata ) ) {
-      if ( colorvar %in% colnames( extradata )) {
-        vv$res[,colorvar]=extradata[,colorvar]
-        }
+  
+  if (missing(byvariable)) {
+    vv <- visreg::visreg(mdl, xvariable, plot = FALSE)
+    
+    # Ensure colorvar levels are handled correctly
+    if (colorvar %in% names(model.frame(mdl))) {
+      vv$res[, colorvar] <- model.frame(mdl)[names(predict(mdl)), colorvar]
+    } else if (!is.null(extradata)) {
+      if (colorvar %in% colnames(extradata)) {
+        vv$res[, colorvar] <- factor(extradata[, colorvar], levels = levels(model.frame(mdl)[, colorvar]))
+      }
     }
-#    vv$res=augment_with_custom_color(vv$res, colorvar, color_palette_name=palette)
-    if ( is.factor(vv$res[,xvariable] ) | is.character(vv$res[,xvariable]) ) {
-      return( ggboxplot(vv$res, x = xvariable, y = 'visregRes', 
-                    size=addpoints, palette=palette,
-                    conf.int=T,
-                    point=addthepoints,
-                    add.params = list(color = "blue", fill = "cyan"),
-                    fill=colorvar,
-                    cor.coef=TRUE ) +  
-                    theme(text = element_text(size=12))+ ylab(ystring) + 
-                    ggtitle( titlestring ) )
+    
+    if (is.factor(vv$res[, xvariable]) | is.character(vv$res[, xvariable])) {
+      return(
+        ggboxplot(
+          vv$res, x = xvariable, y = 'visregRes', size = addpoints, palette = palette,
+          conf.int = TRUE, point = addthepoints, add.params = list(color = "blue", fill = "cyan"),
+          fill = colorvar, cor.coef = TRUE
+        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring)
+      )
     } else {
-      return( ggscatter(vv$res, x = xvariable, y = 'visregRes', 
-                    size=addpoints, 
-                    point=addthepoints, add='reg.line', conf.int=T,
-                    color=colorvar,
-                    add.params = list(color = "blue", fill = "cyan"),
-                    palette=palette,
-                    cor.coef=TRUE ) +
-                    theme(text = element_text(size=12))+ ylab(ystring) + 
-                    ggtitle( titlestring ) + theme(legend.position = "top", legend.title = element_blank())  # Position legend at top
-                  )
-    }
+      return(
+        ggscatter(
+          vv$res, x = xvariable, y = 'visregRes', size = addpoints, point = addthepoints,
+          add = 'reg.line', conf.int = TRUE, color = colorvar, add.params = list(color = "blue", fill = "cyan"),
+          palette = palette, cor.coef = TRUE
+        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring) +
+          theme(legend.position = "top", legend.title = element_blank())
+      )
     }
   }
-
+}
 
 #' balanced sampling of a variable
 #' 
@@ -6772,4 +6774,60 @@ subset_multiple_visits <- function(data, subject_identifier, visit_identifier) {
     ungroup()
   
   return(subjects_with_multiple_visits)
+}
+
+
+
+
+#' Harmonize Multi-Site Data by Matching Controls
+#'
+#' This function adjusts the data from multiple sites such that the control data has consistent
+#' mean and standard deviation values across all sites. This adjustment is then applied to all 
+#' other diagnostic categories at each site.
+#'
+#' @param data A data frame containing site, diagnosis, and feature columns.
+#' @param site_col A string specifying the column name for the site.
+#' @param diagnosis_col A string specifying the column name for the diagnosis.
+#' @param control_label A string specifying the label for the control group in the diagnosis column.
+#' @param feature_cols A vector of strings specifying the feature columns to be harmonized.
+#' @return A data frame with harmonized features for each diagnostic category across sites.
+#' @examples
+#' # Simulate example data
+#' set.seed(123)
+#' data <- data.frame(
+#'   site = rep(c("Site1", "Site2", "Site3"), each = 100),
+#'   diagnosis = rep(c("Control", "Disease1", "Disease2"), each = 100),
+#'   feature1 = rnorm(300, mean = rep(c(10, 12, 15), each = 100), sd = 3),
+#'   feature2 = rnorm(300, mean = rep(c(20, 22, 25), each = 100), sd = 4)
+#' )
+#' # Harmonize the data
+#' harmonized_data <- harmonize_sites(data, "site", "diagnosis", "Control", c("feature1", "feature2"))
+#' @export
+harmonize_sites <- function(data, site_col, diagnosis_col, control_label, feature_cols) {
+  # Check inputs
+  if (!all(c(site_col, diagnosis_col, feature_cols) %in% colnames(data))) {
+    stop("Specified columns must exist in the data frame.")
+  }
+  
+  # Calculate overall mean and SD of control group for each feature
+  control_data <- data[data[[diagnosis_col]] == control_label, ]
+  global_means <- sapply(feature_cols, function(col) mean(control_data[[col]], na.rm = TRUE))
+  global_sds <- sapply(feature_cols, function(col) sd(control_data[[col]], na.rm = TRUE))
+  
+  # Function to scale each site to match global control stats
+  adjust_site <- function(subdata) {
+    site_controls <- subdata[subdata[[diagnosis_col]] == control_label, ]
+    site_means <- sapply(feature_cols, function(col) mean(site_controls[[col]], na.rm = TRUE))
+    site_sds <- sapply(feature_cols, function(col) sd(site_controls[[col]], na.rm = TRUE))
+    
+    # Apply scaling to all subjects in this site
+    for (col in feature_cols) {
+      subdata[[col]] <- (subdata[[col]] - site_means[col]) / site_sds[col] * global_sds[col] + global_means[col]
+    }
+    subdata
+  }
+  
+  # Apply adjustment across each site
+  harmonized_data <- do.call(rbind, lapply(split(data, data[[site_col]]), adjust_site))
+  return(harmonized_data)
 }
