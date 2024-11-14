@@ -6873,6 +6873,7 @@ harmonize_sites <- function(data, site_col, diagnosis_col, control_label, featur
 #' @return A list containing:
 #'   - `harmonized_data`: the data frame with features adjusted across sites.
 #'   - `summary_stats`: a data frame with quantiles (e.g., 25th, 50th, and 75th) by site for each feature.
+#' @export
 #' @examples
 #' harmonize_sites_quantiles(df, site_col = "Site", diagnosis_col = "Diagnosis", 
 #'                           control_label = "Control", feature_cols = c("Feature1", "Feature2"), 
