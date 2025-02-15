@@ -6989,3 +6989,68 @@ combat_with_na <- function(df, batch) {
   # Return the ComBat-adjusted data with NAs preserved
   return(cbt_transposed)
 }
+
+
+
+
+
+#' Plot Regression Results as a Graph
+#'
+#' This function creates a graphical representation of regression results using either 
+#' an igraph-based network plot or a Sankey diagram.
+#'
+#' @param predictors A character vector of predictor variable names.
+#' @param weights A numeric vector of regression coefficients (weights).
+#' @param outcome A character string specifying the outcome variable.
+#' @param method A character string specifying the visualization method: either "igraph" or "sankey".
+#'
+#' @return A graphical representation of the regression model.
+#' @examples
+#' predictors <- c("Age", "BMI", "Exercise", "Smoking")
+#' weights <- c(0.5, -0.3, 0.7, -0.6)
+#' outcome <- "Heart Disease"
+#' plot_regression_graph(predictors, weights, outcome, method = "igraph")
+#' plot_regression_graph(predictors, weights, outcome, method = "sankey")
+#' @export
+plot_regression_graph <- function(predictors, weights, outcome, method = "igraph") {
+  
+  if (length(predictors) != length(weights)) {
+    stop("Predictors and weights must have the same length")
+  }
+
+  usePkg("igraph")
+  usePkg("networkD3")
+  
+  # Normalize weights for visualization
+  abs_weights <- abs(weights)
+  norm_weights <- abs_weights / max(abs_weights)
+  
+  # Create edges
+  edges <- data.frame(
+    from = predictors,
+    to = rep(outcome, length(predictors)),
+    weight = norm_weights
+  )
+  
+  if (method == "igraph") {
+    g <- graph_from_data_frame(edges, directed = TRUE)
+    E(g)$width <- edges$weight * 5  # Scale edge width
+    
+    plot(g, edge.arrow.size = 0.5, edge.width = E(g)$width,
+         vertex.size = 15, vertex.color = "lightblue",
+         vertex.label.color = "black", vertex.label.cex = 1.2,
+         main = "Regression Results Visualization")
+  }
+  
+  else if (method == "sankey") {
+    nodes <- data.frame(name = c(predictors, outcome))
+    edges$from <- match(edges$from, nodes$name) - 1
+    edges$to <- match(edges$to, nodes$name) - 1
+    
+    sankeyNetwork(Links = edges, Nodes = nodes, Source = "from", Target = "to", 
+                  Value = "weight", NodeID = "name", units = "Weight",
+                  fontSize = 14, nodeWidth = 30)
+  } else {
+    stop("Invalid method. Choose either 'igraph' or 'sankey'")
+  }
+}
