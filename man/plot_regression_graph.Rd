@@ -4,7 +4,7 @@
 \alias{plot_regression_graph}
 \title{Plot Regression Results as a Graph}
 \usage{
-plot_regression_graph(predictors, weights, outcome, method = "igraph")
+plot_regression_graph(predictors, weights, outcome, method = "ggraph")
 }
 \arguments{
 \item{predictors}{A character vector of predictor variable names.}
@@ -13,19 +13,19 @@ plot_regression_graph(predictors, weights, outcome, method = "igraph")
 
 \item{outcome}{A character string specifying the outcome variable.}
 
-\item{method}{A character string specifying the visualization method: either "igraph" or "sankey".}
+\item{method}{A character string specifying the visualization method: either "ggraph" (modern graph) or "sankey".}
 }
 \value{
 A graphical representation of the regression model.
 }
 \description{
 This function creates a graphical representation of regression results using either
-an igraph-based network plot or a Sankey diagram.
+an igraph-based network plot (with modern styling) or a Sankey diagram.
 }
 \examples{
 predictors <- c("Age", "BMI", "Exercise", "Smoking")
 weights <- c(0.5, -0.3, 0.7, -0.6)
 outcome <- "Heart Disease"
-plot_regression_graph(predictors, weights, outcome, method = "igraph")
+plot_regression_graph(predictors, weights, outcome, method = "ggraph")
 plot_regression_graph(predictors, weights, outcome, method = "sankey")
 }
