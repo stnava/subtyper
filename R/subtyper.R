@@ -7037,13 +7037,14 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
   if (method == "ggraph") {
     g <- as_tbl_graph(edges)    
     ggraph(g, layout = "stress") +
-      geom_edge_link(aes(width = weight), alpha = 0.7, color = "dodgerblue") +
+      geom_edge_link(aes(width = log1p(weight)), alpha = 0.7, color = "dodgerblue") +  # Apply log transformation
       geom_node_point(size = 10, color = "firebrick") +
       geom_node_text(aes(label = name), vjust = 1.5, size = 5, color = "black") +
-      scale_edge_width_continuous(transform = scales::log10_trans()) +  # Use `transform`
+      scale_edge_width(range = c(0.5, 5)) +  # Set a visually appealing range
       theme_void() +
       theme(legend.position = "none") +
-      ggtitle("Regression Results Visualization")  
+      ggtitle("Regression Results Visualization")
+      
   } 
   
   else if (method == "sankey") {
