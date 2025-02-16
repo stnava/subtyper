@@ -4,7 +4,13 @@
 \alias{plot_regression_graph}
 \title{Plot Regression Results as a Graph}
 \usage{
-plot_regression_graph(predictors, weights, outcome, method = "ggraph")
+plot_regression_graph(
+  predictors,
+  weights,
+  outcome,
+  method = "ggraph",
+  title = NULL
+)
 }
 \arguments{
 \item{predictors}{A character vector of predictor variable names.}
@@ -14,6 +20,8 @@ plot_regression_graph(predictors, weights, outcome, method = "ggraph")
 \item{outcome}{A character string specifying the outcome variable.}
 
 \item{method}{A character string specifying the visualization method: either "ggraph" (modern graph), "sankey", or "alluvial".}
+
+\item{title}{An optional character string specifying a custom plot title. Defaults to a method-specific title.}
 }
 \value{
 A graphical representation of the regression model.
@@ -26,7 +34,7 @@ an igraph-based network plot (with modern styling), a Sankey diagram, or an allu
 predictors <- c("Age", "BMI", "Exercise", "Smoking")
 weights <- c(0.5, -0.3, 0.7, -0.6)
 outcome <- "Heart Disease"
-plot_regression_graph(predictors, weights, outcome, method = "ggraph")
+plot_regression_graph(predictors, weights, outcome, method = "ggraph", title = "My Custom Graph")
 plot_regression_graph(predictors, weights, outcome, method = "sankey")
-plot_regression_graph(predictors, weights, outcome, method = "alluvial")
+plot_regression_graph(predictors, weights, outcome, method = "alluvial", title = "Custom Alluvial Plot")
 }

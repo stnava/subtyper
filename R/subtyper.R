@@ -6991,7 +6991,6 @@ combat_with_na <- function(df, batch) {
 }
 
 
-
 #' Plot Regression Results as a Graph
 #'
 #' This function creates a graphical representation of regression results using either 
@@ -7001,17 +7000,18 @@ combat_with_na <- function(df, batch) {
 #' @param weights A numeric vector of regression coefficients (weights).
 #' @param outcome A character string specifying the outcome variable.
 #' @param method A character string specifying the visualization method: either "ggraph" (modern graph), "sankey", or "alluvial".
+#' @param title An optional character string specifying a custom plot title. Defaults to a method-specific title.
 #'
 #' @return A graphical representation of the regression model.
 #' @examples
 #' predictors <- c("Age", "BMI", "Exercise", "Smoking")
 #' weights <- c(0.5, -0.3, 0.7, -0.6)
 #' outcome <- "Heart Disease"
-#' plot_regression_graph(predictors, weights, outcome, method = "ggraph")
+#' plot_regression_graph(predictors, weights, outcome, method = "ggraph", title = "My Custom Graph")
 #' plot_regression_graph(predictors, weights, outcome, method = "sankey")
-#' plot_regression_graph(predictors, weights, outcome, method = "alluvial")
+#' plot_regression_graph(predictors, weights, outcome, method = "alluvial", title = "Custom Alluvial Plot")
 #' @export
-plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph") {
+plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph", title = NULL) {
   
   if (length(predictors) != length(weights)) {
     stop("Predictors and weights must have the same length")
@@ -7034,22 +7034,31 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
   edges <- data.frame(
     from = predictors,
     to = rep(outcome, length(predictors)),
-    weight = norm_weights,
+    nweight = norm_weights,
     sign = weights,
-    color = weights  # Store original weight values for color mapping
+    weights = weights  # Store original weight values for color mapping
   )
+  
+  # Set default titles if none provided
+  if (is.null(title)) {
+    title <- switch(method,
+                    "ggraph" = "Regression Results Visualization",
+                    "sankey" = "Regression Results (Sankey Diagram)",
+                    "alluvial" = "Regression Results (Alluvial Diagram)",
+                    "Visualization")
+  }
   
   if (method == "ggraph") {
     g <- as_tbl_graph(edges)
     
     ggraph(g, layout = "stress") +
-      geom_edge_link(aes(width = log1p(weight)), alpha = 0.7, color = "dodgerblue") +
+      geom_edge_link(aes(width = log1p(nweight)), alpha = 0.7, color = "dodgerblue") +
       geom_node_point(size = 10, color = "firebrick") +
       geom_node_text(aes(label = name), vjust = 1.5, size = 5, color = "black") +
       scale_edge_width(range = c(0.5, 5)) +
       theme_void() +
       theme(legend.position = "none") +
-      ggtitle("Regression Results Visualization")
+      ggtitle(title)
       
   } else if (method == "sankey") {
     nodes <- data.frame(name = c(predictors, outcome))
@@ -7057,21 +7066,21 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
     edges$to <- match(edges$to, nodes$name) - 1
     
     sankeyNetwork(Links = edges, Nodes = nodes, Source = "from", Target = "to", 
-                  Value = "weight", NodeID = "name", units = "Weight",
+                  Value = "nweight", NodeID = "name", units = "Weight",
                   fontSize = 14, nodeWidth = 30)
     
   } else if (method == "alluvial") {
     alluvial_data <- edges %>%
-      rename(Predictor = from, Outcome = to, Weight = weight)
+      rename(Predictor = from, Outcome = to, Weight = weights)
     
-    ggplot(alluvial_data, aes(axis1 = Predictor, axis2 = Outcome, y = Weight, fill = color)) +
-      geom_alluvium(aes(fill = color), width = 0.4, alpha = 0.8) +
+    ggplot(alluvial_data, aes(axis1 = Predictor, axis2 = Outcome, y = Weight, fill = weights)) +
+      geom_alluvium(aes(fill = weights), width = 0.4, alpha = 0.8) +
       geom_stratum(width = 0.5, fill = "gray", color = "black") +  # Outcome remains neutral
       geom_text(stat = "stratum", aes(label = after_stat(stratum)), size = 5) +
       scale_fill_gradient2(low = "red", mid = "white", high = "blue", midpoint = 0) +  # Gradient scale
       theme_minimal() +
       theme(legend.position = "right") +
-      ggtitle("Regression Results (Alluvial Diagram)")
+      ggtitle(title)
     
   } else {
     stop("Invalid method. Choose either 'ggraph', 'sankey', or 'alluvial'")
