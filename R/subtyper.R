@@ -6992,17 +6992,15 @@ combat_with_na <- function(df, batch) {
 
 
 
-
-
 #' Plot Regression Results as a Graph
 #'
 #' This function creates a graphical representation of regression results using either 
-#' an igraph-based network plot (with modern styling) or a Sankey diagram.
+#' an igraph-based network plot (with modern styling), a Sankey diagram, or an alluvial diagram.
 #'
 #' @param predictors A character vector of predictor variable names.
 #' @param weights A numeric vector of regression coefficients (weights).
 #' @param outcome A character string specifying the outcome variable.
-#' @param method A character string specifying the visualization method: either "ggraph" (modern graph) or "sankey".
+#' @param method A character string specifying the visualization method: either "ggraph" (modern graph), "sankey", or "alluvial".
 #'
 #' @return A graphical representation of the regression model.
 #' @examples
@@ -7011,6 +7009,7 @@ combat_with_na <- function(df, batch) {
 #' outcome <- "Heart Disease"
 #' plot_regression_graph(predictors, weights, outcome, method = "ggraph")
 #' plot_regression_graph(predictors, weights, outcome, method = "sankey")
+#' plot_regression_graph(predictors, weights, outcome, method = "alluvial")
 #' @export
 plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph") {
   
@@ -7018,10 +7017,14 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
     stop("Predictors and weights must have the same length")
   }
   
+  # Load required packages
   usePkg("igraph")
   usePkg("networkD3")
   usePkg("ggraph")
   usePkg("tidygraph")
+  usePkg("ggplot2")
+  usePkg("ggalluvial")
+  usePkg("dplyr")
 
   # Normalize weights for visualization
   abs_weights <- abs(weights)
@@ -7031,23 +7034,24 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
   edges <- data.frame(
     from = predictors,
     to = rep(outcome, length(predictors)),
-    weight = norm_weights
+    weight = norm_weights,
+    sign = weights,
+    color = weights  # Store original weight values for color mapping
   )
   
   if (method == "ggraph") {
-    g <- as_tbl_graph(edges)    
+    g <- as_tbl_graph(edges)
+    
     ggraph(g, layout = "stress") +
-      geom_edge_link(aes(width = log1p(weight)), alpha = 0.7, color = "dodgerblue") +  # Apply log transformation
+      geom_edge_link(aes(width = log1p(weight)), alpha = 0.7, color = "dodgerblue") +
       geom_node_point(size = 10, color = "firebrick") +
       geom_node_text(aes(label = name), vjust = 1.5, size = 5, color = "black") +
-      scale_edge_width(range = c(0.5, 5)) +  # Set a visually appealing range
+      scale_edge_width(range = c(0.5, 5)) +
       theme_void() +
       theme(legend.position = "none") +
       ggtitle("Regression Results Visualization")
       
-  } 
-  
-  else if (method == "sankey") {
+  } else if (method == "sankey") {
     nodes <- data.frame(name = c(predictors, outcome))
     edges$from <- match(edges$from, nodes$name) - 1
     edges$to <- match(edges$to, nodes$name) - 1
@@ -7055,7 +7059,21 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
     sankeyNetwork(Links = edges, Nodes = nodes, Source = "from", Target = "to", 
                   Value = "weight", NodeID = "name", units = "Weight",
                   fontSize = 14, nodeWidth = 30)
+    
+  } else if (method == "alluvial") {
+    alluvial_data <- edges %>%
+      rename(Predictor = from, Outcome = to, Weight = weight)
+    
+    ggplot(alluvial_data, aes(axis1 = Predictor, axis2 = Outcome, y = Weight, fill = color)) +
+      geom_alluvium(aes(fill = color), width = 0.4, alpha = 0.8) +
+      geom_stratum(width = 0.5, fill = "gray", color = "black") +  # Outcome remains neutral
+      geom_text(stat = "stratum", aes(label = after_stat(stratum)), size = 5) +
+      scale_fill_gradient2(low = "red", mid = "white", high = "blue", midpoint = 0) +  # Gradient scale
+      theme_minimal() +
+      theme(legend.position = "right") +
+      ggtitle("Regression Results (Alluvial Diagram)")
+    
   } else {
-    stop("Invalid method. Choose either 'ggraph' or 'sankey'")
+    stop("Invalid method. Choose either 'ggraph', 'sankey', or 'alluvial'")
   }
 }

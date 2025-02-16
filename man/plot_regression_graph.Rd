@@ -13,14 +13,14 @@ plot_regression_graph(predictors, weights, outcome, method = "ggraph")
 
 \item{outcome}{A character string specifying the outcome variable.}
 
-\item{method}{A character string specifying the visualization method: either "ggraph" (modern graph) or "sankey".}
+\item{method}{A character string specifying the visualization method: either "ggraph" (modern graph), "sankey", or "alluvial".}
 }
 \value{
 A graphical representation of the regression model.
 }
 \description{
 This function creates a graphical representation of regression results using either
-an igraph-based network plot (with modern styling) or a Sankey diagram.
+an igraph-based network plot (with modern styling), a Sankey diagram, or an alluvial diagram.
 }
 \examples{
 predictors <- c("Age", "BMI", "Exercise", "Smoking")
@@ -28,4 +28,5 @@ weights <- c(0.5, -0.3, 0.7, -0.6)
 outcome <- "Heart Disease"
 plot_regression_graph(predictors, weights, outcome, method = "ggraph")
 plot_regression_graph(predictors, weights, outcome, method = "sankey")
+plot_regression_graph(predictors, weights, outcome, method = "alluvial")
 }
