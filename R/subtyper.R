@@ -7071,7 +7071,7 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
     
   } else if (method == "alluvial") {
     alluvial_data <- edges %>%
-      rename(Predictor = from, Outcome = to, Weight = weights)
+      dplyr::rename(Predictor = from, Outcome = to, Weight = weights)
     
     ggplot(alluvial_data, aes(axis1 = Predictor, axis2 = Outcome, y = Weight, fill = weights)) +
       geom_alluvium(aes(fill = weights), width = 0.4, alpha = 0.8) +
