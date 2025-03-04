@@ -38,6 +38,52 @@ complete_cases_from_equation <- function(df, equation) {
   return(complete_cases)
 }
 
+#' Visualize Longitudinal Data Across Time Points with Group Comparison
+#'
+#' This function creates a line plot showing trends over time for each subject,
+#' and includes an option to visualize differences between two groups.
+#'
+#' @param df Data frame containing longitudinal data.
+#' @param subject_col Character. Column name for subject identifiers. Default is "Subject".
+#' @param time_col Character. Column name for time points. Default is "timepoint".
+#' @param value_col Character. Column name for the measurement to be visualized. This parameter is required.
+#' @param group_col Character. Optional. Column name for grouping variable (e.g., "Condition"). Default is NULL.
+#'
+#' @return A ggplot object displaying trends over time with optional group comparison.
+#' @examples
+#' visualize_timepoints(demog[demog$longitudinal, ], value_col = "smri.Label1.VolumeInMillimeters", group_col = "Condition")
+#'
+#' @export
+visualize_timepoints <- function(df, subject_col = "Subject", time_col = "timepoint", value_col, group_col = NULL) {
+  if (missing(value_col)) {
+    stop("Please provide the name of the value column to visualize.")
+  }
+  
+  p <- ggplot(df, aes(x = .data[[time_col]], y = .data[[value_col]], group = .data[[subject_col]], color = .data[[subject_col]])) +
+    geom_line(linewidth = 1, alpha = 0.7) +  # Use linewidth instead of size, slight transparency
+    geom_point(size = 3) +
+    theme_minimal(base_size = 16) +
+    labs(title = "Longitudinal Data Visualization",
+         x = "Time Point",
+         y = value_col,
+         color = "Subject") +
+    theme(
+      plot.title = element_text(size = 20, face = "bold"),
+      axis.title.x = element_text(size = 18, face = "bold"),
+      axis.title.y = element_text(size = 18, face = "bold"),
+      axis.text.x = element_text(size = 14, angle = 45, hjust = 1),
+      axis.text.y = element_text(size = 14),
+      legend.text = element_text(size = 12),
+      legend.title = element_text(size = 14, face = "bold")
+    )
+  
+  if (!is.null(group_col)) {
+    p <- p + facet_wrap(~.data[[group_col]]) +  # Separate plots by group
+      labs(color = group_col)  # Adjust legend title
+  }
+  
+  return(p)
+}
 
 #' Compare Model Predictions with True Values
 #'
