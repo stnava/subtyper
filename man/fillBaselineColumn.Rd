@@ -19,7 +19,7 @@ fillBaselineColumn(
 \arguments{
 \item{mxdfin}{Input data frame with repeated measurements and a grouped time variable}
 
-\item{columnName}{string defining valid columns in the data frame.}
+\item{columnName}{string or vector of strings defining valid columns in the data frame to process.}
 
 \item{subjectID}{the unique subject id column name}
 
@@ -32,23 +32,100 @@ baseline-ness. e.g. \code{isBaseline}}
 
 \item{deltaExt}{string appended to column name defining the change variable}
 
-\item{fast}{boolean; will only return subjects with baseline values; if there
-are several baseline entries, these will be averaged. only works with numeric data.}
+\item{fast}{boolean; if TRUE, uses a faster, column-wise approach (requires data.table-like operations).
+Will only return subjects with baseline values. If there are several baseline entries, these will be
+averaged (for numeric) or the mode will be taken (for non-numeric). Only works robustly with atomic
+data types (numeric, character, factor).}
 
-\item{verbose}{boolean}
+\item{verbose}{boolean to print progress messages}
 }
 \value{
-data frame with new columns
+data frame with new columns (or a list containing it if deltaExt is NA)
 }
 \description{
 build a column of data that maps baseline values to every row. baseline values
 starting points or reference points for each subject, e.g. a value of a measurement
-at time zero.  the method will produce a mean value if multiple entries match
+at time zero. The method will produce a mean value if multiple entries match
 the subjectID and visitID conditions.
 }
 \examples{
-mydf = generateSubtyperData( 100 )
-mydf = fillBaselineColumn( mydf, "RandomBasisProjection01", "Id", "visit", "V0" )
+# Generate dummy data for an example
+generateSubtyperData <- function(n_subjects = 10, n_visits = 5) {
+  set.seed(123)
+  subjects <- paste0("Sub_", 1:n_subjects)
+  df <- data.frame(
+    commonID = rep(subjects, each = n_visits),
+    yearsbl = rep(0:(n_visits - 1), n_subjects), # Assuming 0 is baseline
+    RandomBasisProjection01 = rnorm(n_subjects * n_visits, mean = 10, sd = 2),
+    CategoricalVar = sample(c("A", "B", "C"), n_subjects * n_visits, replace = TRUE),
+    stringsAsFactors = FALSE
+  )
+  # Introduce some missing baseline data for testing 'fast' mode filtering
+  df$RandomBasisProjection01[sample(1:nrow(df), 5)] <- NA
+  # Introduce multiple baselines for some subjects
+  extra_baseline_subject <- df[df$commonID == subjects[1] & df$yearsbl == 0,]
+  extra_baseline_subject$yearsbl <- 0.001 # slightly different baseline visit
+  df <- rbind(df, extra_baseline_subject)
+
+  return(df)
+}
+
+# Example 1: Single numeric column with fast mode
+mydf <- generateSubtyperData(10)
+mydog <- fillBaselineColumn(
+  mxdfin = mydf,
+  columnName = "RandomBasisProjection01",
+  subjectID = 'commonID',
+  visitID = 'yearsbl',
+  baselineVisitValue = 0,
+  fast = TRUE,
+  verbose = TRUE
+)[[1]]
+# Check a subject with multiple baselines (Sub_1, has duplicate for yearsbl=0)
+# Note: The example data generation for multiple baselines might need manual adjustment
+# to realistically simulate it for 'aggregate' to take effect.
+# For instance, if Sub_1 has two 'yearsbl' == 0 entries with different
+# RandomBasisProjection01 values.
+
+# Example 2: Multiple columns (numeric and categorical) with fast mode
+mydf2 <- generateSubtyperData(10)
+mydog2 <- fillBaselineColumn(
+  mxdfin = mydf2,
+  columnName = c("RandomBasisProjection01", "CategoricalVar"), # vars2bl from your example
+  subjectID = 'commonID',
+  visitID = 'yearsbl',
+  baselineVisitValue = 0,
+  fast = TRUE,
+  verbose = FALSE
+)[[1]]
+head(mydog2)
+
+# Example 3: Fast mode, specific scenario if a subject entirely lacks baseline
+# mydf3 <- generateSubtyperData(5)
+# mydf3 <- mydf3[!(mydf3$commonID == "Sub_1" & mydf3$yearsbl == 0), ] # Remove Sub_1's baseline
+# mydog3 <- fillBaselineColumn(
+#   mxdfin = mydf3,
+#   columnName = "RandomBasisProjection01",
+#   subjectID = 'commonID',
+#   visitID = 'yearsbl',
+#   baselineVisitValue = 0,
+#   fast = TRUE,
+#   verbose = TRUE
+# )[[1]]
+# print(unique(mydog3$commonID)) # Sub_1 should be absent
+
+# Example 4: Slow mode (default)
+mydf_slow <- generateSubtyperData(5)
+mydog_slow <- fillBaselineColumn(
+  mxdfin = mydf_slow,
+  columnName = "RandomBasisProjection01",
+  subjectID = 'commonID',
+  visitID = 'yearsbl',
+  baselineVisitValue = 0,
+  fast = FALSE, # Explicitly use the slow path
+  verbose = TRUE
+)[[1]]
+head(mydog_slow)
 }
 \author{
 Avants BB

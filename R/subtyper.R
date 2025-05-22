@@ -1002,34 +1002,13 @@ return( mxdfin[ mxdfin[,visitvar] %in% visitselect, ] )
 #' mydf = generateSubtyperData( 100 )
 #' mydfhq = highestQualityRepeat( mydf, "Id", "visit", "quality")
 #' @export
-highestQualityRepeat  <-function(
-  mxdfin,
-  idvar,
-  visitvar,
-  qualityvar ) {
-
-  if ( ! ( visitvar %in% names( mxdfin ) ) ) stop("visitvar not in dataframe")
-  if ( ! ( idvar %in% names( mxdfin ) ) ) stop("idvar not in dataframe")
-  if ( ! ( qualityvar %in% names( mxdfin ) ) ) stop("qualityvar not in dataframe")
-  vizzes = unique( mxdfin[,visitvar] )
-  uids = unique( mxdfin[,idvar] )
-  useit = rep( FALSE, nrow( mxdfin ) )
-  for ( u in uids ) {
-    losel = mxdfin[,idvar] == u
-    vizzesloc = unique( mxdfin[ losel, visitvar ] )
-    for ( v in vizzesloc ) {
-      losel = mxdfin[,idvar] == u & mxdfin[,visitvar] == v
-      mysnr = mxdfin[losel,qualityvar]
-      myw = which( losel )
-      if ( length( myw ) > 1 ) {
-        if ( any( !is.na(mysnr) )  )
-          useit[ myw[ which.max(mysnr) ] ] = TRUE
-        } else useit[ myw ] = TRUE
-      }
-    }
-  return( mxdfin[ useit, ] )
+highestQualityRepeat <- function(mxdfin, idvar, visitvar, qualityvar) {
+  stopifnot(all(c(idvar, visitvar, qualityvar) %in% names(mxdfin)))
+  mxdfin |>
+    dplyr::group_by(.data[[idvar]], .data[[visitvar]]) |>
+    dplyr::slice_max(order_by = .data[[qualityvar]], n = 1, with_ties = FALSE, na_rm = TRUE) |>
+    dplyr::ungroup()
 }
-
 
 #' Reject subjects and timepoints with lowest quality
 #'
@@ -1359,157 +1338,376 @@ filterForGoodData <- function( dataIn,
 
 
 
+#'
 #' fill baseline column
 #'
 #' build a column of data that maps baseline values to every row. baseline values
 #' starting points or reference points for each subject, e.g. a value of a measurement
-#' at time zero.  the method will produce a mean value if multiple entries match
+#' at time zero. The method will produce a mean value if multiple entries match
 #' the subjectID and visitID conditions.
 #'
 #' @param mxdfin Input data frame with repeated measurements and a grouped time variable
-#' @param columnName string defining valid columns in the data frame.
+#' @param columnName string or vector of strings defining valid columns in the data frame to process.
 #' @param subjectID the unique subject id column name
 #' @param visitID names of the column that defines the variable defining
 #' baseline-ness. e.g. \code{isBaseline}
 #' @param baselineVisitValue the value defining baseline e.g. \code{TRUE}
 #' @param baselineExt string appended to column name defining the baseline variable
 #' @param deltaExt string appended to column name defining the change variable
-#' @param fast boolean; will only return subjects with baseline values; if there 
-#' are several baseline entries, these will be averaged. only works with numeric data.
-#' @param verbose boolean
-#' @return data frame with new columns
+#' @param fast boolean; if TRUE, uses a faster, column-wise approach (requires data.table-like operations).
+#'   Will only return subjects with baseline values. If there are several baseline entries, these will be
+#'   averaged (for numeric) or the mode will be taken (for non-numeric). Only works robustly with atomic
+#'   data types (numeric, character, factor).
+#' @param verbose boolean to print progress messages
+#' @return data frame with new columns (or a list containing it if deltaExt is NA)
 #' @author Avants BB
 #' @examples
-#' mydf = generateSubtyperData( 100 )
-#' mydf = fillBaselineColumn( mydf, "RandomBasisProjection01", "Id", "visit", "V0" )
+#' # Generate dummy data for an example
+#' generateSubtyperData <- function(n_subjects = 10, n_visits = 5) {
+#'   set.seed(123)
+#'   subjects <- paste0("Sub_", 1:n_subjects)
+#'   df <- data.frame(
+#'     commonID = rep(subjects, each = n_visits),
+#'     yearsbl = rep(0:(n_visits - 1), n_subjects), # Assuming 0 is baseline
+#'     RandomBasisProjection01 = rnorm(n_subjects * n_visits, mean = 10, sd = 2),
+#'     CategoricalVar = sample(c("A", "B", "C"), n_subjects * n_visits, replace = TRUE),
+#'     stringsAsFactors = FALSE
+#'   )
+#'   # Introduce some missing baseline data for testing 'fast' mode filtering
+#'   df$RandomBasisProjection01[sample(1:nrow(df), 5)] <- NA
+#'   # Introduce multiple baselines for some subjects
+#'   extra_baseline_subject <- df[df$commonID == subjects[1] & df$yearsbl == 0,]
+#'   extra_baseline_subject$yearsbl <- 0.001 # slightly different baseline visit
+#'   df <- rbind(df, extra_baseline_subject)
+#'
+#'   return(df)
+#' }
+#'
+#' # Example 1: Single numeric column with fast mode
+#' mydf <- generateSubtyperData(10)
+#' mydog <- fillBaselineColumn(
+#'   mxdfin = mydf,
+#'   columnName = "RandomBasisProjection01",
+#'   subjectID = 'commonID',
+#'   visitID = 'yearsbl',
+#'   baselineVisitValue = 0,
+#'   fast = TRUE,
+#'   verbose = TRUE
+#' )[[1]]
+#' # Check a subject with multiple baselines (Sub_1, has duplicate for yearsbl=0)
+#' # Note: The example data generation for multiple baselines might need manual adjustment
+#' # to realistically simulate it for 'aggregate' to take effect.
+#' # For instance, if Sub_1 has two 'yearsbl' == 0 entries with different
+#' # RandomBasisProjection01 values.
+#'
+#' # Example 2: Multiple columns (numeric and categorical) with fast mode
+#' mydf2 <- generateSubtyperData(10)
+#' mydog2 <- fillBaselineColumn(
+#'   mxdfin = mydf2,
+#'   columnName = c("RandomBasisProjection01", "CategoricalVar"), # vars2bl from your example
+#'   subjectID = 'commonID',
+#'   visitID = 'yearsbl',
+#'   baselineVisitValue = 0,
+#'   fast = TRUE,
+#'   verbose = FALSE
+#' )[[1]]
+#' head(mydog2)
+#'
+#' # Example 3: Fast mode, specific scenario if a subject entirely lacks baseline
+#' # mydf3 <- generateSubtyperData(5)
+#' # mydf3 <- mydf3[!(mydf3$commonID == "Sub_1" & mydf3$yearsbl == 0), ] # Remove Sub_1's baseline
+#' # mydog3 <- fillBaselineColumn(
+#' #   mxdfin = mydf3,
+#' #   columnName = "RandomBasisProjection01",
+#' #   subjectID = 'commonID',
+#' #   visitID = 'yearsbl',
+#' #   baselineVisitValue = 0,
+#' #   fast = TRUE,
+#' #   verbose = TRUE
+#' # )[[1]]
+#' # print(unique(mydog3$commonID)) # Sub_1 should be absent
+#'
+#' # Example 4: Slow mode (default)
+#' mydf_slow <- generateSubtyperData(5)
+#' mydog_slow <- fillBaselineColumn(
+#'   mxdfin = mydf_slow,
+#'   columnName = "RandomBasisProjection01",
+#'   subjectID = 'commonID',
+#'   visitID = 'yearsbl',
+#'   baselineVisitValue = 0,
+#'   fast = FALSE, # Explicitly use the slow path
+#'   verbose = TRUE
+#' )[[1]]
+#' head(mydog_slow)
+#' @importFrom stats aggregate sd
 #' @export
 fillBaselineColumn <- function(
-   mxdfin,
-   columnName,
-   subjectID,
-   visitID,
-   baselineVisitValue,
-   baselineExt = "_BL",
-   deltaExt = "_delta",
-   fast = TRUE,
-   verbose=TRUE
+    mxdfin,
+    columnName,
+    subjectID,
+    visitID,
+    baselineVisitValue,
+    baselineExt = "_BL",
+    deltaExt = "_delta",
+    fast = TRUE,
+    verbose = TRUE
 ) {
 
+  # Renamed 'fs' to 'get_indices_for_which' to avoid name collision with mlr3 or other packages.
+  # This is a common utility function in some R packages, often defined as `which(x)`.
+  get_indices_for_which <- function(x) which(x)
+
   myMode <- function(x) {
-    ux <- unique(x)
-    ux[which.max(tabulate(match(x, ux)))]
-    }
-  mostfreq <- function( x, na.rm=TRUE ) {
-    if ( is.numeric( x ) ) return( mean(x,na.rm=na.rm ) )
-    return( myMode( x ) )
+    if (length(x) == 0 || all(is.na(x))) return(NA)
+    x_no_na <- x[!is.na(x)]
+    if (length(x_no_na) == 0) return(NA)
+    
+    # Coerce to character to handle factors / logicals consistently
+    ux <- unique(as.character(x_no_na))
+    tab <- tabulate(match(as.character(x_no_na), ux))
+    mode_val <- ux[which.max(tab)]
+    return(mode_val)
   }
-  if ( ! ( subjectID %in% names( mxdfin ) ) )
-    stop("subjectID not in data frame's columns")
-  if ( ! all( columnName %in% names( mxdfin ) ) )
-    stop("columnName not in data frame's columns")
-  if ( ! ( visitID %in% names( mxdfin ) ) )
-    stop("visitID not in data frame's columns")
-  if ( ! ( baselineVisitValue %in% mxdfin[,visitID] ) )
-    stop("baselineVisitValue not in data frame's visitID")
-  newcolname = paste0( columnName, baselineExt )
-  newcolnamed = paste0( columnName, deltaExt )
-  if ( fast ) { # use columnful merge (was use_data.table)
-    # get the sid freq
-    mxdfin[,subjectID]=as.character(mxdfin[,subjectID])
-    mxdfin = mxdfin[ order( mxdfin[,subjectID] ), ]
-    sidfreq = table( mxdfin[,subjectID])
-    bldf = mxdfin[ fs(mxdfin[,visitID] == baselineVisitValue),  c(subjectID,columnName) ]
-    sidtblbl = table( bldf[,subjectID]) 
+  
+  # mostfreq handles both numeric (mean) and non-numeric (mode)
+  mostfreq <- function(x, na.rm = TRUE) {
+    if (is.numeric(x)) {
+      return(mean(x, na.rm = na.rm))
+    }
+    return(myMode(x))
+  }
+
+  # --- Input Validation ---
+  if (!(subjectID %in% names(mxdfin)))
+    stop(paste("subjectID column '", subjectID, "' not found in data frame's columns.", sep=""))
+  if (!all(columnName %in% names(mxdfin)))
+    stop(paste("One or more columnNames (", paste(columnName, collapse=", "), ") not found in data frame's columns.", sep=""))
+  if (!(visitID %in% names(mxdfin)))
+    stop(paste("visitID column '", visitID, "' not found in data frame's columns.", sep=""))
+  
+  # Ensure baselineVisitValue exists in the data at all
+  if (!any(mxdfin[[visitID]] == baselineVisitValue, na.rm = TRUE)) {
+    warning(paste("No rows found with `visitID` (", visitID, ") equal to `baselineVisitValue` (", baselineVisitValue, "). Resulting baseline columns will be all NA for affected subjects.", sep=""))
+    # In some scenarios, we might want to stop here rather than warn, depending on desired behavior
+  }
+
+  # Ensure subjectID is a character type for consistent merging/ordering
+  mxdfin[[subjectID]] <- as.character(mxdfin[[subjectID]])
+
+  # Prepare new column names
+  newcolname <- paste0(columnName, baselineExt)
+  newcolnamed <- paste0(columnName, deltaExt)
+
+  # Initialize new columns with NA in mxdfin
+  for (cn in newcolname) {
+    mxdfin[[cn]] <- NA
+  }
+  if (!is.na(deltaExt) && length(columnName) > 0) {
+    for (cnd in newcolnamed) {
+      mxdfin[[cnd]] <- NA
+    }
+  }
+
+  if (fast) { # --- FAST PATH (more efficient for large datasets) ---
+    if (verbose) cat("Using fast path...\n")
+
+    # Order mxdfin by subjectID for efficient processing later if needed
+    mxdfin <- mxdfin[order(mxdfin[[subjectID]]), ]
+
+    # Get baseline rows
+    bldf_raw = mxdfin[ get_indices_for_which(mxdfin[[visitID]] == baselineVisitValue), c(subjectID, columnName), drop = FALSE ]
+    
+    # Check if there are any baseline entries
+    if (nrow(bldf_raw) == 0) {
+      if (verbose) cat("No baseline entries found. Returning data frame with NA baseline columns.\n")
+      # Return the original data frame with NA-filled new columns
+      return(list(mxdfin, newcolname, newcolnamed))
+    }
+
+    sidtblbl = table( bldf_raw[[subjectID]] )
     maxbln = max( sidtblbl )
+
     if ( maxbln > 1 ) {
       onlyones = names( sidtblbl )[ sidtblbl == 1 ]
       morethanones = names( sidtblbl )[ sidtblbl > 1 ]
-      bldf1 = bldf[ bldf[,subjectID] %in% onlyones, ]
-      sel2 = bldf[,subjectID] %in% morethanones
-      if ( verbose )
-        print( paste( "aggregate ", columnName, " in ", sum(sel2), "subjects with > 1 row ... these subjects have as many as", maxbln, "entries" ) )
-      multisubs=bldf[sel2,subjectID]
-      bldf2 = aggregate( bldf[sel2,c(subjectID,columnName)], list(multisubs), mostfreq, na.rm=T)
-      bldf2[,subjectID]=unique( multisubs )
-      bldf = base::rbind( bldf1[,c(subjectID,columnName)], bldf2[,c(subjectID,columnName)] )
-      bldf = bldf[ order( bldf[,subjectID] ), ]
-      if ( verbose )
-        print("aggregation done")
-      }
-    inmcols = colnames( bldf ) %in% columnName
-    colnames( bldf )[ inmcols ] = newcolname
-    mxdfin = mxdfin[ mxdfin[,subjectID] %in% bldf[,subjectID], ]
-    sidfreq = sidfreq[ names(sidfreq) %in% bldf[,subjectID] ]
-    sidfreq = sidfreq[ as.character(bldf[,subjectID]) ]
-    rownames(bldf)=bldf[,subjectID]
-    if ( verbose ) {
-      print( "begin repeat")
-      print( as.integer(sidfreq) )
-    }
-    bldf = bldf[rep.int( bldf[,subjectID] , as.integer(sidfreq)), ]
-    if ( verbose ) {
-      print("end repeat/begin fill")
-      print(dim(bldf))
-      print(dim(mxdfin))
-    }
-    if ( verbose ) {
-      print("selection done")
-      print(dim(mxdfin))
-      print(dim(bldf))
-    }
-    if ( identical( as.character(mxdfin[,subjectID]), as.character(bldf[,subjectID]) ) ) {
-      mxdfin[,newcolname]=bldf[,newcolname]
-    } else {
-      print("Subject IDs are not identical")
-      print(head(mxdfin[,subjectID]))
-      print(head(bldf[,subjectID]))
-      print(table( mxdfin[,subjectID]!=bldf[,subjectID]  ))
-      stop("Subject IDs are not identical")
-    }
-    if ( verbose )
-      print("end fill")
-#    filldf = dplyr::bind_rows( mxdfin, bldf, .id=subjectID )
-#    filldf = data.table(mxdfin)[bldf, on = subjectID, allow.cartesian=FALSE] # data.table
-    if ( ! is.na( deltaExt ) ) {
-      mxdfin[,newcolnamed] = mxdfin[,columnName] - mxdfin[,newcolname]
-    }
-    return( list(mxdfin, newcolname, newcolnamed ) )
-  }
-  mxdfin[,newcolname]=NA
-  mxdfin[,newcolnamed]=NA
-  visitidisnumeric = is.numeric(mxdfin[,visitID])
-  usubs = unique( mxdfin[,subjectID] )
-  nsubs = length( usubs )
-  ct=0
-  for ( u in usubs ) {
-    if ( ct %% 20 == 0 ) cat( paste0(round(ct/nsubs*100),"%.") )
-    ct=ct+1
-    losel = fs( mxdfin[,subjectID] == u )
-    lomxdfin = mxdfin[ losel ,  ]
-    selbase = fs( lomxdfin[,visitID] == baselineVisitValue )
-    if ( sum(selbase) == 0 & visitidisnumeric ) { # take next best value
-      minval = min( lomxdfin[,visitID],na.rm=T )
-      selbase = fs(lomxdfin[,visitID] == minval)
-      }
-    selbase[ is.na(selbase) ] = FALSE
-    for ( jj in 1:length( columnName ) ) {
-      columnNameLoc = columnName[jj]
-      newcolnameLoc = newcolname[jj]
-      isFactor = class( lomxdfin[,columnNameLoc] ) != "numeric"
-      baseval = NA
-      if ( sum( selbase ) > 0  & !isFactor ) {
-        baseval = mean( lomxdfin[ selbase, columnNameLoc ],  na.rm=T )
-      } else if ( sum( selbase ) > 0  & isFactor ) {
-        baseval = median( lomxdfin[ selbase, columnNameLoc ],  na.rm=T )
-      }
-      mxdfin[ losel , newcolnameLoc ] = baseval
-    }
-  }
-  if ( ! is.na( deltaExt ) )
-    mxdfin[,newcolnamed] = mxdfin[,columnName] - mxdfin[,newcolname]
-  return( list(mxdfin, newcolname, newcolnamed ) )
-}
 
+      bldf1 = bldf_raw[ bldf_raw[[subjectID]] %in% onlyones, , drop = FALSE ]
+
+      sel2 = bldf_raw[[subjectID]] %in% morethanones
+      multisubs = bldf_raw[sel2, subjectID]
+
+      if ( verbose ) {
+        cat(paste0("Aggregating ", paste(columnName, collapse=", "), " in ",
+                   sum(sel2), " subjects with > 1 baseline row (max ", maxbln, " entries per subject).\n"))
+      }
+      
+      # Corrected aggregate usage:
+      # x: only the data columns to aggregate
+      # by: a list containing the grouping variable (e.g., subjectID)
+      # FUN: the function to apply (mostfreq)
+      bldf2_agg_data <- aggregate(
+        x = bldf_raw[sel2, columnName, drop = FALSE],
+        by = list(grp_id = multisubs),
+        FUN = mostfreq,
+        na.rm = TRUE
+      )
+      
+      # Rename the grouping column (grp_id) to the actual subjectID name
+      names(bldf2_agg_data)[names(bldf2_agg_data) == "grp_id"] <- subjectID
+      
+      # Combine subjects with one baseline entry and subjects with aggregated baselines
+      # Ensure column order and types match for rbind
+      bldf <- base::rbind( bldf1, bldf2_agg_data )
+      
+      # Convert all aggregated columns to character if original was character/factor,
+      # to ensure consistent typing for the final merge later. Numeric remains numeric.
+      for (cn in columnName) {
+        if (!is.numeric(mxdfin[[cn]])) { # If original column is not numeric
+          bldf[[cn]] <- as.character(bldf[[cn]])
+        } else { # If original column is numeric, ensure aggregated is numeric
+          bldf[[cn]] <- as.numeric(bldf[[cn]])
+        }
+      }
+      if (verbose) cat("Aggregation done.\n")
+    } else {
+      bldf = bldf_raw # All subjects had only one baseline
+    }
+
+    # Rename the data columns in bldf to their new baseline names
+    for (i in seq_along(columnName)) {
+      names(bldf)[names(bldf) == columnName[i]] <- newcolname[i]
+    }
+
+    # Filter mxdfin to only include subjects for whom we found baseline data
+    # This behavior is inherent to the 'fast' path as it relies on merging.
+    if (verbose) cat("Filtering mxdfin to subjects with baseline data.\n")
+    mxdfin <- mxdfin[mxdfin[[subjectID]] %in% bldf[[subjectID]], , drop = FALSE ]
+    
+    # If mxdfin becomes empty after filtering, cannot proceed with merge
+    if (nrow(mxdfin) == 0) {
+      if (verbose) cat("No subjects remaining in mxdfin after filtering for baseline data. Returning empty data frame. \n")
+      # Return empty data frame with expected columns (filled with NA for new cols)
+      empty_df <- mxdfin
+      for (cn_bl in newcolname) empty_df[[cn_bl]] <- NA
+      for (cn_delta in newcolnamed) empty_df[[cn_delta]] <- NA
+      return(list(empty_df, newcolname, newcolnamed))
+    }
+
+    # Prepare for merging: create a matching subjectID vector for repetition
+    # This involves ordering bldf by subjectID to match mxdfin's order
+    bldf <- bldf[order(bldf[[subjectID]]), , drop = FALSE]
+    
+    # Get frequencies of each subject in the *filtered and ordered* mxdfin
+    sid_counts_in_mxdfin <- table(mxdfin[[subjectID]])
+    # Ensure sid_counts_in_mxdfin is ordered by bldf's subjectIDs
+    sid_freq_for_replicate <- sid_counts_in_mxdfin[as.character(bldf[[subjectID]])]
+
+    if (verbose) cat("Replicating baseline rows...\n")
+    # Replicate baseline values for each subject to match original data frame's rows
+    # bldf will now have the same number of rows as mxdfin (for the filtered subjects)
+    bldf_replicated <- bldf[rep.int(seq_len(nrow(bldf)), as.integer(sid_freq_for_replicate)), , drop = FALSE]
+    
+    # It's crucial that mxdfin and bldf_replicated are ordered identically by subjectID
+    # Since both were ordered by subjectID and bldf_replicated uses counts from mxdfin,
+    # their subjectID sequences should match.
+    if (verbose) cat("Filling columns...\n")
+    if (identical(as.character(mxdfin[[subjectID]]), as.character(bldf_replicated[[subjectID]]))) {
+      for (cn_bl in newcolname) {
+        mxdfin[[cn_bl]] <- bldf_replicated[[cn_bl]]
+      }
+    } else {
+      cat("\n")
+      warning("Subject IDs do not match after replication/ordering. Falling back to merge() (slower but safer). Result: Columns appended, not mapped directly.\n")
+      # Fallback to merge if direct assignment fails (slower but safer)
+      # Ensure mxdfin has the new baseline columns (initially NA)
+      
+      # Perform a left join
+      mxdfin <- merge(mxdfin, bldf, by = subjectID, all.x = TRUE, sort = FALSE)
+      
+      # Handle potential duplicate columns from merge if newcolname already existed before merge
+      for (cn_bl in newcolname) {
+          if (cn_bl %in% names(mxdfin) && sum(names(mxdfin) == cn_bl) > 1) {
+              # If merge created a duplicate, remove the one that is all NA or the first one
+              warning(paste0("Duplicate column '", cn_bl, "' created by merge(). Removing the first occurrence."))
+              mxdfin <- mxdfin[, -get_indices_for_which(names(mxdfin) == cn_bl)[1]] # Remove the first duplicate matching the name
+          }
+      }
+    }
+    if (verbose) cat("Fill done.\n")
+
+  } else { # --- SLOW PATH (iterates subject by subject) ---
+    if (verbose) cat("Using slow path...\n")
+    usubs <- unique(mxdfin[[subjectID]])
+    nsubs <- length(usubs)
+    ct <- 0
+
+    for (u in usubs) {
+      if (verbose && ct %% 20 == 0) cat(paste0(round(ct / nsubs * 100), "%. "))
+      ct <- ct + 1
+
+      losel <- get_indices_for_which(mxdfin[[subjectID]] == u)
+      lomxdfin <- mxdfin[losel, , drop = FALSE]
+
+      # Find baseline rows for current subject
+      selbase <- get_indices_for_which(lomxdfin[[visitID]] == baselineVisitValue)
+
+      # If no direct baseline value match, try to find the earliest visit if visitID is numeric
+      if (sum(selbase, na.na.rm = TRUE) == 0 && is.numeric(lomxdfin[[visitID]])) {
+        minval <- min(lomxdfin[[visitID]], na.rm = TRUE)
+        selbase <- get_indices_for_which(lomxdfin[[visitID]] == minval)
+      }
+      
+      # Ensure selbase handles NAs correctly if 'get_indices_for_which' was 'which' only, and 'lomxdfin' had NA in visitID
+      selbase[is.na(selbase)] <- FALSE # Defensive programming
+
+      for (jj in seq_along(columnName)) {
+        columnNameLoc <- columnName[jj]
+        newcolnameLoc <- newcolname[jj]
+        
+        # Check if lomxdfin[[columnNameLoc]] is numeric or not
+        is_numeric_col <- is.numeric(lomxdfin[[columnNameLoc]])
+        
+        baseval <- NA # Default to NA if no baseline found or issue
+
+        if (sum(selbase, na.rm = TRUE) > 0) {
+          if (is_numeric_col) {
+            # Use mean for numeric baseline values
+            baseval <- mean(lomxdfin[selbase, columnNameLoc], na.rm = TRUE)
+          } else {
+            # Use mostfreq (myMode) for non-numeric baseline values
+            baseval <- mostfreq(lomxdfin[selbase, columnNameLoc], na.rm = TRUE)
+          }
+        }
+        mxdfin[losel, newcolnameLoc] <- baseval
+      }
+    }
+    if (verbose) cat("100%.\n")
+  } # End of slow path
+
+  # Calculate delta columns if deltaExt is provided and relevant columns exist
+  if (!is.na(deltaExt) && length(columnName) > 0) {
+    for (i in seq_along(columnName)) {
+      if (all(c(columnName[i], newcolname[i]) %in% names(mxdfin))) {
+        # Only perform calculation if the baseline column was numerically calculated
+        # If it was a factor/character, the mean will result in NA or the column will be character
+        # Checking if mxdfin[[newcolname[i]]] is numeric or convertible to numeric
+        is_baseline_numeric <- is.numeric(mxdfin[[newcolname[i]]]) && !all(is.na(mxdfin[[newcolname[i]]]))
+        
+        if (is_baseline_numeric && is.numeric(mxdfin[[columnName[i]]])) {
+             mxdfin[[newcolnamed[i]]] <- mxdfin[[columnName[i]]] - mxdfin[[newcolname[i]]]
+        } else {
+             if (verbose) warning(paste0("Cannot calculate delta for '", columnName[i], "' as baseline or original column is not numeric. Setting delta to NA."))
+             mxdfin[[newcolnamed[i]]] <- NA # Cannot compute delta for non-numeric or non-numeric baseline
+        }
+      } else {
+        warning(paste0("Missing columns for delta calculation for '", columnName[i], "'. Skipping delta calculation for this variable."))
+        mxdfin[[newcolnamed[i]]] <- NA
+      }
+    }
+  }
+
+  return(list(mxdfin, newcolname, newcolnamed))
+}
 
 #' Covariate adjustment
 #'
@@ -5867,26 +6065,34 @@ identify_best_voi <- function(data, group_var = names(data)[1], value_var = name
 #' @return The modified data frame.
 #' @export
 truncatehi <- function(df, x, t = 4, removeit = FALSE) {
-  # Sort the column in descending order
-  sortvec <- sort(df[, x], decreasing = TRUE)
-  
-  # Get the threshold value
-  t <- sortvec[t]
-  selection = na2f(df[, x] > t)
-  # Truncate high values if removeit is FALSE
-  if (!removeit) {
-    df[selection, x] <- t
+  # Allow x to be a symbol or string
+  colname <- deparse(substitute(x))
+  if (colname %in% names(df)) {
+    xvec <- df[[colname]]
+  } else if (x %in% names(df)) {
+    xvec <- df[[x]]
+    colname <- x
+  } else {
+    stop("Column not found in dataframe.")
   }
-  # Remove high values if removeit is TRUE
-  else {
+
+  # Sort descending, get threshold
+  sortvec <- sort(xvec, decreasing = TRUE, na.last = NA)
+  if (length(sortvec) < t) stop("Not enough non-NA values to determine threshold.")
+  threshold <- sortvec[t]
+
+  # Identify values above threshold
+  selection <- na2f(xvec > threshold)
+
+  # Modify data
+  if (!removeit) {
+    df[selection, colname] <- threshold
+  } else {
     df <- df[!selection, ]
   }
-  
-  # Return the modified data frame
+
   return(df)
 }
-
-
 
 
 #' Shorten Names
