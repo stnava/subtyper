@@ -6159,151 +6159,270 @@ rowwise_linear_variable_adjustments <- function(tempNM, trainvalues, varstoadjus
 
 
 
-
-
-
-
-#' Create a new vector with a specified correlation to an input vector
+#' Generate a "Table 1" style summary for academic papers (Base R only).
 #'
-#' @param a Input vector
-#' @param rho Desired correlation between a and the new vector
-#'
-#' @return A new vector with the desired correlation to a
-#'
-#' @examples
-#' a <- rnorm(100)
-#' rho <- 0.7
-#' b <- create_correlated_vector(a, rho)
-#' cor(a, b)
-#' @export
-create_correlated_vector <- function(a, rho) {
-  stopifnot(rho >= -1, rho <= 1)
-  e <- rnorm(length(a))
-  b <- rho * (a - mean(a)) / sd(a) + sqrt(1 - rho^2) * e
-  mean(a) + sd(a) * b / sd(b)
-}
-
-
-#' Generate a table summarizing the data in a data frame.
+#' This function creates a comprehensive summary table, often referred to as "Table 1"
+#' in scientific publications, providing descriptive statistics (mean and SD for
+#' numeric variables, counts and percentages for categorical variables)
+#' broken down by a faceting variable. It also includes an overall "Total" column.
+#' This version is implemented using only base R functions and the `stats` package.
 #'
 #' @param df Data frame containing the data.
-#' @param vars Vector of variable names to include in the summary.
-#' @param facet_var Name of the facet variable.
-#' @param col_names Vector of custom column names (optional).
-#' @param factor_rows Logical indicating whether to display factor variables in rows (default = FALSE).
+#' @param vars Vector of variable names (strings) to include in the summary.
+#' @param facet_var Name of the facet variable (string) to group the data by.
+#' @param col_names Vector of custom column names for the facet groups (optional).
+#' @param total_col_name String for the name of the total column (default: "Total").
+#' @param include_missing Logical. If TRUE, a row for 'Missing' counts will be added
+#'   for each variable (default: FALSE).
+#' @param digits_numeric Integer. Number of decimal places for numeric summaries (default: 2).
+#' @param digits_percent Integer. Number of decimal places for percentages (default: 2).
+#' @param indent_factor_levels String to use for indenting factor levels (default: "   ").
 #'
-#' @return A data frame summarizing the data in the formula.
+#' @return A data frame summarizing the data.
 #'
 #' @examples
 #' \dontrun{
-#' table_1(df, vars, facet_var)
+#' # Create dummy data
+#' set.seed(123)
+#' df_example <- data.frame(
+#'   group = sample(c("Control", "Treatment A", "Treatment B"), 100, replace = TRUE,
+#'                  prob = c(0.4, 0.3, 0.3)),
+#'   age = rnorm(100, mean = 50, sd = 10),
+#'   sex = sample(c("Male", "Female"), 100, replace = TRUE, prob = c(0.55, 0.45)),
+#'   bmi = rnorm(100, mean = 25, sd = 3),
+#'   disease_status = sample(c("Healthy", "Mild", "Severe", NA), 100, replace = TRUE,
+#'                           prob = c(0.4, 0.3, 0.2, 0.1)),
+#'   smoker = sample(c("Yes", "No"), 100, replace = TRUE, prob = c(0.2, 0.8)),
+#'   stringsAsFactors = FALSE
+#' )
+#' # Convert to factors
+#' df_example$group <- as.factor(df_example$group)
+#' df_example$sex <- as.factor(df_example$sex)
+#' df_example$disease_status <- as.factor(df_example$disease_status)
+#' df_example$smoker <- as.factor(df_example$smoker)
+#'
+#' # Basic Table 1
+#' table_1(df_example,
+#'         vars = c("age", "sex", "bmi", "disease_status", "smoker"),
+#'         facet_var = "group")
+#'
+#' # Table 1 with custom column names and missing counts
+#' table_1(df_example,
+#'         vars = c("age", "sex", "bmi", "disease_status", "smoker"),
+#'         facet_var = "group",
+#'         col_names = c("Grp A", "Grp B", "Grp C"), # Order must match natural factor levels/alphabetic
+#'         include_missing = TRUE)
+#'
+#' # Table 1 with a subset of variables
+#' table_1(df_example,
+#'         vars = c("age", "sex"),
+#'         facet_var = "group")
 #' }
 #' @importFrom stats sd
 #' @export
-table_1 <- function(df, vars, facet_var, col_names = NULL, factor_rows = FALSE) {
-  # Define a function to format the output for numeric variables
-  format_output <- function(x) {
-    x <- x[!is.na(x)]
+table_1 <- function(df, vars, facet_var, col_names = NULL, total_col_name = "Total",
+                    include_missing = FALSE, digits_numeric = 2, digits_percent = 2,
+                    indent_factor_levels = "   ") {
+
+  # --- Input Validation ---
+  if (!is.data.frame(df)) {
+    stop("`df` must be a data frame.")
+  }
+  if (!is.character(vars) || length(vars) == 0) {
+    stop("`vars` must be a character vector of variable names.")
+  }
+  if (!is.character(facet_var) || length(facet_var) != 1) {
+    stop("`facet_var` must be a single string specifying the facet variable.")
+  }
+  if (!all(vars %in% names(df))) {
+    stop("Not all `vars` are found in the data frame `df`.")
+  }
+  if (!(facet_var %in% names(df))) {
+    stop("`facet_var` is not found in the data frame `df`.")
+  }
+  if (!is.logical(include_missing) || length(include_missing) != 1) {
+    stop("`include_missing` must be a single logical value (TRUE/FALSE).")
+  }
+  if (!is.numeric(digits_numeric) || length(digits_numeric) != 1 || digits_numeric < 0) {
+    stop("`digits_numeric` must be a non-negative integer.")
+  }
+  if (!is.numeric(digits_percent) || length(digits_percent) != 1 || digits_percent < 0) {
+    stop("`digits_percent` must be a non-negative integer.")
+  }
+
+  # Ensure facet_var is a factor for consistent grouping and ordering
+  if (!is.factor(df[[facet_var]])) {
+    df[[facet_var]] <- as.factor(df[[facet_var]])
+  }
+  original_facet_levels <- levels(df[[facet_var]])
+
+  # --- Helper functions for formatting ---
+  format_num_summary <- function(x_vec, na_rm = TRUE) {
+    x <- x_vec[!is.na(x_vec)]
     if (length(x) == 0) {
-      return("NA (NA)")
-    } else {
-      mean_sd <- paste0(round(mean(x), 2), " (", round(sd(x), 2), ")")
-      return(mean_sd)
+      return(paste0("NA (NA)"))
     }
+    mu <- mean(x, na.rm = na_rm)
+    s <- sd(x, na.rm = na_rm)
+    paste0(sprintf(paste0("%.", digits_numeric, "f"), mu), " (",
+           sprintf(paste0("%.", digits_numeric, "f"), s), ")")
   }
-  
-  # Define a function to format the output for factors
-  format_factor <- function(x) {
-    x <- x[!is.na(x)]
-    if (length(x) == 0) {
-      return("NA")
-    } else {
-      freq <- table(x)
-      result <- paste0(round(freq / sum(freq) * 100, 2), collapse = "/")
-      return(paste0(result, "%"))
+
+  format_cat_summary <- function(n_count, total_non_na) {
+    if (total_non_na == 0) {
+      return(paste0("0 (", sprintf(paste0("%.", digits_percent, "f"), 0), "%)"))
     }
+    percent <- (n_count / total_non_na) * 100
+    paste0(n_count, " (", sprintf(paste0("%.", digits_percent, "f"), percent), "%)")
   }
-  
-  # Split the data by the facet variable
-  df_split <- split(df, df[, facet_var])
-  
-  # Initialize results
-  row_names <- c("Sample.Size")
-  results <- list()
-  
-  # Add sample size row
-  sample_sizes <- sapply(df_split, function(x) sum(!is.na(x[, facet_var])))
-  results[[1]] <- as.character(sample_sizes)
-  
-  # Loop through each variable
-  row_counter <- 2
-  for (var in vars) {
-    if (is.factor(df[, var]) | is.character(df[, var])) {
-      # Add the factor name
-      row_names <- c(row_names, var)
-      results[[row_counter]] <- rep("", length(df_split))
+
+  # --- Initialize storage for results ---
+  all_rows <- list()
+  row_counter <- 0
+
+  # --- Sample Size Row ---
+  group_Ns <- tapply(df[[facet_var]], df[[facet_var]], length)
+  overall_N <- nrow(df)
+
+  # Create header row for overall summary
+  sample_size_row_base <- c("N", "") # Characteristic and Level for N row
+  sample_size_row_groups <- unname(group_Ns[original_facet_levels]) # Ensure order
+  sample_size_row_total <- overall_N
+
+  row_counter <- row_counter + 1
+  all_rows[[row_counter]] <- c(sample_size_row_base, as.character(sample_size_row_groups),
+                               as.character(sample_size_row_total))
+
+  # --- Process each variable ---
+  for (var_name in vars) {
+    var_data_overall <- df[[var_name]]
+
+    # Split data by facet_var categories
+    data_split <- split(df[[var_name]], df[[facet_var]])
+
+    # Data for the Total column
+    total_var_data_non_na <- var_data_overall[!is.na(var_data_overall)]
+    total_na_count <- sum(is.na(var_data_overall))
+
+    # --- Numeric Variable ---
+    if (is.numeric(var_data_overall)) {
       row_counter <- row_counter + 1
-      
-      factor_levels <- unique(df[, var])
-      factor_levels <- factor_levels[!is.na(factor_levels)]
-      
-      if (factor_rows) {
-        # Add a row for the factor levels with indentation
-        row_names <- c(row_names, paste0("    ", paste(factor_levels, collapse = "/")))
-        results[[row_counter]] <- rep("", length(df_split))
+      # Main variable row
+      current_row_base <- c(var_name, "") # Characteristic and Level for this variable
+      current_row_groups <- sapply(data_split, format_num_summary)
+      current_row_total <- format_num_summary(var_data_overall)
+
+      # Ensure group columns are in the correct order
+      current_row_groups_ordered <- current_row_groups[original_facet_levels]
+
+      all_rows[[row_counter]] <- c(current_row_base, current_row_groups_ordered, current_row_total)
+
+      # Missing data row for numeric variable
+      if (include_missing) {
         row_counter <- row_counter + 1
-        
-        for (j in 1:length(df_split)) {
-          x <- df_split[[j]]
-          results[[row_counter]] <- format_factor(x[, var])
-        }
-        row_counter <- row_counter + 1
-      } else {
-        # Add a row for each level and its percentage
-        for (level in factor_levels) {
-          row_names <- c(row_names, paste0("    ", level))  # Indent factor level names
-          result_row <- c()
-          for (j in 1:length(df_split)) {
-            x <- df_split[[j]]
-            level_freq <- sum(x[, var] == level, na.rm = TRUE)
-            level_percent <- round((level_freq / nrow(x)) * 100, 2)
-            result_row <- c(result_row, paste0(level_percent, "%"))
-          }
-          results[[row_counter]] <- result_row
-          row_counter <- row_counter + 1
-        }
+        missing_counts_groups <- sapply(data_split, function(x) sum(is.na(x)))
+        missing_counts_groups_ordered <- missing_counts_groups[original_facet_levels]
+
+        missing_row_base <- c("", paste0(indent_factor_levels, "Missing"))
+        all_rows[[row_counter]] <- c(missing_row_base, as.character(missing_counts_groups_ordered),
+                                     as.character(total_na_count))
       }
+
+    # --- Categorical Variable ---
     } else {
-      # For non-factor variables, just add one row
-      row_names <- c(row_names, var)
-      result_row <- c()
-      for (j in 1:length(df_split)) {
-        x <- df_split[[j]]
-        result_row <- c(result_row, format_output(x[, var]))
-      }
-      results[[row_counter]] <- result_row
+      # Ensure var_data_overall is a factor to get all levels for consistent rows
+      var_data_overall_factor <- as.factor(var_data_overall)
+      all_levels <- levels(var_data_overall_factor)
+
       row_counter <- row_counter + 1
+      # Header row for the categorical variable (e.g., "Sex")
+      all_rows[[row_counter]] <- c(var_name, "", rep("", length(original_facet_levels)), "")
+
+
+      # --- Loop through each level of the categorical variable ---
+      for (level_val in all_levels) {
+        row_counter <- row_counter + 1
+        current_row_base <- c("", paste0(indent_factor_levels, level_val)) # No Characteristic for level row
+
+        current_row_groups_values <- character(length(original_facet_levels))
+        names(current_row_groups_values) <- original_facet_levels # Pre-allocate and name
+
+        for (i in seq_along(original_facet_levels)) {
+          group_name <- original_facet_levels[i]
+          group_data <- data_split[[group_name]]
+          group_data_factor <- as.factor(group_data) # Convert subgroup data to factor for consistent levels
+          
+          non_na_count_in_group <- sum(!is.na(group_data_factor))
+          
+          # Count occurrences of the current level in the current group
+          level_count_in_group <- sum(as.character(group_data_factor) == level_val, na.rm = TRUE)
+          
+          current_row_groups_values[group_name] <- format_cat_summary(level_count_in_group, non_na_count_in_group)
+        }
+
+        # Value for the Total column
+        non_na_count_overall <- sum(!is.na(var_data_overall_factor))
+        level_count_overall <- sum(as.character(var_data_overall_factor) == level_val, na.rm = TRUE)
+        current_row_total <- format_cat_summary(level_count_overall, non_na_count_overall)
+
+        all_rows[[row_counter]] <- c(current_row_base, current_row_groups_values, current_row_total)
+      }
+
+      # Missing data row for categorical variable
+      if (include_missing) {
+        row_counter <- row_counter + 1
+        missing_counts_groups <- sapply(data_split, function(x) sum(is.na(x)))
+        missing_counts_groups_ordered <- missing_counts_groups[original_facet_levels]
+
+        missing_row_base <- c("", paste0(indent_factor_levels, "Missing"))
+        all_rows[[row_counter]] <- c(missing_row_base, as.character(missing_counts_groups_ordered),
+                                     as.character(total_na_count))
+      }
     }
-  }
-  
-  # Convert results to a data frame
-  df_results <- as.data.frame(do.call(rbind, results))
-  
-  # Set row names
-  rownames(df_results) <- row_names
-  
-  # Format column names with sample sizes
-  if (!is.null(col_names)) {
-    colnames(df_results) <- paste0(col_names, " (N=", sample_sizes, ")")
+  } # End of var loop
+
+  # --- Assemble the final data frame ---
+  # All rows are character vectors, so rbind them directly.
+  final_matrix <- do.call(rbind, all_rows)
+
+  # Column names
+  col_names_output <- c("Characteristic", "Level", original_facet_levels, total_col_name)
+  colnames(final_matrix) <- col_names_output
+
+  # Convert to data frame
+  df_results <- as.data.frame(final_matrix, stringsAsFactors = FALSE)
+
+  # --- Format Column Headers ---
+  # Prepare column names (e.g., "Group (N=X)")
+  facet_col_display_names <- character(length(original_facet_levels))
+  if (is.null(col_names)) {
+    # Use default facet levels if no custom names are provided
+    for (i in seq_along(original_facet_levels)) {
+      group_N <- group_Ns[original_facet_levels[i]]
+      facet_col_display_names[i] <- paste0(original_facet_levels[i], " (N=", group_N, ")")
+    }
+  } else if (length(col_names) != length(original_facet_levels)) {
+    warning("Length of `col_names` does not match number of unique facet groups. Using default names.")
+    for (i in seq_along(original_facet_levels)) {
+      group_N <- group_Ns[original_facet_levels[i]]
+      facet_col_display_names[i] <- paste0(original_facet_levels[i], " (N=", group_N, ")")
+    }
   } else {
-    # Generate default column names with sample sizes
-    col_names <- paste0(names(df_split))
-    colnames(df_results) <- paste0(col_names, " (N=", sample_sizes, ")")
+    # If custom names are provided
+    for (i in seq_along(original_facet_levels)) {
+      group_N <- group_Ns[original_facet_levels[i]]
+      facet_col_display_names[i] <- paste0(col_names[i], " (N=", group_N, ")")
+    }
   }
-  
-  # Return the data frame
-  return(df_results[-1,])
+
+  # Rename columns in the data frame
+  names(df_results)[match(original_facet_levels, names(df_results))] <- facet_col_display_names
+  names(df_results)[match(total_col_name, names(df_results))] <- paste0(total_col_name, " (N=", overall_N, ")")
+
+  return(df_results)
 }
+
+
 
 #' Generate a table summarizing the data in a linear model formula.
 #'

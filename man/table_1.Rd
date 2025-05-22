@@ -2,29 +2,86 @@
 % Please edit documentation in R/subtyper.R
 \name{table_1}
 \alias{table_1}
-\title{Generate a table summarizing the data in a data frame.}
+\title{Generate a "Table 1" style summary for academic papers (Base R only).}
 \usage{
-table_1(df, vars, facet_var, col_names = NULL, factor_rows = FALSE)
+table_1(
+  df,
+  vars,
+  facet_var,
+  col_names = NULL,
+  total_col_name = "Total",
+  include_missing = FALSE,
+  digits_numeric = 2,
+  digits_percent = 2,
+  indent_factor_levels = "   "
+)
 }
 \arguments{
 \item{df}{Data frame containing the data.}
 
-\item{vars}{Vector of variable names to include in the summary.}
+\item{vars}{Vector of variable names (strings) to include in the summary.}
 
-\item{facet_var}{Name of the facet variable.}
+\item{facet_var}{Name of the facet variable (string) to group the data by.}
 
-\item{col_names}{Vector of custom column names (optional).}
+\item{col_names}{Vector of custom column names for the facet groups (optional).}
 
-\item{factor_rows}{Logical indicating whether to display factor variables in rows (default = FALSE).}
+\item{total_col_name}{String for the name of the total column (default: "Total").}
+
+\item{include_missing}{Logical. If TRUE, a row for 'Missing' counts will be added
+for each variable (default: FALSE).}
+
+\item{digits_numeric}{Integer. Number of decimal places for numeric summaries (default: 2).}
+
+\item{digits_percent}{Integer. Number of decimal places for percentages (default: 2).}
+
+\item{indent_factor_levels}{String to use for indenting factor levels (default: "   ").}
 }
 \value{
-A data frame summarizing the data in the formula.
+A data frame summarizing the data.
 }
 \description{
-Generate a table summarizing the data in a data frame.
+This function creates a comprehensive summary table, often referred to as "Table 1"
+in scientific publications, providing descriptive statistics (mean and SD for
+numeric variables, counts and percentages for categorical variables)
+broken down by a faceting variable. It also includes an overall "Total" column.
+This version is implemented using only base R functions and the \code{stats} package.
 }
 \examples{
 \dontrun{
-table_1(df, vars, facet_var)
+# Create dummy data
+set.seed(123)
+df_example <- data.frame(
+  group = sample(c("Control", "Treatment A", "Treatment B"), 100, replace = TRUE,
+                 prob = c(0.4, 0.3, 0.3)),
+  age = rnorm(100, mean = 50, sd = 10),
+  sex = sample(c("Male", "Female"), 100, replace = TRUE, prob = c(0.55, 0.45)),
+  bmi = rnorm(100, mean = 25, sd = 3),
+  disease_status = sample(c("Healthy", "Mild", "Severe", NA), 100, replace = TRUE,
+                          prob = c(0.4, 0.3, 0.2, 0.1)),
+  smoker = sample(c("Yes", "No"), 100, replace = TRUE, prob = c(0.2, 0.8)),
+  stringsAsFactors = FALSE
+)
+# Convert to factors
+df_example$group <- as.factor(df_example$group)
+df_example$sex <- as.factor(df_example$sex)
+df_example$disease_status <- as.factor(df_example$disease_status)
+df_example$smoker <- as.factor(df_example$smoker)
+
+# Basic Table 1
+table_1(df_example,
+        vars = c("age", "sex", "bmi", "disease_status", "smoker"),
+        facet_var = "group")
+
+# Table 1 with custom column names and missing counts
+table_1(df_example,
+        vars = c("age", "sex", "bmi", "disease_status", "smoker"),
+        facet_var = "group",
+        col_names = c("Grp A", "Grp B", "Grp C"), # Order must match natural factor levels/alphabetic
+        include_missing = TRUE)
+
+# Table 1 with a subset of variables
+table_1(df_example,
+        vars = c("age", "sex"),
+        facet_var = "group")
 }
 }
