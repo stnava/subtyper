@@ -879,6 +879,7 @@ plotSubtypeChange <-function( mxdfin,
                            ylab = ''
                           )
     {
+      mxdfin = data.frame( mxdfin )
       stopifnot( idvar %in% colnames(mxdfin) )
       stopifnot( measurement %in% colnames(mxdfin) )
       stopifnot( subtype %in% colnames(mxdfin) )
@@ -2806,6 +2807,7 @@ hierarchicalSubtypePlots <- function(
     manualColors,
     outputPrefix,
     width=12, height=8 ) {
+  inputDataFrame = data.frame( inputDataFrame )
   if ( ! ( any(hierarchyOfSubtypes %in% names(inputDataFrame) ) ) )
     stop("some hierarchyOfSubtypes variables do not exist in the data frame.")
   if ( ! ( any(variableToVisualize %in% names(inputDataFrame) ) ) )
