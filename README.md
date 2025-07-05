@@ -39,6 +39,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 if (!requireNamespace("Biobase", quietly = TRUE))
   BiocManager::install("Biobase")
 BiocManager::install("globaltest")
+BiocManager::install("sva")
 install.packages("NMF")
 ```
 
@@ -58,8 +59,9 @@ R CMD INSTALL . # FIXME not on arm64 yet
 ```
 
 ```R
+remotes::install_github('jhmadsen/DDoutlier') # was booted off CRAN
 install.packages( 
-c("ggplot2", "caret", "ClusterR", "coca", "dCUR", "dplyr", "effectsize", "Evacluster", "flexclust", "fpc", "gaston", "ggpubr", "ggthemes", "ggstatsplot", "ggbeeswarm", "globaltest", "gridExtra", "imbalance", "mlr3", "mlr3cluster", "mlr3pipelines", "wesanderson", "Hmisc", "plyr", "DDoutlier", "data.table", "mclust", "NMF", "pheatmap", "gprofiler2", "magrittr",  "fastICA", "pgenlibr", "VarSelLCM", "visreg"))
+c("ggplot2", "caret", "ClusterR", "coca", "dCUR", "dplyr", "effectsize", "Evacluster", "flexclust", "fpc", "gaston", "ggpubr", "ggthemes", "ggstatsplot", "ggbeeswarm", "globaltest", "gridExtra", "imbalance", "mlr3", "mlr3cluster", "mlr3pipelines", "wesanderson", "Hmisc", "plyr", "data.table", "mclust", "NMF", "pheatmap", "gprofiler2", "magrittr",  "fastICA", "pgenlibr", "VarSelLCM", "visreg"))
 ```
 
 ## For developers

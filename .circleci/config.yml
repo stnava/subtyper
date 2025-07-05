@@ -15,11 +15,11 @@ steps: &steps
 #        command: R -e "remotes::install_github('mlr-org/mlr3extralearners')"
     - run:
         name: Install Biobase
-        command: R -e "install.packages('BiocManager'); BiocManager::install('Biobase'); BiocManager::install('globaltest')"
+        command: R -e "install.packages('BiocManager'); BiocManager::install('Biobase'); BiocManager::install('globaltest');BiocManager::install('sva')"
     - run:
         name: Install package dependencies
         command: R -e "devtools::install_deps(dep = TRUE)"
-    - run: 
+    - run:
         name: DDoutlier
         command: |
           export GITHUB_PAT=${GITHUB_PAT}
