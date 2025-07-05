@@ -70,6 +70,7 @@ Imports:
   fastICA,
   pgenlibr,
   grDevices,
+  sva,
   VarSelLCM,
   visreg
 Suggests:
