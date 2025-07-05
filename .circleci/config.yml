@@ -19,7 +19,7 @@ steps: &steps
     - run:
         name: Install package dependencies
         command: R -e "devtools::install_deps(dep = TRUE)"
-    -run name: DDoutlier
+    - run name: DDoutlier
         command: R -e "remotes::install_github('jhmadsen/DDoutlier')"
     - run:
         name: Install package dependencies manually
