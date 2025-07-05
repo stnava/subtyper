@@ -31,6 +31,6 @@ This function creates a line plot showing trends over time for each subject,
 and includes an option to visualize differences between two groups.
 }
 \examples{
-visualize_timepoints(demog[demog$longitudinal, ], value_col = "smri.Label1.VolumeInMillimeters", group_col = "Condition")
+# visualize_timepoints(demog[demog$longitudinal, ], value_col = "smri.Label1.VolumeInMillimeters", group_col = "Condition")
 
 }

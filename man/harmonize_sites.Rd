@@ -39,6 +39,6 @@ matches the mean of the control group in a reference site. The transformation is
 to all data within each site, regardless of diagnosis, for each feature separately.
 }
 \examples{
-harmonize_sites(df, site_col = "Site", diagnosis_col = "Diagnosis", 
-                control_label = "Control", feature_cols = c("Feature1", "Feature2"), reference_site = "SiteA")
+# harmonize_sites(df, site_col = "Site", diagnosis_col = "Diagnosis", 
+#                control_label = "Control", feature_cols = c("Feature1", "Feature2"), reference_site = "SiteA")
 }

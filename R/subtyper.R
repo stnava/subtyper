@@ -51,7 +51,7 @@ complete_cases_from_equation <- function(df, equation) {
 #'
 #' @return A ggplot object displaying trends over time with optional group comparison.
 #' @examples
-#' visualize_timepoints(demog[demog$longitudinal, ], value_col = "smri.Label1.VolumeInMillimeters", group_col = "Condition")
+#' # visualize_timepoints(demog[demog$longitudinal, ], value_col = "smri.Label1.VolumeInMillimeters", group_col = "Condition")
 #'
 #' @export
 visualize_timepoints <- function(df, subject_col = "Subject", time_col = "timepoint", value_col, group_col = NULL) {
@@ -7191,8 +7191,8 @@ subset_multiple_visits <- function(data, subject_identifier, visit_identifier) {
 #'   - `harmonized_data`: the data frame with features adjusted across sites
 #'   - `summary_stats`: a data frame with original control means by site and reference means for each feature
 #' @examples
-#' harmonize_sites(df, site_col = "Site", diagnosis_col = "Diagnosis", 
-#'                 control_label = "Control", feature_cols = c("Feature1", "Feature2"), reference_site = "SiteA")
+#' # harmonize_sites(df, site_col = "Site", diagnosis_col = "Diagnosis", 
+#' #                control_label = "Control", feature_cols = c("Feature1", "Feature2"), reference_site = "SiteA")
 harmonize_sites <- function(data, site_col, diagnosis_col, control_label, feature_cols, reference_site) {
   # Check if specified columns exist
   if (!all(c(site_col, diagnosis_col, feature_cols) %in% colnames(data))) {
@@ -7270,9 +7270,9 @@ harmonize_sites <- function(data, site_col, diagnosis_col, control_label, featur
 #'   - `summary_stats`: a data frame with quantiles (e.g., 25th, 50th, and 75th) by site for each feature.
 #' @export
 #' @examples
-#' harmonize_sites_quantiles(df, site_col = "Site", diagnosis_col = "Diagnosis", 
-#'                           control_label = "Control", feature_cols = c("Feature1", "Feature2"), 
-#'                           reference_site = "SiteA")
+#' # harmonize_sites_quantiles(df, site_col = "Site", diagnosis_col = "Diagnosis", 
+#' #                          control_label = "Control", feature_cols = c("Feature1", "Feature2"), 
+#' #                          reference_site = "SiteA")
 harmonize_sites_quantiles <- function(data, site_col, diagnosis_col, control_label, feature_cols, reference_site) {
   # Check if specified columns exist
   if (!all(c(site_col, diagnosis_col, feature_cols) %in% colnames(data))) {
@@ -7356,7 +7356,7 @@ harmonize_sites_quantiles <- function(data, site_col, diagnosis_col, control_lab
 #'
 #' @examples
 #' # Assuming 'df' is your data frame with missing values and 'batch' is a vector of batch assignments
-#' adjusted_data <- combat_with_na(df, batch)
+#' # adjusted_data <- combat_with_na(df, batch)
 #'
 #' @import sva
 #' @export

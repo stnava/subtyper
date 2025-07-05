@@ -19,6 +19,6 @@ This function performs batch effect correction using the ComBat method from the 
 }
 \examples{
 # Assuming 'df' is your data frame with missing values and 'batch' is a vector of batch assignments
-adjusted_data <- combat_with_na(df, batch)
+# adjusted_data <- combat_with_na(df, batch)
 
 }

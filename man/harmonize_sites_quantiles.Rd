@@ -38,7 +38,7 @@ Adjusts specified features across sites to match the quantiles (e.g., 25th, 50th
 in the reference site. The transformation is applied to all data within each site, regardless of diagnosis, for each feature separately.
 }
 \examples{
-harmonize_sites_quantiles(df, site_col = "Site", diagnosis_col = "Diagnosis", 
-                          control_label = "Control", feature_cols = c("Feature1", "Feature2"), 
-                          reference_site = "SiteA")
+# harmonize_sites_quantiles(df, site_col = "Site", diagnosis_col = "Diagnosis", 
+#                          control_label = "Control", feature_cols = c("Feature1", "Feature2"), 
+#                          reference_site = "SiteA")
 }
