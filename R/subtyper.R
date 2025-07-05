@@ -1736,8 +1736,8 @@ adjustByCovariates  <- function(
   outcomevar = gsub( " ", "", unlist(strsplit( adjustmentFormula, "~" ))[[1]] )
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
-    gsel = mxdfin[,groupVariable] %in% group
-    if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
+    gsel = as.character(data.frame(mxdfin)[,groupVariable]) %in% group
+    if ( sum(gsel) < 5 ) stop(paste("too few subjects in subgroup for training",sum(gsel)))
     subdf = mxdfin[ gsel, ]
   } else subdf = mxdfin
   for ( xx in all.vars( as.formula( adjustmentFormula ) ) ) {
@@ -1799,8 +1799,8 @@ adjustByCovariatesUni  <- function(
   }
   outcomevar = gsub( " ", "", unlist(strsplit( adjustmentFormula, "~" ))[[1]] )
   if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
-  gsel = mxdfin[,groupVariable] %in% group
-  if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
+  gsel = as.character(data.frame(mxdfin)[,groupVariable]) %in% group
+  if ( sum(gsel) < 5 ) stop(paste("too few subjects in subgroup for training",sum(gsel)))
   subdf = mxdfin
   subdf$adjustByCovariatesUniTempVar = cstrained( 
     subdf[,outcomevar], gsel )
@@ -1851,8 +1851,8 @@ trainSubtypeUni  <- function(
     stop( "length( subtypes ) != ( length( quantiles ) + 1 )" )
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
-    gsel = mxdfin[,groupVariable] %in% group
-    if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
+    gsel = as.character(data.frame(mxdfin)[,groupVariable]) %in% group
+    if ( sum(gsel) < 5 ) stop(paste("too few subjects in subgroup for training",sum(gsel)))
     subdf = mxdfin[ gsel, ]
   } else {
     subdf = mxdfin
@@ -1934,49 +1934,67 @@ scale_variables_in_equation <- function( mydf, myeq, variables_to_exclude ) {
 #' pdf = predictSubtypeUni( mydf, qdf, "Id" )
 #' @export
 #' @importFrom Hmisc cut2
-predictSubtypeUni  <- function(
+predictSubtypeUni <- function(
   mxdfin,
   subtypeDataFrame,
   idvar,
   visitName,
   baselineVisit,
-  rename = TRUE ) {
+  rename = TRUE
+) {
+  if (!"measurement" %in% names(subtypeDataFrame))
+    stop("Column 'measurement' must exist in subtypeDataFrame")
 
-  msr = as.character( subtypeDataFrame[, "measurement"][1] )
-  thesubtypes = subtypeDataFrame[,1]
-  mxdfin[,names(subtypeDataFrame)[1]] = NA
-  quantsV = as.numeric( subtypeDataFrame[,"quantileValues"][-1] )
-  quantsP = as.numeric( subtypeDataFrame[,"quantiles"][-1] )
-  # by default, just run across each row
-  mxdfin[,names(subtypeDataFrame)[1]] = Hmisc::cut2( mxdfin[,msr], cuts = quantsV )
-  theselevs = sort( na.omit( unique(  mxdfin[,names(subtypeDataFrame)[1]] ) ) )
-  if ( rename ) {
-    mxdfin[,names(subtypeDataFrame)[1]] = as.character( mxdfin[,names(subtypeDataFrame)[1]] )
-    for ( k in 1:length( theselevs ) ) {
-      losel = mxdfin[,names(subtypeDataFrame)[1]] == theselevs[k]
-      mxdfin[,names(subtypeDataFrame)[1]][ losel ] = thesubtypes[k]
+  msr <- as.character(subtypeDataFrame[1, "measurement"])
+  subtype_colname <- names(subtypeDataFrame)[1]
+
+  if (!msr %in% names(mxdfin))
+    stop(paste("Measurement column", msr, "not found in mxdfin"))
+
+  thesubtypes <- subtypeDataFrame[[subtype_colname]]
+  quantsV <- as.numeric(subtypeDataFrame[,"quantileValues"][-1])
+
+  if (any(is.na(quantsV)) || length(quantsV) == 0)
+    stop("Invalid or empty quantileValues")
+
+  # Cut into quantile bins
+  mxdfin[[subtype_colname]] <- Hmisc::cut2(mxdfin[[msr]], cuts = quantsV)
+  theselevs <- sort(na.omit(unique(mxdfin[[subtype_colname]])))
+
+  if (rename) {
+    if (length(thesubtypes) != length(theselevs)) {
+      warning("Number of subtype labels does not match number of bins")
     }
-    mxdfin[,names(subtypeDataFrame)[1]] <- factor(mxdfin[,names(subtypeDataFrame)[1]], levels=thesubtypes )
+    mxdfin[[subtype_colname]] <- as.character(mxdfin[[subtype_colname]])
+    for (k in seq_along(theselevs)) {
+      mxdfin[[subtype_colname]][mxdfin[[subtype_colname]] == theselevs[k]] <- thesubtypes[k]
+    }
+    mxdfin[[subtype_colname]] <- factor(mxdfin[[subtype_colname]], levels = thesubtypes)
   } else {
-    mxdfin[,names(subtypeDataFrame)[1]] <- factor(mxdfin[,names(subtypeDataFrame)[1]], levels=theselevs )
+    mxdfin[[subtype_colname]] <- factor(mxdfin[[subtype_colname]], levels = theselevs)
   }
-  if ( missing( visitName ) | missing( baselineVisit ) )
-    return( mxdfin )
-  if ( ! ( baselineVisit %in% unique( mxdfin[,visitName] ) ) )
-    stop( "! ( baselineVisit %in% unique( mxdfin[,visitName] ) )" )
-  uids = unique( mxdfin[,idvar] )
-  for ( u in uids ) {
-    usel = mxdfin[,idvar] == u
-    losel0 = mxdfin[,idvar] == u & mxdfin[,visitName] == baselineVisit & !is.na(mxdfin[,msr])
-    losel0[ is.na( losel0 ) ] = FALSE
-    if ( sum( losel0 ) > 0 ) {
-      mytbl = table( mxdfin[losel0,names(subtypeDataFrame)[1]] )
-      mostcommon = names( mytbl )[which.max(mytbl)]
-      mxdfin[usel,names(subtypeDataFrame)[1]] = mostcommon
+
+  # If no baseline correction needed
+  if (missing(visitName) || missing(baselineVisit)) return(mxdfin)
+  if (!baselineVisit %in% unique(mxdfin[[visitName]]))
+    stop("baselineVisit not found in visitName column")
+
+  uids <- unique(mxdfin[[idvar]])
+  for (u in uids) {
+    usel <- mxdfin[[idvar]] == u
+    losel0 <- which(
+      mxdfin[[idvar]] == u &
+      mxdfin[[visitName]] == baselineVisit &
+      !is.na(mxdfin[[msr]])
+    )
+    if (length(losel0) > 0) {
+      mytbl <- table(mxdfin[losel0, subtype_colname])
+      mostcommon <- names(mytbl)[which.max(mytbl)]
+      mxdfin[usel, subtype_colname] <- mostcommon
     }
   }
-  return( mxdfin )
 
+  return(mxdfin)
 }
 
 
@@ -2053,7 +2071,7 @@ trainSubtypeClusterMulti  <- function(
   .env <- environment() ## identify the environment of cv.step
   if ( ! missing( group ) & ! missing( groupVariable ) ) {
     if ( ! (groupVariable %in% names( mxdfin ) ) ) stop("group name is wrong")
-    gsel = mxdfin[,groupVariable] %in% group
+    gsel = as.character(data.frame(mxdfin)[,groupVariable]) %in% group
     if ( sum(gsel) < 5 ) stop("too few subjects in subgroup for training")
     subdf = mxdfin[ gsel, measureColumns ]
   } else {
