@@ -12,6 +12,7 @@ normativeSummary(
   idcolumn = "commonID",
   sexcol = "commonSex",
   agecol = "commonAge",
+  return_plot = FALSE,
   verbose = TRUE
 )
 }
@@ -29,6 +30,8 @@ normativeSummary(
 \item{sexcol}{name of the sex column}
 
 \item{agecol}{name of the age column}
+
+\item{return_plot}{A logical flag indicating whether to return the plot object}
 
 \item{verbose}{A logical flag indicating whether to print detailed output.}
 }

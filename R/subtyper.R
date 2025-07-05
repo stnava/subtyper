@@ -5255,6 +5255,7 @@ convert_to_random_effects <- function(variables) {
 #' @param idcolumn column name for the unique subject ID
 #' @param sexcol name of the sex column
 #' @param agecol name of the age column
+#' @param return_plot A logical flag indicating whether to return the plot object
 #' @param verbose A logical flag indicating whether to print detailed output.
 #'
 #' @return A summary object containing normative statistics for the specified columns of the subject.
@@ -5262,7 +5263,7 @@ convert_to_random_effects <- function(variables) {
 #'
 #' @examples
 #' # normativeSummary(myData, 1, c("Column1", "Column2"), zoom = 1, verbose = TRUE)
-normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID', sexcol='commonSex', agecol='commonAge', verbose=TRUE) {
+normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID', sexcol='commonSex', agecol='commonAge', return_plot=FALSE, verbose=TRUE) {
   if(!is.data.frame(data)) stop("The 'data' input must be a data frame.")
   if(!all(columns %in% names(data))) stop("All specified columns must exist in the data frame.")
   if(subjectRow > nrow(data) || subjectRow < 1) stop("Subject row is out of bounds.")
@@ -5363,6 +5364,9 @@ normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID
   } else {
     cat("No numeric data for z-score plot.\n")
   }
+
+  if ( return_plot ) return(
+    grid.arrange(grobs=histList,ncol=round(sqrt(length(histList))),top=paste("Normative Results:",data[subjectRow,idcolumn])) )
 
   grid.arrange(grobs=histList,ncol=round(sqrt(length(histList))),top=paste("Normative Results:",data[subjectRow,idcolumn]))
   return(summaryList)
