@@ -32,6 +32,7 @@
 <url><loc>/reference/bipartite_variable_match.html</loc></url>
 <url><loc>/reference/clearcolname.html</loc></url>
 <url><loc>/reference/collect_and_zip_images.html</loc></url>
+<url><loc>/reference/combat_with_na.html</loc></url>
 <url><loc>/reference/compare_model_predictions.html</loc></url>
 <url><loc>/reference/complete_cases_from_equation.html</loc></url>
 <url><loc>/reference/consensusSubtypingCOCA.html</loc></url>
@@ -61,6 +62,9 @@
 <url><loc>/reference/getExt.html</loc></url>
 <url><loc>/reference/getNamesFromDataframe.html</loc></url>
 <url><loc>/reference/glm_impute.html</loc></url>
+<url><loc>/reference/grepl_multi.html</loc></url>
+<url><loc>/reference/harmonize_sites.html</loc></url>
+<url><loc>/reference/harmonize_sites_quantiles.html</loc></url>
 <url><loc>/reference/hierarchicalSubtypePlots.html</loc></url>
 <url><loc>/reference/highestQualityRepeat.html</loc></url>
 <url><loc>/reference/identify_best_voi.html</loc></url>
@@ -92,6 +96,7 @@
 <url><loc>/reference/plinkVariantsDataFrame.html</loc></url>
 <url><loc>/reference/plotCategoricalData.html</loc></url>
 <url><loc>/reference/plotSubtypeChange.html</loc></url>
+<url><loc>/reference/plot_regression_graph.html</loc></url>
 <url><loc>/reference/predictSubtypeClusterMulti.html</loc></url>
 <url><loc>/reference/predictSubtypeUni.html</loc></url>
 <url><loc>/reference/prplot.html</loc></url>
@@ -114,6 +119,7 @@
 <url><loc>/reference/shorten_pymm_names.html</loc></url>
 <url><loc>/reference/simlr_impute.html</loc></url>
 <url><loc>/reference/sinkhorn_method.html</loc></url>
+<url><loc>/reference/subset_multiple_visits.html</loc></url>
 <url><loc>/reference/table_1.html</loc></url>
 <url><loc>/reference/table_1_from_formula.html</loc></url>
 <url><loc>/reference/table_1_presentation.html</loc></url>
@@ -125,6 +131,7 @@
 <url><loc>/reference/undersample_majority.html</loc></url>
 <url><loc>/reference/visglm.html</loc></url>
 <url><loc>/reference/visualize_permutation_test.html</loc></url>
+<url><loc>/reference/visualize_timepoints.html</loc></url>
 <url><loc>/reference/write_simlr_data_frames.html</loc></url>
 </urlset>
 

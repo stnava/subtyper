@@ -82,7 +82,8 @@ to landscape or portrait mode.</p>
 <span>  landscape <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  table_size <span class="op">=</span> <span class="st">"medium"</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>  latex_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"striped"</span><span class="op">)</span></span>
+<span>  latex_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"striped"</span><span class="op">)</span>,</span>
+<span>  format <span class="op">=</span> <span class="st">"latex"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -125,6 +126,10 @@ to landscape or portrait mode.</p>
 <dt id="arg-latex-options">latex_options<a class="anchor" aria-label="anchor" href="#arg-latex-options"></a></dt>
 <dd><p>A character vector for specifying additional LaTeX styling options. Defaults to <code>c("striped")</code>.</p></dd>
 
+
+<dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
+<dd><p>either latex or html</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -135,20 +140,19 @@ to landscape or portrait mode.</p>
     <h2>Examples</h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">data</span> <span class="op">&lt;-</span> <span class="va">mtcars</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="fu">kable_table</span><span class="op">(</span><span class="va">data</span>, caption <span class="op">=</span> <span class="st">"Sample Table"</span>, scl <span class="op">=</span> <span class="fl">0.8</span>, row.names <span class="op">=</span> <span class="cn">TRUE</span>, striped <span class="op">=</span> <span class="cn">TRUE</span>, landscape <span class="op">=</span> <span class="cn">FALSE</span>, table_size <span class="op">=</span> <span class="st">"large"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>package ‘kableExtra’ was built under R version 4.3.1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \begin{table}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \centering\centering</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \caption{Sample Table}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \centering</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \begin{tabular}[t]{lrrrrr}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> \begin{tabular}[t]{&gt;{}lrrrrr}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \toprule</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &amp; mpg &amp; cyl &amp; disp &amp; hp &amp; drat\\</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \midrule</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \cellcolor{gray!22}{\cellcolor{gray!10}{Mazda RX4}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{21.0}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{6}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{160}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{110}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{3.90}}\\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Mazda RX4 Wag &amp; 21.0 &amp; 6 &amp; 160 &amp; 110 &amp; 3.90\\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \cellcolor{gray!22}{\cellcolor{gray!10}{Datsun 710}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{22.8}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{4}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{108}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{93}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{3.85}}\\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Hornet 4 Drive &amp; 21.4 &amp; 6 &amp; 258 &amp; 110 &amp; 3.08\\</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> \cellcolor{gray!22}{\cellcolor{gray!10}{Hornet Sportabout}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{18.7}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{8}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{360}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{175}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{3.15}}\\</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> \cellcolor{gray!22}{\textbf{\cellcolor{gray!10}{Mazda RX4}}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{21.0}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{6}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{160}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{110}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{3.90}}\\</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> \textbf{Mazda RX4 Wag} &amp; 21.0 &amp; 6 &amp; 160 &amp; 110 &amp; 3.90\\</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> \cellcolor{gray!22}{\textbf{\cellcolor{gray!10}{Datsun 710}}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{22.8}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{4}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{108}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{93}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{3.85}}\\</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> \textbf{Hornet 4 Drive} &amp; 21.4 &amp; 6 &amp; 258 &amp; 110 &amp; 3.08\\</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> \cellcolor{gray!22}{\textbf{\cellcolor{gray!10}{Hornet Sportabout}}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{18.7}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{8}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{360}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{175}} &amp; \cellcolor{gray!22}{\cellcolor{gray!10}{3.15}}\\</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \bottomrule</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \end{tabular}</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> \end{table}</span>
