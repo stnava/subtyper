@@ -14,7 +14,7 @@ multigrep(x, desc, intersect = FALSE)
 \item{intersect}{boolean whether to use intersection or union otherwise}
 }
 \value{
-result of grep
+result of grep (indices of desc that match x)
 }
 \description{
 Grep entries with a vector search parameters

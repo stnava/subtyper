@@ -625,13 +625,50 @@ na2f <- function( x ) {
   x
 }
 
+#' Multi-pattern Matching in Character Vectors
+#'
+#' Performs multiple `grepl` string pattern matches over a character vector
+#' and returns a logical vector indicating whether each element matches
+#' any or all of the given patterns.
+#'
+#' @param x A character vector of regular expression patterns to match.
+#' @param desc A character vector to search within.
+#' @param intersect Logical; if `FALSE` (default), returns `TRUE` for any match
+#' (union behavior). If `TRUE`, returns `TRUE` only for elements that match *all* patterns
+#' (intersection behavior).
+#'
+#' @return A logical vector of the same length as `desc` indicating which elements match
+#' the specified patterns according to the `intersect` setting.
+#'
+#' @examples
+#' strings <- c("apple pie", "banana split", "cherry tart", "apple tart")
+#' grepl_multi(c("apple", "tart"), strings)           # OR behavior
+#' grepl_multi(c("apple", "tart"), strings, TRUE)     # AND behavior
+#'
+#' @export
+grepl_multi <- function(x, desc, intersect = FALSE) {
+  match_idx <- rep(intersect, length(desc))  # TRUE if intersect, FALSE otherwise
+
+  for (pattern in x) {
+    current_match <- grepl(pattern, desc)
+
+    if (!intersect) {
+      match_idx <- match_idx | current_match  # union
+    } else {
+      match_idx <- match_idx & current_match  # intersection
+    }
+  }
+
+  return(match_idx)
+}
+
 #' Grep entries with a vector search parameters
 #'
 #' @param x a vector of search terms
 #' @param desc target vector of items to be searched
 #' @param intersect boolean whether to use intersection or union otherwise
 #'
-#' @return result of grep
+#' @return result of grep (indices of desc that match x)
 #' @author Avants BB
 #' @export
 multigrep <- function( x, desc, intersect=FALSE ) {
