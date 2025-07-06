@@ -34,7 +34,7 @@ an igraph-based network plot (with modern styling), a Sankey diagram, or an allu
 predictors <- c("Age", "BMI", "Exercise", "Smoking")
 weights <- c(0.5, -0.3, 0.7, -0.6)
 outcome <- "Heart Disease"
-plot_regression_graph(predictors, weights, outcome, method = "ggraph", title = "My Custom Graph")
-plot_regression_graph(predictors, weights, outcome, method = "sankey")
-plot_regression_graph(predictors, weights, outcome, method = "alluvial", title = "Custom Alluvial Plot")
+# plot_regression_graph(predictors, weights, outcome, method = "ggraph", title = "My Custom Graph")
+# plot_regression_graph(predictors, weights, outcome, method = "sankey")
+# plot_regression_graph(predictors, weights, outcome, method = "alluvial", title = "Custom Alluvial Plot")
 }

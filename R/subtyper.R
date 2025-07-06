@@ -7402,9 +7402,9 @@ combat_with_na <- function(df, batch) {
 #' predictors <- c("Age", "BMI", "Exercise", "Smoking")
 #' weights <- c(0.5, -0.3, 0.7, -0.6)
 #' outcome <- "Heart Disease"
-#' plot_regression_graph(predictors, weights, outcome, method = "ggraph", title = "My Custom Graph")
-#' plot_regression_graph(predictors, weights, outcome, method = "sankey")
-#' plot_regression_graph(predictors, weights, outcome, method = "alluvial", title = "Custom Alluvial Plot")
+#' # plot_regression_graph(predictors, weights, outcome, method = "ggraph", title = "My Custom Graph")
+#' # plot_regression_graph(predictors, weights, outcome, method = "sankey")
+#' # plot_regression_graph(predictors, weights, outcome, method = "alluvial", title = "Custom Alluvial Plot")
 #' @export
 plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph", title = NULL) {
   
