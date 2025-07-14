@@ -2,58 +2,75 @@
 % Please edit documentation in R/subtyper.R
 \name{create_table1}
 \alias{create_table1}
-\title{Create a Table 1 for Population Characteristics}
+\title{Create a Publication-Ready Summary Table (Table 1)}
 \usage{
 create_table1(
   data,
-  summary_vars,
-  group_var,
-  title = "Table 1: Population Characteristics",
-  output_format = "gt",
-  landscape = TRUE,
-  latex_font_size = c(`12.0pt` = "8.0pt", `14.4pt` = "10.0pt")
+  by_var,
+  vars,
+  font_size = NULL,
+  title = NULL,
+  subtitle = NULL,
+  footnote = NULL,
+  p_value = FALSE,
+  missing_text = "Unknown",
+  statistic = list(gtsummary::all_continuous() ~ "{median} ({p25}, {p75})"),
+  digits = NULL,
+  type = list(dplyr::where(is.numeric) ~ "continuous")
 )
 }
 \arguments{
-\item{data}{A data frame containing the dataset.}
+\item{data}{A data frame or tibble containing the data to summarize.}
 
-\item{summary_vars}{A character vector of variable names to include in the summary.}
+\item{by_var}{A character string specifying the stratifying column name. Required.}
 
-\item{group_var}{A character string of the variable name to group by.}
+\item{vars}{A character vector of column names to be summarized. Required.}
 
-\item{title}{A character string for the table title. Default is "Table 1: Population Characteristics".}
+\item{font_size}{A numeric value for the table's font size. \code{gt} will handle
+translation to appropriate units (e.g., px for HTML, pt for LaTeX).
+Example: \code{10}. If \code{NULL} (the default), \code{gt}'s standard size is used.}
 
-\item{output_format}{A character string indicating the desired output format, either "gt" or "latex". Default is "gt".}
+\item{title}{A character string for the table's main title.}
 
-\item{landscape}{boolean}
+\item{subtitle}{A character string for the table's subtitle.}
 
-\item{latex_font_size}{optional font size changes}
+\item{footnote}{A character string for a source note or footnote.}
+
+\item{p_value}{Logical. If \code{TRUE}, an overall p-value is added.}
+
+\item{missing_text}{A character string to display for missing values.}
+
+\item{statistic}{A named list specifying the statistics to report.}
+
+\item{digits}{A named list specifying the number of digits to display.}
+
+\item{type}{A named list of formulas specifying variable types. Default
+\code{list(where(is.numeric) ~ "continuous")} correctly handles all numeric variables.}
 }
 \value{
-A \code{gt} table object or LaTeX code depending on the \code{output_format}.
+A \code{gt_tbl} object.
 }
 \description{
-This function generates a "Table 1" for summarizing population characteristics
-in an academic paper. It uses the \code{gtsummary} package for summarizing and
-the \code{gt} package for table customization, including adding stripes.
-Additionally, if the output format is LaTeX, it generates the corresponding LaTeX code.
+This function leverages \code{gtsummary} and \code{gt} to generate a publication-quality
+summary table. It is designed to be robust, highly customizable, and easy
+to integrate into R Markdown workflows for both HTML and PDF output.
 }
 \examples{
-data(mtcars)
-mtcars$cyl <- as.factor(mtcars$cyl)
-summary_vars <- c("mpg", "hp", "wt")
-group_var <- "cyl"
-table1_gt <- create_table1(data = mtcars, 
-                           summary_vars = summary_vars, 
-                           group_var = group_var, 
-                           title = "Table 1: Population Characteristics by Cylinder",
-                           output_format = "gt")
-print(table1_gt)
+if (require(gtsummary) && require(gt) && require(dplyr)) {
+  # Example 1: Standard usage
+  create_table1(
+    data = gtsummary::trial,
+    by_var = "trt",
+    vars = c("age", "grade")
+  )
 
-table1_latex <- create_table1(data = mtcars, 
-                               summary_vars = summary_vars, 
-                               group_var = group_var, 
-                               title = "Table 1: Population Characteristics by Cylinder",
-                               output_format = "latex")
-cat(table1_latex)
+  # Example 2: Using the font_size argument for a more compact table
+  create_table1(
+    data = gtsummary::trial,
+    by_var = "trt",
+    vars = c("age", "grade", "response", "marker"),
+    title = "Patient Demographics",
+    font_size = 9 # Set font size to 9pt
+  )
+}
 }

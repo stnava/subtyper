@@ -5710,114 +5710,121 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
   return(important_vars)
 }
 
-#' Create a Table 1 for Population Characteristics
-#'
-#' This function generates a "Table 1" for summarizing population characteristics
-#' in an academic paper. It uses the `gtsummary` package for summarizing and 
-#' the `gt` package for table customization, including adding stripes.
-#' Additionally, if the output format is LaTeX, it generates the corresponding LaTeX code.
-#'
-#' @param data A data frame containing the dataset.
-#' @param summary_vars A character vector of variable names to include in the summary.
-#' @param group_var A character string of the variable name to group by.
-#' @param title A character string for the table title. Default is "Table 1: Population Characteristics".
-#' @param output_format A character string indicating the desired output format, either "gt" or "latex". Default is "gt".
-#' @param landscape boolean
-#' @param latex_font_size optional font size changes
-#' @return A `gt` table object or LaTeX code depending on the `output_format`.
-#' @import dplyr
-#' @import gtsummary
-#' @import gt
-#' @examples
-#' data(mtcars)
-#' mtcars$cyl <- as.factor(mtcars$cyl)
-#' summary_vars <- c("mpg", "hp", "wt")
-#' group_var <- "cyl"
-#' table1_gt <- create_table1(data = mtcars, 
-#'                            summary_vars = summary_vars, 
-#'                            group_var = group_var, 
-#'                            title = "Table 1: Population Characteristics by Cylinder",
-#'                            output_format = "gt")
-#' print(table1_gt)
-#'
-#' table1_latex <- create_table1(data = mtcars, 
-#'                                summary_vars = summary_vars, 
-#'                                group_var = group_var, 
-#'                                title = "Table 1: Population Characteristics by Cylinder",
-#'                                output_format = "latex")
-#' cat(table1_latex)
-#' @export
-create_table1 <- function(data, summary_vars, group_var, 
-                          title = "Table 1: Population Characteristics", 
-                          output_format = "gt",
-                          landscape = TRUE,
-                          latex_font_size = c("12.0pt" = "8.0pt", "14.4pt" = "10.0pt")) {
-  library(gt)
-  library(gtsummary)
-  
-  # Check if group_var is a factor, if not convert it to a factor
-  if (!is.factor(data[[group_var]])) {
-    data[[group_var]] <- as.factor(data[[group_var]])
-  }
-  
-  # Helper function to check if a column is categorical
-  is_categorical <- function(df) {
-    sapply(df, function(x) is.factor(x) || is.character(x))
-  }
-  
-  # Initialize variables for continuous and categorical columns
-  categorical_vars <- NULL
-  continuous_vars <- NULL
-  
-  # Identify which variables are categorical and which are continuous
-  categorical_vars_bool <- is_categorical(data[, summary_vars])
-  if (sum(categorical_vars_bool) > 0) {
-    categorical_vars <- summary_vars[categorical_vars_bool]
-  }
-  if (sum(!categorical_vars_bool) > 0) {
-    continuous_vars <- summary_vars[!categorical_vars_bool]
-  }
-  # Create summary table using gtsummary
-  table1 <- data %>%
-    select(all_of(c(summary_vars, group_var)))
-  table1_summary <- tbl_summary(table1, 
-      by = all_of(group_var), 
-      type = list(where(is.numeric) ~ "continuous"),
-      missing = "no" ) %>%
-    add_p() %>%
-    modify_header(label ~ paste0("**",group_var,"**")) %>%
-    bold_labels()
-  
-  # Convert to gt table for further customization
-  gt_table1 <- as_gt(table1_summary)
-  
-  # Add header and stripes to the gt table
-  gt_table1 <- gt_table1 %>%
-    tab_header(
-      title = title
-    )
-  
-  # If output_format is "latex", return the LaTeX version of the table
-  if (output_format == "latex") {
-    # Convert the gtsummary table to LaTeX
-    latex_table1 <- table1_summary %>% as_gt() %>% as_latex()
-    latex_table1 = gsub("_"," ",latex_table1,fixed=TRUE)
-    # Adjust font sizes
-    for (font_size in names(latex_font_size)) {
-      latex_table1 <- gsub(font_size, latex_font_size[[font_size]], latex_table1)
-    }
-    
-    if ( landscape ) {
-      # Add landscape environment
-      latex_table1 <- paste0("\\begin{landscape}\n", latex_table1, "\n\\end{landscape}")
-    }
-    return(latex_table1)
-  }
-  
-  # If output_format is "gt", return the gt table
-  return(gt_table1)
-}
 
+#' Create a Publication-Ready Summary Table (Table 1)
+#'
+#' @description
+#' This function leverages `gtsummary` and `gt` to generate a publication-quality
+#' summary table. It is designed to be robust, highly customizable, and easy
+#' to integrate into R Markdown workflows for both HTML and PDF output.
+#'
+#' @param data A data frame or tibble containing the data to summarize.
+#' @param by_var A character string specifying the stratifying column name. Required.
+#' @param vars A character vector of column names to be summarized. Required.
+#' @param font_size A numeric value for the table's font size. `gt` will handle
+#'   translation to appropriate units (e.g., px for HTML, pt for LaTeX).
+#'   Example: `10`. If `NULL` (the default), `gt`'s standard size is used.
+#' @param type A named list of formulas specifying variable types. Default
+#'   `list(where(is.numeric) ~ "continuous")` correctly handles all numeric variables.
+#' @param title A character string for the table's main title.
+#' @param subtitle A character string for the table's subtitle.
+#' @param footnote A character string for a source note or footnote.
+#' @param p_value Logical. If `TRUE`, an overall p-value is added.
+#' @param missing_text A character string to display for missing values.
+#' @param statistic A named list specifying the statistics to report.
+#' @param digits A named list specifying the number of digits to display.
+#'
+#' @return A `gt_tbl` object.
+#'
+#' @importFrom gtsummary tbl_summary add_p bold_labels as_gt all_continuous
+#' @importFrom gt tab_header tab_source_note tab_options px opt_table_font
+#' @importFrom tidyselect all_of
+#' @importFrom dplyr where
+#' @export
+#'
+#' @examples
+#' if (require(gtsummary) && require(gt) && require(dplyr)) {
+#'   # Example 1: Standard usage
+#'   create_table1(
+#'     data = gtsummary::trial,
+#'     by_var = "trt",
+#'     vars = c("age", "grade")
+#'   )
+#'
+#'   # Example 2: Using the font_size argument for a more compact table
+#'   create_table1(
+#'     data = gtsummary::trial,
+#'     by_var = "trt",
+#'     vars = c("age", "grade", "response", "marker"),
+#'     title = "Patient Demographics",
+#'     font_size = 9 # Set font size to 9pt
+#'   )
+#' }
+create_table1 <- function(data,
+                          by_var,
+                          vars,
+                          font_size = NULL,
+                          title = NULL,
+                          subtitle = NULL,
+                          footnote = NULL,
+                          p_value = FALSE,
+                          missing_text = "Unknown",
+                          statistic = list(gtsummary::all_continuous() ~ "{median} ({p25}, {p75})"),
+                          digits = NULL,
+                          type = list(dplyr::where(is.numeric) ~ "continuous")) {
+
+  # --- 1. Input Validation ---
+  if (missing(by_var)) stop("Argument `by_var` is missing.", call. = FALSE)
+  if (missing(vars)) stop("Argument `vars` is missing.", call. = FALSE)
+  if (!is.character(by_var) || length(by_var) != 1) stop("`by_var` must be a single string.", call. = FALSE)
+  if (!is.character(vars)) stop("`vars` must be a character vector.", call. = FALSE)
+  all_needed_cols <- c(by_var, vars)
+  missing_cols <- setdiff(all_needed_cols, names(data))
+  if (length(missing_cols) > 0) {
+    stop(paste0("The following columns were not found in the data: ", paste(missing_cols, collapse = ", ")), call. = FALSE)
+  }
+
+  # --- 2. Core Summary using gtsummary ---
+  summary_tbl <- gtsummary::tbl_summary(
+    data, by = tidyselect::all_of(by_var), include = tidyselect::all_of(vars),
+    statistic = statistic, digits = digits, missing_text = missing_text, type = type
+  )
+
+  if (p_value) {
+    summary_tbl <- gtsummary::add_p(summary_tbl)
+  }
+
+  summary_tbl <- summary_tbl %>% gtsummary::bold_labels()
+
+  # --- 3. Aesthetic Polishing using gt ---
+  gt_tbl <- summary_tbl %>% gtsummary::as_gt()
+
+  if (!is.null(title) || !is.null(subtitle)) {
+    gt_tbl <- gt::tab_header(gt_tbl, title = title, subtitle = subtitle)
+  }
+  if (!is.null(footnote)) {
+    gt_tbl <- gt::tab_source_note(gt_tbl, source_note = footnote)
+  }
+
+  # --- INTEGRATED FONT SIZE LOGIC ---
+  if (!is.null(font_size)) {
+    gt_tbl <- gt_tbl %>% gt::opt_table_font(size = font_size)
+  }
+
+  # Apply final "booktabs" styling
+  gt_tbl <- gt::tab_options(
+    gt_tbl, table.border.top.style = "none", table.border.bottom.style = "none",
+    column_labels.border.bottom.style = "solid", column_labels.border.bottom.width = gt::px(2),
+    table_body.border.bottom.style = "solid", table_body.border.bottom.width = gt::px(1),
+    table_body.hlines.style = "none", row_group.border.top.style = "none",
+    row_group.border.bottom.style = "none", heading.border.bottom.style = "none",
+    source_notes.font.size = "small", heading.title.font.size = "large",
+    heading.align = "left"
+  )
+
+  # --- 4. Return the Final Object ---
+  return(gt_tbl)
+}
 
 #' Rename Columns in a Data Frame
 #'
