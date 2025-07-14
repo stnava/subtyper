@@ -89,7 +89,7 @@ visualize_timepoints <- function(df, subject_col = "Subject", time_col = "timepo
 #'
 #' This function takes in two models and produces two ggplots in a list that show the predictions
 #' of the models versus the true response variable. For mixed models, it allows the user to ignore random effects.
-#' It also displays the R-squared (R²) value and the difference in R-squared (ΔR²) between the two models within each plot.
+#' It also displays the R-squared value and the difference in R-squared between the two models within each plot.
 #'
 #' @param model1 A fitted model object (either a standard regression or a mixed model).
 #' @param model2 A second fitted model object (either a standard regression or a mixed model).

@@ -35,7 +35,7 @@ A list of two ggplot objects, each comparing the predictions of a model with the
 \description{
 This function takes in two models and produces two ggplots in a list that show the predictions
 of the models versus the true response variable. For mixed models, it allows the user to ignore random effects.
-It also displays the R-squared (R²) value and the difference in R-squared (ΔR²) between the two models within each plot.
+It also displays the R-squared value and the difference in R-squared between the two models within each plot.
 }
 \examples{
 \dontrun{

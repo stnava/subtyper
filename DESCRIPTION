@@ -71,6 +71,7 @@ Imports:
   pgenlibr,
   grDevices,
   sva,
+  tidyselect,
   VarSelLCM,
   visreg
 Suggests:
