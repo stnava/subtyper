@@ -64,6 +64,20 @@ install.packages(
 c("ggplot2", "caret", "ClusterR", "coca", "dCUR", "dplyr", "effectsize", "Evacluster", "flexclust", "fpc", "gaston", "ggpubr", "ggthemes", "ggstatsplot", "ggbeeswarm", "globaltest", "gridExtra", "imbalance", "mlr3", "mlr3cluster", "mlr3pipelines", "wesanderson", "Hmisc", "plyr", "data.table", "mclust", "NMF", "pheatmap", "gprofiler2", "magrittr",  "fastICA", "pgenlibr", "VarSelLCM", "visreg"))
 ```
 
+## OSX specific notes: Running R in a Clean Environment
+
+### Why Use This?
+
+Sometimes, issues arise in R installations due to user-specific environment variables (such as `LD_LIBRARY_PATH`, `DYLD_LIBRARY_PATH`, `R_LIBS`, or `PKG_CONFIG_PATH`). These can conflict with R's ability to find the correct system libraries or load shared objects (`.so` / `.dylib` files) during package compilation or loading.
+
+To avoid these issues, you can launch R in a **minimal, clean environment**, preserving only the necessary `HOME` and `PATH` variables.
+
+### Command
+
+```bash
+env -i HOME=$HOME PATH="/opt/homebrew/bin:/usr/bin:/bin" /opt/homebrew/bin/R
+```
+
 ## For developers
 
 The repository includes a Makefile to facilitate some common tasks.
