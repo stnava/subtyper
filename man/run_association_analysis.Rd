@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{run_association_analysis}
 \alias{run_association_analysis}
-\title{A master function to run association analyses (LM or LMER).}
+\title{A management function to run association analyses (LM or LMER) with progress.}
 \usage{
 run_association_analysis(
   data,
@@ -39,5 +39,5 @@ A tidy data frame with results for every predictor-outcome pair.
 \description{
 This function acts as a dispatcher, calling the appropriate helper
 (lm_anv_p_and_d or lmer_anv_p_and_d) based on whether the analysis
-is specified as longitudinal. It extracts and returns key metrics.
+is specified as longitudinal. It extracts key metrics and displays a progress bar.
 }

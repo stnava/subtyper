@@ -4949,11 +4949,11 @@ eliminateNonUniqueColumns <- function(matrix) {
   return(result_matrix)
 }
 
-#' A master function to run association analyses (LM or LMER).
+#' A management function to run association analyses (LM or LMER) with progress.
 #'
 #' This function acts as a dispatcher, calling the appropriate helper
 #' (lm_anv_p_and_d or lmer_anv_p_and_d) based on whether the analysis
-#' is specified as longitudinal. It extracts and returns key metrics.
+#' is specified as longitudinal. It extracts key metrics and displays a progress bar.
 #'
 #' @param data The dataframe containing all variables.
 #' @param predictors A character vector of predictor column names.
@@ -4965,72 +4965,75 @@ eliminateNonUniqueColumns <- function(matrix) {
 #'   to the outcome variable for longitudinal analyses.
 #' @param random_effects A string for the random effects part of the LMER formula.
 #' @return A tidy data frame with results for every predictor-outcome pair.
+#' @importFrom progress progress_bar
+#' @export
 run_association_analysis <- function(data, predictors, outcomes, covariates, dataset_name, 
                                      analysis_type = "Cross-Sectional", 
                                      use_delta_outcome = TRUE,
                                      random_effects = "(1 | PTID)") {
   
-  all_results <- lapply(outcomes, function(outcome) {
-    
-    lapply(predictors, function(predictor) {
+  # --- 1. Setup Progress Bar ---
+  # Ensure the 'progress' package is installed: install.packages("progress")
+  total_iterations <- length(outcomes) * length(predictors)
+  
+  pb <- progress::progress_bar$new(
+    format = "[:bar] :percent | ETA: :eta | :what",
+    total = total_iterations,
+    width = 80,
+    clear = FALSE
+  )
+  
+  # --- 2. Use For Loops for Explicit Progress Ticking ---
+  all_results_list <- list()
+  
+  for (outcome in outcomes) {
+    for (predictor in predictors) {
       
-      # --- MODIFICATION: Conditionally append "_delta" ---
+      # Update the progress bar with the current task
+      pb$tick(tokens = list(what = paste(dataset_name, outcome, sep = " | ")))
+      
+      # --- Core Logic (Unchanged) ---
       outcome_variable <- if (analysis_type == "Longitudinal" && use_delta_outcome) {
         paste0(outcome, "_delta")
       } else {
         outcome
       }
       
-      # Ensure the final outcome variable exists in the data
       if (!outcome_variable %in% names(data)) {
-        warning(paste("Outcome variable", outcome_variable, "not found in data. Skipping."))
-        return(NULL)
+        warning(paste("Outcome variable", outcome_variable, "not found. Skipping."))
+        next # Skip to the next iteration
       }
       
-      # Run the appropriate model
       if (analysis_type == "Longitudinal") {
         model_results <- lmer_anv_p_and_d(
-          data = data,
-          outcome = outcome_variable,
-          predictor = predictor,
-          fixed_effects = covariates,
-          random_effects = random_effects,
-          predictoroperator = '*' # Always test for interaction in longitudinal
+          data = data, outcome = outcome_variable, predictor = predictor,
+          fixed_effects = covariates, random_effects = random_effects,
+          predictoroperator = '*'
         )
       } else {
         model_results <- lm_anv_p_and_d(
-          data = data,
-          outcome = outcome_variable,
-          predictor = predictor,
-          fixed_effects = covariates,
-          predictoroperator = '+'
+          data = data, outcome = outcome_variable, predictor = predictor,
+          fixed_effects = covariates, predictoroperator = '+'
         )
       }
       
-      if (is.null(model_results)) return(NULL)
+      if (is.null(model_results)) next
       
-      # Extract coefficients and effect sizes
       coeffs <- model_results$coefficients
       effect_sizes <- model_results$effect_sizes
       
-      # Find the specific term for the predictor of interest
       term_of_interest <- if (analysis_type == "Longitudinal") {
-        # Find interaction term, e.g., "yearsbl:t1PC1"
-        # This part is robust and finds the correct interaction term
         interaction_term <- grep(paste0(":", predictor), rownames(coeffs), value = TRUE, fixed = TRUE)
-        if (length(interaction_term) == 0) {
-            interaction_term <- grep(paste0(predictor, ":"), rownames(coeffs), value = TRUE, fixed = TRUE)
-        }
-        if (length(interaction_term) == 0) return(NULL) # No interaction term found
-        interaction_term[1] # Take the first one if multiple match
+        if (length(interaction_term) == 0) interaction_term <- grep(paste0(predictor, ":"), rownames(coeffs), value = TRUE, fixed = TRUE)
+        if (length(interaction_term) == 0) next
+        interaction_term[1]
       } else {
         predictor
       }
       
-      if (is.na(term_of_interest) || !term_of_interest %in% rownames(coeffs)) return(NULL)
+      if (is.na(term_of_interest) || !term_of_interest %in% rownames(coeffs)) next
       
-      # Return a one-row tibble with all key metrics
-      tibble::tibble(
+      result_row <- tibble::tibble(
         dataset = dataset_name,
         analysis_type = analysis_type,
         predictor = predictor,
@@ -5039,10 +5042,13 @@ run_association_analysis <- function(data, predictors, outcomes, covariates, dat
         p_value = coeffs[term_of_interest, "Pr(>|t|)"],
         cohens_d = effect_sizes[term_of_interest, "d"]
       )
-    }) %>% bind_rows()
-  }) %>% bind_rows()
+      
+      all_results_list[[length(all_results_list) + 1]] <- result_row
+    }
+  }
   
-  return(all_results)
+  # --- 3. Combine and Return Results ---
+  dplyr::bind_rows(all_results_list)
 }
 
 
