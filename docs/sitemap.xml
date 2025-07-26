@@ -12,6 +12,7 @@
 <url><loc>/reference/adjustByCovariates.html</loc></url>
 <url><loc>/reference/adjustByCovariatesUni.html</loc></url>
 <url><loc>/reference/adjust_p_values.html</loc></url>
+<url><loc>/reference/analyze_longitudinal_change.html</loc></url>
 <url><loc>/reference/antspymm_nuisance_names.html</loc></url>
 <url><loc>/reference/antspymm_predictors.html</loc></url>
 <url><loc>/reference/antspymm_qc_names.html</loc></url>
@@ -75,6 +76,7 @@
 <url><loc>/reference/kable_table.html</loc></url>
 <url><loc>/reference/lm_anv_p_and_d.html</loc></url>
 <url><loc>/reference/lmer_anv_p_and_d.html</loc></url>
+<url><loc>/reference/lmer_anv_p_and_d_old.html</loc></url>
 <url><loc>/reference/log_parameters.html</loc></url>
 <url><loc>/reference/mapAsymVar.html</loc></url>
 <url><loc>/reference/mapLRAverageVar.html</loc></url>
@@ -111,7 +113,9 @@
 <url><loc>/reference/replace_values.html</loc></url>
 <url><loc>/reference/replace_values_by_key.html</loc></url>
 <url><loc>/reference/rowwise_linear_variable_adjustments.html</loc></url>
+<url><loc>/reference/run_association_analysis.html</loc></url>
 <url><loc>/reference/scale_variables_in_equation.html</loc></url>
+<url><loc>/reference/select_high_quality_data.html</loc></url>
 <url><loc>/reference/select_important_variables.html</loc></url>
 <url><loc>/reference/select_longitudinal_subjects.html</loc></url>
 <url><loc>/reference/setSeedBasedOnTime.html</loc></url>
