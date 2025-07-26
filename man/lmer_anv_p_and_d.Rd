@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{lmer_anv_p_and_d}
 \alias{lmer_anv_p_and_d}
-\title{Linear Mixed Effects Model Analysis with ANOVA and Effect Size Calculation}
+\title{Fit and compare linear mixed-effects models and calculate effect sizes.}
 \usage{
 lmer_anv_p_and_d(
   data,
@@ -15,37 +15,23 @@ lmer_anv_p_and_d(
 )
 }
 \arguments{
-\item{data}{A data frame containing the variables referenced in the model formulas.}
+\item{data}{A data frame containing the data.}
 
-\item{outcome}{The name of the dependent variable (outcome) as a string.}
+\item{outcome}{A character string specifying the outcome variable.}
 
-\item{predictor}{The name of the main predictor variable as a string.}
+\item{predictor}{A character string specifying the main predictor of interest.}
 
-\item{fixed_effects}{A string specifying the fixed effects to be included in the model, excluding the main predictor.}
+\item{fixed_effects}{A character string of other fixed effects.}
 
-\item{random_effects}{A string specifying the random effects to be included in the model. we assume that a subject ID is the first entry if this is a vector.}
+\item{random_effects}{A character string specifying the random effects structure (e.g., "(1 | commonID)").}
 
-\item{predictoroperator}{either a \code{+} or \code{*}}
+\item{predictoroperator}{A character string for the operator between fixed effects and the predictor (e.g., '*' or '+').}
 
-\item{verbose}{boolean}
+\item{verbose}{A logical indicating whether to print debugging information.}
 }
 \value{
-A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
-predictor, coefficients of the full model, and the count of unique levels in the random effects variable.
+A list containing the model, comparison, effect sizes, coefficients, and sample size, or NULL on error.
 }
 \description{
-This function fits two linear mixed effects models: a base model without the main predictor of interest
-and a full model including the main predictor. It then compares these models using ANOVA to test the
-significance of adding the main predictor. Additionally, it calculates the effect sizes for the predictor
-in the full model. This function is designed to facilitate the analysis of data where both fixed and
-random effects are present, accommodating complex experimental designs.
-NOTE: this function will scale variables internally to aid coefficient estimate visualization.
-}
-\examples{
-# Assuming 'data' is your dataset with columns 'outcome', 'predictor', 'fixed_var1', ...,
-# and 'subject' as the random effect:
-# results <- lmer_anv_p_and_d(data, "outcome", "predictor", "fixed_var1 + fixed_var2", "subject")
-# summary(results$full_model) # Full model summary
-# results$model_comparison # ANOVA comparison
-# results$effect_sizes # Effect sizes
+Fit and compare linear mixed-effects models and calculate effect sizes.
 }
