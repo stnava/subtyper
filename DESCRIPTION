@@ -69,6 +69,7 @@ Imports:
   magrittr,
   fastICA,
   pgenlibr,
+  progress,
   grDevices,
   sva,
   tidyselect,
