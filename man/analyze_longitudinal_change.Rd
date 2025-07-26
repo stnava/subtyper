@@ -24,33 +24,10 @@ analyze_longitudinal_change(
 \item{random_effect}{A character string for the name of the random grouping factor (e.g., "eid").}
 }
 \value{
-A list containing:
-\item{model}{The fitted \code{lmerMod} object.}
-\item{cohen_d}{The calculated Cohen's d for the main predictor.}
-\item{t_value}{The t-statistic for the main predictor.}
-\item{df}{The degrees of freedom for the t-statistic.}
-\item{p_value}{The p-value for the main predictor.}
-\item{spaghetti_plot}{A ggplot object showing individual trajectories.}
-\item{population_plot}{A ggplot object showing the model-predicted population trajectory.}
-Returns \code{NULL} if the model fails to converge or an error occurs.
+A list containing the model object, statistics, and ggplot objects, or NULL on error.
 }
 \description{
 This function fits a linear mixed-effects model to assess the relationship
 between a predictor and an outcome over time, while controlling for covariates.
 It returns the model object, key statistics, and two plots for visualization.
-}
-\examples{
-\dontrun{
-# Assuming `ukbbdL` is your data frame
-result <- analyze_longitudinal_change(
-  data = ukbbdL,
-  outcome_var = "t1PC1",
-  predictor = "yearsbl",
-  covariates = c("Age", "Sex", "T1Hier_resnetGrade"),
-  random_effect = "eid"
-)
-if (!is.null(result)) {
-  gridExtra::grid.arrange(result$spaghetti_plot, result$population_plot, ncol = 2)
-}
-}
 }

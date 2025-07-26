@@ -5376,31 +5376,8 @@ lmer_anv_p_and_d_old <- function(data, outcome, predictor, fixed_effects, random
 #' @param covariates A character vector of covariate names.
 #' @param random_effect A character string for the name of the random grouping factor (e.g., "eid").
 #'
-#' @return A list containing:
-#'   \item{model}{The fitted `lmerMod` object.}
-#'   \item{cohen_d}{The calculated Cohen's d for the main predictor.}
-#'   \item{t_value}{The t-statistic for the main predictor.}
-#'   \item{df}{The degrees of freedom for the t-statistic.}
-#'   \item{p_value}{The p-value for the main predictor.}
-#'   \item{spaghetti_plot}{A ggplot object showing individual trajectories.}
-#'   \item{population_plot}{A ggplot object showing the model-predicted population trajectory.}
-#'   Returns `NULL` if the model fails to converge or an error occurs.
+#' @return A list containing the model object, statistics, and ggplot objects, or NULL on error.
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Assuming `ukbbdL` is your data frame
-#' result <- analyze_longitudinal_change(
-#'   data = ukbbdL,
-#'   outcome_var = "t1PC1",
-#'   predictor = "yearsbl",
-#'   covariates = c("Age", "Sex", "T1Hier_resnetGrade"),
-#'   random_effect = "eid"
-#' )
-#' if (!is.null(result)) {
-#'   gridExtra::grid.arrange(result$spaghetti_plot, result$population_plot, ncol = 2)
-#' }
-#' }
 analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates = NULL, random_effect = "eid") {
   
   # --- 1. Input Validation and Setup ---
@@ -5411,23 +5388,20 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
     return(NULL)
   }
   
-  # Create a clean dataset with no missing values in required columns
   clean_data <- data %>%
     dplyr::select(all_of(required_vars)) %>%
     na.omit()
   
-  if (nrow(clean_data) < 20) { # Not enough data for a stable model
+  if (nrow(clean_data) < 20) {
     warning("Too few complete cases to fit model. Skipping.")
     return(NULL)
   }
 
   # --- 2. Fit the Mixed-Effects Model ---
-  # Safely construct the model formula
   fixed_effects_str <- paste(c(predictor, covariates), collapse = " + ")
   random_effect_str <- paste0("(1 | ", random_effect, ")")
   model_formula <- reformulate(c(fixed_effects_str, random_effect_str), response = outcome_var)
   
-  # Fit the model within a tryCatch block to handle convergence errors
   model <- tryCatch({
     lmerTest::lmer(model_formula, data = clean_data)
   }, error = function(e) {
@@ -5446,15 +5420,14 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
       return(NULL)
   }
 
-  # Calculate Cohen's d
   t_value <- predictor_row$statistic
   cohens_d <- effectsize::t_to_d(t_value, df = predictor_row$df)$d
   
   # --- 4. Create Visualizations ---
   
-  # Spaghetti Plot
+  # Spaghetti Plot (using .data pronoun correctly inside dplyr/ggplot)
   n_subjects <- length(unique(clean_data[[random_effect]]))
-  n_sample <- min(n_subjects, 100) # Sample 100 subjects or all if N < 100
+  n_sample <- min(n_subjects, 100)
   sampled_ids <- sample(unique(clean_data[[random_effect]]), n_sample)
   
   p1 <- ggplot(clean_data %>% dplyr::filter(.data[[random_effect]] %in% sampled_ids), 
@@ -5470,11 +5443,16 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
     theme_minimal(base_size = 14) +
     theme(legend.position = "top")
 
-  # Population-level plot
+  # --- FIX: Population-level plot data generation ---
+  # Use standard base R `[[...]]` subsetting inside `with()`, not the .data pronoun.
   grid <- with(clean_data, expand.grid(
-    predictor = seq(min(.data[[predictor]]), max(.data[[predictor]]), length.out = 100)
+    # This line is fixed
+    predictor = seq(min(clean_data[[predictor]]), max(clean_data[[predictor]]), length.out = 100)
   ))
+  names(grid)[1] <- predictor # Rename the column to match the predictor name
+
   for (covar in covariates) {
+    # This loop is also fixed to use standard subsetting
     grid[[covar]] <- if(is.numeric(clean_data[[covar]])) mean(clean_data[[covar]]) else names(which.max(table(clean_data[[covar]])))
   }
   
@@ -5482,7 +5460,7 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
   grid$pred <- pred_obj$fit
   grid$se <- pred_obj$se.fit
   
-  p2 <- ggplot(grid, aes(x = predictor, y = pred)) +
+  p2 <- ggplot(grid, aes(x = .data[[predictor]], y = pred)) +
     geom_ribbon(aes(ymin = pred - 1.96 * se, ymax = pred + 1.96 * se), fill = "#56B4E9", alpha = 0.3) +
     geom_line(color = "#0072B2", linewidth = 1.2) +
     labs(
