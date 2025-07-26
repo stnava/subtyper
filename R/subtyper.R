@@ -4949,6 +4949,190 @@ eliminateNonUniqueColumns <- function(matrix) {
   return(result_matrix)
 }
 
+#' A master function to run association analyses (LM or LMER).
+#'
+#' This function acts as a dispatcher, calling the appropriate helper
+#' (lm_anv_p_and_d or lmer_anv_p_and_d) based on whether the analysis
+#' is specified as longitudinal. It extracts and returns key metrics.
+#'
+#' @param data The dataframe containing all variables.
+#' @param predictors A character vector of predictor column names.
+#' @param outcomes A character vector of outcome column names.
+#' @param covariates A character string of covariates.
+#' @param dataset_name A string to label the results.
+#' @param analysis_type A string, either "Cross-Sectional" or "Longitudinal".
+#' @param use_delta_outcome A logical value. If TRUE (default), appends "_delta"
+#'   to the outcome variable for longitudinal analyses.
+#' @param random_effects A string for the random effects part of the LMER formula.
+#' @return A tidy data frame with results for every predictor-outcome pair.
+run_association_analysis <- function(data, predictors, outcomes, covariates, dataset_name, 
+                                     analysis_type = "Cross-Sectional", 
+                                     use_delta_outcome = TRUE,
+                                     random_effects = "(1 | PTID)") {
+  
+  all_results <- lapply(outcomes, function(outcome) {
+    
+    lapply(predictors, function(predictor) {
+      
+      # --- MODIFICATION: Conditionally append "_delta" ---
+      outcome_variable <- if (analysis_type == "Longitudinal" && use_delta_outcome) {
+        paste0(outcome, "_delta")
+      } else {
+        outcome
+      }
+      
+      # Ensure the final outcome variable exists in the data
+      if (!outcome_variable %in% names(data)) {
+        warning(paste("Outcome variable", outcome_variable, "not found in data. Skipping."))
+        return(NULL)
+      }
+      
+      # Run the appropriate model
+      if (analysis_type == "Longitudinal") {
+        model_results <- lmer_anv_p_and_d(
+          data = data,
+          outcome = outcome_variable,
+          predictor = predictor,
+          fixed_effects = covariates,
+          random_effects = random_effects,
+          predictoroperator = '*' # Always test for interaction in longitudinal
+        )
+      } else {
+        model_results <- lm_anv_p_and_d(
+          data = data,
+          outcome = outcome_variable,
+          predictor = predictor,
+          fixed_effects = covariates,
+          predictoroperator = '+'
+        )
+      }
+      
+      if (is.null(model_results)) return(NULL)
+      
+      # Extract coefficients and effect sizes
+      coeffs <- model_results$coefficients
+      effect_sizes <- model_results$effect_sizes
+      
+      # Find the specific term for the predictor of interest
+      term_of_interest <- if (analysis_type == "Longitudinal") {
+        # Find interaction term, e.g., "yearsbl:t1PC1"
+        # This part is robust and finds the correct interaction term
+        interaction_term <- grep(paste0(":", predictor), rownames(coeffs), value = TRUE, fixed = TRUE)
+        if (length(interaction_term) == 0) {
+            interaction_term <- grep(paste0(predictor, ":"), rownames(coeffs), value = TRUE, fixed = TRUE)
+        }
+        if (length(interaction_term) == 0) return(NULL) # No interaction term found
+        interaction_term[1] # Take the first one if multiple match
+      } else {
+        predictor
+      }
+      
+      if (is.na(term_of_interest) || !term_of_interest %in% rownames(coeffs)) return(NULL)
+      
+      # Return a one-row tibble with all key metrics
+      tibble::tibble(
+        dataset = dataset_name,
+        analysis_type = analysis_type,
+        predictor = predictor,
+        outcome = outcome,
+        t_stat = coeffs[term_of_interest, "t value"],
+        p_value = coeffs[term_of_interest, "Pr(>|t|)"],
+        cohens_d = effect_sizes[term_of_interest, "d"]
+      )
+    }) %>% bind_rows()
+  }) %>% bind_rows()
+  
+  return(all_results)
+}
+
+
+#' Fit and compare linear mixed-effects models and calculate effect sizes.
+#'
+#' @param data A data frame containing the data.
+#' @param outcome A character string specifying the outcome variable.
+#' @param predictor A character string specifying the main predictor of interest.
+#' @param fixed_effects A character string of other fixed effects.
+#' @param random_effects A character string specifying the random effects structure (e.g., "(1 | commonID)").
+#' @param predictoroperator A character string for the operator between fixed effects and the predictor (e.g., '*' or '+').
+#' @param verbose A logical indicating whether to print debugging information.
+#' @return A list containing the model, comparison, effect sizes, coefficients, and sample size, or NULL on error.
+#' @importFrom lmerTest lmer
+#' @importFrom lme4 isSingular 
+#' @importFrom stats anova
+#' @importFrom stringr str_extract str_match
+#' @importFrom effectsize t_to_d
+#' @export
+lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_effects, predictoroperator='*', verbose=FALSE ) {
+  # Validate input
+  stopifnot(is.character(outcome), is.character(predictor), is.character(fixed_effects), is.character(random_effects))
+
+  # --- FIX 1: Extract the grouping variable name from the random effects string ---
+  # This robustly gets "commonID" from "(1 | commonID)"
+  grouping_var <- trimws(sub(".*\\|\\s*", "", random_effects))
+  grouping_var <- gsub(")", "", grouping_var, fixed = TRUE)
+
+  # Construct model formulas
+  base_model_formula <- as.formula(paste(outcome, "~", fixed_effects, "+", random_effects))
+  full_model_formula <- as.formula(paste(outcome, "~", fixed_effects, predictoroperator, predictor, "+", random_effects))
+  
+  # Get all variables needed for the model, including the grouping variable
+  all_vars_in_formula <- all.vars(full_model_formula)
+  
+  # --- FIX 2: Explicitly add the grouping variable to the list of required columns ---
+  required_vars <- unique(c(all_vars_in_formula, grouping_var))
+  
+  missing_vars <- setdiff(required_vars, colnames(data))
+  if (length(missing_vars) > 0) {
+    warning("The following variables are missing in the data: ", paste(missing_vars, collapse = ", "), ". Skipping.")
+    return(NULL)
+  }
+  
+  # Subset data, ensuring the grouping variable is kept
+  datasub <- na.omit(data[, required_vars])
+  
+  if (nrow(datasub) < 10) { # Not enough data to fit a model
+      return(NULL)
+  }
+  
+  # This helper function was provided in the original script
+  hasConverged <- function (mm) {
+    if(is.null(unlist(mm@optinfo$conv$lme4))) return(1)
+    if(isSingular(mm)) return(0)
+    return(-1)
+  }
+
+  # Fit models in tryCatch blocks
+  base_model <- tryCatch({
+    lmer(base_model_formula, data = datasub, REML = FALSE)
+  }, error = function(e) NULL)
+  
+  if (is.null(base_model)) return(NULL)
+  
+  full_model <- tryCatch({
+    lmer(full_model_formula, data = datasub, REML = FALSE)
+  }, error = function(e) NULL)
+  
+  if (is.null(full_model) || hasConverged(full_model) != 1) return(NULL)
+  
+  # Perform ANOVA
+  model_comparison <- anova(base_model, full_model)
+  
+  # Calculate effect sizes
+  coefs <- summary(full_model)$coefficients
+  ndf <- round(coefs[, "df"])
+  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], ndf)
+  effect_sizes <- data.frame(effect_sizes)
+  rownames(effect_sizes) <- rownames(coefs)
+  
+  # Return results
+  list(
+    full_model = full_model,
+    model_comparison = model_comparison,
+    effect_sizes = effect_sizes,
+    coefficients = coefs,
+    n = length(unique(datasub[[grouping_var]]))
+  )
+}
 
 
 #' Linear Mixed Effects Model Analysis with ANOVA and Effect Size Calculation
@@ -4976,13 +5160,7 @@ eliminateNonUniqueColumns <- function(matrix) {
 #' # summary(results$full_model) # Full model summary
 #' # results$model_comparison # ANOVA comparison
 #' # results$effect_sizes # Effect sizes
-#' @importFrom lmerTest lmer
-#' @importFrom lme4 isSingular 
-#' @importFrom stats anova
-#' @importFrom stringr str_extract str_match
-#' @importFrom effectsize t_to_d
-#' @export
-lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_effects, predictoroperator='*', verbose=FALSE ) {
+lmer_anv_p_and_d_old <- function(data, outcome, predictor, fixed_effects, random_effects, predictoroperator='*', verbose=FALSE ) {
   # Validate input to ensure variables exist in the data frame
   stopifnot(is.character(outcome), is.character(predictor), is.character(fixed_effects), is.character(random_effects))
 
@@ -5069,6 +5247,146 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_eff
   return(results)
 }
 
+
+#' Analyze and Visualize Longitudinal Change with a Mixed-Effects Model
+#'
+#' This function fits a linear mixed-effects model to assess the relationship
+#' between a predictor and an outcome over time, while controlling for covariates.
+#' It returns the model object, key statistics, and two plots for visualization.
+#'
+#' @param data A data frame containing the data.
+#' @param outcome_var A character string specifying the name of the outcome variable.
+#' @param predictor A character string specifying the main predictor of interest (e.g., "yearsbl").
+#' @param covariates A character vector of covariate names.
+#' @param random_effect A character string for the name of the random grouping factor (e.g., "eid").
+#'
+#' @return A list containing:
+#'   \item{model}{The fitted `lmerMod` object.}
+#'   \item{cohen_d}{The calculated Cohen's d for the main predictor.}
+#'   \item{t_value}{The t-statistic for the main predictor.}
+#'   \item{df}{The degrees of freedom for the t-statistic.}
+#'   \item{p_value}{The p-value for the main predictor.}
+#'   \item{spaghetti_plot}{A ggplot object showing individual trajectories.}
+#'   \item{population_plot}{A ggplot object showing the model-predicted population trajectory.}
+#'   Returns `NULL` if the model fails to converge or an error occurs.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Assuming `ukbbdL` is your data frame
+#' result <- analyze_longitudinal_change(
+#'   data = ukbbdL,
+#'   outcome_var = "t1PC1",
+#'   predictor = "yearsbl",
+#'   covariates = c("Age", "Sex", "T1Hier_resnetGrade"),
+#'   random_effect = "eid"
+#' )
+#' if (!is.null(result)) {
+#'   gridExtra::grid.arrange(result$spaghetti_plot, result$population_plot, ncol = 2)
+#' }
+#' }
+analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates = NULL, random_effect = "eid") {
+  
+  # --- 1. Input Validation and Setup ---
+  required_vars <- unique(c(outcome_var, predictor, covariates, random_effect))
+  missing_vars <- setdiff(required_vars, names(data))
+  if (length(missing_vars) > 0) {
+    warning("Missing variables in data: ", paste(missing_vars, collapse = ", "), ". Skipping.")
+    return(NULL)
+  }
+  
+  # Create a clean dataset with no missing values in required columns
+  clean_data <- data %>%
+    dplyr::select(all_of(required_vars)) %>%
+    na.omit()
+  
+  if (nrow(clean_data) < 20) { # Not enough data for a stable model
+    warning("Too few complete cases to fit model. Skipping.")
+    return(NULL)
+  }
+
+  # --- 2. Fit the Mixed-Effects Model ---
+  # Safely construct the model formula
+  fixed_effects_str <- paste(c(predictor, covariates), collapse = " + ")
+  random_effect_str <- paste0("(1 | ", random_effect, ")")
+  model_formula <- reformulate(c(fixed_effects_str, random_effect_str), response = outcome_var)
+  
+  # Fit the model within a tryCatch block to handle convergence errors
+  model <- tryCatch({
+    lmerTest::lmer(model_formula, data = clean_data)
+  }, error = function(e) {
+    warning("lmer model failed to converge or errored: ", e$message)
+    return(NULL)
+  })
+  
+  if (is.null(model)) return(NULL)
+
+  # --- 3. Extract Results and Metrics ---
+  fixed_effects_df <- broom.mixed::tidy(model, effects = "fixed")
+  predictor_row <- fixed_effects_df %>% dplyr::filter(term == predictor)
+  
+  if (nrow(predictor_row) == 0) {
+      warning("Predictor term not found in model summary. Skipping.")
+      return(NULL)
+  }
+
+  # Calculate Cohen's d
+  t_value <- predictor_row$statistic
+  cohens_d <- effectsize::t_to_d(t_value, df = predictor_row$df)$d
+  
+  # --- 4. Create Visualizations ---
+  
+  # Spaghetti Plot
+  n_subjects <- length(unique(clean_data[[random_effect]]))
+  n_sample <- min(n_subjects, 100) # Sample 100 subjects or all if N < 100
+  sampled_ids <- sample(unique(clean_data[[random_effect]]), n_sample)
+  
+  p1 <- ggplot(clean_data %>% dplyr::filter(.data[[random_effect]] %in% sampled_ids), 
+               aes(x = .data[[predictor]], y = .data[[outcome_var]], group = .data[[random_effect]])) +
+    geom_line(aes(color = .data[[covariates[1]]]), alpha = 0.3) +
+    geom_smooth(aes(group = .data[[covariates[1]]], color = .data[[covariates[1]]]),
+                method = "lm", se = TRUE, linewidth = 1.2) +
+    labs(
+      title = paste("Longitudinal Change in", outcome_var),
+      subtitle = sprintf("Cohen's d = %.2f, p = %.3g", cohens_d, predictor_row$p.value),
+      x = predictor, y = outcome_var, color = covariates[1]
+    ) +
+    theme_minimal(base_size = 14) +
+    theme(legend.position = "top")
+
+  # Population-level plot
+  grid <- with(clean_data, expand.grid(
+    predictor = seq(min(.data[[predictor]]), max(.data[[predictor]]), length.out = 100)
+  ))
+  for (covar in covariates) {
+    grid[[covar]] <- if(is.numeric(clean_data[[covar]])) mean(clean_data[[covar]]) else names(which.max(table(clean_data[[covar]])))
+  }
+  
+  pred_obj <- predict(model, newdata = grid, re.form = NA, se.fit = TRUE)
+  grid$pred <- pred_obj$fit
+  grid$se <- pred_obj$se.fit
+  
+  p2 <- ggplot(grid, aes(x = predictor, y = pred)) +
+    geom_ribbon(aes(ymin = pred - 1.96 * se, ymax = pred + 1.96 * se), fill = "#56B4E9", alpha = 0.3) +
+    geom_line(color = "#0072B2", linewidth = 1.2) +
+    labs(
+      title = paste("Population-Level Model of", outcome_var),
+      subtitle = "Model-predicted trajectory with 95% CI",
+      x = predictor, y = outcome_var
+    ) +
+    theme_minimal(base_size = 14)
+
+  # --- 5. Return All Results ---
+  return(list(
+    model = model,
+    cohen_d = cohens_d,
+    t_value = t_value,
+    df = predictor_row$df,
+    p_value = predictor_row$p.value,
+    spaghetti_plot = p1,
+    population_plot = p2
+  ))
+}
 
 #' Forcefully Unload a Package in R
 #'
