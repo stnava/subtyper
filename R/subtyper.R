@@ -4949,6 +4949,116 @@ eliminateNonUniqueColumns <- function(matrix) {
   return(result_matrix)
 }
 
+
+#' Select High-Quality Imaging Data Based on Available QC Metrics
+#'
+#' This function filters a data frame to include only subjects/scans that meet
+#' a set of predefined quality control (QC) criteria. It dynamically applies
+#' filters only for the QC columns that are present in the input data frame,
+#' and prints a message for any skipped QC checks.
+#'
+#' @param data A data frame containing some or all of the QC variables.
+#' @param t1_grade_thresh A numeric value for the minimum acceptable T1 image
+#'   quality grade. Filtering is skipped if `T1Hier_resnetGrade` column is absent.
+#'   Default is 0.8.
+#' @param rsfmri_fd_thresh A numeric value for the maximum acceptable mean
+#'   framewise displacement (FD) in rsfMRI data. Filtering is skipped if
+#'   `rsfMRI_fcnxpro122_FD_mean` column is absent. Default is 0.5.
+#' @param dti_fd_thresh A numeric value for the maximum acceptable mean
+#'   framewise displacement (FD) in DTI data. Filtering is skipped if
+#'   `DTI_dti_FD_mean` column is absent. Default is 10.
+#' @param rsfmri_minutes_thresh A numeric value for the minimum acceptable
+#'   duration of uncensored rsfMRI data in minutes. Filtering is skipped if
+#'   `rsfMRI_fcnxpro122_minutes_censored_data` column is absent. Default is 2.
+#' @param study_name An optional character string. If provided, the data will
+#'   also be filtered to include only rows where the `studyName` column
+#'   matches this value. Filtering is skipped if `studyName` column is absent.
+#'   Default is NULL.
+#'
+#' @return A logical vector of the same length as `nrow(data)`. `TRUE` indicates
+#'   a row that passes all available QC criteria, and `FALSE` indicates a row
+#'   that fails at least one.
+#' @export
+#'
+#' @examples
+#' # Create a dummy data frame that is missing the DTI column
+#' mock_data <- data.frame(
+#'   T1Hier_resnetGrade = c(0.9, 0.7, 0.95, 0.85),
+#'   rsfMRI_fcnxpro122_FD_mean = c(0.2, 0.6, 0.3, 0.4),
+#'   rsfMRI_fcnxpro122_minutes_censored_data = c(5, 4, 3, 6),
+#'   studyName = c("ADNI", "ADNI", "PPMI", "ADNI")
+#' )
+#'
+#' # The function will run, apply all possible filters, and print a message
+#' # about the missing DTI column.
+#' qc_passed <- select_high_quality_data(mock_data, study_name = "ADNI")
+#' #> Message: QC check for 'DTI_dti_FD_mean' skipped: column not found.
+#' print(qc_passed)
+#' #> [1]  TRUE FALSE FALSE  TRUE
+select_high_quality_data <- function(data, 
+                                     t1_grade_thresh = 0.8, 
+                                     rsfmri_fd_thresh = 0.5, 
+                                     dti_fd_thresh = 10, 
+                                     rsfmri_minutes_thresh = 2,
+                                     study_name = NULL) {
+  
+  # Start with a vector of all TRUEs, representing all rows passing initially
+  qualsel <- rep(TRUE, nrow(data))
+  
+  # Helper function to check for a column and print a message if absent
+  check_and_filter <- function(col_name, filter_expr, message_if_absent) {
+    if (col_name %in% names(data)) {
+      # The filter expression is evaluated in the context of the calling function
+      # This uses non-standard evaluation, so we pass the expression itself
+      return(filter_expr)
+    } else {
+      message(paste("QC check for", message_if_absent, "skipped: column not found."))
+      return(rep(TRUE, nrow(data))) # If column is missing, all rows pass this check
+    }
+  }
+  
+  # --- Sequentially apply each filter only if the column exists ---
+  
+  qualsel <- qualsel & check_and_filter(
+    "T1Hier_resnetGrade", 
+    data$T1Hier_resnetGrade > t1_grade_thresh,
+    "'T1Hier_resnetGrade'"
+  )
+  
+  qualsel <- qualsel & check_and_filter(
+    "rsfMRI_fcnxpro122_FD_mean",
+    data$rsfMRI_fcnxpro122_FD_mean <= rsfmri_fd_thresh,
+    "'rsfMRI_fcnxpro122_FD_mean'"
+  )
+  
+  qualsel <- qualsel & check_and_filter(
+    "DTI_dti_FD_mean",
+    data$DTI_dti_FD_mean <= dti_fd_thresh,
+    "'DTI_dti_FD_mean'"
+  )
+  
+  qualsel <- qualsel & check_and_filter(
+    "rsfMRI_fcnxpro122_minutes_censored_data",
+    data$rsfMRI_fcnxpro122_minutes_censored_data >= rsfmri_minutes_thresh,
+    "'rsfMRI_fcnxpro122_minutes_censored_data'"
+  )
+  
+  # Apply the study name filter only if it's provided and the column exists
+  if (!is.null(study_name)) {
+    qualsel <- qualsel & check_and_filter(
+      "studyName",
+      data$studyName == study_name,
+      "'studyName'"
+    )
+  }
+  
+  # Convert any NAs that result from comparisons to FALSE
+  # This ensures that rows with missing values for a given QC check fail that check.
+  qualsel[is.na(qualsel)] <- FALSE
+  
+  return(qualsel)
+}
+
 #' A management function to run association analyses (LM or LMER) with progress.
 #'
 #' This function acts as a dispatcher, calling the appropriate helper
