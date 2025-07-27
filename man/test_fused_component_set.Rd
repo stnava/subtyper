@@ -16,7 +16,8 @@ test_fused_component_set(
   outcome_label = NULL,
   predictor_name_map = NULL,
   verbose = FALSE,
-  interact_with_all = FALSE
+  interact_with_all = FALSE,
+  p_threshold = 0.005
 )
 }
 \arguments{
@@ -48,12 +49,17 @@ human-readable labels. Example: \code{list(t1PC10 = "Temporal Atrophy")}.}
 \item{interact_with_all}{A logical. If \code{FALSE} (default) and \code{predictoroperator = "*"},
 only the variable in \code{plot_interaction_with} is interacted with the predictors.
 If \code{TRUE}, all \code{covariates} are interacted with the predictors.}
+
+\item{p_threshold}{A numeric p-value (default \code{0.05}). Only models with an
+overall p-value from the model comparison below this threshold will have
+a plot generated. Set to \code{1.0} to generate plots for all models.}
 }
 \value{
-A list containing \code{summary_stats}, \code{combined_plot}, \code{effect_sizes}, and \code{coefficients}.
+A list containing \code{summary_stats}, \code{effect_sizes}, \code{coefficients}, and
+\code{combined_plot} (which will be \code{NULL} if p > \code{p_threshold}).
 }
 \description{
 This is the core analysis engine. It builds and compares models
 (\code{lm} or \code{lmer}) for a single set of predictors. It creates publication-quality
-plots with informative titles, significance stars, and human-readable labels.
+plots for models that meet a significance threshold.
 }

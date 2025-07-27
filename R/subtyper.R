@@ -7938,31 +7938,37 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effect
 }
 
 
-# 4. DEFINE THE MAIN ANALYSIS ENGINE
-# ==========================================================================
-#' @title Test a Fused Set of Components and Create Informative Plots
-#' @description This is the core analysis engine. It builds and compares models
-#'   (`lm` or `lmer`) for a single set of predictors. It creates publication-quality
-#'   plots with informative titles, significance stars, and human-readable labels.
+#' Test a Fused Set of Components and Create Informative Plots
+#'
+#' This is the core analysis engine. It builds and compares models
+#' (`lm` or `lmer`) for a single set of predictors. It creates publication-quality
+#' plots for models that meet a significance threshold.
+#'
+#' @param p_threshold A numeric p-value (default `0.05`). Only models with an
+#'   overall p-value from the model comparison below this threshold will have
+#'   a plot generated. Set to `1.0` to generate plots for all models.
 #' @inheritParams run_fused_analysis_sweep
-#' @return A list containing `summary_stats`, `combined_plot`, `effect_sizes`, and `coefficients`.
+#' @return A list containing `summary_stats`, `effect_sizes`, `coefficients`, and
+#'   `combined_plot` (which will be `NULL` if p > `p_threshold`).
 #' @export
-test_fused_component_set <- function(data, pc_index, outcome, covariates, modality_prefixes, 
-                                     random_effects = NULL, predictoroperator = "+", 
+test_fused_component_set <- function(data, pc_index, outcome, covariates, modality_prefixes,
+                                     random_effects = NULL, predictoroperator = "+",
                                      plot_interaction_with = NULL, outcome_label = NULL,
                                      predictor_name_map = NULL, verbose = FALSE,
-                                     interact_with_all = FALSE) {
-  
+                                     interact_with_all = FALSE,
+                                     p_threshold = 0.005) { # <-- NEW PARAMETER
+
   fused_predictors <- paste0(modality_prefixes, "PC", pc_index)
   fused_predictors_string <- paste(fused_predictors, collapse = " + ")
-  
-  if (!is.null(random_effects)) { 
-    model_results <- lmer_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string, 
-                                      covariates=covariates, random_effects=random_effects, 
+
+  # --- Model Fitting (Unchanged) ---
+  if (!is.null(random_effects)) {
+    model_results <- lmer_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string,
+                                      covariates=covariates, random_effects=random_effects,
                                       predictoroperator=predictoroperator, verbose=verbose,
-                                      plot_interaction_with=plot_interaction_with, 
+                                      plot_interaction_with=plot_interaction_with,
                                       interact_with_all=interact_with_all)
-  } else { 
+  } else {
     model_results <- lm_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string,
                                     covariates=covariates, predictoroperator=predictoroperator,
                                     verbose=verbose, plot_interaction_with=plot_interaction_with,
@@ -7970,37 +7976,71 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
   }
   if (is.null(model_results)) { return(NULL) }
   
-  full_model <- model_results$full_model; model_coefs <- model_results$coefficients
-  y_label <- if (!is.null(outcome_label)) outcome_label else outcome
+  # --- Extract Key Results (Unchanged) ---
+  full_model <- model_results$full_model
+  model_coefs <- model_results$coefficients
   
-  plot_list <- lapply(fused_predictors, function(pred_var_name) {
-    pred_p_value <- if (pred_var_name %in% rownames(model_coefs)) model_coefs[pred_var_name, "Pr(>|t|)"] else NA
-    stars <- add_significance_stars(pred_p_value)
-    pretty_pred_name <- if (!is.null(predictor_name_map) && pred_var_name %in% names(predictor_name_map)) predictor_name_map[[pred_var_name]] else pred_var_name
-    subplot_title <- paste0(pretty_pred_name, " ", stars)
-    tryCatch({
-      args_for_plot <- list(model = full_model, pred = pred_var_name, interval = TRUE, y.label = y_label, data = if (inherits(full_model, "lm")) full_model$model else full_model@frame)
-      if (!is.null(plot_interaction_with) && predictoroperator == "*") args_for_plot$modx <- plot_interaction_with
-      do.call(jtools::effect_plot, args_for_plot) + ggplot2::labs(title = subplot_title)
-    }, error = function(e) NULL)
-  })
-  
-  compact_plot_list <- purrr::compact(plot_list)
-  if (length(compact_plot_list) == 0) return(NULL)
-  
+  # Get the overall model p-value from the ANOVA comparison
   last_col_index <- ncol(model_results$model_comparison)
   overall_p_value <- model_results$model_comparison[2, last_col_index]
-  formatted_p <- insight::format_p(overall_p_value,digits=4)
-  main_plot_title <- sprintf("Partial Effects for Component Set %d on %s\nOverall Model %s", pc_index, y_label, formatted_p)
-  
-  unified_plot <- gridExtra::grid.arrange(grobs = compact_plot_list, nrow = round(sqrt(length(compact_plot_list))),
-    top = grid::textGrob(main_plot_title, gp = grid::gpar(fontsize = 14, fontface = "bold")))
-  
+
+  # =======================================================================
+  # --- THE FIX: Conditional Plot Generation ---
+  # =======================================================================
+
+  # Initialize the plot object as NULL. It will only be created if the
+  # model is significant according to the user-defined threshold.
+  unified_plot <- NULL
+
+  # Check if the overall model p-value is valid and below the threshold
+  if (!is.na(overall_p_value) && overall_p_value < p_threshold) {
+    
+    # --- All Plotting Logic is now inside this 'if' block ---
+    y_label <- if (!is.null(outcome_label)) outcome_label else outcome
+    
+    plot_list <- lapply(fused_predictors, function(pred_var_name) {
+      pred_p_value <- if (pred_var_name %in% rownames(model_coefs)) model_coefs[pred_var_name, "Pr(>|t|)"] else NA
+      stars <- add_significance_stars(pred_p_value)
+      pretty_pred_name <- predictor_name_map[[pred_var_name]] %||% pred_var_name
+      subplot_title <- paste0(pretty_pred_name, " ", stars)
+      
+      tryCatch({
+        args_for_plot <- list(model = full_model, pred = pred_var_name, interval = TRUE, y.label = y_label, data = insight::get_data(full_model))
+        if (!is.null(plot_interaction_with) && predictoroperator == "*") args_for_plot$modx <- plot_interaction_with
+        do.call(jtools::effect_plot, args_for_plot) + ggplot2::labs(title = subplot_title)
+      }, error = function(e) NULL)
+    })
+    
+    compact_plot_list <- purrr::compact(plot_list)
+    
+    # Only proceed if there are actually plots to arrange
+    if (length(compact_plot_list) > 0) {
+        formatted_p <- insight::format_p(overall_p_value, digits = 4)
+        main_plot_title <- sprintf("Partial Effects for Component Set %d on %s\nOverall Model %s", pc_index, y_label, formatted_p)
+        
+        # Assign the generated plot object to our variable
+        unified_plot <- gridExtra::grid.arrange(
+            grobs = compact_plot_list,
+            nrow = round(sqrt(length(compact_plot_list))),
+            top = grid::textGrob(main_plot_title, gp = grid::gpar(fontsize = 14, fontface = "bold"))
+        )
+    }
+  } # End of conditional plotting block
+
+  # --- Assemble Final Output (Unchanged, but now `unified_plot` can be NULL) ---
   f_squared <- if (!is.null(model_results$delta_R2)) delta_R2_to_f2(model_results$delta_R2, model_results$r2_full) else NA
-  
-  list(summary_stats = tibble(pc_index=pc_index, outcome=outcome, model_p_value=overall_p_value, delta_R2=model_results$delta_R2, cohen_f_squared=f_squared),
-       combined_plot = unified_plot, effect_sizes = model_results$effect_sizes, coefficients = model_results$coefficients)
+
+  list(
+    summary_stats = tibble(pc_index=pc_index, outcome=outcome, model_p_value=overall_p_value, delta_R2=model_results$delta_R2, cohen_f_squared=f_squared),
+    combined_plot = unified_plot, # This will be NULL for non-significant models
+    effect_sizes = model_results$effect_sizes,
+    coefficients = model_results$coefficients
+  )
 }
+
+# A simple helper function to provide a default value if the primary is NULL
+`%||%` <- function(a, b) if (is.null(a)) b else a
+
 
 # 5. DEFINE THE TOP-LEVEL ORCHESTRATOR
 # ==========================================================================
