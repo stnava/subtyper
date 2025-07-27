@@ -26,7 +26,7 @@ steps: &steps
           Rscript -e "devtools::install_github('jhmadsen/DDoutlier')"
     - run:
         name: Install package dependencies manually
-        command: Rscript -e "install.packages(c( 'fmsb', 'kableExtra', 'cardx',  'nmfbin',  'glasso',  'FRESA.CAD', 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot','ciTools'))"
+        command: Rscript -e "install.packages(c( 'fmsb', 'kableExtra', 'cardx', 'jtools', 'nmfbin',  'glasso',  'FRESA.CAD', 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot','ciTools'))"
     - run:
         no_output_timeout: 30m
         name: Build package
