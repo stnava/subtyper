@@ -5162,93 +5162,7 @@ run_association_analysis <- function(data, predictors, outcomes, covariates, dat
 }
 
 
-#' Fit and compare linear mixed-effects models and calculate effect sizes.
-#'
-#' @param data A data frame containing the data.
-#' @param outcome A character string specifying the outcome variable.
-#' @param predictor A character string specifying the main predictor of interest.
-#' @param fixed_effects A character string of other fixed effects.
-#' @param random_effects A character string specifying the random effects structure (e.g., "(1 | commonID)").
-#' @param predictoroperator A character string for the operator between fixed effects and the predictor (e.g., '*' or '+').
-#' @param verbose A logical indicating whether to print debugging information.
-#' @return A list containing the model, comparison, effect sizes, coefficients, and sample size, or NULL on error.
-#' @importFrom lmerTest lmer
-#' @importFrom lme4 isSingular 
-#' @importFrom stats anova
-#' @importFrom stringr str_extract str_match
-#' @importFrom effectsize t_to_d
-#' @export
-lmer_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, random_effects, predictoroperator='*', verbose=FALSE ) {
-  # Validate input
-  stopifnot(is.character(outcome), is.character(predictor), is.character(fixed_effects), is.character(random_effects))
 
-  # --- FIX 1: Extract the grouping variable name from the random effects string ---
-  # This robustly gets "commonID" from "(1 | commonID)"
-  grouping_var <- trimws(sub(".*\\|\\s*", "", random_effects))
-  grouping_var <- gsub(")", "", grouping_var, fixed = TRUE)
-
-  # Construct model formulas
-  base_model_formula <- as.formula(paste(outcome, "~", fixed_effects, "+", random_effects))
-  full_model_formula <- as.formula(paste(outcome, "~", fixed_effects, predictoroperator, predictor, "+", random_effects))
-  
-  # Get all variables needed for the model, including the grouping variable
-  all_vars_in_formula <- all.vars(full_model_formula)
-  
-  # --- FIX 2: Explicitly add the grouping variable to the list of required columns ---
-  required_vars <- unique(c(all_vars_in_formula, grouping_var))
-  
-  missing_vars <- setdiff(required_vars, colnames(data))
-  if (length(missing_vars) > 0) {
-    warning("The following variables are missing in the data: ", paste(missing_vars, collapse = ", "), ". Skipping.")
-    return(NULL)
-  }
-  
-  # Subset data, ensuring the grouping variable is kept
-  datasub <- na.omit(data[, required_vars])
-  
-  if (nrow(datasub) < 10) { # Not enough data to fit a model
-      return(NULL)
-  }
-  
-  # This helper function was provided in the original script
-  hasConverged <- function (mm) {
-    if(is.null(unlist(mm@optinfo$conv$lme4))) return(1)
-    if(isSingular(mm)) return(0)
-    return(-1)
-  }
-
-  # Fit models in tryCatch blocks
-  base_model <- tryCatch({
-    lmer(base_model_formula, data = datasub, REML = FALSE)
-  }, error = function(e) NULL)
-  
-  if (is.null(base_model)) return(NULL)
-  
-  full_model <- tryCatch({
-    lmer(full_model_formula, data = datasub, REML = FALSE)
-  }, error = function(e) NULL)
-  
-  if (is.null(full_model) || hasConverged(full_model) != 1) return(NULL)
-  
-  # Perform ANOVA
-  model_comparison <- anova(base_model, full_model)
-  
-  # Calculate effect sizes
-  coefs <- summary(full_model)$coefficients
-  ndf <- round(coefs[, "df"])
-  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], ndf)
-  effect_sizes <- data.frame(effect_sizes)
-  rownames(effect_sizes) <- rownames(coefs)
-  
-  # Return results
-  list(
-    full_model = full_model,
-    model_comparison = model_comparison,
-    effect_sizes = effect_sizes,
-    coefficients = coefs,
-    n = length(unique(datasub[[grouping_var]]))
-  )
-}
 
 
 #' Linear Mixed Effects Model Analysis with ANOVA and Effect Size Calculation
@@ -5524,99 +5438,6 @@ force_unload_package <- function(pkg) {
 }
 
 
-#' Linear Regression Analysis with ANOVA and Effect Size Calculation
-#'
-#' This function fits two linear regression models: a base model without the main predictor of interest
-#' and a full model including the main predictor. It then compares these models using ANOVA to test the
-#' significance of adding the main predictor. Additionally, it calculates the effect sizes for the predictor
-#' in the full model. This function is designed to facilitate the analysis of data.
-#' NOTE: this function will scale variables internally to aid coefficient estimate visualization.
-#'
-#' @param data A data frame containing the variables referenced in the model formulas.
-#' @param outcome The name of the dependent variable (outcome) as a string.
-#' @param predictor The name of the main predictor variable as a string.
-#' @param fixed_effects A string specifying the fixed effects to be included in the model, excluding the main predictor.
-#' @param predictoroperator either a \code{+} or \code{*}
-#' @param verbose boolean
-#' @return A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
-#' predictor, coefficients of the full model, and the sample size (n).
-#' @examples
-#' # Assuming 'data' is your dataset with columns 'outcome', 'predictor', and 'fixed_var1', ...
-#' # results <- lm_anv_p_and_d(data, "outcome", "predictor", "fixed_var1 + fixed_var2")
-#' # summary(results$full_model) # Full model summary
-#' # results$model_comparison # ANOVA comparison
-#' # results$effect_sizes # Effect sizes
-#' @importFrom stats lm anova
-#' @importFrom effectsize t_to_d
-#' @export
-lm_anv_p_and_d <- function(data, outcome, predictor, fixed_effects, predictoroperator='*', verbose=FALSE) {
-  # Validate input to ensure variables exist in the data frame
-  stopifnot(is.character(outcome), is.character(predictor), is.character(fixed_effects))
-  
-  # Construct the model formulas directly
-  base_model_formula <- paste(outcome, "~", fixed_effects)
-  if (verbose) {
-    print("base_model_formula")
-    print(base_model_formula)
-  }
-  full_model_formula <- paste(base_model_formula, predictoroperator, predictor)
-  base_model_formula <- as.formula(base_model_formula)
-  full_model_formula <- as.formula(full_model_formula)
-  all_vars <- all.vars(full_model_formula)
-  missing_vars <- setdiff(all_vars, colnames(data))
-  if (verbose) {
-    print(full_model_formula)
-  }
-  if (length(missing_vars) > 0) {
-    stop("The following variables are missing in the data: ", paste(missing_vars, collapse = ", "), ".")
-  }
-  
-  # Subset data to exclude rows with NA values for relevant variables
-  datasub <- na.omit(data[, all_vars])
-  
-  # Fit the linear models using lm
-  base_model <- tryCatch({
-    lm(base_model_formula, data = datasub)
-  }, error = function(e) {
-    print("ERROR")
-    print(e)
-    NULL
-  })
-  if (is.null(base_model)) return(NULL)
-  
-  full_model <- tryCatch({
-    lm(full_model_formula, data = datasub)
-  }, error = function(e) {
-    print("ERROR")
-    print(e)
-    NULL
-  })
-  if (is.null(full_model)) return(NULL)
-  
-  # Perform ANOVA to compare the models
-  model_comparison <- anova(base_model, full_model)
-  
-  # Calculate effect sizes for the full model
-  coefs <- summary(full_model)$coefficients
-  ndf <- nrow(datasub)
-  effect_sizes <- effectsize::t_to_d(coefs[, "t value"], rep(ndf, nrow(coefs)))
-  effect_sizes <- data.frame(effect_sizes)
-  rownames(effect_sizes) <- rownames(coefs)
-  searchpred <- all.vars(formula(paste0("z~", predictor)))[-1]
-  effect_sizes <- effect_sizes[multigrep(searchpred, rownames(effect_sizes)), ]
-  
-  # Prepare and return the results
-  results <- list(
-    full_model = full_model,
-    model_comparison = model_comparison,
-    effect_sizes = effect_sizes,
-    coefficients = coefs,
-    n = ndf,
-    base_model=base_model
-  )
-  
-  return(results)
-}
 
 
 #' Set Seed Based on Current Time
@@ -7936,4 +7757,300 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
   } else {
     stop("Invalid method. Choose either 'ggraph', 'sankey', or 'alluvial'")
   }
+}
+
+# 1. LOAD ALL NECESSARY LIBRARIES
+# ==========================================================================
+library(lmerTest); library(lme4); library(performance); library(effectsize)
+library(jtools); library(gridExtra); library(grid); library(tibble)
+library(ggplot2); library(dplyr); library(purrr); library(progress); library(insight)
+
+# 2. DEFINE HELPER FUNCTIONS
+# ==========================================================================
+#' Convert P-value to Significance Stars
+#'
+#' This helper function takes a numeric p-value and returns a character string
+#' containing the conventional stars for statistical significance.
+#'
+#' @param p A numeric p-value. Can be `NA`.
+#' @return A character string: `***` for p < 0.001, `**` for p < 0.01, `*` for
+#'   p < 0.05, or an empty string (`""`) for non-significant p-values or if `p` is `NA`.
+#' @examples
+#' add_significance_stars(0.045) # Returns "*"
+#' add_significance_stars(0.005) # Returns "**"
+#' add_significance_stars(0.15)  # Returns ""
+#' add_significance_stars(NA)    # Returns ""
+#' @export
+add_significance_stars <- function(p) { if(is.na(p))"" else if(p<0.001)"***" else if(p<0.01)"**" else if(p<0.05)"*" else "" }
+
+#' Calculate Cohen's f-squared from Delta R-squared
+#'
+#' Calculates the Cohen's f-squared effect size, a measure of local effect size
+#' for a set of predictors in a hierarchical regression model.
+#'
+#' @param delta_r2 The change in R-squared (numeric) when the predictors of
+#'   interest are added to the model (i.e., R-squared of the full model minus
+#'   R-squared of the base model).
+#' @param r2_full The R-squared (numeric) of the full model that includes the
+#'   predictors of interest.
+#' @return The numeric value for Cohen's f-squared.
+#' @references
+#' Cohen, J. (1988). *Statistical power analysis for the behavioral sciences*
+#' (2nd ed.). Hillsdale, NJ: Erlbaum.
+#' @examples
+#' # Calculate f-squared for a set of predictors that added 5% to the variance
+#' # explained, where the final model explained 30% of the variance.
+#' delta_R2_to_f2(delta_r2 = 0.05, r2_full = 0.30)
+#' @export
+delta_R2_to_f2 <- function(delta_r2, r2_full) { delta_r2 / (1 - r2_full) }
+
+# 3. DEFINE MODEL FITTING ENGINES (WITH NEW INTERACTION LOGIC)
+# ==========================================================================
+#' @title Fit and Compare Linear Models
+#' @description Internal helper for `lm` models with flexible interaction specification.
+#' @inheritParams run_fused_analysis_sweep
+#' @param predictor A character string specifying the main predictor(s).
+#' @return A harmonized list of model results.
+#' @export
+lm_anv_p_and_d <- function(data, outcome, predictor, covariates, predictoroperator = '*', verbose = FALSE,
+                           plot_interaction_with = NULL, interact_with_all = FALSE) {
+  base_model_formula_str <- paste(outcome, "~", covariates)
+  
+  if (predictoroperator == "*") {
+    if (interact_with_all) {
+      full_model_formula_str <- paste0(outcome, " ~ (", covariates, ") * (", predictor, ")")
+    } else {
+      if (is.null(plot_interaction_with)) stop("For targeted interaction ('*'), 'plot_interaction_with' must specify the interacting covariate.")
+      all_covs <- trimws(unlist(strsplit(covariates, "\\+")))
+      main_effects <- paste(setdiff(all_covs, plot_interaction_with), collapse = " + ")
+      full_model_formula_str <- paste0(outcome, " ~ ", main_effects, " + (", plot_interaction_with, ") * (", predictor, ")")
+    }
+  } else {
+    full_model_formula_str <- paste(base_model_formula_str, predictoroperator, predictor)
+  }
+  
+  if(verbose) { message("--- LM Formulas ---\n", "Base Model: ", base_model_formula_str, "\n", "Full Model: ", full_model_formula_str) }
+  full_model_formula <- as.formula(full_model_formula_str)
+  datasub <- na.omit(data[, all.vars(full_model_formula), drop = FALSE])
+  if (nrow(datasub) < 2) return(NULL)
+  
+  base_model <- lm(as.formula(base_model_formula_str), data = datasub)
+  full_model <- lm(full_model_formula, data = datasub)
+  
+  r2_full <- summary(full_model)$adj.r.squared; r2_base <- summary(base_model)$adj.r.squared
+  delta_R2 <- r2_full - r2_base
+  model_comparison <- anova(base_model, full_model)
+  coefs <- summary(full_model)$coefficients
+  
+  predictor_vars <- trimws(unlist(strsplit(predictor, "\\+")))
+  all_es <- effectsize::t_to_d(t = coefs[, "t value"], df_error = df.residual(full_model))
+  all_es_df <- data.frame(all_es); rownames(all_es_df) <- rownames(coefs)
+  relevant_indices <- multigrep(predictor_vars, rownames(all_es_df))
+  effect_sizes_df <- all_es_df[relevant_indices, , drop = FALSE]
+  
+  list(full_model=full_model, model_comparison=model_comparison, coefficients=coefs, 
+       effect_sizes=effect_sizes_df, delta_R2=delta_R2, r2_full=r2_full)
+}
+
+#' @title Fit and Compare Mixed-Effects Models
+#' @description Internal helper for `lmer` models with flexible interaction specification.
+#' @inheritParams run_fused_analysis_sweep
+#' @param predictor A character string specifying the main predictor(s).
+#' @return A harmonized list of model results.
+#' @export
+lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effects, predictoroperator = '*', verbose = FALSE,
+                             plot_interaction_with = NULL, interact_with_all = FALSE) {
+  base_model_formula_str <- paste(outcome, "~", covariates, "+", random_effects)
+  
+  if (predictoroperator == "*") {
+    if (interact_with_all) {
+      full_model_formula_str <- paste0(outcome, " ~ (", covariates, ") * (", predictor, ") + ", random_effects)
+    } else {
+      if (is.null(plot_interaction_with)) stop("For targeted interaction ('*'), 'plot_interaction_with' must specify the interacting covariate.")
+      all_covs <- trimws(unlist(strsplit(covariates, "\\+")))
+      main_effects <- paste(setdiff(all_covs, plot_interaction_with), collapse = " + ")
+      full_model_formula_str <- paste0(outcome, " ~ ", main_effects, " + (", plot_interaction_with, ") * (", predictor, ") + ", random_effects)
+    }
+  } else {
+    full_model_formula_str <- paste(outcome, "~", covariates, predictoroperator, predictor, "+", random_effects)
+  }
+  
+  if(verbose) { message("--- LMER Formulas ---\n", "Base Model: ", base_model_formula_str, "\n", "Full Model: ", full_model_formula_str) }
+  full_model_formula <- as.formula(full_model_formula_str)
+  grouping_var <- trimws(sub(".*\\|\\s*", "", random_effects)); grouping_var <- gsub(")", "", grouping_var, fixed=TRUE)
+  required_vars <- unique(c(all.vars(full_model_formula), grouping_var))
+  if (length(setdiff(required_vars, colnames(data))) > 0) return(NULL)
+  datasub <- na.omit(data[, required_vars, drop = FALSE])
+  if (nrow(datasub) < 20) return(NULL)
+  
+  hasConverged <- function(mm) { if(is.null(unlist(mm@optinfo$conv$lme4))) TRUE else if(lme4::isSingular(mm)) FALSE else TRUE }
+  base_model <- tryCatch({lmerTest::lmer(as.formula(base_model_formula_str), data = datasub, REML = FALSE)}, error=function(e) NULL)
+  if (is.null(base_model)) return(NULL)
+  full_model <- tryCatch({lmerTest::lmer(full_model_formula, data = datasub, REML = FALSE)}, error=function(e) NULL)
+  if (is.null(full_model) || !hasConverged(full_model)) return(NULL)
+  
+  r2_full <- performance::r2(full_model)$R2_marginal; r2_base <- performance::r2(base_model)$R2_marginal
+  delta_R2 <- r2_full - r2_base
+  model_comparison <- anova(base_model, full_model)
+  coefs <- summary(full_model)$coefficients
+  
+  predictor_vars <- trimws(unlist(strsplit(predictor, "\\+")))
+  all_es <- effectsize::t_to_d(t = coefs[, "t value"], df = coefs[, "df"])
+  all_es_df <- data.frame(all_es); rownames(all_es_df) <- rownames(coefs)
+  relevant_indices <- multigrep(predictor_vars, rownames(all_es_df))
+  effect_sizes_df <- all_es_df[relevant_indices, , drop = FALSE]
+  
+  list(full_model=full_model, model_comparison=model_comparison, coefficients=coefs,
+       effect_sizes=effect_sizes_df, delta_R2=delta_R2, r2_full=r2_full)
+}
+
+
+# 4. DEFINE THE MAIN ANALYSIS ENGINE
+# ==========================================================================
+#' @title Test a Fused Set of Components and Create Informative Plots
+#' @description This is the core analysis engine. It builds and compares models
+#'   (`lm` or `lmer`) for a single set of predictors. It creates publication-quality
+#'   plots with informative titles, significance stars, and human-readable labels.
+#' @inheritParams run_fused_analysis_sweep
+#' @return A list containing `summary_stats`, `combined_plot`, `effect_sizes`, and `coefficients`.
+#' @export
+test_fused_component_set <- function(data, pc_index, outcome, covariates, modality_prefixes, 
+                                     random_effects = NULL, predictoroperator = "+", 
+                                     plot_interaction_with = NULL, outcome_label = NULL,
+                                     predictor_name_map = NULL, verbose = FALSE,
+                                     interact_with_all = FALSE) {
+  
+  fused_predictors <- paste0(modality_prefixes, "PC", pc_index)
+  fused_predictors_string <- paste(fused_predictors, collapse = " + ")
+  
+  if (!is.null(random_effects)) { 
+    model_results <- lmer_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string, 
+                                      covariates=covariates, random_effects=random_effects, 
+                                      predictoroperator=predictoroperator, verbose=verbose,
+                                      plot_interaction_with=plot_interaction_with, 
+                                      interact_with_all=interact_with_all)
+  } else { 
+    model_results <- lm_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string,
+                                    covariates=covariates, predictoroperator=predictoroperator,
+                                    verbose=verbose, plot_interaction_with=plot_interaction_with,
+                                    interact_with_all=interact_with_all)
+  }
+  if (is.null(model_results)) { return(NULL) }
+  
+  full_model <- model_results$full_model; model_coefs <- model_results$coefficients
+  y_label <- if (!is.null(outcome_label)) outcome_label else outcome
+  
+  plot_list <- lapply(fused_predictors, function(pred_var_name) {
+    pred_p_value <- if (pred_var_name %in% rownames(model_coefs)) model_coefs[pred_var_name, "Pr(>|t|)"] else NA
+    stars <- add_significance_stars(pred_p_value)
+    pretty_pred_name <- if (!is.null(predictor_name_map) && pred_var_name %in% names(predictor_name_map)) predictor_name_map[[pred_var_name]] else pred_var_name
+    subplot_title <- paste0(pretty_pred_name, " ", stars)
+    tryCatch({
+      args_for_plot <- list(model = full_model, pred = pred_var_name, interval = TRUE, y.label = y_label, data = if (inherits(full_model, "lm")) full_model$model else full_model@frame)
+      if (!is.null(plot_interaction_with) && predictoroperator == "*") args_for_plot$modx <- plot_interaction_with
+      do.call(jtools::effect_plot, args_for_plot) + ggplot2::labs(title = subplot_title)
+    }, error = function(e) NULL)
+  })
+  
+  compact_plot_list <- purrr::compact(plot_list)
+  if (length(compact_plot_list) == 0) return(NULL)
+  
+  last_col_index <- ncol(model_results$model_comparison)
+  overall_p_value <- model_results$model_comparison[2, last_col_index]
+  formatted_p <- insight::format_p(overall_p_value,digits=4)
+  main_plot_title <- sprintf("Partial Effects for Component Set %d on %s\nOverall Model %s", pc_index, y_label, formatted_p)
+  
+  unified_plot <- gridExtra::grid.arrange(grobs = compact_plot_list, nrow = round(sqrt(length(compact_plot_list))),
+    top = grid::textGrob(main_plot_title, gp = grid::gpar(fontsize = 14, fontface = "bold")))
+  
+  f_squared <- if (!is.null(model_results$delta_R2)) delta_R2_to_f2(model_results$delta_R2, model_results$r2_full) else NA
+  
+  list(summary_stats = tibble(pc_index=pc_index, outcome=outcome, model_p_value=overall_p_value, delta_R2=model_results$delta_R2, cohen_f_squared=f_squared),
+       combined_plot = unified_plot, effect_sizes = model_results$effect_sizes, coefficients = model_results$coefficients)
+}
+
+# 5. DEFINE THE TOP-LEVEL ORCHESTRATOR
+# ==========================================================================
+#' @title Run a Fused Component Analysis Across a Sweep of PC Indices
+#' @description This is the main user-facing function. It automates running
+#'   `test_fused_component_set` over a range of PC indices, handling progress
+#'   reporting and aggregating all successful results into a beautifully
+#'   organized list, including data ready for heatmap plotting.
+#'
+#' @param pc_indices A numeric vector of PC indices to loop over (e.g., `1:50`).
+#' @param data A data frame containing all necessary variables.
+#' @param outcome The outcome variable name (character string).
+#' @param covariates A character string of fixed-effect covariates (e.g., "Age + Sex").
+#' @param modality_prefixes A character vector of the component prefixes (e.g., `c("t1", "dt")`).
+#' @param random_effects A character string for the `lmer` random effects (e.g., `"(1 | ID)"`).
+#'   If `NULL` (default), a standard `lm` is used.
+#' @param predictoroperator Operator for combining predictors. Defaults to `'+'`.
+#'   Use `'*'` to model full interactions.
+#' @param plot_interaction_with A moderator variable name to plot as an interaction.
+#'   When `predictoroperator = "*"`, this also specifies the *only* covariate
+#'   that will be included in the interaction term, unless `interact_with_all` is `TRUE`.
+#' @param interact_with_all A logical. If `FALSE` (default) and `predictoroperator = "*"`,
+#'   only the variable in `plot_interaction_with` is interacted with the predictors.
+#'   If `TRUE`, all `covariates` are interacted with the predictors.
+#' @param outcome_label An optional string for a "pretty" y-axis label.
+#' @param predictor_name_map An optional named list to map predictor names to
+#'   human-readable labels. Example: `list(t1PC10 = "Temporal Atrophy")`.
+#' @param heatmap_value The statistic to use for the heatmap values. One of
+#'   `"t.value"` (default), `"d"` (Cohen's d), or `"p.value"`.
+#' @param verbose A logical. If `TRUE`, the model formulas used in each run will be printed.
+#'
+#' @return A list containing four aggregated components:
+#'   \item{summary_statistics}{A single tibble of overall model statistics.}
+#'   \item{effect_sizes}{A single tibble of all Cohen's d effect sizes.}
+#'   \item{plots}{A named list of all generated plot objects.}
+#'   \item{heatmap_data}{A numeric matrix with PC indices as rows and predictors
+#'     as columns, ready for heatmap plotting.}
+#' @export
+run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, modality_prefixes, 
+                                     random_effects = NULL, predictoroperator = "+", 
+                                     plot_interaction_with = NULL, interact_with_all = FALSE,
+                                     outcome_label = NULL, predictor_name_map = NULL, 
+                                     heatmap_value = c("t.value", "d", "p.value"),
+                                     verbose = FALSE) {
+  
+  heatmap_value <- match.arg(heatmap_value)
+  pb <- progress::progress_bar$new(format="[:bar] :percent | ETA: :eta | PC: :pc", total=length(pc_indices))
+  
+  results_list <- purrr::map(pc_indices, function(idx) {
+    pb$tick(tokens = list(pc = idx))
+    test_fused_component_set(
+      data=data, pc_index=idx, outcome=outcome, covariates=covariates,
+      modality_prefixes=modality_prefixes, random_effects=random_effects,
+      predictoroperator=predictoroperator, plot_interaction_with=plot_interaction_with,
+      outcome_label=outcome_label, predictor_name_map=predictor_name_map,
+      verbose=verbose, interact_with_all=interact_with_all
+    )
+  })
+  
+  valid_results <- purrr::compact(results_list)
+  if (length(valid_results) == 0) { warning("All analysis runs failed."); return(NULL) }
+  
+  all_summary_stats <- purrr::map_dfr(valid_results, "summary_stats")
+  names(valid_results) <- purrr::map_int(valid_results, ~.x$summary_stats$pc_index)
+  all_effect_sizes <- purrr::imap_dfr(valid_results, ~{ if (!is.null(.x$effect_sizes) && nrow(.x$effect_sizes) > 0) { dplyr::mutate(.x$effect_sizes, pc_index = as.integer(.y), .before = 1) } })
+  all_plots <- purrr::map(valid_results, "combined_plot")
+  
+  heatmap_rows <- purrr::map(valid_results, function(res) {
+    pc_preds <- paste0(modality_prefixes, "PC", res$summary_stats$pc_index)
+    row_vec <- setNames(rep(NA_real_, length(pc_preds)), pc_preds)
+    if (heatmap_value == "d") { source_df <- res$effect_sizes; col_name <- "d"
+    } else if (heatmap_value == "t.value") { source_df <- as.data.frame(res$coefficients); col_name <- "t value"
+    } else { source_df <- as.data.frame(res$coefficients); col_name <- "Pr(>|t|)" }
+    for (pred_name in pc_preds) {
+      if (!is.null(source_df) && pred_name %in% rownames(source_df)) {
+        row_vec[pred_name] <- source_df[pred_name, col_name]
+      }
+    }
+    return(row_vec)
+  })
+  
+  heatmap_matrix <- do.call(rbind, heatmap_rows)
+  
+  list(summary_statistics = all_summary_stats, effect_sizes = all_effect_sizes,
+       plots = all_plots, heatmap_data = heatmap_matrix)
 }

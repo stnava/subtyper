@@ -2,45 +2,44 @@
 % Please edit documentation in R/subtyper.R
 \name{lm_anv_p_and_d}
 \alias{lm_anv_p_and_d}
-\title{Linear Regression Analysis with ANOVA and Effect Size Calculation}
+\title{Fit and Compare Linear Models}
 \usage{
 lm_anv_p_and_d(
   data,
   outcome,
   predictor,
-  fixed_effects,
+  covariates,
   predictoroperator = "*",
-  verbose = FALSE
+  verbose = FALSE,
+  plot_interaction_with = NULL,
+  interact_with_all = FALSE
 )
 }
 \arguments{
-\item{data}{A data frame containing the variables referenced in the model formulas.}
+\item{data}{A data frame containing all necessary variables.}
 
-\item{outcome}{The name of the dependent variable (outcome) as a string.}
+\item{outcome}{The outcome variable name (character string).}
 
-\item{predictor}{The name of the main predictor variable as a string.}
+\item{predictor}{A character string specifying the main predictor(s).}
 
-\item{fixed_effects}{A string specifying the fixed effects to be included in the model, excluding the main predictor.}
+\item{covariates}{A character string of fixed-effect covariates (e.g., "Age + Sex").}
 
-\item{predictoroperator}{either a \code{+} or \code{*}}
+\item{predictoroperator}{Operator for combining predictors. Defaults to \code{'+'}.
+Use \code{'*'} to model full interactions.}
 
-\item{verbose}{boolean}
+\item{verbose}{A logical. If \code{TRUE}, the model formulas used in each run will be printed.}
+
+\item{plot_interaction_with}{A moderator variable name to plot as an interaction.
+When \code{predictoroperator = "*"}, this also specifies the \emph{only} covariate
+that will be included in the interaction term, unless \code{interact_with_all} is \code{TRUE}.}
+
+\item{interact_with_all}{A logical. If \code{FALSE} (default) and \code{predictoroperator = "*"},
+only the variable in \code{plot_interaction_with} is interacted with the predictors.
+If \code{TRUE}, all \code{covariates} are interacted with the predictors.}
 }
 \value{
-A list containing the fitted full model object, ANOVA model comparison, calculated effect sizes for the
-predictor, coefficients of the full model, and the sample size (n).
+A harmonized list of model results.
 }
 \description{
-This function fits two linear regression models: a base model without the main predictor of interest
-and a full model including the main predictor. It then compares these models using ANOVA to test the
-significance of adding the main predictor. Additionally, it calculates the effect sizes for the predictor
-in the full model. This function is designed to facilitate the analysis of data.
-NOTE: this function will scale variables internally to aid coefficient estimate visualization.
-}
-\examples{
-# Assuming 'data' is your dataset with columns 'outcome', 'predictor', and 'fixed_var1', ...
-# results <- lm_anv_p_and_d(data, "outcome", "predictor", "fixed_var1 + fixed_var2")
-# summary(results$full_model) # Full model summary
-# results$model_comparison # ANOVA comparison
-# results$effect_sizes # Effect sizes
+Internal helper for \code{lm} models with flexible interaction specification.
 }
