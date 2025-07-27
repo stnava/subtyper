@@ -5059,90 +5059,124 @@ select_high_quality_data <- function(data,
   return(qualsel)
 }
 
-#' A management function to run association analyses (LM or LMER) with progress.
+
+#' Run a Batch Association Analysis
 #'
-#' This function acts as a dispatcher, calling the appropriate helper
-#' (lm_anv_p_and_d or lmer_anv_p_and_d) based on whether the analysis
-#' is specified as longitudinal. It extracts key metrics and displays a progress bar.
+#' This function automates running a series of association models, iterating through
+#' a list of predictors and outcomes for a given dataset. It can run both
+#' cross-sectional (`lm`) and longitudinal (`lmer`) models.
 #'
-#' @param data The dataframe containing all variables.
-#' @param predictors A character vector of predictor column names.
-#' @param outcomes A character vector of outcome column names.
-#' @param covariates A character string of covariates.
-#' @param dataset_name A string to label the results.
-#' @param analysis_type A string, either "Cross-Sectional" or "Longitudinal".
-#' @param use_delta_outcome A logical value. If TRUE (default), appends "_delta"
-#'   to the outcome variable for longitudinal analyses.
-#' @param random_effects A string for the random effects part of the LMER formula.
-#' @return A tidy data frame with results for every predictor-outcome pair.
-#' @importFrom progress progress_bar
+#' @param data The data frame containing all necessary variables.
+#' @param predictors A character vector of predictor variable names.
+#' @param outcomes A character vector of outcome variable names.
+#' @param covariates A character string of covariates to include in all models
+#'   (e.g., "Age + Sex").
+#' @param dataset_name A character string to label the results (e.g., "ADNI").
+#' @param analysis_type A character string, either "Cross-Sectional" (default) or "Longitudinal".
+#' @param use_delta_outcome A logical. If TRUE and `analysis_type` is "Longitudinal",
+#'   it will look for outcome variables with a `_delta` suffix.
+#' @param random_effects An optional character string for the `lmer` random effects
+#'   (e.g., `"(1 | PTID)"`). Only used when `analysis_type` is "Longitudinal".
+#' @param interaction_variable An optional character string specifying the variable
+#'   to interact with the predictor in longitudinal models (e.g., "yearsbl").
+#'   **This is required for longitudinal analyses.**
+#'
+#' @return A single tibble (data frame) containing the summarized results from
+#'   all successful model fits.
 #' @export
-run_association_analysis <- function(data, predictors, outcomes, covariates, dataset_name, 
-                                     analysis_type = "Cross-Sectional", 
+#' @examples
+#' \dontrun{
+#' # Example for a cross-sectional analysis
+#' cs_results <- run_association_analysis(
+#'   data = my_cross_sectional_data,
+#'   predictors = c("PredictorA", "PredictorB"),
+#'   outcomes = c("MMSE", "ADAS13"),
+#'   covariates = "Age + Sex + Education",
+#'   dataset_name = "MyStudy_CS"
+#' )
+#'
+#' # Example for a longitudinal analysis with an interaction
+#' long_results <- run_association_analysis(
+#'   data = my_longitudinal_data,
+#'   predictors = c("Biomarker1", "Biomarker2"),
+#'   outcomes = c("CognitionScore"),
+#'   covariates = "Age_at_baseline + Sex + Education + yearsbl",
+#'   dataset_name = "MyStudy_Long",
+#'   analysis_type = "Longitudinal",
+#'   use_delta_outcome = FALSE, # Use the raw score over time
+#'   random_effects = "(1 | SubjectID)",
+#'   interaction_variable = "yearsbl" # Specify the interaction term
+#' )
+#' }
+run_association_analysis <- function(data, predictors, outcomes, covariates, dataset_name,
+                                     analysis_type = "Cross-Sectional",
                                      use_delta_outcome = TRUE,
-                                     random_effects = "(1 | PTID)") {
-  
+                                     random_effects = "(1 | PTID)",
+                                     interaction_variable = NULL) { # Added this new parameter
+
   # --- 1. Setup Progress Bar ---
-  # Ensure the 'progress' package is installed: install.packages("progress")
   total_iterations <- length(outcomes) * length(predictors)
-  
   pb <- progress::progress_bar$new(
     format = "[:bar] :percent | ETA: :eta | :what",
-    total = total_iterations,
-    width = 80,
-    clear = FALSE
+    total = total_iterations, width = 80, clear = FALSE
   )
-  
-  # --- 2. Use For Loops for Explicit Progress Ticking ---
+
+  # --- 2. Iterate and Analyze ---
   all_results_list <- list()
-  
+
   for (outcome in outcomes) {
     for (predictor in predictors) {
-      
-      # Update the progress bar with the current task
-      pb$tick(tokens = list(what = paste(dataset_name, outcome, sep = " | ")))
-      
-      # --- Core Logic (Unchanged) ---
+      pb$tick(tokens = list(what = paste(dataset_name, outcome, predictor, sep = " | ")))
+
       outcome_variable <- if (analysis_type == "Longitudinal" && use_delta_outcome) {
         paste0(outcome, "_delta")
       } else {
         outcome
       }
-      
-      if (!outcome_variable %in% names(data)) {
-        warning(paste("Outcome variable", outcome_variable, "not found. Skipping."))
-        next # Skip to the next iteration
+
+      if (!outcome_variable %in% names(data) || !predictor %in% names(data)) {
+        next
       }
       
+      # --- FIXED SECTION ---
       if (analysis_type == "Longitudinal") {
+        if (is.null(interaction_variable)) {
+            stop("For longitudinal analysis, `interaction_variable` must be specified.", call. = FALSE)
+        }
+        # Correctly call lmer_anv_p_and_d
         model_results <- lmer_anv_p_and_d(
           data = data, outcome = outcome_variable, predictor = predictor,
-          fixed_effects = covariates, random_effects = random_effects,
+          covariates = covariates, # FIXED: was 'fixed_effects'
+          random_effects = random_effects,
+          plot_interaction_with = interaction_variable, # ADDED: specifies the interaction
           predictoroperator = '*'
         )
       } else {
+        # Correctly call lm_anv_p_and_d
         model_results <- lm_anv_p_and_d(
           data = data, outcome = outcome_variable, predictor = predictor,
-          fixed_effects = covariates, predictoroperator = '+'
+          covariates = covariates, # FIXED: was 'fixed_effects'
+          predictoroperator = '+'
         )
       }
-      
+      # --- END OF FIX ---
+
       if (is.null(model_results)) next
-      
+
       coeffs <- model_results$coefficients
       effect_sizes <- model_results$effect_sizes
-      
+
+      # This logic remains the same but is now more likely to succeed
       term_of_interest <- if (analysis_type == "Longitudinal") {
-        interaction_term <- grep(paste0(":", predictor), rownames(coeffs), value = TRUE, fixed = TRUE)
-        if (length(interaction_term) == 0) interaction_term <- grep(paste0(predictor, ":"), rownames(coeffs), value = TRUE, fixed = TRUE)
-        if (length(interaction_term) == 0) next
-        interaction_term[1]
+        # Look for the interaction term (e.g., "yearsbl:PredictorA")
+        grep(paste0(":", predictor), rownames(coeffs), value = TRUE, fixed = TRUE)[1] %||%
+        grep(paste0(predictor, ":"), rownames(coeffs), value = TRUE, fixed = TRUE)[1]
       } else {
         predictor
       }
       
-      if (is.na(term_of_interest) || !term_of_interest %in% rownames(coeffs)) next
-      
+      if (is.null(term_of_interest) || is.na(term_of_interest) || !term_of_interest %in% rownames(coeffs)) next
+
       result_row <- tibble::tibble(
         dataset = dataset_name,
         analysis_type = analysis_type,
@@ -5152,17 +5186,16 @@ run_association_analysis <- function(data, predictors, outcomes, covariates, dat
         p_value = coeffs[term_of_interest, "Pr(>|t|)"],
         cohens_d = effect_sizes[term_of_interest, "d"]
       )
-      
       all_results_list[[length(all_results_list) + 1]] <- result_row
     }
   }
-  
+
   # --- 3. Combine and Return Results ---
   dplyr::bind_rows(all_results_list)
 }
 
-
-
+# A simple helper function to provide a default value if the primary is NULL
+`%||%` <- function(a, b) if (is.null(a)) b else a
 
 
 #' Linear Mixed Effects Model Analysis with ANOVA and Effect Size Calculation
@@ -6956,7 +6989,7 @@ table_1_from_formula <- function(formula, data, facet_var) {
   vars <- setdiff(vars, facet_var)
   
   # Call table_1_facet to summarize the data
-  table_1(data, vars, facet_var,factor_rows=FALSE)
+  table_1(data, vars, facet_var )
 }
 
 
@@ -8053,4 +8086,104 @@ run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, moda
   
   list(summary_statistics = all_summary_stats, effect_sizes = all_effect_sizes,
        plots = all_plots, heatmap_data = heatmap_matrix)
+}
+
+
+
+#' Run a Master Analysis Across Multiple Pre-defined Configurations
+#'
+#' This function encapsulates a series of analysis sweeps (`run_fused_analysis_sweep`).
+#' It iterates through a list of configurations, runs a sweep for each outcome
+#' within that configuration, and aggregates all results into master data frames.
+#'
+#' @param analysis_configurations A named list of analysis configurations.
+#' @param pc_indices A numeric vector of PC indices to sweep over.
+#' @param modality_prefixes A character vector of the component prefixes.
+#' @param ... Global arguments passed to every `run_fused_analysis_sweep` call.
+#'
+#' @return A list containing `summary_statistics`, `effect_sizes`, and `plots`.
+#' @export
+run_multiview_analysis <- function(analysis_configurations, pc_indices, modality_prefixes, ...) {
+
+  all_results <- purrr::imap(analysis_configurations, function(config, config_name) {
+    message(sprintf("\n--- Running Configuration: %s ---", config_name))
+    outcome_results <- purrr::map(names(config$outcomes), function(outcome_name) {
+      args_for_sweep <- list(
+        pc_indices = pc_indices,
+        data = config$data,
+        outcome = outcome_name,
+        covariates = config$covariates,
+        modality_prefixes = modality_prefixes
+      )
+      if ("random_effects" %in% names(config)) args_for_sweep$random_effects <- config$random_effects
+      if ("plot_interaction_with" %in% names(config)) args_for_sweep$plot_interaction_with <- config$plot_interaction_with
+      
+      res <- do.call(run_fused_analysis_sweep, c(args_for_sweep, list(...)))
+      
+      if (!is.null(res)) {
+        res$analysis_id <- list(
+          dataset = config$dataset_name,
+          analysis_type = config$analysis_type,
+          outcome_label = config$outcomes[outcome_name],
+          full_id = paste(config_name, outcome_name, sep = "_")
+        )
+      }
+      return(res)
+    })
+    return(outcome_results)
+  })
+
+  # --- Combine All Results into Master Data Frames ---
+  valid_results <- purrr::compact(unlist(all_results, recursive = FALSE))
+  names(valid_results) <- purrr::map_chr(valid_results, ~.x$analysis_id$full_id)
+
+  # Create the Master Summary Data Frame (this part was correct)
+  master_summary_df <- purrr::map_dfr(valid_results, ~{
+    .x$summary_statistics %>%
+      dplyr::mutate(
+        dataset = .x$analysis_id$dataset,
+        analysis_type = .x$analysis_id$analysis_type,
+        outcome_label = .x$analysis_id$outcome_label,
+        .before = 1
+      )
+  })
+
+  # =======================================================================
+  # --- CORRECTED LOGIC FOR MASTER EFFECT SIZES DATA FRAME ---
+  # =======================================================================
+  master_effects_df <- purrr::map_dfr(valid_results, ~{
+    # Each result `.x` contains two data frames:
+    # 1. .x$summary_statistics: has the pc_index column
+    # 2. .x$effect_sizes: needs the pc_index column
+    
+    # We can't simply join them as they don't share a key.
+    # The key is implicit: the Nth group of effect sizes corresponds
+    # to the Nth row of the summary statistics.
+    
+    # First, get the number of predictors per PC run (e.g., 5 modalities)
+    num_modalities <- length(modality_prefixes)
+    
+    # Create the `pc_index` column manually by repeating each index
+    # from the summary stats `num_modalities` times.
+    pc_index_col <- rep(.x$summary_statistics$pc_index, each = num_modalities)
+    
+    # Now, add this correctly sized column to the effect sizes data frame
+    .x$effect_sizes %>%
+      tibble::as_tibble(rownames = "predictor") %>%
+      dplyr::mutate(
+        pc_index = pc_index_col,
+        dataset = .x$analysis_id$dataset,
+        analysis_type = .x$analysis_id$analysis_type,
+        outcome_label = .x$analysis_id$outcome_label,
+        .before = 1
+      )
+  })
+  
+  all_plots <- purrr::map(valid_results, "combined_plot")
+
+  list(
+    summary_statistics = master_summary_df,
+    effect_sizes = master_effects_df,
+    plots = all_plots
+  )
 }

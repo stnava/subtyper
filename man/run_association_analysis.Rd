@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{run_association_analysis}
 \alias{run_association_analysis}
-\title{A management function to run association analyses (LM or LMER) with progress.}
+\title{Run a Batch Association Analysis}
 \usage{
 run_association_analysis(
   data,
@@ -12,32 +12,65 @@ run_association_analysis(
   dataset_name,
   analysis_type = "Cross-Sectional",
   use_delta_outcome = TRUE,
-  random_effects = "(1 | PTID)"
+  random_effects = "(1 | PTID)",
+  interaction_variable = NULL
 )
 }
 \arguments{
-\item{data}{The dataframe containing all variables.}
+\item{data}{The data frame containing all necessary variables.}
 
-\item{predictors}{A character vector of predictor column names.}
+\item{predictors}{A character vector of predictor variable names.}
 
-\item{outcomes}{A character vector of outcome column names.}
+\item{outcomes}{A character vector of outcome variable names.}
 
-\item{covariates}{A character string of covariates.}
+\item{covariates}{A character string of covariates to include in all models
+(e.g., "Age + Sex").}
 
-\item{dataset_name}{A string to label the results.}
+\item{dataset_name}{A character string to label the results (e.g., "ADNI").}
 
-\item{analysis_type}{A string, either "Cross-Sectional" or "Longitudinal".}
+\item{analysis_type}{A character string, either "Cross-Sectional" (default) or "Longitudinal".}
 
-\item{use_delta_outcome}{A logical value. If TRUE (default), appends "_delta"
-to the outcome variable for longitudinal analyses.}
+\item{use_delta_outcome}{A logical. If TRUE and \code{analysis_type} is "Longitudinal",
+it will look for outcome variables with a \verb{_delta} suffix.}
 
-\item{random_effects}{A string for the random effects part of the LMER formula.}
+\item{random_effects}{An optional character string for the \code{lmer} random effects
+(e.g., \code{"(1 | PTID)"}). Only used when \code{analysis_type} is "Longitudinal".}
+
+\item{interaction_variable}{An optional character string specifying the variable
+to interact with the predictor in longitudinal models (e.g., "yearsbl").
+\strong{This is required for longitudinal analyses.}}
 }
 \value{
-A tidy data frame with results for every predictor-outcome pair.
+A single tibble (data frame) containing the summarized results from
+all successful model fits.
 }
 \description{
-This function acts as a dispatcher, calling the appropriate helper
-(lm_anv_p_and_d or lmer_anv_p_and_d) based on whether the analysis
-is specified as longitudinal. It extracts key metrics and displays a progress bar.
+This function automates running a series of association models, iterating through
+a list of predictors and outcomes for a given dataset. It can run both
+cross-sectional (\code{lm}) and longitudinal (\code{lmer}) models.
+}
+\examples{
+\dontrun{
+# Example for a cross-sectional analysis
+cs_results <- run_association_analysis(
+  data = my_cross_sectional_data,
+  predictors = c("PredictorA", "PredictorB"),
+  outcomes = c("MMSE", "ADAS13"),
+  covariates = "Age + Sex + Education",
+  dataset_name = "MyStudy_CS"
+)
+
+# Example for a longitudinal analysis with an interaction
+long_results <- run_association_analysis(
+  data = my_longitudinal_data,
+  predictors = c("Biomarker1", "Biomarker2"),
+  outcomes = c("CognitionScore"),
+  covariates = "Age_at_baseline + Sex + Education + yearsbl",
+  dataset_name = "MyStudy_Long",
+  analysis_type = "Longitudinal",
+  use_delta_outcome = FALSE, # Use the raw score over time
+  random_effects = "(1 | SubjectID)",
+  interaction_variable = "yearsbl" # Specify the interaction term
+)
+}
 }
