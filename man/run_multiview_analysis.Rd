@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{run_multiview_analysis}
 \alias{run_multiview_analysis}
-\title{Run a Master Analysis Across Multiple Pre-defined Configurations}
+\title{Run a Master Multi-view Analysis Across Multiple Configurations}
 \usage{
 run_multiview_analysis(
   analysis_configurations,
@@ -24,7 +24,7 @@ run_multiview_analysis(
 A list containing \code{summary_statistics}, \code{effect_sizes}, and \code{plots}.
 }
 \description{
-This function encapsulates a series of analysis sweeps (\code{run_fused_analysis_sweep}).
-It iterates through a list of configurations, runs a sweep for each outcome
-within that configuration, and aggregates all results into master data frames.
+This function orchestrates a series of analysis sweeps. It iterates through
+a list of configurations and their specified outcomes, calling the underlying
+\code{run_fused_analysis_sweep} function and aggregating all results.
 }

@@ -8089,12 +8089,11 @@ run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, moda
 }
 
 
-
-#' Run a Master Analysis Across Multiple Pre-defined Configurations
+#' Run a Master Multi-view Analysis Across Multiple Configurations
 #'
-#' This function encapsulates a series of analysis sweeps (`run_fused_analysis_sweep`).
-#' It iterates through a list of configurations, runs a sweep for each outcome
-#' within that configuration, and aggregates all results into master data frames.
+#' This function orchestrates a series of analysis sweeps. It iterates through
+#' a list of configurations and their specified outcomes, calling the underlying
+#' `run_fused_analysis_sweep` function and aggregating all results.
 #'
 #' @param analysis_configurations A named list of analysis configurations.
 #' @param pc_indices A numeric vector of PC indices to sweep over.
@@ -8107,24 +8106,39 @@ run_multiview_analysis <- function(analysis_configurations, pc_indices, modality
 
   all_results <- purrr::imap(analysis_configurations, function(config, config_name) {
     message(sprintf("\n--- Running Configuration: %s ---", config_name))
+    
+    # This loop iterates through the "pretty names" of the outcomes
     outcome_results <- purrr::map(names(config$outcomes), function(outcome_name) {
+      
+      # Get the actual variable name from the named vector
+      actual_outcome_variable <- config$outcomes[[outcome_name]]
+      
+      # Define the arguments to pass to the sweep function
       args_for_sweep <- list(
         pc_indices = pc_indices,
         data = config$data,
-        outcome = outcome_name,
+        outcome = actual_outcome_variable, # Use the actual variable name for the model
+        # =======================================================================
+        # --- THE FIX: Pass the pretty name to the `outcome_label` argument ---
+        # =======================================================================
+        outcome_label = outcome_name, # Use the pretty name for plot labels
         covariates = config$covariates,
         modality_prefixes = modality_prefixes
       )
+      
+      # Add optional arguments if they exist in the config
       if ("random_effects" %in% names(config)) args_for_sweep$random_effects <- config$random_effects
       if ("plot_interaction_with" %in% names(config)) args_for_sweep$plot_interaction_with <- config$plot_interaction_with
       
+      # Call the underlying function with the complete set of arguments
       res <- do.call(run_fused_analysis_sweep, c(args_for_sweep, list(...)))
       
+      # Attach metadata for final aggregation
       if (!is.null(res)) {
         res$analysis_id <- list(
           dataset = config$dataset_name,
           analysis_type = config$analysis_type,
-          outcome_label = config$outcomes[outcome_name],
+          outcome_label = outcome_name, # The pretty name is the final label
           full_id = paste(config_name, outcome_name, sep = "_")
         )
       }
@@ -8133,11 +8147,10 @@ run_multiview_analysis <- function(analysis_configurations, pc_indices, modality
     return(outcome_results)
   })
 
-  # --- Combine All Results into Master Data Frames ---
+  # --- Combine All Results into Master Data Frames (This part is already correct) ---
   valid_results <- purrr::compact(unlist(all_results, recursive = FALSE))
   names(valid_results) <- purrr::map_chr(valid_results, ~.x$analysis_id$full_id)
 
-  # Create the Master Summary Data Frame (this part was correct)
   master_summary_df <- purrr::map_dfr(valid_results, ~{
     .x$summary_statistics %>%
       dplyr::mutate(
@@ -8148,26 +8161,9 @@ run_multiview_analysis <- function(analysis_configurations, pc_indices, modality
       )
   })
 
-  # =======================================================================
-  # --- CORRECTED LOGIC FOR MASTER EFFECT SIZES DATA FRAME ---
-  # =======================================================================
   master_effects_df <- purrr::map_dfr(valid_results, ~{
-    # Each result `.x` contains two data frames:
-    # 1. .x$summary_statistics: has the pc_index column
-    # 2. .x$effect_sizes: needs the pc_index column
-    
-    # We can't simply join them as they don't share a key.
-    # The key is implicit: the Nth group of effect sizes corresponds
-    # to the Nth row of the summary statistics.
-    
-    # First, get the number of predictors per PC run (e.g., 5 modalities)
     num_modalities <- length(modality_prefixes)
-    
-    # Create the `pc_index` column manually by repeating each index
-    # from the summary stats `num_modalities` times.
     pc_index_col <- rep(.x$summary_statistics$pc_index, each = num_modalities)
-    
-    # Now, add this correctly sized column to the effect sizes data frame
     .x$effect_sizes %>%
       tibble::as_tibble(rownames = "predictor") %>%
       dplyr::mutate(
