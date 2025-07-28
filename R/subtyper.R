@@ -5442,6 +5442,7 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
     theme_minimal(base_size = 14)
 
   # --- Population-Level Plot ---
+  suppressMessages({
   p2 <- jtools::effect_plot(model, pred = !!predictor_sym, interval = TRUE) +
     labs(
       title = paste("Population-Level Effect:", outcome_var),
@@ -5449,6 +5450,7 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
       x = predictor, y = outcome_var
     ) +
     theme_minimal(base_size = 14)
+  })
 
   # --- 6. Return All Results ---
   return(list(
