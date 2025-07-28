@@ -29,7 +29,7 @@ steps: &steps
         command: Rscript -e "install.packages(c( 'fmsb', 'kableExtra', 'cardx', 'jtools', 'nmfbin',  'glasso',  'FRESA.CAD', 'gaston', 'NMF','wesanderson','ggthemes','ggstatsplot','ciTools'))"
     - run:
         name: Install package by cloud
-        command: Rscript -e "install.packages( c(  'DEoptimR'), repos = 'https://cloud.r-project.org' )"
+        command: Rscript -e "install.packages( c(  'DEoptimR','statsExpressions'), repos = 'https://cloud.r-project.org' )"
     - run:
         no_output_timeout: 30m
         name: Build package
