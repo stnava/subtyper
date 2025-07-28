@@ -7949,7 +7949,7 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
                                      random_effects = NULL, predictoroperator = "+",
                                      plot_interaction_with = NULL, outcome_label = NULL,
                                      predictor_name_map = NULL, verbose = FALSE,
-                                     interact_with_all = FALSE, p_threshold = 0.05) {
+                                     interact_with_all = FALSE, p_threshold = 0.005) {
 
   fused_predictors <- paste0(modality_prefixes, "PC", pc_index)
   fused_predictors_string <- paste(fused_predictors, collapse = " + ")
