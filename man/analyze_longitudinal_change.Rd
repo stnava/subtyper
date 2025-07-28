@@ -2,32 +2,62 @@
 % Please edit documentation in R/subtyper.R
 \name{analyze_longitudinal_change}
 \alias{analyze_longitudinal_change}
-\title{Analyze and Visualize Longitudinal Change with a Mixed-Effects Model}
+\title{Analyze Longitudinal Change with a Linear Mixed-Effects Model}
 \usage{
 analyze_longitudinal_change(
   data,
   outcome_var,
   predictor,
   covariates = NULL,
-  random_effect = "eid"
+  random_effect = "eid",
+  verbose = FALSE
 )
 }
 \arguments{
-\item{data}{A data frame containing the data.}
+\item{data}{A data frame containing all necessary variables.}
 
-\item{outcome_var}{A character string specifying the name of the outcome variable.}
+\item{outcome_var}{The name of the dependent variable (character string).}
 
-\item{predictor}{A character string specifying the main predictor of interest (e.g., "yearsbl").}
+\item{predictor}{The name of the main continuous predictor, typically a time
+variable like "yearsbl" (character string).}
 
-\item{covariates}{A character vector of covariate names.}
+\item{covariates}{A character vector of other fixed-effect covariates to
+include in the model.}
 
-\item{random_effect}{A character string for the name of the random grouping factor (e.g., "eid").}
+\item{random_effect}{The name of the random intercept grouping variable,
+typically a subject ID like "eid" (character string).}
+
+\item{verbose}{A logical. If \code{TRUE}, the function will print the exact
+model formula being used. Defaults to \code{FALSE}.}
 }
 \value{
-A list containing the model object, statistics, and ggplot objects, or NULL on error.
+A list containing the \code{lmer} model object, Cohen's d for the main
+predictor, t-value, p-value, and two \code{ggplot} objects (\code{spaghetti_plot}
+and \code{population_plot}). Returns \code{NULL} if the model fails.
 }
 \description{
-This function fits a linear mixed-effects model to assess the relationship
-between a predictor and an outcome over time, while controlling for covariates.
-It returns the model object, key statistics, and two plots for visualization.
+This function fits a linear mixed-effects model to assess how an outcome
+variable changes over time (or another continuous predictor). It returns a
+list containing the model, key statistics, and two plots: a spaghetti plot
+showing individual trajectories and a population-level plot showing the
+overall model fit.
+}
+\examples{
+\dontrun{
+# Assuming `my_long_data` exists and has the necessary columns
+result <- analyze_longitudinal_change(
+  data = my_long_data,
+  outcome_var = "CognitiveScore",
+  predictor = "YearsFromBaseline",
+  covariates = c("AgeAtBaseline", "Sex", "Education"),
+  random_effect = "SubjectID",
+  verbose = TRUE
+)
+
+# Display the generated plots side-by-side
+if (!is.null(result)) {
+  library(gridExtra)
+  grid.arrange(result$spaghetti_plot, result$population_plot, ncol = 2)
+}
+}
 }

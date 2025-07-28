@@ -17,7 +17,7 @@ test_fused_component_set(
   predictor_name_map = NULL,
   verbose = FALSE,
   interact_with_all = FALSE,
-  p_threshold = 0.05
+  p_threshold = 0.005
 )
 }
 \arguments{

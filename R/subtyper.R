@@ -5310,114 +5310,147 @@ lmer_anv_p_and_d_old <- function(data, outcome, predictor, fixed_effects, random
   return(results)
 }
 
-
-#' Analyze and Visualize Longitudinal Change with a Mixed-Effects Model
+#' Analyze Longitudinal Change with a Linear Mixed-Effects Model
 #'
-#' This function fits a linear mixed-effects model to assess the relationship
-#' between a predictor and an outcome over time, while controlling for covariates.
-#' It returns the model object, key statistics, and two plots for visualization.
+#' This function fits a linear mixed-effects model to assess how an outcome
+#' variable changes over time (or another continuous predictor). It returns a
+#' list containing the model, key statistics, and two plots: a spaghetti plot
+#' showing individual trajectories and a population-level plot showing the
+#' overall model fit.
 #'
-#' @param data A data frame containing the data.
-#' @param outcome_var A character string specifying the name of the outcome variable.
-#' @param predictor A character string specifying the main predictor of interest (e.g., "yearsbl").
-#' @param covariates A character vector of covariate names.
-#' @param random_effect A character string for the name of the random grouping factor (e.g., "eid").
+#' @param data A data frame containing all necessary variables.
+#' @param outcome_var The name of the dependent variable (character string).
+#' @param predictor The name of the main continuous predictor, typically a time
+#'   variable like "yearsbl" (character string).
+#' @param covariates A character vector of other fixed-effect covariates to
+#'   include in the model.
+#' @param random_effect The name of the random intercept grouping variable,
+#'   typically a subject ID like "eid" (character string).
+#' @param verbose A logical. If `TRUE`, the function will print the exact
+#'   model formula being used. Defaults to `FALSE`.
 #'
-#' @return A list containing the model object, statistics, and ggplot objects, or NULL on error.
+#' @return A list containing the `lmer` model object, Cohen's d for the main
+#'   predictor, t-value, p-value, and two `ggplot` objects (`spaghetti_plot`
+#'   and `population_plot`). Returns `NULL` if the model fails.
+#' @importFrom dplyr select filter group_by all_of
+#' @importFrom lmerTest lmer
+#' @importFrom broom.mixed tidy
+#' @importFrom effectsize t_to_d
+#' @importFrom ggplot2 ggplot aes geom_line geom_smooth geom_ribbon labs theme_minimal theme
 #' @export
-analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates = NULL, random_effect = "eid") {
+#' @examples
+#' \dontrun{
+#' # Assuming `my_long_data` exists and has the necessary columns
+#' result <- analyze_longitudinal_change(
+#'   data = my_long_data,
+#'   outcome_var = "CognitiveScore",
+#'   predictor = "YearsFromBaseline",
+#'   covariates = c("AgeAtBaseline", "Sex", "Education"),
+#'   random_effect = "SubjectID",
+#'   verbose = TRUE
+#' )
+#'
+#' # Display the generated plots side-by-side
+#' if (!is.null(result)) {
+#'   library(gridExtra)
+#'   grid.arrange(result$spaghetti_plot, result$population_plot, ncol = 2)
+#' }
+#' }
+analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates = NULL,
+                                        random_effect = "eid", verbose = FALSE) {
+
+  # --- 1. Setup and Input Validation ---
   
-  # --- 1. Input Validation and Setup ---
-  required_vars <- unique(c(outcome_var, predictor, covariates, random_effect))
+  # Use modern tidy evaluation embracing `{{...}}` to handle variable names robustly
+  outcome_sym <- rlang::sym(outcome_var)
+  predictor_sym <- rlang::sym(predictor)
+  random_effect_sym <- rlang::sym(random_effect)
+  
+  required_vars <- c(outcome_var, predictor, covariates, random_effect)
   missing_vars <- setdiff(required_vars, names(data))
   if (length(missing_vars) > 0) {
-    warning("Missing variables in data: ", paste(missing_vars, collapse = ", "), ". Skipping.")
+    warning("Missing variables in data: ", paste(missing_vars, collapse = ", "), ". Skipping.", call. = FALSE)
     return(NULL)
   }
   
+  # Create a clean data subset for the model
   clean_data <- data %>%
     dplyr::select(all_of(required_vars)) %>%
     na.omit()
   
   if (nrow(clean_data) < 20) {
-    warning("Too few complete cases to fit model. Skipping.")
+    warning("Fewer than 20 complete cases after NA removal. Skipping.", call. = FALSE)
     return(NULL)
   }
 
-  # --- 2. Fit the Mixed-Effects Model ---
+  # --- 2. Construct Model Formula ---
+  
   fixed_effects_str <- paste(c(predictor, covariates), collapse = " + ")
-  random_effect_str <- paste0("(1 | ", random_effect, ")")
-  model_formula <- reformulate(c(fixed_effects_str, random_effect_str), response = outcome_var)
+  model_formula_str <- sprintf("%s ~ %s + (1 | %s)", outcome_var, fixed_effects_str, random_effect)
+  model_formula <- as.formula(model_formula_str)
+
+  # --- VERBOSE OPTION: Print the formula if requested ---
+  if (verbose) {
+    message("Model Formula: ", model_formula_str)
+  }
+
+  # --- 3. Fit the Mixed-Effects Model ---
   
   model <- tryCatch({
     lmerTest::lmer(model_formula, data = clean_data)
   }, error = function(e) {
-    warning("lmer model failed to converge or errored: ", e$message)
+    warning(sprintf("Model fitting for outcome '%s' failed: %s", outcome_var, e$message), call. = FALSE)
     return(NULL)
   })
   
   if (is.null(model)) return(NULL)
+  if (lme4::isSingular(model)) {
+    warning(sprintf("Model for outcome '%s' has a singular fit. Results may be unreliable.", outcome_var), call. = FALSE)
+  }
 
-  # --- 3. Extract Results and Metrics ---
+  # --- 4. Extract Key Results ---
+  
   fixed_effects_df <- broom.mixed::tidy(model, effects = "fixed")
   predictor_row <- fixed_effects_df %>% dplyr::filter(term == predictor)
   
   if (nrow(predictor_row) == 0) {
-      warning("Predictor term not found in model summary. Skipping.")
-      return(NULL)
+    warning("Predictor term '", predictor, "' not found in model summary. Skipping.", call. = FALSE)
+    return(NULL)
   }
 
   t_value <- predictor_row$statistic
-  cohens_d <- effectsize::t_to_d(t_value, df = predictor_row$df)$d
-  
-  # --- 4. Create Visualizations ---
-  
-  # Spaghetti Plot (using .data pronoun correctly inside dplyr/ggplot)
+  cohens_d <- effectsize::t_to_d(t_value, df_error = predictor_row$df)$d
+
+  # --- 5. Create Visualizations ---
+
+  # --- Spaghetti Plot ---
+  # Sample subjects for clarity if there are many
   n_subjects <- length(unique(clean_data[[random_effect]]))
   n_sample <- min(n_subjects, 100)
   sampled_ids <- sample(unique(clean_data[[random_effect]]), n_sample)
   
-  p1 <- ggplot(clean_data %>% dplyr::filter(.data[[random_effect]] %in% sampled_ids), 
-               aes(x = .data[[predictor]], y = .data[[outcome_var]], group = .data[[random_effect]])) +
-    geom_line(aes(color = .data[[covariates[1]]]), alpha = 0.3) +
-    geom_smooth(aes(group = .data[[covariates[1]]], color = .data[[covariates[1]]]),
-                method = "lm", se = TRUE, linewidth = 1.2) +
+  p1 <- clean_data %>%
+    dplyr::filter({{ random_effect_sym }} %in% sampled_ids) %>%
+    ggplot(aes(x = {{ predictor_sym }}, y = {{ outcome_sym }}, group = {{ random_effect_sym }})) +
+    geom_line(alpha = 0.3) +
+    geom_smooth(aes(group = 1), method = "lm", se = TRUE, color = "dodgerblue", linewidth = 1.5) +
     labs(
-      title = paste("Longitudinal Change in", outcome_var),
+      title = paste("Individual Trajectories:", outcome_var),
       subtitle = sprintf("Cohen's d = %.2f, p = %.3g", cohens_d, predictor_row$p.value),
-      x = predictor, y = outcome_var, color = covariates[1]
+      x = predictor, y = outcome_var
     ) +
-    theme_minimal(base_size = 14) +
-    theme(legend.position = "top")
+    theme_minimal(base_size = 14)
 
-  # --- FIX: Population-level plot data generation ---
-  # Use standard base R `[[...]]` subsetting inside `with()`, not the .data pronoun.
-  grid <- with(clean_data, expand.grid(
-    # This line is fixed
-    predictor = seq(min(clean_data[[predictor]]), max(clean_data[[predictor]]), length.out = 100)
-  ))
-  names(grid)[1] <- predictor # Rename the column to match the predictor name
-
-  for (covar in covariates) {
-    # This loop is also fixed to use standard subsetting
-    grid[[covar]] <- if(is.numeric(clean_data[[covar]])) mean(clean_data[[covar]]) else names(which.max(table(clean_data[[covar]])))
-  }
-  
-  pred_obj <- predict(model, newdata = grid, re.form = NA, se.fit = TRUE)
-  grid$pred <- pred_obj$fit
-  grid$se <- pred_obj$se.fit
-  
-  p2 <- ggplot(grid, aes(x = .data[[predictor]], y = pred)) +
-    geom_ribbon(aes(ymin = pred - 1.96 * se, ymax = pred + 1.96 * se), fill = "#56B4E9", alpha = 0.3) +
-    geom_line(color = "#0072B2", linewidth = 1.2) +
+  # --- Population-Level Plot ---
+  p2 <- jtools::effect_plot(model, pred = !!predictor_sym, interval = TRUE) +
     labs(
-      title = paste("Population-Level Model of", outcome_var),
+      title = paste("Population-Level Effect:", outcome_var),
       subtitle = "Model-predicted trajectory with 95% CI",
       x = predictor, y = outcome_var
     ) +
     theme_minimal(base_size = 14)
 
-  # --- 5. Return All Results ---
+  # --- 6. Return All Results ---
   return(list(
     model = model,
     cohen_d = cohens_d,
@@ -5428,6 +5461,7 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
     population_plot = p2
   ))
 }
+
 
 #' Forcefully Unload a Package in R
 #'
