@@ -17,49 +17,19 @@ test_fused_component_set(
   predictor_name_map = NULL,
   verbose = FALSE,
   interact_with_all = FALSE,
-  p_threshold = 0.005
+  p_threshold = 0.05
 )
 }
 \arguments{
-\item{data}{A data frame containing all necessary variables.}
-
-\item{outcome}{The outcome variable name (character string).}
-
-\item{covariates}{A character string of fixed-effect covariates (e.g., "Age + Sex").}
-
-\item{modality_prefixes}{A character vector of the component prefixes (e.g., \code{c("t1", "dt")}).}
-
-\item{random_effects}{A character string for the \code{lmer} random effects (e.g., \code{"(1 | ID)"}).
-If \code{NULL} (default), a standard \code{lm} is used.}
-
-\item{predictoroperator}{Operator for combining predictors. Defaults to \code{'+'}.
-Use \code{'*'} to model full interactions.}
-
-\item{plot_interaction_with}{A moderator variable name to plot as an interaction.
-When \code{predictoroperator = "*"}, this also specifies the \emph{only} covariate
-that will be included in the interaction term, unless \code{interact_with_all} is \code{TRUE}.}
-
-\item{outcome_label}{An optional string for a "pretty" y-axis label.}
-
-\item{predictor_name_map}{An optional named list to map predictor names to
-human-readable labels. Example: \code{list(t1PC10 = "Temporal Atrophy")}.}
-
-\item{verbose}{A logical. If \code{TRUE}, the model formulas used in each run will be printed.}
-
-\item{interact_with_all}{A logical. If \code{FALSE} (default) and \code{predictoroperator = "*"},
-only the variable in \code{plot_interaction_with} is interacted with the predictors.
-If \code{TRUE}, all \code{covariates} are interacted with the predictors.}
-
-\item{p_threshold}{A numeric p-value (default \code{0.05}). Only models with an
-overall p-value from the model comparison below this threshold will have
-a plot generated. Set to \code{1.0} to generate plots for all models.}
+\item{p_threshold}{A numeric p-value (default \code{0.05}). Plots are only generated
+for models with an overall p-value below this threshold.}
 }
 \value{
-A list containing \code{summary_stats}, \code{effect_sizes}, \code{coefficients}, and
-\code{combined_plot} (which will be \code{NULL} if p > \code{p_threshold}).
+A list containing \code{summary_stats}, \code{combined_plot} (which may be \code{NULL}),
+\code{effect_sizes}, and \code{coefficients}.
 }
 \description{
-This is the core analysis engine. It builds and compares models
-(\code{lm} or \code{lmer}) for a single set of predictors. It creates publication-quality
-plots for models that meet a significance threshold.
+This is the core analysis engine for a single PC index. It builds
+and compares models and creates plots for significant models. It uses the
+robust \code{jtools::effect_plot} for all visualizations, including interactions.
 }

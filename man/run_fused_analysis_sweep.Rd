@@ -17,55 +17,19 @@ run_fused_analysis_sweep(
   outcome_label = NULL,
   predictor_name_map = NULL,
   heatmap_value = c("t.value", "d", "p.value"),
-  verbose = FALSE
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
-\item{pc_indices}{A numeric vector of PC indices to loop over (e.g., \code{1:50}).}
-
-\item{data}{A data frame containing all necessary variables.}
-
-\item{outcome}{The outcome variable name (character string).}
-
-\item{covariates}{A character string of fixed-effect covariates (e.g., "Age + Sex").}
-
-\item{modality_prefixes}{A character vector of the component prefixes (e.g., \code{c("t1", "dt")}).}
-
-\item{random_effects}{A character string for the \code{lmer} random effects (e.g., \code{"(1 | ID)"}).
-If \code{NULL} (default), a standard \code{lm} is used.}
-
-\item{predictoroperator}{Operator for combining predictors. Defaults to \code{'+'}.
-Use \code{'*'} to model full interactions.}
-
-\item{plot_interaction_with}{A moderator variable name to plot as an interaction.
-When \code{predictoroperator = "*"}, this also specifies the \emph{only} covariate
-that will be included in the interaction term, unless \code{interact_with_all} is \code{TRUE}.}
-
-\item{interact_with_all}{A logical. If \code{FALSE} (default) and \code{predictoroperator = "*"},
-only the variable in \code{plot_interaction_with} is interacted with the predictors.
-If \code{TRUE}, all \code{covariates} are interacted with the predictors.}
-
-\item{outcome_label}{An optional string for a "pretty" y-axis label.}
-
-\item{predictor_name_map}{An optional named list to map predictor names to
-human-readable labels. Example: \code{list(t1PC10 = "Temporal Atrophy")}.}
-
-\item{heatmap_value}{The statistic to use for the heatmap values. One of
-\code{"t.value"} (default), \code{"d"} (Cohen's d), or \code{"p.value"}.}
-
-\item{verbose}{A logical. If \code{TRUE}, the model formulas used in each run will be printed.}
+\item{...}{Arguments passed down to \code{test_fused_component_set}, including \code{p_threshold}.}
 }
 \value{
-A list containing four aggregated components:
-\item{summary_statistics}{A single tibble of overall model statistics.}
-\item{effect_sizes}{A single tibble of all Cohen's d effect sizes.}
-\item{plots}{A named list of all generated plot objects.}
-\item{heatmap_data}{A numeric matrix with PC indices as rows and predictors
-as columns, ready for heatmap plotting.}
+A list containing aggregated \code{summary_statistics}, \code{effect_sizes},
+a named list of \code{plots}, and \code{heatmap_data} matrix.
 }
 \description{
-This is the main user-facing function. It automates running
-\code{test_fused_component_set} over a range of PC indices, handling progress
-reporting and aggregating all successful results into a beautifully
-organized list, including data ready for heatmap plotting.
+This mid-level function automates running \code{test_fused_component_set}
+over a range of PC indices for a single outcome, handling progress reporting
+and aggregating the results.
 }

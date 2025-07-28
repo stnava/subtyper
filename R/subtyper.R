@@ -7792,11 +7792,6 @@ plot_regression_graph <- function(predictors, weights, outcome, method = "ggraph
   }
 }
 
-# 1. LOAD ALL NECESSARY LIBRARIES
-# ==========================================================================
-library(lmerTest); library(lme4); library(performance); library(effectsize)
-library(jtools); library(gridExtra); library(grid); library(tibble)
-library(ggplot2); library(dplyr); library(purrr); library(progress); library(insight)
 
 # 2. DEFINE HELPER FUNCTIONS
 # ==========================================================================
@@ -7837,18 +7832,16 @@ add_significance_stars <- function(p) { if(is.na(p))"" else if(p<0.001)"***" els
 #' @export
 delta_R2_to_f2 <- function(delta_r2, r2_full) { delta_r2 / (1 - r2_full) }
 
-# 3. DEFINE MODEL FITTING ENGINES (WITH NEW INTERACTION LOGIC)
-# ==========================================================================
-#' @title Fit and Compare Linear Models
-#' @description Internal helper for `lm` models with flexible interaction specification.
-#' @inheritParams run_fused_analysis_sweep
-#' @param predictor A character string specifying the main predictor(s).
-#' @return A harmonized list of model results.
-#' @export
-lm_anv_p_and_d <- function(data, outcome, predictor, covariates, predictoroperator = '*', verbose = FALSE,
-                           plot_interaction_with = NULL, interact_with_all = FALSE) {
+#' Internal Engine to Fit and Compare Linear Models
+#' @description Fits a base and full `lm` model, compares them, and extracts
+#'   results. Crucially, it returns the exact data subset used for fitting.
+#' @return A list containing model objects, comparisons, coefficients, effect
+#'   sizes, and the `model_data` object. Returns `NULL` on failure.
+#' @noRd
+lm_anv_p_and_d <- function(data, outcome, predictor, covariates, 
+  predictoroperator = '*', verbose = FALSE,
+  plot_interaction_with = NULL, interact_with_all = FALSE) {
   base_model_formula_str <- paste(outcome, "~", covariates)
-  
   if (predictoroperator == "*") {
     if (interact_with_all) {
       full_model_formula_str <- paste0(outcome, " ~ (", covariates, ") * (", predictor, ")")
@@ -7861,8 +7854,6 @@ lm_anv_p_and_d <- function(data, outcome, predictor, covariates, predictoroperat
   } else {
     full_model_formula_str <- paste(base_model_formula_str, predictoroperator, predictor)
   }
-  
-  if(verbose) { message("--- LM Formulas ---\n", "Base Model: ", base_model_formula_str, "\n", "Full Model: ", full_model_formula_str) }
   full_model_formula <- as.formula(full_model_formula_str)
   datasub <- na.omit(data[, all.vars(full_model_formula), drop = FALSE])
   if (nrow(datasub) < 2) return(NULL)
@@ -7882,19 +7873,19 @@ lm_anv_p_and_d <- function(data, outcome, predictor, covariates, predictoroperat
   effect_sizes_df <- all_es_df[relevant_indices, , drop = FALSE]
   
   list(full_model=full_model, model_comparison=model_comparison, coefficients=coefs, 
-       effect_sizes=effect_sizes_df, delta_R2=delta_R2, r2_full=r2_full)
+       effect_sizes=effect_sizes_df, delta_R2=delta_R2, r2_full=r2_full, model_data = datasub)
 }
 
-#' @title Fit and Compare Mixed-Effects Models
-#' @description Internal helper for `lmer` models with flexible interaction specification.
-#' @inheritParams run_fused_analysis_sweep
-#' @param predictor A character string specifying the main predictor(s).
-#' @return A harmonized list of model results.
-#' @export
+
+#' Internal Engine to Fit and Compare Mixed-Effects Models
+#' @description Fits a base and full `lmer` model, compares them, and extracts
+#'   results. Crucially, it returns the exact data subset used for fitting.
+#' @return A list containing model objects, comparisons, coefficients, effect
+#'   sizes, and the `model_data` object. Returns `NULL` on failure.
+#' @noRd
 lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effects, predictoroperator = '*', verbose = FALSE,
                              plot_interaction_with = NULL, interact_with_all = FALSE) {
   base_model_formula_str <- paste(outcome, "~", covariates, "+", random_effects)
-  
   if (predictoroperator == "*") {
     if (interact_with_all) {
       full_model_formula_str <- paste0(outcome, " ~ (", covariates, ") * (", predictor, ") + ", random_effects)
@@ -7907,7 +7898,6 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effect
   } else {
     full_model_formula_str <- paste(outcome, "~", covariates, predictoroperator, predictor, "+", random_effects)
   }
-  
   if(verbose) { message("--- LMER Formulas ---\n", "Base Model: ", base_model_formula_str, "\n", "Full Model: ", full_model_formula_str) }
   full_model_formula <- as.formula(full_model_formula_str)
   grouping_var <- trimws(sub(".*\\|\\s*", "", random_effects)); grouping_var <- gsub(")", "", grouping_var, fixed=TRUE)
@@ -7934,69 +7924,52 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effect
   effect_sizes_df <- all_es_df[relevant_indices, , drop = FALSE]
   
   list(full_model=full_model, model_comparison=model_comparison, coefficients=coefs,
-       effect_sizes=effect_sizes_df, delta_R2=delta_R2, r2_full=r2_full)
+       effect_sizes=effect_sizes_df, delta_R2=delta_R2, r2_full=r2_full, model_data = datasub)
 }
 
 
+# ==========================================================================
+# 4. DEFINE THE CORE ANALYSIS ENGINE
+# ==========================================================================
+
 #' Test a Fused Set of Components and Create Informative Plots
 #'
-#' This is the core analysis engine. It builds and compares models
-#' (`lm` or `lmer`) for a single set of predictors. It creates publication-quality
-#' plots for models that meet a significance threshold.
+#' @description This is the core analysis engine for a single PC index. It builds
+#'   and compares models and creates plots for significant models. It uses the
+#'   robust `jtools::effect_plot` for all visualizations, including interactions.
 #'
-#' @param p_threshold A numeric p-value (default `0.05`). Only models with an
-#'   overall p-value from the model comparison below this threshold will have
-#'   a plot generated. Set to `1.0` to generate plots for all models.
+#' @param p_threshold A numeric p-value (default `0.05`). Plots are only generated
+#'   for models with an overall p-value below this threshold.
+#'
 #' @inheritParams run_fused_analysis_sweep
-#' @return A list containing `summary_stats`, `effect_sizes`, `coefficients`, and
-#'   `combined_plot` (which will be `NULL` if p > `p_threshold`).
+#' @return A list containing `summary_stats`, `combined_plot` (which may be `NULL`),
+#'   `effect_sizes`, and `coefficients`.
 #' @export
 test_fused_component_set <- function(data, pc_index, outcome, covariates, modality_prefixes,
                                      random_effects = NULL, predictoroperator = "+",
                                      plot_interaction_with = NULL, outcome_label = NULL,
                                      predictor_name_map = NULL, verbose = FALSE,
-                                     interact_with_all = FALSE,
-                                     p_threshold = 0.005) { # <-- NEW PARAMETER
+                                     interact_with_all = FALSE, p_threshold = 0.05) {
 
   fused_predictors <- paste0(modality_prefixes, "PC", pc_index)
   fused_predictors_string <- paste(fused_predictors, collapse = " + ")
-
-  # --- Model Fitting (Unchanged) ---
-  if (!is.null(random_effects)) {
-    model_results <- lmer_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string,
-                                      covariates=covariates, random_effects=random_effects,
-                                      predictoroperator=predictoroperator, verbose=verbose,
-                                      plot_interaction_with=plot_interaction_with,
-                                      interact_with_all=interact_with_all)
-  } else {
-    model_results <- lm_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string,
-                                    covariates=covariates, predictoroperator=predictoroperator,
-                                    verbose=verbose, plot_interaction_with=plot_interaction_with,
-                                    interact_with_all=interact_with_all)
+  
+  if (!is.null(random_effects)) { 
+    model_results <- lmer_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string, covariates=covariates, random_effects=random_effects, predictoroperator=predictoroperator, verbose=verbose, plot_interaction_with=plot_interaction_with, interact_with_all=interact_with_all)
+  } else { 
+    model_results <- lm_anv_p_and_d(data=data, outcome=outcome, predictor=fused_predictors_string, covariates=covariates, predictoroperator=predictoroperator, verbose=verbose, plot_interaction_with=plot_interaction_with, interact_with_all=interact_with_all)
   }
   if (is.null(model_results)) { return(NULL) }
   
-  # --- Extract Key Results (Unchanged) ---
   full_model <- model_results$full_model
   model_coefs <- model_results$coefficients
-  
-  # Get the overall model p-value from the ANOVA comparison
   last_col_index <- ncol(model_results$model_comparison)
   overall_p_value <- model_results$model_comparison[2, last_col_index]
 
-  # =======================================================================
-  # --- THE FIX: Conditional Plot Generation ---
-  # =======================================================================
-
-  # Initialize the plot object as NULL. It will only be created if the
-  # model is significant according to the user-defined threshold.
   unified_plot <- NULL
 
-  # Check if the overall model p-value is valid and below the threshold
   if (!is.na(overall_p_value) && overall_p_value < p_threshold) {
-    
-    # --- All Plotting Logic is now inside this 'if' block ---
-    y_label <- if (!is.null(outcome_label)) outcome_label else outcome
+    y_label <- outcome_label %||% outcome
     
     plot_list <- lapply(fused_predictors, function(pred_var_name) {
       pred_p_value <- if (pred_var_name %in% rownames(model_coefs)) model_coefs[pred_var_name, "Pr(>|t|)"] else NA
@@ -8005,86 +7978,69 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
       subplot_title <- paste0(pretty_pred_name, " ", stars)
       
       tryCatch({
-        args_for_plot <- list(model = full_model, pred = pred_var_name, interval = TRUE, y.label = y_label, data = insight::get_data(full_model))
-        if (!is.null(plot_interaction_with) && predictoroperator == "*") args_for_plot$modx <- plot_interaction_with
-        do.call(jtools::effect_plot, args_for_plot) + ggplot2::labs(title = subplot_title)
-      }, error = function(e) NULL)
+        # Define the base arguments for the plot
+        args_for_plot <- list(
+          model = full_model,
+          pred = pred_var_name,
+          interval = TRUE,
+          y.label = y_label,
+          data = model_results$model_data # CRITICAL: Use the exact data from the model fit
+        )
+        
+        # If an interaction is specified, add the `modx` argument to the list.
+        # `jtools::effect_plot` handles this robustly.
+        if (!is.null(plot_interaction_with) && predictoroperator == "*") {
+          args_for_plot$modx <- plot_interaction_with
+          do.call(interactions::interact_plot, args_for_plot) + ggplot2::labs(title = subplot_title) + theme(legend.position = "none")
+        } else {
+          # Call the plotting function with the complete argument list
+          do.call(jtools::effect_plot, args_for_plot) + ggplot2::labs(title = subplot_title)
+        }
+        
+      }, error = function(e) {
+          message(sprintf("\nWarning: Plotting failed for predictor '%s' with outcome '%s'.", pred_var_name, outcome))
+          message("The error was: ", e$message)
+          return(NULL)
+      })
     })
     
     compact_plot_list <- purrr::compact(plot_list)
-    
-    # Only proceed if there are actually plots to arrange
     if (length(compact_plot_list) > 0) {
         formatted_p <- insight::format_p(overall_p_value, digits = 4)
         main_plot_title <- sprintf("Partial Effects for Component Set %d on %s\nOverall Model %s", pc_index, y_label, formatted_p)
-        
-        # Assign the generated plot object to our variable
         unified_plot <- gridExtra::grid.arrange(
             grobs = compact_plot_list,
             nrow = round(sqrt(length(compact_plot_list))),
             top = grid::textGrob(main_plot_title, gp = grid::gpar(fontsize = 14, fontface = "bold"))
         )
     }
-  } # End of conditional plotting block
+  }
 
-  # --- Assemble Final Output (Unchanged, but now `unified_plot` can be NULL) ---
   f_squared <- if (!is.null(model_results$delta_R2)) delta_R2_to_f2(model_results$delta_R2, model_results$r2_full) else NA
-
-  list(
-    summary_stats = tibble(pc_index=pc_index, outcome=outcome, model_p_value=overall_p_value, delta_R2=model_results$delta_R2, cohen_f_squared=f_squared),
-    combined_plot = unified_plot, # This will be NULL for non-significant models
-    effect_sizes = model_results$effect_sizes,
-    coefficients = model_results$coefficients
-  )
+  list(summary_stats = tibble(pc_index=pc_index, outcome=outcome, model_p_value=overall_p_value, delta_R2=model_results$delta_R2, cohen_f_squared=f_squared),
+       combined_plot = unified_plot, effect_sizes = model_results$effect_sizes, coefficients = model_results$coefficients)
 }
 
-# A simple helper function to provide a default value if the primary is NULL
-`%||%` <- function(a, b) if (is.null(a)) b else a
 
-
-# 5. DEFINE THE TOP-LEVEL ORCHESTRATOR
 # ==========================================================================
-#' @title Run a Fused Component Analysis Across a Sweep of PC Indices
-#' @description This is the main user-facing function. It automates running
-#'   `test_fused_component_set` over a range of PC indices, handling progress
-#'   reporting and aggregating all successful results into a beautifully
-#'   organized list, including data ready for heatmap plotting.
+# 5. DEFINE ORCHESTRATOR FUNCTIONS
+# ==========================================================================
+
+#' Run a Fused Component Analysis Across a Sweep of PC Indices
 #'
-#' @param pc_indices A numeric vector of PC indices to loop over (e.g., `1:50`).
-#' @param data A data frame containing all necessary variables.
-#' @param outcome The outcome variable name (character string).
-#' @param covariates A character string of fixed-effect covariates (e.g., "Age + Sex").
-#' @param modality_prefixes A character vector of the component prefixes (e.g., `c("t1", "dt")`).
-#' @param random_effects A character string for the `lmer` random effects (e.g., `"(1 | ID)"`).
-#'   If `NULL` (default), a standard `lm` is used.
-#' @param predictoroperator Operator for combining predictors. Defaults to `'+'`.
-#'   Use `'*'` to model full interactions.
-#' @param plot_interaction_with A moderator variable name to plot as an interaction.
-#'   When `predictoroperator = "*"`, this also specifies the *only* covariate
-#'   that will be included in the interaction term, unless `interact_with_all` is `TRUE`.
-#' @param interact_with_all A logical. If `FALSE` (default) and `predictoroperator = "*"`,
-#'   only the variable in `plot_interaction_with` is interacted with the predictors.
-#'   If `TRUE`, all `covariates` are interacted with the predictors.
-#' @param outcome_label An optional string for a "pretty" y-axis label.
-#' @param predictor_name_map An optional named list to map predictor names to
-#'   human-readable labels. Example: `list(t1PC10 = "Temporal Atrophy")`.
-#' @param heatmap_value The statistic to use for the heatmap values. One of
-#'   `"t.value"` (default), `"d"` (Cohen's d), or `"p.value"`.
-#' @param verbose A logical. If `TRUE`, the model formulas used in each run will be printed.
-#'
-#' @return A list containing four aggregated components:
-#'   \item{summary_statistics}{A single tibble of overall model statistics.}
-#'   \item{effect_sizes}{A single tibble of all Cohen's d effect sizes.}
-#'   \item{plots}{A named list of all generated plot objects.}
-#'   \item{heatmap_data}{A numeric matrix with PC indices as rows and predictors
-#'     as columns, ready for heatmap plotting.}
+#' @description This mid-level function automates running `test_fused_component_set`
+#'   over a range of PC indices for a single outcome, handling progress reporting
+#'   and aggregating the results.
+#' @param ... Arguments passed down to `test_fused_component_set`, including `p_threshold`.
+#' @return A list containing aggregated `summary_statistics`, `effect_sizes`,
+#'   a named list of `plots`, and `heatmap_data` matrix.
 #' @export
 run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, modality_prefixes, 
                                      random_effects = NULL, predictoroperator = "+", 
                                      plot_interaction_with = NULL, interact_with_all = FALSE,
                                      outcome_label = NULL, predictor_name_map = NULL, 
                                      heatmap_value = c("t.value", "d", "p.value"),
-                                     verbose = FALSE) {
+                                     verbose = FALSE, ...) {
   
   heatmap_value <- match.arg(heatmap_value)
   pb <- progress::progress_bar$new(format="[:bar] :percent | ETA: :eta | PC: :pc", total=length(pc_indices))
@@ -8096,16 +8052,15 @@ run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, moda
       modality_prefixes=modality_prefixes, random_effects=random_effects,
       predictoroperator=predictoroperator, plot_interaction_with=plot_interaction_with,
       outcome_label=outcome_label, predictor_name_map=predictor_name_map,
-      verbose=verbose, interact_with_all=interact_with_all
+      verbose=verbose, interact_with_all=interact_with_all, ...
     )
   })
   
   valid_results <- purrr::compact(results_list)
-  if (length(valid_results) == 0) { warning("All analysis runs failed."); return(NULL) }
+  if (length(valid_results) == 0) { return(NULL) }
   
   all_summary_stats <- purrr::map_dfr(valid_results, "summary_stats")
-  names(valid_results) <- purrr::map_int(valid_results, ~.x$summary_stats$pc_index)
-  all_effect_sizes <- purrr::imap_dfr(valid_results, ~{ if (!is.null(.x$effect_sizes) && nrow(.x$effect_sizes) > 0) { dplyr::mutate(.x$effect_sizes, pc_index = as.integer(.y), .before = 1) } })
+  all_effect_sizes <- purrr::map_dfr(valid_results, "effect_sizes", .id = "pc_index")
   all_plots <- purrr::map(valid_results, "combined_plot")
   
   heatmap_rows <- purrr::map(valid_results, function(res) {
@@ -8131,83 +8086,66 @@ run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, moda
 
 #' Run a Master Multi-view Analysis Across Multiple Configurations
 #'
-#' This function orchestrates a series of analysis sweeps. It iterates through
-#' a list of configurations and their specified outcomes, calling the underlying
-#' `run_fused_analysis_sweep` function and aggregating all results.
+#' @description This is the main user-facing function. It orchestrates analysis
+#'   sweeps across multiple configurations (e.g., datasets, analysis types)
+#'   and aggregates all results into a final, tidy output.
 #'
-#' @param analysis_configurations A named list of analysis configurations.
-#' @param pc_indices A numeric vector of PC indices to sweep over.
-#' @param modality_prefixes A character vector of the component prefixes.
-#' @param ... Global arguments passed to every `run_fused_analysis_sweep` call.
+#' @param analysis_configurations A named list of lists. Each inner list defines
+#'   an analysis and must contain `data`, `outcomes`, `covariates`, `dataset_name`,
+#'   and `analysis_type`. Can also contain optional overrides like `random_effects`.
+#' @param pc_indices A numeric vector of PC indices to sweep over for all analyses.
+#' @param modality_prefixes A character vector of component prefixes.
+#' @param ... Global arguments passed down to all analysis calls, such as `verbose`,
+#'   `p_threshold`, etc.
 #'
-#' @return A list containing `summary_statistics`, `effect_sizes`, and `plots`.
+#' @return A list containing three main components: `summary_statistics`,
+#'   `effect_sizes`, and `plots`.
 #' @export
 run_multiview_analysis <- function(analysis_configurations, pc_indices, modality_prefixes, ...) {
 
   all_results <- purrr::imap(analysis_configurations, function(config, config_name) {
     message(sprintf("\n--- Running Configuration: %s ---", config_name))
-    
-    # This loop iterates through the "pretty names" of the outcomes
     outcome_results <- purrr::map(names(config$outcomes), function(outcome_name) {
-      
-      # Get the actual variable name from the named vector
       actual_outcome_variable <- config$outcomes[[outcome_name]]
-      
-      # Define the arguments to pass to the sweep function
       args_for_sweep <- list(
-        pc_indices = pc_indices,
-        data = config$data,
-        outcome = actual_outcome_variable, # Use the actual variable name for the model
-        # =======================================================================
-        # --- THE FIX: Pass the pretty name to the `outcome_label` argument ---
-        # =======================================================================
-        outcome_label = outcome_name, # Use the pretty name for plot labels
-        covariates = config$covariates,
-        modality_prefixes = modality_prefixes
+        pc_indices = pc_indices, data = config$data, outcome = actual_outcome_variable,
+        outcome_label = outcome_name, covariates = config$covariates, modality_prefixes = modality_prefixes
       )
-      
-      # Add optional arguments if they exist in the config
       if ("random_effects" %in% names(config)) args_for_sweep$random_effects <- config$random_effects
       if ("plot_interaction_with" %in% names(config)) args_for_sweep$plot_interaction_with <- config$plot_interaction_with
+      if ("predictoroperator" %in% names(config)) args_for_sweep$predictoroperator <- config$predictoroperator
       
-      # Call the underlying function with the complete set of arguments
       res <- do.call(run_fused_analysis_sweep, c(args_for_sweep, list(...)))
       
-      # Attach metadata for final aggregation
       if (!is.null(res)) {
-        res$analysis_id <- list(
-          dataset = config$dataset_name,
-          analysis_type = config$analysis_type,
-          outcome_label = outcome_name, # The pretty name is the final label
-          full_id = paste(config_name, outcome_name, sep = "_")
-        )
+        res$analysis_id <- list(dataset = config$dataset_name, analysis_type = config$analysis_type,
+          outcome_label = outcome_name, full_id = paste(config_name, outcome_name, sep = "_"))
       }
       return(res)
     })
     return(outcome_results)
   })
 
-  # --- Combine All Results into Master Data Frames (This part is already correct) ---
   valid_results <- purrr::compact(unlist(all_results, recursive = FALSE))
+  if (length(valid_results) == 0) {
+    warning("All analysis runs failed to produce any valid results.", call. = FALSE)
+    return(NULL)
+  }
   names(valid_results) <- purrr::map_chr(valid_results, ~.x$analysis_id$full_id)
 
   master_summary_df <- purrr::map_dfr(valid_results, ~{
     .x$summary_statistics %>%
-      dplyr::mutate(
-        dataset = .x$analysis_id$dataset,
-        analysis_type = .x$analysis_id$analysis_type,
-        outcome_label = .x$analysis_id$outcome_label,
-        .before = 1
-      )
+      dplyr::mutate(dataset = .x$analysis_id$dataset, analysis_type = .x$analysis_id$analysis_type,
+                    outcome_label = .x$analysis_id$outcome_label, .before = 1)
   })
 
+  # CORRECTED: This logic robustly adds the pc_index by parsing the predictor name.
   master_effects_df <- purrr::map_dfr(valid_results, ~{
-    num_modalities <- length(modality_prefixes)
-    pc_index_col <- rep(.x$summary_statistics$pc_index, each = num_modalities)
+    if (is.null(.x$effect_sizes) || nrow(.x$effect_sizes) == 0) return(NULL)
     .x$effect_sizes %>%
       tibble::as_tibble(rownames = "predictor") %>%
       dplyr::mutate(
-        pc_index = pc_index_col,
+        pc_index = as.numeric(stringr::str_extract(predictor, "(?<=PC)\\d+")),
         dataset = .x$analysis_id$dataset,
         analysis_type = .x$analysis_id$analysis_type,
         outcome_label = .x$analysis_id$outcome_label,

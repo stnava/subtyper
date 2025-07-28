@@ -12,19 +12,23 @@ run_multiview_analysis(
 )
 }
 \arguments{
-\item{analysis_configurations}{A named list of analysis configurations.}
+\item{analysis_configurations}{A named list of lists. Each inner list defines
+an analysis and must contain \code{data}, \code{outcomes}, \code{covariates}, \code{dataset_name},
+and \code{analysis_type}. Can also contain optional overrides like \code{random_effects}.}
 
-\item{pc_indices}{A numeric vector of PC indices to sweep over.}
+\item{pc_indices}{A numeric vector of PC indices to sweep over for all analyses.}
 
-\item{modality_prefixes}{A character vector of the component prefixes.}
+\item{modality_prefixes}{A character vector of component prefixes.}
 
-\item{...}{Global arguments passed to every \code{run_fused_analysis_sweep} call.}
+\item{...}{Global arguments passed down to all analysis calls, such as \code{verbose},
+\code{p_threshold}, etc.}
 }
 \value{
-A list containing \code{summary_statistics}, \code{effect_sizes}, and \code{plots}.
+A list containing three main components: \code{summary_statistics},
+\code{effect_sizes}, and \code{plots}.
 }
 \description{
-This function orchestrates a series of analysis sweeps. It iterates through
-a list of configurations and their specified outcomes, calling the underlying
-\code{run_fused_analysis_sweep} function and aggregating all results.
+This is the main user-facing function. It orchestrates analysis
+sweeps across multiple configurations (e.g., datasets, analysis types)
+and aggregates all results into a final, tidy output.
 }
