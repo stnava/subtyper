@@ -997,6 +997,68 @@ plotSubtypeChange <-function( mxdfin,
     }
 
 
+#' Scale Continuous Predictors in a Data Frame Based on a Model Formula
+#'
+#' This function prepares a data frame for modeling by standardizing all continuous
+#' numeric predictors specified in a formula. It intelligently parses the formula
+#' to identify the outcome variable (which is never scaled) and all predictors.
+#' Each numeric predictor is then scaled to have a mean of 0 and a standard
+#' deviation of 1 (Z-scoring).
+#'
+#' @param data A data frame containing all the variables mentioned in the formula.
+#' @param formula A model formula object (e.g., `Outcome ~ Predictor1 + (1 | Group)`).
+#'   The function will scale all numeric variables on the right-hand side of the `~`.
+#'
+#' @return A data frame with the same dimensions as the input, but with the
+#'   continuous numeric predictors scaled and centered.
+#'
+#' @export
+scale_predictors_from_formula <- function(data, formula) {
+  
+  # --- 1. Identify all variables from the formula ---
+  all_vars <- all.vars(formula)
+  
+  missing_vars <- setdiff(all_vars, names(data))
+  if (length(missing_vars) > 0) {
+    stop("The following variables from the formula are not in the data frame: ", 
+         paste(missing_vars, collapse = ", "), call. = FALSE)
+  }
+
+  # --- 2. Identify outcome vs. predictor variables ---
+  outcome_var <- all.vars(update(formula, . ~ 1))
+  predictor_vars <- setdiff(all_vars, outcome_var)
+  
+  # =========================================================================
+  # --- THE FIX: Use the correct `dplyr::select(where(...))` idiom ---
+  # =========================================================================
+  
+  # 3. Identify which of the predictors are numeric and need scaling.
+  # First, get the subset of the data frame containing only the predictor variables.
+  predictor_df <- data %>% dplyr::select(all_of(predictor_vars))
+  
+  # Then, from that subset, get the names of the columns that are numeric.
+  numeric_predictors_to_scale <- predictor_df %>%
+    dplyr::select(where(is.numeric)) %>%
+    names()
+    
+  if (length(numeric_predictors_to_scale) == 0) {
+    # If no numeric predictors are found, just return the original data
+    return(data)
+  }
+
+  # --- 4. Apply scaling to the identified columns ---
+  scaled_data <- data %>%
+    dplyr::mutate(
+      dplyr::across(
+        .cols = all_of(numeric_predictors_to_scale),
+        .fns = ~ as.numeric(scale(.))
+      )
+    )
+    
+  return(scaled_data)
+}
+
+
 
 #' Get subjects within a given set of visits
 #'
@@ -5388,7 +5450,7 @@ analyze_longitudinal_change <- function(data, outcome_var, predictor, covariates
   fixed_effects_str <- paste(c(predictor, covariates), collapse = " + ")
   model_formula_str <- sprintf("%s ~ %s + (1 | %s)", outcome_var, fixed_effects_str, random_effect)
   model_formula <- as.formula(model_formula_str)
-
+  clean_data = scale_predictors_from_formula( clean_data, model_formula )
   # --- VERBOSE OPTION: Print the formula if requested ---
   if (verbose) {
     message("Model Formula: ", model_formula_str)
@@ -7940,6 +8002,8 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effect
   required_vars <- unique(c(all.vars(full_model_formula), grouping_var))
   if (length(setdiff(required_vars, colnames(data))) > 0) return(NULL)
   datasub <- na.omit(data[, required_vars, drop = FALSE])
+  datasub <- scale_predictors_from_formula(datasub, full_model_formula)
+
   if (nrow(datasub) < 20) return(NULL)
   
   hasConverged <- function(mm) { if(is.null(unlist(mm@optinfo$conv$lme4))) TRUE else if(lme4::isSingular(mm)) FALSE else TRUE }
@@ -7985,8 +8049,9 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
                                      random_effects = NULL, predictoroperator = "+",
                                      plot_interaction_with = NULL, outcome_label = NULL,
                                      predictor_name_map = NULL, verbose = FALSE,
-                                     interact_with_all = FALSE, p_threshold = 0.005) {
-
+                                     interact_with_all = FALSE, p_threshold = 0.05, ...) {
+  # This is the final recipient of p_threshold.
+  
   fused_predictors <- paste0(modality_prefixes, "PC", pc_index)
   fused_predictors_string <- paste(fused_predictors, collapse = " + ")
   
@@ -8004,7 +8069,7 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
 
   unified_plot <- NULL
 
-  if (!is.na(overall_p_value) && overall_p_value < p_threshold) {
+  if (!is.na(overall_p_value) && overall_p_value <= p_threshold) {
     y_label <- outcome_label %||% outcome
     
     plot_list <- lapply(fused_predictors, function(pred_var_name) {
@@ -8014,24 +8079,13 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
       subplot_title <- paste0(pretty_pred_name, " ", stars)
       
       tryCatch({
-        # Define the base arguments for the plot
-        args_for_plot <- list(
-          model = full_model,
-          pred = pred_var_name,
-          interval = TRUE,
-          y.label = y_label,
-          data = model_results$model_data # CRITICAL: Use the exact data from the model fit
-        )
-        
-        # If an interaction is specified, add the `modx` argument to the list.
-        # `jtools::effect_plot` handles this robustly.
+        args_for_plot <- list(model = full_model, pred = pred_var_name, interval = TRUE, y.label = y_label, data = model_results$model_data)
         if (!is.null(plot_interaction_with) && predictoroperator == "*") {
           args_for_plot$modx <- plot_interaction_with
-          do.call(interactions::interact_plot, args_for_plot) + ggplot2::labs(title = subplot_title) + theme(legend.position = "none")
-        } else {
-          # Call the plotting function with the complete argument list
-          do.call(jtools::effect_plot, args_for_plot) + ggplot2::labs(title = subplot_title)
         }
+        suppressMessages({
+          plot_object <- do.call(jtools::effect_plot, args_for_plot) + ggplot2::labs(title = subplot_title)
+        })
         
       }, error = function(e) {
           message(sprintf("\nWarning: Plotting failed for predictor '%s' with outcome '%s'.", pred_var_name, outcome))
@@ -8057,11 +8111,6 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
        combined_plot = unified_plot, effect_sizes = model_results$effect_sizes, coefficients = model_results$coefficients)
 }
 
-
-# ==========================================================================
-# 5. DEFINE ORCHESTRATOR FUNCTIONS
-# ==========================================================================
-
 #' Run a Fused Component Analysis Across a Sweep of PC Indices
 #'
 #' @description This mid-level function automates running `test_fused_component_set`
@@ -8078,18 +8127,19 @@ run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, moda
                                      heatmap_value = c("t.value", "d", "p.value"),
                                      verbose = FALSE, ...) {
   
+  extra_args <- list(...)
   heatmap_value <- match.arg(heatmap_value)
   pb <- progress::progress_bar$new(format="[:bar] :percent | ETA: :eta | PC: :pc", total=length(pc_indices))
   
   results_list <- purrr::map(pc_indices, function(idx) {
     pb$tick(tokens = list(pc = idx))
-    test_fused_component_set(
-      data=data, pc_index=idx, outcome=outcome, covariates=covariates,
-      modality_prefixes=modality_prefixes, random_effects=random_effects,
-      predictoroperator=predictoroperator, plot_interaction_with=plot_interaction_with,
-      outcome_label=outcome_label, predictor_name_map=predictor_name_map,
-      verbose=verbose, interact_with_all=interact_with_all, ...
+    args_for_test <- list(
+      data=data, pc_index=idx, outcome=outcome, covariates=covariates, modality_prefixes=modality_prefixes,
+      random_effects=random_effects, predictoroperator=predictoroperator, plot_interaction_with=plot_interaction_with,
+      outcome_label=outcome_label, predictor_name_map=predictor_name_map, verbose=verbose,
+      interact_with_all=interact_with_all
     )
+    do.call(test_fused_component_set, c(args_for_test, extra_args))
   })
   
   valid_results <- purrr::compact(results_list)
@@ -8106,19 +8156,13 @@ run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, moda
     } else if (heatmap_value == "t.value") { source_df <- as.data.frame(res$coefficients); col_name <- "t value"
     } else { source_df <- as.data.frame(res$coefficients); col_name <- "Pr(>|t|)" }
     for (pred_name in pc_preds) {
-      if (!is.null(source_df) && pred_name %in% rownames(source_df)) {
-        row_vec[pred_name] <- source_df[pred_name, col_name]
-      }
+      if (!is.null(source_df) && pred_name %in% rownames(source_df)) { row_vec[pred_name] <- source_df[pred_name, col_name] }
     }
     return(row_vec)
   })
-  
   heatmap_matrix <- do.call(rbind, heatmap_rows)
-  
-  list(summary_statistics = all_summary_stats, effect_sizes = all_effect_sizes,
-       plots = all_plots, heatmap_data = heatmap_matrix)
+  list(summary_statistics = all_summary_stats, effect_sizes = all_effect_sizes, plots = all_plots, heatmap_data = heatmap_matrix)
 }
-
 
 #' Run a Master Multi-view Analysis Across Multiple Configurations
 #'
@@ -8139,19 +8183,28 @@ run_fused_analysis_sweep <- function(pc_indices, data, outcome, covariates, moda
 #' @export
 run_multiview_analysis <- function(analysis_configurations, pc_indices, modality_prefixes, ...) {
 
+  global_args <- list(...)
+
   all_results <- purrr::imap(analysis_configurations, function(config, config_name) {
     message(sprintf("\n--- Running Configuration: %s ---", config_name))
+    
     outcome_results <- purrr::map(names(config$outcomes), function(outcome_name) {
-      actual_outcome_variable <- config$outcomes[[outcome_name]]
       args_for_sweep <- list(
-        pc_indices = pc_indices, data = config$data, outcome = actual_outcome_variable,
-        outcome_label = outcome_name, covariates = config$covariates, modality_prefixes = modality_prefixes
+        pc_indices = pc_indices, modality_prefixes = modality_prefixes, data = config$data,
+        outcome = config$outcomes[[outcome_name]], outcome_label = outcome_name, covariates = config$covariates
       )
+      
+      # Explicitly check for and add optional arguments from the config list
       if ("random_effects" %in% names(config)) args_for_sweep$random_effects <- config$random_effects
       if ("plot_interaction_with" %in% names(config)) args_for_sweep$plot_interaction_with <- config$plot_interaction_with
       if ("predictoroperator" %in% names(config)) args_for_sweep$predictoroperator <- config$predictoroperator
+      if ("p_threshold" %in% names(config)) args_for_sweep$p_threshold <- config$p_threshold
       
-      res <- do.call(run_fused_analysis_sweep, c(args_for_sweep, list(...)))
+      # Combine specific arguments with global '...' arguments.
+      # Arguments in `args_for_sweep` (from the config) will take precedence over `global_args`.
+      final_args <- purrr::list_modify(global_args, !!!args_for_sweep)
+      
+      res <- do.call(run_fused_analysis_sweep, final_args)
       
       if (!is.null(res)) {
         res$analysis_id <- list(dataset = config$dataset_name, analysis_type = config$analysis_type,
@@ -8175,7 +8228,6 @@ run_multiview_analysis <- function(analysis_configurations, pc_indices, modality
                     outcome_label = .x$analysis_id$outcome_label, .before = 1)
   })
 
-  # CORRECTED: This logic robustly adds the pc_index by parsing the predictor name.
   master_effects_df <- purrr::map_dfr(valid_results, ~{
     if (is.null(.x$effect_sizes) || nrow(.x$effect_sizes) == 0) return(NULL)
     .x$effect_sizes %>%

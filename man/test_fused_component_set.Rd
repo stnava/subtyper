@@ -17,12 +17,15 @@ test_fused_component_set(
   predictor_name_map = NULL,
   verbose = FALSE,
   interact_with_all = FALSE,
-  p_threshold = 0.005
+  p_threshold = 0.05,
+  ...
 )
 }
 \arguments{
 \item{p_threshold}{A numeric p-value (default \code{0.05}). Plots are only generated
 for models with an overall p-value below this threshold.}
+
+\item{...}{Arguments passed down to \code{test_fused_component_set}, including \code{p_threshold}.}
 }
 \value{
 A list containing \code{summary_stats}, \code{combined_plot} (which may be \code{NULL}),
