@@ -8070,8 +8070,10 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
   unified_plot <- NULL
 
   myplotfun = jtools::effect_plot
+  isinteract=FALSE
   if ( !is.null(plot_interaction_with) && predictoroperator == "*" ) {
     myplotfun = interactions::interact_plot
+    isinteract=TRUE
   }
   if (!is.na(overall_p_value) && overall_p_value <= p_threshold) {
     y_label <- outcome_label %||% outcome
@@ -8088,7 +8090,7 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
           args_for_plot$modx <- plot_interaction_with
         }
         suppressMessages({
-          plot_object <- do.call(myplotfun, args_for_plot) + ggplot2::labs(title = subplot_title)
+          plot_object <- do.call(myplotfun, args_for_plot) + ggplot2::labs(title = subplot_title) + theme(legend.position = "none")
         })
         
       }, error = function(e) {
