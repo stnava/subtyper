@@ -2,20 +2,27 @@
 % Please edit documentation in R/subtyper.R
 \name{rank_methods_by_performance}
 \alias{rank_methods_by_performance}
-\title{Rank Rows of a Data Frame by Weighted Performance}
+\title{Rank Methods by Weighted Performance Using Various Normalization Strategies}
 \usage{
-rank_methods_by_performance(df, id_col, weights_df)
+rank_methods_by_performance(df, id_col, weights_df, method = "rank")
 }
 \arguments{
 \item{df}{The performance data frame.}
 
-\item{id_col}{A character string specifying the unique identifier column.}
+\item{id_col}{A character string specifying the unique identifier column in \code{df}.}
 
 \item{weights_df}{A data frame defining the metrics, weights, and directions.}
+
+\item{method}{The normalization method to use. Must be one of \code{"rank"} (default),
+\code{"minmax"}, or \code{"zscore"}.}
 }
 \value{
-A list containing \code{ranked_df} (a tibble) and \code{gt_table} (a gt object).
+A list containing two elements:
+\item{ranked_df}{A tibble with all original columns plus the new rank/score.}
+\item{gt_table}{A \code{gt} table object, formatted for presentation.}
 }
 \description{
-Rank Rows of a Data Frame by Weighted Performance
+This function ranks methods based on a set of performance metrics, using one
+of three user-selected normalization strategies: rank averaging, min-max
+scaling, or Z-scoring. This version resolves all known syntax errors.
 }
