@@ -8366,7 +8366,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
     rename_with(~ display_name_map[.], .cols = all_of(active_metric_cols))
 
   gt_table <- display_ready_df %>%
-    gt() %>%
+    gt::gt() %>%
     tab_header(
       title = md(paste("**Method Performance Ranking (", stringr::str_to_title(method), "Method )**")),
       subtitle = "Methods ranked by a weighted average of normalized performance scores."
