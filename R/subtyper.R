@@ -116,25 +116,20 @@ mapAsymVar <-function( mydataframe, leftvar, leftname='left', rightname='right',
     }
     
     # Extract all numbers from the string
-    numbers <- str_extract_all(input_string, "\\b\\d+\\b")[[1]]
+    numbers <- stringr::str_extract_all(input_string, "\\b\\d+\\b")[[1]]
     
     # Apply the modification to the numbers
-    modified_numbers <- map_chr(numbers, modify_value)
+    modified_numbers <- purrr::map_chr(numbers, modify_value)
     
     # Replace old numbers with new numbers in the string
     for (i in seq_along(numbers)) {
-      input_string <- str_replace(input_string, numbers[i], modified_numbers[i])
+      input_string <- stringr::str_replace(input_string, numbers[i], modified_numbers[i])
     }
 
     return(input_string)
   }
 
   rightvar =  gsub( leftname, rightname, leftvar )
-#  for ( k in 1:length(rightvar) ) {
-#    r=rightvar[k]
-#    if ( length( grep("rsfMRI_",r) > 0 ) )
-#      rightvar[k]=replace_values(r)
-#  }
   hasright = rightvar %in% colnames(mydataframe)
   temp = mydataframe[,leftvar[hasright]] - mydataframe[,rightvar[hasright]]
   temp = temp * sign(temp )
@@ -330,7 +325,7 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
       x = paste("T.", response),
       y = paste("P.", response)
     ) +
-    annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared1, "\nΔR² =", delta_r_squared),
+    annotate(geom="label", x = max_val, y = min_val, label = paste("R2 =", r_squared1, "\ndelR2 =", delta_r_squared),
              hjust = 1.1, vjust = -0.5, size = annot_size, color = "blue", fill = 'white') +
     scale_x_continuous(limits = c(min_val, max_val)) +
     scale_y_continuous(limits = c(min_val, max_val)) +
@@ -345,7 +340,7 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
       x = paste("T.", response),
       y = paste("P.", response)
     ) + 
-    annotate(geom="label", x = max_val, y = min_val, label = paste("R² =", r_squared2, "\nΔR² =", delta_r_squared),
+    annotate(geom="label", x = max_val, y = min_val, label = paste("R2 =", r_squared2, "\ndelR2 =", delta_r_squared),
              hjust = 1.1, vjust = -0.5, size = annot_size, color = "blue", fill = 'white') +
     scale_x_continuous(limits = c(min_val, max_val)) +
     scale_y_continuous(limits = c(min_val, max_val)) +
@@ -996,7 +991,6 @@ plotSubtypeChange <-function( mxdfin,
 
     lmxdf = mxdfin
     lmxdf$timer = lmxdf[ , vizname ]
-# When the population standard deviation is known, the formula for a confidence interval (CI) for a population mean is x̄ ± z* σ/√n, where x̄ is the sample mean, σ is the population standard deviation, n is the sample size, and z* represents the appropriate z*-value from the standard normal distribution for your desired confidence level.
 
     tgcWithin <- summarySE( lmxdf, measurevar=measurement,
             groupvars=c('timer',subtype), na.rm=TRUE, conf.interval=.95 )
