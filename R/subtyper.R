@@ -6,6 +6,163 @@
 }
 
 
+#' Set Seed Based on Current Time
+#'
+#' This function sets the random number generator seed based on the current time,
+#' with a fine resolution of seconds. This ensures a different seed is used each time
+#' the function is called, provided calls are at least one second apart.
+#'
+#' @return The numeric value used as the seed, derived from the current time in seconds.
+#' @examples
+#' seedValue <- setSeedBasedOnTime()
+#' print(seedValue)
+#' @export
+setSeedBasedOnTime <- function() {
+  op <- options(digits.secs = 8)
+  # Get the current time
+  currentTime <- Sys.time()
+  
+  # Convert the current time to a numeric value
+  # numericTime <- as.numeric(currentTime, units = "secs")
+  numericTime = as.integer(substr(as.character(Sys.time()),22,200))
+  # Use the numeric time as the seed
+  set.seed(numericTime)
+  
+  # Optionally, return the seed value used
+  return(numericTime)
+}
+
+#' Grep entries with a vector search parameters
+#'
+#' @param x a vector of search terms
+#' @param desc target vector of items to be searched
+#' @param intersect boolean whether to use intersection or union otherwise
+#'
+#' @return result of grep (indices of desc that match x)
+#' @author Avants BB
+#' @export
+multigrep <- function( x, desc, intersect=FALSE ) {
+  roisel = c()
+  for ( xx in x ) {
+    if (length(roisel)==0 | !intersect ) {
+      roisel = c( roisel, grep(xx, desc) )
+    } else {
+      roisel = intersect( roisel, grep(xx, desc) )
+    }
+  }
+  return(  roisel )
+}
+
+
+#' Extract column names with concatenated search parameters
+#'
+#' @param x vector of strings
+#' @param demogIn the dataframe with column names to search.
+#' @param exclusions the strings to exclude
+#'
+#' @return vector of string column names
+#' @author Avants BB
+#' @examples
+#'
+#' mydf = generateSubtyperData( 5 )
+#' nms = getNamesFromDataframe( c("it","v"), mydf )
+#'
+#' @export
+getNamesFromDataframe <- function( x, demogIn, exclusions ) {
+  outnames = names(demogIn)[ grep(x[1],names(demogIn ) ) ]
+  if ( length( x ) > 1 )
+  for ( y in x[-1] )
+    outnames = outnames[ grep(y,outnames ) ]
+
+  if ( ! missing( exclusions ) ) {
+    toexclude=grep(exclusions[1],outnames)
+    if ( length(exclusions) > 1 )
+      for ( zz in exclusions[-1] ) {
+        toexclude = c( toexclude, grep(zz,outnames) )
+      }
+    if ( length( toexclude ) > 0 ) outnames = outnames[ -toexclude ]
+  }
+  return( outnames )
+}
+
+
+
+#' Convert left/right variables to a measure of asymmetry
+#'
+#' @param mydataframe dataframe containing relevant variables
+#' @param leftvar left side variable names ie the full names of the variables to asym
+#' @param leftname the variable substring indicating left side
+#' @param rightname the variable substring indicating right side
+#' @param replacer string to replace left with in column names of output
+#' @return fixed x
+#' @author Avants BB
+#' @export
+mapAsymVar <-function( mydataframe, leftvar, leftname='left', rightname='right', replacer='Asym' ) {
+
+  library(stringr)
+  library(purrr)
+  replace_values <- function(input_string) {
+    # Function to modify a number based on the specified rules
+    modify_value <- function(number) {
+      num <- as.numeric(number)
+      if (num >= 1 && num <= 249) {
+        return(as.character(num + 249))
+      } else {
+        return(number)
+      }
+    }
+    
+    # Extract all numbers from the string
+    numbers <- str_extract_all(input_string, "\\b\\d+\\b")[[1]]
+    
+    # Apply the modification to the numbers
+    modified_numbers <- map_chr(numbers, modify_value)
+    
+    # Replace old numbers with new numbers in the string
+    for (i in seq_along(numbers)) {
+      input_string <- str_replace(input_string, numbers[i], modified_numbers[i])
+    }
+
+    return(input_string)
+  }
+
+  rightvar =  gsub( leftname, rightname, leftvar )
+#  for ( k in 1:length(rightvar) ) {
+#    r=rightvar[k]
+#    if ( length( grep("rsfMRI_",r) > 0 ) )
+#      rightvar[k]=replace_values(r)
+#  }
+  hasright = rightvar %in% colnames(mydataframe)
+  temp = mydataframe[,leftvar[hasright]] - mydataframe[,rightvar[hasright]]
+  temp = temp * sign(temp )
+  newnames = gsub(leftname, replacer,leftvar[hasright])
+  mydataframe[,newnames]=temp
+  return( mydataframe )
+}
+
+
+
+#' Convert left/right variables to an average measurement
+#'
+#' @param mydataframe dataframe containing relevant variables
+#' @param leftvar left side variable names ie the full names of the variables to average
+#' @param leftname the variable substring indicating left side
+#' @param rightname the variable substring indicating right side
+#' @param replacer string to replace left with in column names of output
+#' @return fixed x
+#' @author Avants BB
+#' @export
+mapLRAverageVar <- function( mydataframe, leftvar, leftname='left',rightname='right', replacer='LRAVG' ) {
+  rightvar =  gsub( leftname, rightname, leftvar )
+  hasright = rightvar %in% colnames(mydataframe)
+  temp = mydataframe[,leftvar[hasright]] * 0.5 + mydataframe[,rightvar[hasright]] * 0.5
+  newnames = gsub(leftname, replacer,leftvar[hasright])
+  mydataframe[,newnames]=temp
+  return( mydataframe )
+}
+
+
+
 #' Extract Complete Cases from a Data Frame Based on a Model Equation
 #'
 #' This function takes a data frame and a model equation as input, and returns
