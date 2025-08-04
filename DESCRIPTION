@@ -67,6 +67,7 @@ Imports:
   nmfbin,
   optmatch,
   pheatmap,
+  purrr,
   gprofiler2,
   magrittr,
   fastICA,
