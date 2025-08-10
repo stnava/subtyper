@@ -8026,10 +8026,45 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effect
        effect_sizes=effect_sizes_df, delta_R2=delta_R2, r2_full=r2_full, model_data = datasub)
 }
 
-
-# ==========================================================================
-# 4. DEFINE THE CORE ANALYSIS ENGINE
-# ==========================================================================
+#' Filter Names with Zero-Variance Columns
+#'
+#' Given a vector of names and a data matrix, remove any names whose
+#' corresponding columns have zero variance.
+#'
+#' @param names_vec Character vector of names (must match column names of `mat`).
+#' @param mat Numeric matrix or data frame.
+#'
+#' @return A filtered character vector containing only names whose columns
+#'         have non-zero variance.
+#'
+#' @examples
+#' mat <- matrix(rnorm(50), nrow = 10)
+#' colnames(mat) <- paste0("PC", 1:5)
+#' mat[, 3] <- 1  # zero variance column
+#' filter_zero_var_names(paste0("PC", 1:5), mat)
+#' @export
+filter_zero_var_names <- function(names_vec, mat) {
+  stopifnot(all(names_vec %in% colnames(mat)))
+  
+  # Identify zero variance columns
+  zero_var_cols <- vapply(
+    names_vec,
+    function(nm) var(mat[, nm], na.rm = TRUE) == 0,
+    logical(1)
+  )
+  
+  # Filter
+  filtered_names <- names_vec[!zero_var_cols]
+  
+  # Optional: message about what was dropped
+  if (any(zero_var_cols)) {
+    message("Dropped ", sum(zero_var_cols), 
+            " zero-variance column(s): ", 
+            paste(names_vec[zero_var_cols], collapse = ", "))
+  }
+  
+  filtered_names
+}
 
 #' Test a Fused Set of Components and Create Informative Plots
 #'
@@ -8052,6 +8087,8 @@ test_fused_component_set <- function(data, pc_index, outcome, covariates, modali
   # This is the final recipient of p_threshold.
   
   fused_predictors <- paste0(modality_prefixes, "PC", pc_index)
+  fused_predictors = filter_zero_var_names( fused_predictors, data )
+  if ( length(fused_predictors) ==0 ) return(NULL)
   fused_predictors_string <- paste(fused_predictors, collapse = " + ")
   
   if (!is.null(random_effects)) { 
