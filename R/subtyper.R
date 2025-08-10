@@ -8044,6 +8044,7 @@ lmer_anv_p_and_d <- function(data, outcome, predictor, covariates, random_effect
 #' filter_zero_var_names(paste0("PC", 1:5), mat)
 #' @export
 filter_zero_var_names <- function(names_vec, mat) {
+  names_vec=intersect(names_vec,colnames(mat))
   stopifnot(all(names_vec %in% colnames(mat)))
   
   # Identify zero variance columns
