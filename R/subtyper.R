@@ -8334,7 +8334,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
   }
 
   # --- 2. Normalize Scores Based on Selected Method ---
-  scores_df <- df %>% select(all_of(c(id_col, active_metric_cols)))
+  scores_df <- df %>% dplyr::select(all_of(c(id_col, active_metric_cols)))
 
   if (method == "rank") {
     # ... (rest of normalization logic is correct) ...
@@ -8387,7 +8387,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
   # THE DEFINITIVE FIX: Use a two-step process to rename the dynamic column
   # 1. Join the score back to the original data
   final_ranked_df <- df %>%
-    left_join(select(normalized_scores, all_of(id_col), Final_Score), by = id_col) %>%
+    left_join(dplyr::select(normalized_scores, all_of(id_col), Final_Score), by = id_col) %>%
     arrange(if (direction_is_desc) desc(Final_Score) else Final_Score) %>%
     mutate(Overall_Rank = row_number())
     
@@ -8399,7 +8399,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
     display_name_map <- setNames(active_metrics_df$display_name, active_metrics_df$metric_name)
   
   display_ready_df <- final_ranked_df %>%
-    select(Overall_Rank, all_of(id_col), !!sym(score_col_name), all_of(active_metric_cols)) %>%
+    dplyr::select(Overall_Rank, all_of(id_col), !!sym(score_col_name), all_of(active_metric_cols)) %>%
     rename_with(~ display_name_map[.], .cols = all_of(active_metric_cols))
 
   gt_table <- display_ready_df %>%
