@@ -350,6 +350,39 @@ compare_model_predictions <- function(model1, model2, data, response, re.form = 
   return(list(plot1, plot2))
 }
 
+
+#' Convert parameter row to a unique filename
+#'
+#' @param df A data frame with exactly one row containing parameters.
+#' @param prefix Optional filename prefix.
+#' @param sep Separator to use between parameter key/value pairs.
+#' @param sanitize Whether to replace problematic filename characters with `_`.
+#'
+#' @return A character string that is a unique, deterministic filename for the row.
+#' @export
+paramrow_to_filename <- function(df, prefix = "params", sep = "_", sanitize = TRUE) {
+  stopifnot(nrow(df) == 1)
+  
+  # Collapse each value into a string, replacing spaces and punctuation if needed
+  value_strings <- vapply(df, function(val) {
+    val_str <- as.character(val)
+    if (sanitize) {
+      # Replace spaces, commas, equals, colons, etc.
+      val_str <- gsub("[^A-Za-z0-9\\.\\-]", "_", val_str)
+    }
+    val_str
+  }, FUN.VALUE = character(1))
+  
+  # Create key=value pairs
+  key_value_pairs <- paste0(names(df), sep, value_strings)
+  
+  # Build filename
+  filename <- paste(c(prefix, key_value_pairs), collapse = sep)
+  
+  # Add extension if desired (optional)
+  filename
+}
+
 #' Select Longitudinal Subjects
 #'
 #' Select subjects that have at least a minimum number of visits and
