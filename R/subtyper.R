@@ -8764,7 +8764,7 @@ assess_idp_consistency_multi <- function(df,
       "Domain: ", domain, "\n",
       "IDPs: ", idp_str, "\n",
       "Please assess the neuroscientific support for the relationship between these imaging data phenotypes (IDPs) and the given cognitive performance domain. ",
-      "Provide an overall score from 0-100 for the amount of support in the scientific literature justifying these relationships, and give a short justification and explanation for the relationship between the IDPs and the domain. ",
+      "Provide a merit value for the amount of support in the scientific literature justifying these relationships (low, moderate, high), and give a short justification and explanation for the relationship between the IDPs and the domain. ",
       "Note that t1 generally refers to T1w (structural); dt refers to diffusion tensor imaging and rsf refers to resting state functional connectivity. ",
       "IDPs refers to imaging data phenotypes derived from these modalities. Respond ONLY in JSON with keys: confidence_score (0-100) and justification.  Make sure that your replies are concise --- no more than 80 characters.  Compress your reply into key neuroscientific support concepts.  Do not use full sentences. "
     )
