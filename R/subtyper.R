@@ -8611,7 +8611,7 @@ assess_idp_consistency <- function(df,
     "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
     "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
     "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
-    "Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner = a patient's partner rating of cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus;"
+    "Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner = a partner rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus;"
   )
 
   # Define the user prompt template
