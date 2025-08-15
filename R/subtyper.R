@@ -8467,207 +8467,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
 
 
 
-
-#' Assess IDP Consistency with OpenAI Chat Models (Grouped by Domain)
-#'
-#' This function queries an OpenAI chat model to assess the consistency of
-#' Imaging Derived Phenotypes (IDPs) for a given performance domain.  
-#' Rows are grouped by a specified domain column, and each group is sent as a
-#' single API request, reducing the number of calls and mitigating rate-limit issues.
-#'
-#' @param df A \code{data.frame} containing the performance domain column and IDP columns.
-#' @param domain_col A string specifying the name of the column in \code{df}
-#'   that contains the performance domain labels (e.g., \code{"Perf.Dom"}).
-#' @param idp_cols A character vector specifying the names of the columns
-#'   containing the IDP values (e.g., \code{c("IDP.1", "IDP.2", "IDP.3")}).
-#' @param model The OpenAI model to use. Defaults to \code{"gpt-3.5-turbo"}
-#'   for compatibility with free-tier accounts. Can also be \code{"gpt-4o-mini"} or similar if available.
-#' @param temperature Sampling temperature for the model (0 = deterministic).
-#' @param verbose Logical; if \code{TRUE}, prints progress messages and API status.
-#' @param pause_sec Number of seconds to pause between API requests (to avoid rate limiting).
-#' @param max_retries Maximum number of retries after hitting rate limits.
-#'
-#' @details
-#' The function works in three stages:
-#' \enumerate{
-#'   \item Groups rows of \code{df} by the specified \code{domain_col}.
-#'   \item For each group, creates a structured prompt containing all IDPs in that group.
-#'   \item Sends a single API request for the group, and parses the returned JSON into
-#'         \code{consistency_overall}, \code{overall_justification}, and \code{idp_breakdown}.
-#' }
-#'
-#' The OpenAI API key must be available in the \code{OPENAI_API_KEY} environment variable,
-#' set via \code{Sys.setenv(OPENAI_API_KEY = "your_api_key_here")}.
-#'
-#' @return A \code{data.frame} with the original \code{df} columns plus:
-#' \describe{
-#'   \item{\code{consistency_overall}}{One of "Strong", "Moderate", or "Weak".}
-#'   \item{\code{overall_justification}}{A one-to-two sentence explanation.}
-#'   \item{\code{idp_breakdown}}{A list-column mapping each IDP to its individual consistency rating.}
-#' }
-#'
-#' @examples
-#' \dontrun{
-#' # Example data
-#' df <- data.frame(
-#'   PC_Name = c("PC-6", "PC-10"),
-#'   Perf.Dom = c("working.memory", "recall.total"),
-#'   IDP.1 = c("t1.vol.sup.frontal.ctx", "t1.vol.inf.parietal.ctx"),
-#'   IDP.2 = c("t1.vol.occipital.ctx", "t1.vol.hippocampus"),
-#'   stringsAsFactors = FALSE
-#' )
-#'
-#' results <- assess_idp_consistency_grouped(
-#'   df,
-#'   domain_col = "Perf.Dom",
-#'   idp_cols = c("IDP.1", "IDP.2"),
-#'   model = "gpt-3.5-turbo",
-#'   temperature = 0
-#' )
-#' print(results)
-#' }
-#'
-#' @export
-assess_idp_consistency_grouped <- function(df,
-                                           domain_col,
-                                           idp_cols,
-                                           model = "gpt-3.5-turbo",
-                                           temperature = 0,
-                                           verbose = TRUE,
-                                           pause_sec = 3,
-                                           max_retries = 5) {
-  required_packages <- c("httr", "jsonlite", "dplyr")
-  missing_packages <- setdiff(required_packages, rownames(installed.packages()))
-  if (length(missing_packages) > 0) {
-    stop("Missing required packages: ", paste(missing_packages, collapse = ", "))
-  }
-  lapply(required_packages, library, character.only = TRUE)
-
-  if (!is.data.frame(df)) stop("`df` must be a data.frame.")
-  if (!domain_col %in% names(df)) stop("Column '", domain_col, "' not found.")
-  if (any(!idp_cols %in% names(df))) stop("Some `idp_cols` not found.")
-
-  api_key <- Sys.getenv("OPENAI_API_KEY")
-  if (api_key == "") stop("Set OPENAI_API_KEY with Sys.setenv().")
-
-  query_domain_consistency <- function(domain, idp_matrix) {
-    idp_lines <- apply(idp_matrix, 1, function(row) {
-      paste0("- ", paste(row, collapse = ", "))
-    })
-    idp_list_str <- paste(idp_lines, collapse = "\n")
-    prompt <- paste0(
-      "You are an expert in cognitive neuroscience. ",
-      "Given the following brain imaging-derived phenotypes (IDPs) associated with the performance domain '", domain, "', ",
-      "assess the overall consistency of these IDPs for this domain. ",
-      "Return ONLY JSON in a list format, one item per line of IDPs. Each list item must have:\n",
-      "consistency_overall (Strong, Moderate, Weak),\n",
-      "overall_justification (one to two sentences),\n",
-      "idp_breakdown (mapping each IDP in that line to its consistency rating).\n\n",
-      "Here are the IDPs:\n", idp_list_str
-    )
-
-    payload <- list(
-      model = model,
-      messages = list(list(role = "user", content = prompt)),
-      temperature = temperature
-    )
-
-    retry <- 0
-    repeat {
-      res <- tryCatch({
-        httr::POST(
-          url = "https://api.openai.com/v1/chat/completions",
-          httr::add_headers(
-            Authorization = paste("Bearer", api_key),
-            `Content-Type` = "application/json"
-          ),
-          body = jsonlite::toJSON(payload, auto_unbox = TRUE),
-          httr::timeout(30)
-        )
-      }, error = function(e) {
-        if (verbose) message("API request failed: ", e$message)
-        return(NULL)
-      })
-
-      if (is.null(res)) return(NULL)
-
-      if (httr::status_code(res) == 429) {
-        if (retry >= max_retries) {
-          if (verbose) message("Max retries reached after rate limiting.")
-          return(NULL)
-        }
-        wait_time <- pause_sec * (2 ^ retry)
-        if (verbose) message("Rate limited. Waiting ", wait_time, " sec...")
-        Sys.sleep(wait_time)
-        retry <- retry + 1
-        next
-      }
-
-      if (httr::http_error(res)) {
-        if (verbose) message("HTTP error: ", httr::status_code(res))
-        return(NULL)
-      }
-
-      content_txt <- httr::content(res, as = "text", encoding = "UTF-8")
-      parsed <- tryCatch({
-        jsonlite::fromJSON(jsonlite::fromJSON(content_txt, flatten = TRUE)$choices[[1]]$message$content)
-      }, error = function(e) NULL)
-
-      return(parsed)
-    }
-  }
-
-  grouped <- df %>%
-    dplyr::group_by(.data[[domain_col]]) %>%
-    dplyr::group_split()
-
-  all_results <- vector("list", length = nrow(df))
-  for (g in grouped) {
-    domain <- g[[domain_col]][1]
-    idp_matrix <- g[, idp_cols, drop = FALSE]
-
-    if (verbose) {
-      message("\nProcessing domain: ", domain, " (", nrow(idp_matrix), " rows)")
-    }
-
-    res <- query_domain_consistency(domain, idp_matrix)
-
-    if (is.null(res) || length(res) != nrow(idp_matrix)) {
-      if (verbose) message("⚠️ Failed to get results for domain: ", domain)
-      for (i in seq_len(nrow(g))) {
-        all_results[[as.integer(rownames(g)[i])]] <- list(
-          consistency_overall = NA,
-          overall_justification = NA,
-          idp_breakdown = NA
-        )
-      }
-    } else {
-      for (i in seq_len(nrow(g))) {
-        all_results[[as.integer(rownames(g)[i])]] <- list(
-          consistency_overall = res[[i]]$consistency_overall,
-          overall_justification = res[[i]]$overall_justification,
-          idp_breakdown = list(res[[i]]$idp_breakdown)
-        )
-      }
-    }
-    Sys.sleep(pause_sec)
-  }
-
-  results_df <- as.data.frame(do.call(rbind, lapply(all_results, function(x) {
-    data.frame(
-      consistency_overall = x$consistency_overall,
-      overall_justification = x$overall_justification,
-      stringsAsFactors = FALSE
-    )
-  })))
-  results_df$idp_breakdown <- lapply(all_results, function(x) x$idp_breakdown)
-
-  dplyr::bind_cols(df, results_df)
-}
-
-
-
-#' Assess neuroscientific consistency between IDPs and performance domains
+#' Assess neuroscientific consistency between IDPs and performance domains (Optimized)
 #'
 #' This function queries a large language model via either the Groq API or OpenRouter API
 #' to assess the neuroscientific support for the relationship between imaging-derived
@@ -8680,158 +8480,308 @@ assess_idp_consistency_grouped <- function(df,
 #' @param backend Character string specifying which API backend to use: \code{"groq"} or \code{"openrouter"}.
 #' @param api_key_env Character string, name of the environment variable storing the API key for the chosen backend.
 #' @param model Character string, model name for the chosen backend. Defaults to \code{"llama3-70b-8192"} for Groq and \code{"openai/gpt-4o-mini"} for OpenRouter.
+#' @param prompt the default prompt
 #' @param max_retries Integer, maximum number of retries in case of rate limiting.
+#' @param retry_delay_base Numeric, base delay in seconds for exponential backoff (e.g., 1 for 1, 2, 4, 8s).
+#' @param temperature Numeric, sampling temperature for the LLM. 0 for deterministic, higher for more creative. (0-1)
+#' @param user_input_prompt refined with this user input.
 #' @param verbose Logical, if \code{TRUE} prints progress and debugging information.
+#' @param parallel Logical, if \code{TRUE} uses `furrr` for parallel API calls.
+#' @param .options_furrr List, optional arguments passed to `furrr::future_map` (e.g., `future::plan()`).
 #'
 #' @return A data frame with the original data plus:
 #' \itemize{
-#'   \item \code{consistency_score} - numeric confidence score (0–100).
+#'   \item \code{consistency_score} - numeric confidence score (0-100).
 #'   \item \code{justification} - short justification from the model.
 #' }
 #'
 #' @examples
 #' \dontrun{
+#' # Before running, set your API key:
+#' # Sys.setenv(GROQ_API_KEY = "YOUR_GROQ_API_KEY")
+#' # Sys.setenv(OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY")
+#'
+#' # Set up a plan for parallel processing (e.g., multicore)
+#' # This line should be run once in your R session before calling the function with parallel = TRUE
+#' future::plan(future::multisession, workers = 2) # Use 2 cores for parallel processing
+#'
 #' df <- data.frame(
-#'   PC_Name = c("PC-6", "PC-10"),
-#'   Perf.Dom = c("working.memory", "recall.total"),
-#'   IDP.1 = c("t1.vol.sup.frontal.ctx", "t1.vol.inf.parietal.ctx"),
-#'   IDP.2 = c("t1.vol.occipital.ctx", "t1.vol.hippocampus"),
+#'   PC_Name = c("PC-6", "PC-10", "PC-3"),
+#'   Perf.Dom = c("working.memory", "recall.total", "attention.sustained"),
+#'   IDP.1 = c("t1.vol.sup.frontal.ctx", "t1.vol.inf.parietal.ctx", "dt.fa.corpus.callosum"),
+#'   IDP.2 = c("t1.vol.occipital.ctx", "t1.vol.hippocampus", "rsf.connect.dlpfc"),
 #'   stringsAsFactors = FALSE
 #' )
-#' assess_idp_consistency_multi(
+#'
+#' # Example usage (assuming GROQ_API_KEY is set)
+#' results_groq <- assess_idp_consistency_optimized(
 #'   df,
 #'   Perf.Dom = "Perf.Dom",
-#'   idp_cols = c("IDP.1","IDP.2"),
+#'   idp_cols = c("IDP.1", "IDP.2"),
 #'   backend = "groq",
-#'   api_key_env = "GROQ_API_KEY"
+#'   api_key_env = "GROQ_API_KEY",
+#'   parallel = TRUE # Use parallel processing
 #' )
+#' print(results_groq)
+#'
+#' # OpenRouter example (assuming OPENROUTER_API_KEY is set)
+#' # results_openrouter <- assess_idp_consistency_optimized(
+#' #   df,
+#' #   Perf.Dom = "Perf.Dom",
+#' #   idp_cols = c("IDP.1", "IDP.2"),
+#' #   backend = "openrouter",
+#' #   api_key_env = "OPENROUTER_API_KEY",
+#' #   model = "openai/gpt-4o-mini",
+#' #   parallel = TRUE
+#' # )
+#' # print(results_openrouter)
+#'
+#' # Clean up the future plan if no longer needed
+#' future::plan(future::sequential)
 #' }
 #'
-#' @import httr jsonlite dplyr
+#' @import httr jsonlite dplyr stringr purrr furrr future glue
 #' @export
-assess_idp_consistency_multi <- function(df,
-                                         Perf.Dom,
-                                         idp_cols,
-                                         backend = c("groq", "openrouter"),
-                                         api_key_env = NULL,
-                                         model = NULL,
-                                         max_retries = 5,
-                                         verbose = TRUE) {
-  # --- Setup and Safety Checks ---
+assess_idp_consistency <- function(df,
+                                             Perf.Dom,
+                                             idp_cols,
+                                             backend = c("groq", "openrouter"),
+                                             api_key_env = NULL,
+                                             model = NULL,
+                                             max_retries = 5,
+                                             retry_delay_base = 2,
+                                             temperature = 0.1, # Slightly more robust than 0
+                                             user_input_prompt =     "Assess the neuroscientific consistency and provide a score (low, medium, high) and justification. ",
+                                             verbose = TRUE,
+                                             parallel = FALSE,
+                                             .options_furrr = furrr::furrr_options()) {
+
+  # --- 0. Setup and Safety Checks ---
   backend <- match.arg(backend)
+
+  # Check package availability (only if function is used as standalone script,
+  # for package, rely on DESCRIPTION Imports)
   if (!requireNamespace("httr", quietly = TRUE)) stop("Please install the 'httr' package.")
   if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install the 'jsonlite' package.")
-  
-  if (!Perf.Dom %in% names(df)) stop("Perf.Dom column not found in data frame.")
-  if (!all(idp_cols %in% names(df))) stop("One or more IDP columns not found in data frame.")
-  
+  if (!requireNamespace("stringr", quietly = TRUE)) stop("Please install the 'stringr' package.")
+  if (!requireNamespace("purrr", quietly = TRUE)) stop("Please install the 'purrr' package.")
+  if (!requireNamespace("glue", quietly = TRUE)) stop("Please install the 'glue' package.") # Explicit check for glue
+  if (parallel) {
+    if (!requireNamespace("furrr", quietly = TRUE)) stop("Please install the 'furrr' package for parallel processing.")
+    if (!requireNamespace("future", quietly = TRUE)) stop("Please install the 'future' package for parallel processing with furrr.")
+  }
+
+  if (!Perf.Dom %in% names(df)) stop(paste0("Column '", Perf.Dom, "' not found in data frame."))
+  if (!all(idp_cols %in% names(df))) {
+    missing_cols <- setdiff(idp_cols, names(df))
+    stop(paste0("One or more IDP columns not found in data frame: ", paste(missing_cols, collapse = ", ")))
+  }
+
   if (is.null(api_key_env)) {
-    api_key_env <- ifelse(backend == "groq", "GROQ_API_KEY", "OPENROUTER_API_KEY")
+    api_key_env <- switch(
+      backend,
+      groq = "GROQ_API_KEY",
+      openrouter = "OPENROUTER_API_KEY"
+    )
   }
   api_key <- Sys.getenv(api_key_env)
-  if (api_key == "") stop("API key not found in environment variable: ", api_key_env)
-  
-  if (is.null(model)) {
-    model <- ifelse(backend == "groq", "llama3-70b-8192", "openai/gpt-4o-mini")
+  if (api_key == "") {
+    stop(paste0("API key not found in environment variable: '", api_key_env, "'. Please set it, e.g., Sys.setenv(", api_key_env, "='YOUR_API_KEY')."))
   }
-  
-  url <- switch(
+
+  if (is.null(model)) {
+    model <- switch(
+      backend,
+      groq = "llama3-70b-8192",
+      openrouter = "openai/gpt-4o-mini"
+    )
+  }
+
+  api_url <- switch(
     backend,
     groq = "https://api.groq.com/openai/v1/chat/completions",
     openrouter = "https://openrouter.ai/api/v1/chat/completions"
   )
-  
-  # --- Internal helper to parse model's JSON reply ---
-  extract_confidence_and_justification <- function(model_content) {
-    # model_content should be a JSON string like {"confidence_score": 85, "justification": "..."}
-    parsed_inner <- tryCatch(
-      jsonlite::fromJSON(model_content),
-      error = function(e) NULL
+
+  # --- 1. Prompt Engineering (Refined) ---
+  # The system prompt sets the persona and instructions for the LLM.
+  system_prompt <- paste0(
+    "You are an expert neuroscientist and a highly concise AI assistant. Your task is to evaluate the neuroscientific ",
+    "support for the relationship between given Imaging-Derived Phenotypes (IDPs) and a cognitive performance domain. In your reasoning, first identify the measurement being used; then ensure that you understand the nature of the IDPs.  Include that knowledge in your reasoning but respond as I dictate below.",
+    "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
+    "Respond ONLY in a JSON object with two keys: 'consistency_score' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
+    "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
+    "Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner = a patient's partner rating of cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  "
+  )
+
+  # Define the user prompt template
+  user_prompt_template <- paste0(
+    "Domain: {domain}\n",
+    "IDPs: {idps_string}\n",
+    user_input_prompt
+  )
+
+  # --- 2. Unified and Robust Parsing of LLM Response ---
+  parse_llm_response <- function(response_content) {
+    # Attempt to clean potential markdown fences
+    clean_content <- stringr::str_remove_all(response_content, "^```json\\n?|```$|^```\\n?|```$")
+    clean_content <- trimws(clean_content) # Remove leading/trailing whitespace
+
+    # Attempt to parse as JSON
+    parsed <- tryCatch(
+      jsonlite::fromJSON(clean_content, simplifyVector = FALSE),
+      error = function(e) {
+        if (verbose) message("JSON parsing failed: ", e$message, "\nContent received: '", clean_content, "'")
+        NULL
+      }
     )
-    if (is.null(parsed_inner) || !all(c("confidence_score", "justification") %in% names(parsed_inner))) {
-      return(list(confidence_score = NA, justification = model_content))
+
+    # Validate parsed structure and values
+    if (is.null(parsed) ||
+        !all(c("consistency_score", "justification") %in% names(parsed)) ) {
+
+      # Fallback if parsing fails or structure is incorrect
+      return(list(consistency_score = NA, justification = response_content))
     }
+
+
     return(list(
-      confidence_score = parsed_inner$confidence_score,
-      justification = parsed_inner$justification
+      consistency_score = parsed$consistency_score,
+      justification     = parsed$justification
     ))
   }
-  
-  # --- Internal function to query API with retries ---
-  query_api <- function(domain, idps) {
-    idp_str <- paste(idps, collapse = ", ")
-    prompt <- paste0(
-      "Domain: ", domain, "\n",
-      "IDPs: ", idp_str, "\n",
-      "Please assess the neuroscientific support for the relationship between these imaging data phenotypes (IDPs) and the given cognitive performance domain. ",
-      "Provide a merit value for the amount of support in the scientific literature justifying these relationships (low, moderate, high), and give a short justification and explanation for the relationship between the IDPs and the domain. ",
-      "Note that t1 generally refers to T1w (structural); dt refers to diffusion tensor imaging and rsf refers to resting state functional connectivity. ",
-      "IDPs refers to imaging data phenotypes derived from these modalities. Respond ONLY in JSON with keys: confidence_score (0-100) and justification.  Make sure that your replies are concise --- no more than 80 characters.  Compress your reply into key neuroscientific support concepts.  Do not use full sentences. "
+
+  # --- 3. Internal function to query API with Enhanced Retries ---
+  query_api_robust <- function(domain, idps) {
+    idps_string <- paste(idps, collapse = ", ")
+    Sys.sleep(0.33)
+    # Use glue directly with local variables
+    user_prompt <- glue::glue(user_prompt_template)
+
+    messages <- list(
+      list(role = "system", content = system_prompt),
+      list(role = "user", content = user_prompt)
     )
-    retries <- 0
-    while (retries <= max_retries) {
-      res <- tryCatch({
-        httr::POST(
-          url = url,
-          httr::add_headers(
-            Authorization = paste("Bearer", api_key),
-            `Content-Type` = "application/json"
-          ),
-          body = jsonlite::toJSON(list(
-            model = model,
-            messages = list(list(role = "user", content = prompt)),
-            temperature = 0
-          ), auto_unbox = TRUE)
-        )
-      }, error = function(e) {
-        if (verbose) message("POST failed: ", e$message)
-        return(NULL)
-      })
-      
-      if (is.null(res)) {
-        retries <- retries + 1
-        if (verbose) message("Retrying in ", 2 ^ retries, " sec...")
-        Sys.sleep(2 ^ retries)
+
+    retries_attempted <- 0
+    while (retries_attempted <= max_retries) {
+      if (verbose) {
+        message(paste0("Attempt ", retries_attempted + 1, " for Domain: '", domain, "' | IDPs: '", idps_string, "'"))
+      }
+
+      api_response <- purrr::safely(httr::POST)(
+        url = api_url,
+        httr::add_headers(
+          Authorization = paste("Bearer", api_key),
+          `Content-Type` = "application/json"
+        ),
+        body = jsonlite::toJSON(list(
+          model = model,
+          messages = messages,
+          temperature = temperature
+        ), auto_unbox = TRUE)
+      )
+
+      # Check for HTTP request errors (e.g., network issues)
+      if (!is.null(api_response$error)) {
+        if (verbose) message("HTTP POST error: ", api_response$error$message)
+        retries_attempted <- retries_attempted + 1
+        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1)) # Exponential backoff + jitter
         next
       }
-      
-      if (httr::status_code(res) %in% c(429, 500, 502, 503)) {
-        retries <- retries + 1
-        if (verbose) message("Server busy. Waiting ", 2 ^ retries, " sec...")
-        Sys.sleep(2 ^ retries)
+
+      # Check HTTP status code
+      res_status <- httr::status_code(api_response$result)
+      if (res_status >= 400) { # Bad request, authentication, rate limits, server errors
+        content_text <- httr::content(api_response$result, as = "text", encoding = "UTF-8")
+        if (verbose) message("API returned status ", res_status, ": ", content_text)
+
+        # Handle specific retryable errors (e.g., 429 Too Many Requests, 5xx Server Errors)
+        if (res_status %in% c(429, 500, 502, 503, 504)) {
+          retries_attempted <- retries_attempted + 1
+          Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
+          next
+        } else {
+          # Non-retryable client error (e.g., 400 Bad Request, 401 Unauthorized)
+          return(list(consistency_score = NA_real_, justification = paste("API Error (", res_status, "): ", content_text)))
+        }
+      }
+
+      # Parse content and extract LLM's message
+      # Using purrr::safely here to catch jsonlite::fromJSON errors for the API response itself
+      raw_content_text <- httr::content(api_response$result, as = "text", encoding = "UTF-8")
+      content_json_safely <- purrr::safely(jsonlite::fromJSON)(raw_content_text, simplifyVector = FALSE)
+
+      if (!is.null(content_json_safely$error)) {
+        if (verbose) message("Error parsing API response JSON: ", content_json_safely$error$message, "\nRaw content: '", raw_content_text, "'")
+        retries_attempted <- retries_attempted + 1
+        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
         next
       }
-      
-      content_txt <- httr::content(res, as = "text", encoding = "UTF-8")
-      content_json <- tryCatch(jsonlite::fromJSON(content_txt, simplifyVector = FALSE), error = function(e) NULL)
-      if (is.null(content_json) || !is.null(content_json$error)) {
-        retries <- retries + 1
-        if (verbose) message("Invalid API response. Retrying...")
-        Sys.sleep(2 ^ retries)
+
+      content_json <- content_json_safely$result
+
+      if (is.null(content_json) || !is.null(content_json$error) || is.null(content_json$choices) || length(content_json$choices) == 0) {
+        if (verbose) {
+          error_msg <- if (!is.null(content_json$error)) content_json$error$message else "No choices returned by LLM."
+          message("Malformed or empty LLM response structure: ", error_msg, "\nRaw content: '", raw_content_text, "'")
+        }
+        retries_attempted <- retries_attempted + 1
+        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
         next
       }
-      
-      # Extract the model's reply content
+
       model_content <- content_json$choices[[1]]$message$content
-      return(extract_confidence_and_justification(model_content))
+      if (is.null(model_content)) {
+        if (verbose) message("Model content is NULL in LLM response.")
+        retries_attempted <- retries_attempted + 1
+        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
+        next
+      }
+
+      # Attempt to parse the actual LLM output (JSON)
+      parsed_output <- parse_llm_response(model_content)
+
+      # If parsed_output contains valid numbers, we're good
+      if (!is.na(parsed_output$consistency_score)) {
+        return(parsed_output)
+      } else {
+        # If parsing failed but content was received, try again after a delay
+        if (verbose) message("LLM output parsing failed, content received was: '", model_content, "'")
+        retries_attempted <- retries_attempted + 1
+        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
+        next
+      }
     }
-    
-    if (verbose) message("Max retries reached. Returning NA.")
-    return(list(confidence_score = NA, justification = NA))
+
+    if (verbose) message("Max retries reached for '", domain, "' with IDPs '", idps_string, "'. Returning NA.")
+    return(list(consistency_score = NA_real_, justification = "Max retries reached or unparseable response."))
   }
-  
-  # --- Apply to each row ---
-  results <- lapply(seq_len(nrow(df)), function(i) {
-    domain <- df[[Perf.Dom]][i]
-    idps <- unlist(df[i, idp_cols], use.names = FALSE)
-    if (verbose) {
-      message("Processing: ", domain, " | IDPs: ", paste(idps, collapse = ", "))
-    }
-    query_api(domain, idps)
-  })
-  
-  # --- Bind results ---
-  results_df <- do.call(rbind, lapply(results, as.data.frame))
-  df_out <- cbind(df, results_df)
+
+  # --- 4. Apply to each row (serial or parallel) ---
+  if (verbose && parallel) {
+    message("Parallel processing enabled. Ensure a `future` plan is set (e.g., `future::plan(future::multisession)`).")
+  }
+
+  # Conditionally use furrr::future_map or purrr::map
+  if (parallel) {
+    results_list <- furrr::future_map(seq_len(nrow(df)), function(i) {
+      domain <- df[[Perf.Dom]][i]
+      idps <- unlist(df[i, idp_cols], use.names = FALSE)
+      query_api_robust(domain, idps)
+    }, .options = .options_furrr) # Pass .options when parallel
+  } else {
+    results_list <- purrr::map(seq_len(nrow(df)), function(i) {
+      domain <- df[[Perf.Dom]][i]
+      idps <- unlist(df[i, idp_cols], use.names = FALSE)
+      query_api_robust(domain, idps)
+    }) # Do NOT pass .options when not parallel
+  }
+
+  # --- 5. Bind results cleanly ---
+  # Use dplyr::bind_rows for robustness with potentially mixed NA types
+  results_df <- dplyr::bind_rows(results_list)
+  df_out <- dplyr::bind_cols(df, results_df)
+
   return(df_out)
 }
