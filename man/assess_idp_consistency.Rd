@@ -53,7 +53,7 @@ assess_idp_consistency(
 \value{
 A data frame with the original data plus:
 \itemize{
-\item \code{consistency_score} - numeric confidence score (0-100).
+\item \code{consistency} - numeric confidence score (0-100).
 \item \code{justification} - short justification from the model.
 }
 }
