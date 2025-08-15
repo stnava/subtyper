@@ -8491,7 +8491,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
 #'
 #' @return A data frame with the original data plus:
 #' \itemize{
-#'   \item \code{consistency_score} - numeric confidence score (0-100).
+#'   \item \code{consistency} - numeric confidence score (0-100).
 #'   \item \code{justification} - short justification from the model.
 #' }
 #'
@@ -8609,9 +8609,9 @@ assess_idp_consistency <- function(df,
     "You are an expert neuroscientist and a highly concise AI assistant. Your task is to evaluate the neuroscientific ",
     "support for the relationship between given Imaging-Derived Phenotypes (IDPs) and a cognitive performance domain. In your reasoning, first identify the measurement being used; then ensure that you understand the nature of the IDPs.  Include that knowledge in your reasoning but respond as I dictate below.",
     "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
-    "Respond ONLY in a JSON object with two keys: 'consistency_score' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
+    "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
     "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
-    "Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner = a patient's partner rating of cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  "
+    "Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner = a patient's partner rating of cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus."
   )
 
   # Define the user prompt template
@@ -8638,16 +8638,16 @@ assess_idp_consistency <- function(df,
 
     # Validate parsed structure and values
     if (is.null(parsed) ||
-        !all(c("consistency_score", "justification") %in% names(parsed)) ) {
+        !all(c("consistency", "justification") %in% names(parsed)) ) {
 
       # Fallback if parsing fails or structure is incorrect
-      return(list(consistency_score = NA, justification = response_content))
+      return(list(consistency = NA, justification = response_content))
     }
 
 
     return(list(
-      consistency_score = parsed$consistency_score,
-      justification     = parsed$justification
+      consistency = parsed$consistency,
+      justification = parsed$justification
     ))
   }
 
@@ -8703,7 +8703,7 @@ assess_idp_consistency <- function(df,
           next
         } else {
           # Non-retryable client error (e.g., 400 Bad Request, 401 Unauthorized)
-          return(list(consistency_score = NA_real_, justification = paste("API Error (", res_status, "): ", content_text)))
+          return(list(consistency = NA, justification = paste("API Error (", res_status, "): ", content_text)))
         }
       }
 
@@ -8743,7 +8743,7 @@ assess_idp_consistency <- function(df,
       parsed_output <- parse_llm_response(model_content)
 
       # If parsed_output contains valid numbers, we're good
-      if (!is.na(parsed_output$consistency_score)) {
+      if (!is.na(parsed_output$consistency)) {
         return(parsed_output)
       } else {
         # If parsing failed but content was received, try again after a delay
@@ -8755,7 +8755,7 @@ assess_idp_consistency <- function(df,
     }
 
     if (verbose) message("Max retries reached for '", domain, "' with IDPs '", idps_string, "'. Returning NA.")
-    return(list(consistency_score = NA_real_, justification = "Max retries reached or unparseable response."))
+    return(list(consistency = NA, justification = "Max retries reached or unparseable response."))
   }
 
   # --- 4. Apply to each row (serial or parallel) ---
