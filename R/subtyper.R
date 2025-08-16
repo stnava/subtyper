@@ -8612,7 +8612,12 @@ assess_idp_consistency <- function(df,
     "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
     "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
     "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
-    "Adopt a skeptical and critical interpretation.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus;"
+    "I want you to think of your rating as a sum of evidence across all IDPs.",
+    "Direct associations between one or more IDPs and a performance domain should contribute to a high rating.",
+    "Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.",
+    "The absence of both direct and indirect associations between an IDP and a performance domain should contribute to a low rating.",
+    "Adopt a skeptical and critical interpretation.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus; 
+    postcent.ctx = postcentral gyrus; inf.parietal.ctx = inferior parietal cortex; parahippocampal cortex is part of the medial temporal lobe, located just adjacent to the hippocampus;"
   )
 
   # Define the user prompt template
@@ -8655,7 +8660,7 @@ assess_idp_consistency <- function(df,
   # --- 3. Internal function to query API with Enhanced Retries ---
   query_api_robust <- function(domain, idps) {
     idps_string <- paste(idps, collapse = ", ")
-    Sys.sleep(0.33)
+    Sys.sleep(0.5)
     # Use glue directly with local variables
     user_prompt <- glue::glue(user_prompt_template)
 
