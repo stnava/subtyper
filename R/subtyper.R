@@ -8473,6 +8473,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
 #' to assess the neuroscientific support for the relationship between imaging-derived
 #' phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
 #' and provides an overall confidence score and justification.
+#' Reproducibility note. This analysis queries hosted large language models (LLMs) via third-party APIs (Groq/OpenRouter, etc). Because these services may update model weights, decoding settings, and infrastructure without version pinning, outputs can vary across runs even with identical inputs and low temperature settings. Additional non-determinism may arise from rate-limit retries, parallel request timing, and sensitivity to prompt phrasing/ordering. To enhance transparency, we record the full prompt, model identifier, provider, call date, and raw responses. For strict reproducibility (bit-wise repeatability), we provide a separate implementation that targets open-weight models served locally with fixed decoding parameters and request-level seeding; we also cache responses keyed by inputs and parameters.
 #'
 #' @param df A data frame containing at least the performance domain column and one or more IDP columns.
 #' @param Perf.Dom Character string, name of the column in \code{df} containing the performance domain.
@@ -8611,7 +8612,7 @@ assess_idp_consistency <- function(df,
     "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
     "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
     "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
-    "Adopt a skeptical and critical interpretation.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner = a partner rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus;"
+    "Adopt a skeptical and critical interpretation.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains. some explanations of the neuroanatomical names: SNC = substantia nigra compacta; pMEC: Posteromedial entorhinal cortex; aLEC: Anterolateral Entorhinal Cortex; ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus;"
   )
 
   # Define the user prompt template
@@ -8785,3 +8786,4 @@ assess_idp_consistency <- function(df,
 
   return(df_out)
 }
+
