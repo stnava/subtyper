@@ -62,6 +62,7 @@ This function queries a large language model via either the Groq API or OpenRout
 to assess the neuroscientific support for the relationship between imaging-derived
 phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
 and provides an overall confidence score and justification.
+Reproducibility note. This analysis queries hosted large language models (LLMs) via third-party APIs (Groq/OpenRouter, etc). Because these services may update model weights, decoding settings, and infrastructure without version pinning, outputs can vary across runs even with identical inputs and low temperature settings. Additional non-determinism may arise from rate-limit retries, parallel request timing, and sensitivity to prompt phrasing/ordering. To enhance transparency, we record the full prompt, model identifier, provider, call date, and raw responses. For strict reproducibility (bit-wise repeatability), we provide a separate implementation that targets open-weight models served locally with fixed decoding parameters and request-level seeding; we also cache responses keyed by inputs and parameters.
 }
 \examples{
 \dontrun{

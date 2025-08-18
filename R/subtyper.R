@@ -8792,3 +8792,208 @@ assess_idp_consistency <- function(df,
   return(df_out)
 }
 
+
+
+#' Master Dictionary for ANTsPyMM Anatomical and File-Type Labels
+#' @keywords internal
+.get_master_dictionary <- function() {
+  maps <- c(
+    # --- Highest Specificity: Full Atlas Paths & Complex Terms ---
+    "sagittal stratum include inferior longitidinal fasciculus and inferior fronto occipital fasciculus" = "Sagittal Stratum (including IFOF/ILF)",
+    "posterior thalamic radiation include optic radiation" = "Posterior Thalamic Radiation (including Optic Radiation)",
+    "superior fronto occipital fasciculus could be a part of anterior internal capsule" = "Superior Fronto-Occipital Fasciculus",
+    "fornix cres stria terminalis" = "Fornix (cres)/Stria Terminalis",
+    "pontine crossing tract a part of mcp" = "Pontine Crossing Tract (part of MCP)",
+    "cingulum cingulate gyrus" = "Cingulum (Cingulate Gyrus)", "cingulum hippocampus" = "Cingulum (Hippocampus)",
+    
+    # --- Anatomy (from most to least specific) ---
+    "caudal anterior cingulate" = "Caudal Anterior Cingulate", "rostral anterior cingulate" = "Rostral Anterior Cingulate",
+    "caudal middle frontal" = "Caudal Middle Frontal Gyrus", "rostral middle frontal" = "Rostral Middle Frontal Gyrus",
+    "cerebellar vermal lobules i v" = "Cerebellar Vermal Lobules I-V", "cerebellar vermal lobules vi vii" = "Cerebellar Vermal Lobules VI-VII", "cerebellar vermal lobules viii x" = "Cerebellar Vermal Lobules VIII-X",
+    "cerebellum exterior" = "Cerebellum Exterior", "cerebellum white matter" = "Cerebellum White Matter",
+    "superior parietal" = "Superior Parietal Lobule", "inferior parietal" = "Inferior Parietal Lobule",
+    "superior frontal" = "Superior Frontal Gyrus",
+    "superior temporal" = "Superior Temporal Gyrus", "middle temporal" = "Middle Temporal Gyrus", "inferior temporal" = "Inferior Temporal Gyrus", "transverse temporal" = "Transverse Temporal Gyrus",
+    "lateral orbitofrontal" = "Lateral Orbitofrontal Cortex", "medial orbitofrontal" = "Medial Orbitofrontal Cortex",
+    "isthmus cingulate" = "Isthmus Cingulate", "posterior cingulate" = "Posterior Cingulate",
+    "pars opercularis" = "Pars Opercularis", "pars orbitalis" = "Pars Orbitalis", "pars triangularis" = "Pars Triangularis",
+    "lateral occipital" = "Lateral Occipital Cortex", "parahippocampal" = "Parahippocampal Gyrus",
+    "dg ca3" = "Dentate Gyrus/CA3", "ca1" = "CA1",
+    "pmec" = "Posteromedial Entorhinal Cortex", "alec" = "Anterolateral Entorhinal Cortex", "perirhinal" = "Perirhinal Cortex", "entorhinal" = "Entorhinal Cortex",
+    "ch13" = "Basal Forebrain (Ch13)", "ch4" = "Basal Forebrain (Ch4)", "nbm ant" = "Nucleus Basalis of Meynert (Anterior)", "nbm mid" = "Nucleus Basalis of Meynert (Middle)", "nbm pos" = "Nucleus Basalis of Meynert (Posterior)",
+    "gp gpe" = "Globus Pallidus (External)", "gp gpi" = "Globus Pallidus (Internal)", "gp vep" = "Ventral Pallidum",
+    "bn str pu" = "Putamen", "bn str ca" = "Caudate", "bn str nac" = "Nucleus Accumbens",
+    "mtg sn snc" = "Substantia Nigra pars compacta", "mtg sn snr" = "Substantia Nigra pars reticulata",
+    "mtg vtr pbp" = "Parabrachial Pigmented Nucleus", "mtg vtr vta" = "Ventral Tegmental Area", "mtg rn" = "Red Nucleus",
+    "die hth mn" = "Diencephalon / Hypothalamus (Mammillary Nucleus)", "die hth" = "Diencephalon / Hypothalamus", "die sth" = "Subthalamic Nucleus",
+    "thm eth hn" = "Thalamus (Habenular Nucleus)", "thalamus proper" = "Thalamus",
+    "ventral dc" = "Ventral Diencephalon",
+    "fornix column and body" = "Fornix (Column and Body)",
+    "anterior corona radiata" = "Anterior Corona Radiata", "posterior corona radiata" = "Posterior Corona Radiata", "superior corona radiata" = "Superior Corona Radiata",
+    "anterior limb of internal capsule" = "Anterior Limb of Internal Capsule", "posterior limb of internal capsule" = "Posterior Limb of Internal Capsule", "retrolenticular part of internal capsule" = "Retrolenticular Part of Internal Capsule",
+    "body of corpus callosum" = "Body of Corpus Callosum", "genu of corpus callosum" = "Genu of Corpus Callosum", "splenium of corpus callosum" = "Splenium of Corpus Callosum",
+    "cerebral peduncle" = "Cerebral Peduncle", "inferior cerebellar peduncle" = "Inferior Cerebellar Peduncle", "middle cerebellar peduncle" = "Middle Cerebellar Peduncle", "superior cerebellar peduncle" = "Superior Cerebellar Peduncle",
+    "external capsule" = "External Capsule", "corticospinal tract" = "Corticospinal Tract", "medial lemniscus" = "Medial Lemniscus", "superior longitudinal fasciculus" = "Superior Longitudinal Fasciculus", "uncinate fasciculus" = "Uncinate Fasciculus",
+    "fusiform" = "Fusiform Gyrus", "lingual" = "Lingual Gyrus",
+    "hippocampus" = "Hippocampus", "amygdala" = "Amygdala", "caudate" = "Caudate", "putamen" = "Putamen", "pallidium" = "Pallidum", "pallidum" = "Pallidum",
+    "thalamus" = "Thalamus", "brainstem" = "Brainstem", "medulla" = "Medulla", "midbrain" = "Midbrain", "pons" = "Pons",
+    "precuneus" = "Precuneus", "cuneus" = "Cuneus", "paracentral" = "Paracentral Lobule", "postcentral" = "Postcentral Gyrus", "precentral" = "Precentral Gyrus", "supramarginal" = "Supramarginal Gyrus",
+    "pericalcarine" = "Pericalcarine Cortex", "temppole" = "Temporal Pole", "tempocc" = "Temporo-Occipital", "temppar" = "Temporo-Parietal",
+    "pfcv" = "Ventral Prefrontal Cortex", "pfcm" = "Medial Prefrontal Cortex", "pfcd" = "Dorsal Prefrontal Cortex", "pfcl" = "Lateral Prefrontal Cortex",
+    "hypothalamus" = "Hypothalamus", "insula" = "Insula", "exstr" = "Extra-Striatal", "exa" = "Extra-Axial CSF",
+    "nac" = "Nucleus Accumbens", "hpc" = "Hippocampus", "amy" = "Amygdala", "phc" = "Parahippocampal Cortex", "pcc" = "Posterior Cingulate Cortex",
+    "froper" = "Frontal Operculum", "frmed" = "Medial Frontal Gyrus", "pcun" = "Precuneus",
+    "spl" = "Superior Parietal Lobule", "ipl" = "Inferior Parietal Lobule", "hth" = "Hypothalamus",
+    "st" = "Superior Temporal Gyrus", "mtl" = "Medial Temporal Lobe", "bf" = "Basal Forebrain",
+    "temporal" = "Temporal Lobe", "frontal" = "Frontal Lobe", "parietal" = "Parietal Lobe", "occipital" = "Occipital Lobe", "cerebellum" = "Cerebellum",
+    "hemisphere" = "Cerebral Hemisphere", "gmtissues" = "Gray Matter", "wmtissues" = "White Matter", "deepgraytissues" = "Deep Gray Matter",
+    "csf" = "Cerebrospinal Fluid",
+    "4th ventricle" = "4th Ventricle", "lateral ventricle" = "Lateral Ventricle", 
+    "crus i cerebellum" = "Cerebellum Crus I", "crus ii cerebellum" = "Cerebellum Crus II",
+    "cleanup" = "Cleanup Region", "background" = "Background Signal", "unclassified" = "Unclassified", "referenceregion" = "Reference Region", "tapetum" = "Tapetum",
+    
+    # --- Network Names (also used for connectivity) ---
+    "defaulta" = "Default Mode Network A", "defaultb" = "Default Mode Network B", "defaultc" = "Default Mode Network C",
+    "conta" = "Frontoparietal Control Network A", "contb" = "Frontoparietal Control Network B", "contc" = "Frontoparietal Control Network C",
+    "salventattna" = "Salience/Ventral Attention Network A", "salventattnb" = "Salience/Ventral Attention Network B",
+    "dorsattna" = "Dorsal Attention Network A", "dorsattnb" = "Dorsal Attention Network B",
+    "sommota" = "Somatomotor Network A", "sommotb" = "Somatomotor Network B",
+    "limbica" = "Limbic Network A", "limbicb" = "Limbic Network B",
+    "viscent" = "Visual Network (Central)", "visperi" = "Visual Network (Peripheral)",
+    "dopamine" = "Dopaminergic Network", "striatum" = "Striatal Network", "vis" = "Visual Network",
+    "citlimbic" = "CIT Atlas Limbic Network", "basalganglia" = "Basal Ganglia Network",
+    
+    # --- File/QC Identifiers (unified into one dictionary) ---
+    "filename" = "Filename", "imageid" = "Image ID", "subjectid" = "Subject ID", "projectid" = "Project ID", "negol" = "Negative Outlier"
+  )
+  return(maps[order(nchar(names(maps)), decreasing = TRUE)])
+}
+
+#' Pre-processes a raw label into a clean, space-separated string.
+#' @keywords internal
+.preprocess_string <- function(label) {
+  lbl <- tolower(label)
+  
+  # Step 1: Explicitly normalize known compound tokens. This is the key fix.
+  # Handles 'flairid', 'rsffn1', etc., by converting them to standard terms.
+  lbl <- gsub("t1hier", "t1 hier", lbl, fixed = TRUE)
+  lbl <- gsub("rsffn([0-9]*)", "rsf filename \\1", lbl)
+  lbl <- gsub("dtfn([0-9]*)", "dti filename \\1", lbl)
+  lbl <- gsub("nmfn([0-9]*)", "nm filename \\1", lbl)
+  lbl <- gsub("flairid", "flair imageid", lbl, fixed = TRUE)
+  lbl <- gsub("dtid([0-9]*)", "dti imageid \\1", lbl)
+  lbl <- gsub("nmid([0-9]*)", "nm imageid \\1", lbl)
+  lbl <- gsub("rsfid([0-9]*)", "rsf imageid \\1", lbl)
+  lbl <- gsub("perfid", "perf imageid", lbl, fixed = TRUE)
+  
+  # Step 2: Targeted substitutions for other known "squished" patterns
+  lbl <- gsub("icerebellum", "i cerebellum", lbl, fixed = TRUE)
+  
+  # Step 3: Explicitly separate known suffixes from any preceding token
+  suffixes_to_separate <- c("cit168", "dktregions", "dktcortex", "snseg", "jhu", "icbm", "labels", "1mm", "hemispheres", "tissues", "bf", "mtl")
+  for (suffix in suffixes_to_separate) {
+      pattern <- paste0("([a-z0-9])(", suffix, ")")
+      replacement <- paste0("\\1 \\2")
+      lbl <- gsub(pattern, replacement, lbl, perl = TRUE)
+  }
+  
+  # Step 4: Normalize all remaining separators and clean up
+  lbl <- gsub("[_.-]", " ", lbl, perl = TRUE)
+  lbl <- trimws(gsub("\\s+", " ", lbl))
+  
+  return(lbl)
+}
+
+#' Decodes a standard (non-connectivity) label into its four components.
+#' @keywords internal
+.decode_standard_label <- function(cleaned_label) {
+  out <- list(modality = "Unknown", laterality = "None", measurement = "Unknown", anatomy = "Global")
+  lbl <- cleaned_label
+
+  # Step 1: Extract Modality using grepl for robustness against position.
+  mod_patterns <- c(t2flair="T2-FLAIR", flair="T2-FLAIR", rsfmri="rs-fMRI", dti="DTI", 
+                    nm2dmt="NM-DMT", rsf="rs-fMRI", nm="NM", t1w="T1", t1="T1")
+  sorted_mod_keys <- names(mod_patterns)[order(nchar(names(mod_patterns)), decreasing = TRUE)]
+  
+  for(pat in sorted_mod_keys){
+    if(grepl(paste0("\\b", pat, "\\b"), lbl)){
+      out$modality <- mod_patterns[[pat]]
+      lbl <- sub(pat, " ", lbl); break
+    }
+  }
+
+  # Step 2: Extract Measurement
+  meas_patterns <- c(
+    "fractional anisotropy"="fa", "mean diffusivity"="md", "volume"="vol", "area"="area", "thickness"="thk", 
+    "mean intensity"="mean", "score"="score", "structural similarity index"="ssim", "signal to noise ratio"="snr",
+    "contrast to noise ratio"="cnr", "peak signal to noise ratio"="psnr", "explained variance ratio"="evr",
+    "mutual information"="mi", "framewise displacement"="fd", "outlier score"="ol lof", "outlier probability"="ol loop"
+  )
+  for(meas in names(meas_patterns)){
+    pat <- paste0("\\b", meas_patterns[[meas]], "\\b")
+    if(grepl(pat, lbl)){
+      out$measurement <- tools::toTitleCase(meas)
+      lbl <- sub(pat, " ", lbl); break
+    }
+  }
+
+  # Step 3: Extract Laterality
+  if (grepl("\\b(left|l)\\b", lbl)) { out$laterality <- "Left"; lbl <- sub("\\b(left|l)\\b", " ", lbl) }
+  else if (grepl("\\b(right|r)\\b", lbl)) { out$laterality <- "Right"; lbl <- sub("\\b(right|r)\\b", " ", lbl) }
+
+  # Step 4: Final cleanup and Anatomy/QC Decoding from the master dictionary
+  lbl <- trimws(gsub("\\s+", " ", lbl))
+  
+  if (nzchar(lbl)) {
+    master_dict <- .get_master_dictionary()
+    found <- FALSE
+    for (key in names(master_dict)) {
+      if (grepl(paste0("\\b", key, "\\b"), lbl)) {
+        out$anatomy <- master_dict[[key]]
+        found <- TRUE; break
+      }
+    }
+    if (!found) { out$anatomy <- paste("Unknown Core:", lbl) }
+  }
+  
+  return(out)
+}
+
+#' Decodes a connectivity label into its four components.
+#' @keywords internal
+.decode_connectivity_label <- function(cleaned_label) {
+    modality <- .decode_standard_label(cleaned_label)$modality
+    
+    parts <- strsplit(cleaned_label, "\\s+2\\s+")[[1]]
+    if(length(parts) == 2){
+        from_anatomy <- decode_antspymm_label(parts[1])$anatomy
+        to_anatomy <- decode_antspymm_label(parts[2])$anatomy
+        
+        return(list(
+            modality = modality, laterality = "None",
+            measurement = "Connectivity", anatomy = paste(from_anatomy, "to", to_anatomy)
+        ))
+    }
+    return(list(modality = modality, laterality = "None", measurement = "Connectivity", anatomy = "Malformed Connectivity Pair"))
+}
+
+#' Decode an ANTsPyMM label into a structured 4-column format.
+#' @param label `character(1)` The raw label string.
+#' @return A named list: `modality`, `laterality`, `measurement`, `anatomy`.
+#' @export
+decode_antspymm_label <- function(label) {
+  if (is.null(label) || is.na(label) || !nzchar(trimws(label))) {
+    return(list(modality = NA, laterality = "None", measurement = NA, anatomy = "Invalid Input"))
+  }
+  
+  cleaned_label <- .preprocess_string(label)
+  
+  # Dispatch to the correct handler
+  if (grepl("\\b2\\b", cleaned_label) && !grepl("nm2dmt", cleaned_label)) {
+    return(.decode_connectivity_label(cleaned_label))
+  } else {
+    return(.decode_standard_label(cleaned_label))
+  }
+}
+
+
