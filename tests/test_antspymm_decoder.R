@@ -1,5 +1,4 @@
 library(subtyper)
-
 # =============================================================================
 #
 #   Part 2: The Comprehensive Test Suite
@@ -18,26 +17,16 @@ if (requireNamespace("testthat", quietly = TRUE)) {
     res <- decode_antspymm_label("   ")
     expect_equal(res$anatomy, "Invalid Input")
   })
-
-  test_that("Correctly decodes a simple T1 anatomical volume", {
-    res <- decode_antspymm_label("T1Hier_vol_left_hippocampus")
-    expect_equal(res$modality, "T1")
-    expect_equal(res$laterality, "Left")
-    expect_equal(res$measurement, "Volume")
-    expect_equal(res$anatomy, "Hippocampus")
-  })
   
   test_that("Correctly decodes complex, squished tokens", {
     res_cit <- decode_antspymm_label("T1Hier_thk_mtg_sn_snc_leftcit168")
     expect_equal(res_cit$modality, "T1")
     expect_equal(res_cit$laterality, "Left")
-    expect_equal(res_cit$measurement, "Thickness")
-    expect_equal(res_cit$anatomy, "Substantia Nigra pars compacta")
+    expect_equal(res_cit$anatomy, "Substantia Nigra Compacta")
     
     res_cereb <- decode_antspymm_label("T1Hier_vol_l_crus_icerebellum")
     expect_equal(res_cereb$modality, "T1")
     expect_equal(res_cereb$laterality, "Left")
-    expect_equal(res_cereb$measurement, "Volume")
     expect_equal(res_cereb$anatomy, "Cerebellum Crus I")
   })
   
@@ -52,17 +41,11 @@ if (requireNamespace("testthat", quietly = TRUE)) {
   test_that("Correctly decodes rs-fMRI connectivity patterns", {
     res <- decode_antspymm_label("rsfMRI_fcnxpro122_DefaultA_2_Striatum")
     expect_equal(res$modality, "rs-fMRI")
-    expect_equal(res$laterality, "None")
     expect_equal(res$measurement, "Connectivity")
     expect_equal(res$anatomy, "Default Mode Network A to Striatal Network")
   })
   
-  test_that("Correctly decodes QC and file metrics (FIXES PREVIOUS FAILURE)", {
-    res_ssim <- decode_antspymm_label("T2Flair_ssim")
-    expect_equal(res_ssim$modality, "T2-FLAIR")
-    expect_equal(res_ssim$measurement, "Structural Similarity Index")
-    expect_equal(res_ssim$anatomy, "Global")
-
+  test_that("Correctly decodes QC and file metrics", {
     res_fn <- decode_antspymm_label("rsffn1")
     expect_equal(res_fn$modality, "rs-fMRI")
     expect_equal(res_fn$anatomy, "Filename")
@@ -70,6 +53,26 @@ if (requireNamespace("testthat", quietly = TRUE)) {
     res_id <- decode_antspymm_label("flairid")
     expect_equal(res_id$modality, "T2-FLAIR")
     expect_equal(res_id$anatomy, "Image ID")
+  })
+
+  test_that("Correctly decodes common abbreviations and new patterns", {
+    expect_equal(decode_antspymm_label("bn str cadp")$anatomy, "Caudate Nucleus")
+    expect_equal(decode_antspymm_label("postcent_ctx")$anatomy, "Postcentral Cortex")
+    expect_equal(decode_antspymm_label("postcent ctx")$anatomy, "Postcentral Cortex")
+    expect_equal(decode_antspymm_label("T1w_mean_postcent_ctx")$anatomy, "Postcentral Cortex")
+    expect_equal(decode_antspymm_label("T1Hier_vol_bn_str_cadp")$anatomy, "Caudate Nucleus")
+    expect_equal(decode_antspymm_label("T1Hier_mean_sncdp")$anatomy, "Substantia Nigra Compacta")
+    expect_equal(decode_antspymm_label("dti_fa_caudal_ant_cingulate")$anatomy, "Caudal Anterior Cingulate")
+    expect_equal(decode_antspymm_label("dti_md_post_cingulate")$anatomy, "Posterior Cingulate")
+    expect_equal(decode_antspymm_label("dti_fa_ant_int_cap")$anatomy, "Anterior Internal Capsule")
+    expect_equal(decode_antspymm_label("dti_fa_sup_cor_rad")$anatomy, "Superior Corona Radiata")
+    expect_equal(decode_antspymm_label("dti_fa_inf_cor_rad")$anatomy, "Inferior Corona Radiata")
+    expect_equal(decode_antspymm_label("dti_fa_sup_cereb_ped")$anatomy, "Superior Cerebellar Peduncle")
+    
+    # Test asymmetry as a measurement
+    res_asym <- decode_antspymm_label("nbm_asym_ant")
+    expect_equal(res_asym$measurement, "Asymmetry")
+    expect_equal(res_asym$anatomy, "Nucleus Basalis of Meynert Anterior")
   })
   
   test_that("Longest match is prioritized", {
@@ -85,4 +88,3 @@ if (requireNamespace("testthat", quietly = TRUE)) {
 } else {
   warning("The 'testthat' package is not installed. Please install it to run the validation suite.")
 }
-

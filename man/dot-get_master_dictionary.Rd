@@ -2,11 +2,11 @@
 % Please edit documentation in R/subtyper.R
 \name{.get_master_dictionary}
 \alias{.get_master_dictionary}
-\title{Master Dictionary for ANTsPyMM Anatomical and File-Type Labels}
+\title{Master Dictionary for ANTsPyMM Anatomical, Network, and File-Type Labels}
 \usage{
 .get_master_dictionary()
 }
 \description{
-Master Dictionary for ANTsPyMM Anatomical and File-Type Labels
+Master Dictionary for ANTsPyMM Anatomical, Network, and File-Type Labels
 }
 \keyword{internal}

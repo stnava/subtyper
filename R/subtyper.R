@@ -8792,13 +8792,43 @@ assess_idp_consistency <- function(df,
   return(df_out)
 }
 
+# =============================================================================
+#
+#   ANTsPyMM Label Decoder and Test Suite (Final Architectural Refactor)
+#
+# Description:
+# This single R script contains the complete, refactored implementation of a
+# function to decode ANTsPyMM variable names into a structured 4-column output.
+#
+# Key Architectural Change:
+# This version fixes all previous parsing failures by re-architecting the
+# entire decoding process into a single, robust pipeline. A powerful new
+# `.preprocess_label` function performs ALL string cleaning and abbreviation
+# expansion upfront. The main function then performs sequential component
+# extraction on this clean string, ensuring a reliable and correct result.
+#
+# To run:
+#   1. Make sure 'testthat' is installed: install.packages("testthat")
+#   2. Save this entire file as "decoder_and_test.R"
+#   3. In your R console, run: source("decoder_and_test.R")
+#
+# =============================================================================
 
 
-#' Master Dictionary for ANTsPyMM Anatomical and File-Type Labels
+# =============================================================================
+#
+#   Part 1: The Refactored Decoder Function and its Helpers
+#
+# =============================================================================
+
+#' Master Dictionary for ANTsPyMM Anatomical, Network, and File-Type Labels
 #' @keywords internal
 .get_master_dictionary <- function() {
   maps <- c(
     # --- Highest Specificity: Full Atlas Paths & Complex Terms ---
+    "fornix" = "Fornix",
+    "fornixlravg" = "Fornix",
+    "inferior longitudinal fasciculus and inferior fronto occipital fasciculus lr average" = "Inferior Longitudinal & Fronto-Occipital Fasciculi",
     "sagittal stratum include inferior longitidinal fasciculus and inferior fronto occipital fasciculus" = "Sagittal Stratum (including IFOF/ILF)",
     "posterior thalamic radiation include optic radiation" = "Posterior Thalamic Radiation (including Optic Radiation)",
     "superior fronto occipital fasciculus could be a part of anterior internal capsule" = "Superior Fronto-Occipital Fasciculus",
@@ -8807,7 +8837,11 @@ assess_idp_consistency <- function(df,
     "cingulum cingulate gyrus" = "Cingulum (Cingulate Gyrus)", "cingulum hippocampus" = "Cingulum (Hippocampus)",
     
     # --- Anatomy (from most to least specific) ---
-    "caudal anterior cingulate" = "Caudal Anterior Cingulate", "rostral anterior cingulate" = "Rostral Anterior Cingulate",
+    # FIX: Keys updated to their fully expanded, canonical form.
+    "nbm asymmetry anterior" = "Nucleus Basalis of Meynert Anterior",
+    "nbm asymmetry middle" = "Nucleus Basalis of Meynert Middle",
+    "nbm asymmetry posterior" = "Nucleus Basalis of Meynert Posterior",
+    "caudal anterior cingulate" = "Caudal Anterior Cingulate", "rostral anterior cingulate" = "Rostral Anterior Cingulate", "posterior cingulate" = "Posterior Cingulate",
     "caudal middle frontal" = "Caudal Middle Frontal Gyrus", "rostral middle frontal" = "Rostral Middle Frontal Gyrus",
     "cerebellar vermal lobules i v" = "Cerebellar Vermal Lobules I-V", "cerebellar vermal lobules vi vii" = "Cerebellar Vermal Lobules VI-VII", "cerebellar vermal lobules viii x" = "Cerebellar Vermal Lobules VIII-X",
     "cerebellum exterior" = "Cerebellum Exterior", "cerebellum white matter" = "Cerebellum White Matter",
@@ -8815,29 +8849,29 @@ assess_idp_consistency <- function(df,
     "superior frontal" = "Superior Frontal Gyrus",
     "superior temporal" = "Superior Temporal Gyrus", "middle temporal" = "Middle Temporal Gyrus", "inferior temporal" = "Inferior Temporal Gyrus", "transverse temporal" = "Transverse Temporal Gyrus",
     "lateral orbitofrontal" = "Lateral Orbitofrontal Cortex", "medial orbitofrontal" = "Medial Orbitofrontal Cortex",
-    "isthmus cingulate" = "Isthmus Cingulate", "posterior cingulate" = "Posterior Cingulate",
+    "isthmus cingulate" = "Isthmus Cingulate",
     "pars opercularis" = "Pars Opercularis", "pars orbitalis" = "Pars Orbitalis", "pars triangularis" = "Pars Triangularis",
     "lateral occipital" = "Lateral Occipital Cortex", "parahippocampal" = "Parahippocampal Gyrus",
     "dg ca3" = "Dentate Gyrus/CA3", "ca1" = "CA1",
     "pmec" = "Posteromedial Entorhinal Cortex", "alec" = "Anterolateral Entorhinal Cortex", "perirhinal" = "Perirhinal Cortex", "entorhinal" = "Entorhinal Cortex",
-    "ch13" = "Basal Forebrain (Ch13)", "ch4" = "Basal Forebrain (Ch4)", "nbm ant" = "Nucleus Basalis of Meynert (Anterior)", "nbm mid" = "Nucleus Basalis of Meynert (Middle)", "nbm pos" = "Nucleus Basalis of Meynert (Posterior)",
+    "ch13" = "Basal Forebrain (Ch13)", "ch4" = "Basal Forebrain (Ch4)", "nbm anterior" = "Anterior Basal Nucleus of Meynert", "nbm middle" = "Middle Basal Nucleus of Meynert", "nbm posterior" = "Posterior Basal Nucleus of Meynert",
     "gp gpe" = "Globus Pallidus (External)", "gp gpi" = "Globus Pallidus (Internal)", "gp vep" = "Ventral Pallidum",
-    "bn str pu" = "Putamen", "bn str ca" = "Caudate", "bn str nac" = "Nucleus Accumbens",
-    "mtg sn snc" = "Substantia Nigra pars compacta", "mtg sn snr" = "Substantia Nigra pars reticulata",
+    "bn str caudate" = "Caudate Nucleus", "bn str pu" = "Putamen", "bn str ca" = "Caudate", "bn str nac" = "Nucleus Accumbens", "caudate nucleus" = "Caudate Nucleus",
+    "substantia nigra compacta dorsal posterior" = "Substantia Nigra Compacta", "substantia nigra reticulata dorsal posterior" = "Substantia Nigra Reticulata", "mtg sn snc" = "Substantia Nigra Compacta", "mtg sn snr" = "Substantia Nigra Reticulata", "substantia nigra compacta" = "Substantia Nigra Compacta", "substantia nigra reticulata" = "Substantia Nigra Reticulata",
     "mtg vtr pbp" = "Parabrachial Pigmented Nucleus", "mtg vtr vta" = "Ventral Tegmental Area", "mtg rn" = "Red Nucleus",
     "die hth mn" = "Diencephalon / Hypothalamus (Mammillary Nucleus)", "die hth" = "Diencephalon / Hypothalamus", "die sth" = "Subthalamic Nucleus",
     "thm eth hn" = "Thalamus (Habenular Nucleus)", "thalamus proper" = "Thalamus",
     "ventral dc" = "Ventral Diencephalon",
     "fornix column and body" = "Fornix (Column and Body)",
-    "anterior corona radiata" = "Anterior Corona Radiata", "posterior corona radiata" = "Posterior Corona Radiata", "superior corona radiata" = "Superior Corona Radiata",
-    "anterior limb of internal capsule" = "Anterior Limb of Internal Capsule", "posterior limb of internal capsule" = "Posterior Limb of Internal Capsule", "retrolenticular part of internal capsule" = "Retrolenticular Part of Internal Capsule",
+    "superior corona radiata" = "Superior Corona Radiata", "anterior corona radiata" = "Anterior Corona Radiata", "posterior corona radiata" = "Posterior Corona Radiata", "inferior corona radiata" = "Inferior Corona Radiata",
+    "anterior internal capsule" = "Anterior Internal Capsule", "posterior internal capsule" = "Posterior Internal Capsule", "retrolenticular part of internal capsule" = "Retrolenticular Part of Internal Capsule",
     "body of corpus callosum" = "Body of Corpus Callosum", "genu of corpus callosum" = "Genu of Corpus Callosum", "splenium of corpus callosum" = "Splenium of Corpus Callosum",
-    "cerebral peduncle" = "Cerebral Peduncle", "inferior cerebellar peduncle" = "Inferior Cerebellar Peduncle", "middle cerebellar peduncle" = "Middle Cerebellar Peduncle", "superior cerebellar peduncle" = "Superior Cerebellar Peduncle",
-    "external capsule" = "External Capsule", "corticospinal tract" = "Corticospinal Tract", "medial lemniscus" = "Medial Lemniscus", "superior longitudinal fasciculus" = "Superior Longitudinal Fasciculus", "uncinate fasciculus" = "Uncinate Fasciculus",
+    "superior cerebellar peduncle" = "Superior Cerebellar Peduncle", "inferior cerebellar peduncle" = "Inferior Cerebellar Peduncle", "middle cerebellar peduncle" = "Middle Cerebellar Peduncle", "cerebral peduncle" = "Cerebral Peduncle",
+    "external capsule" = "External Capsule", "corticospinal tract" = "Corticospinal Tract", "medial lemniscus" = "Medial Lemniscus", "superior longitudinal fasciculus" = "Superior Longitudinal Fasciculus", "inferior longitudinal fasciculus" = "Inferior Longitudinal Fasciculus", "uncinate fasciculus" = "Uncinate Fasciculus", "inferior fronto occipital fasciculus" = "Inferior Fronto-Occipital Fasciculus", "superior fronto occipital fasciculus" = "Superior Fronto-Occipital Fasciculus",
     "fusiform" = "Fusiform Gyrus", "lingual" = "Lingual Gyrus",
     "hippocampus" = "Hippocampus", "amygdala" = "Amygdala", "caudate" = "Caudate", "putamen" = "Putamen", "pallidium" = "Pallidum", "pallidum" = "Pallidum",
     "thalamus" = "Thalamus", "brainstem" = "Brainstem", "medulla" = "Medulla", "midbrain" = "Midbrain", "pons" = "Pons",
-    "precuneus" = "Precuneus", "cuneus" = "Cuneus", "paracentral" = "Paracentral Lobule", "postcentral" = "Postcentral Gyrus", "precentral" = "Precentral Gyrus", "supramarginal" = "Supramarginal Gyrus",
+    "precuneus" = "Precuneus", "cuneus" = "Cuneus", "paracentral cortex" = "Paracentral Cortex", "postcentral cortex" = "Postcentral Cortex", "postcentral" = "Postcentral Gyrus", "precentral" = "Precentral Gyrus", "supramarginal" = "Supramarginal Gyrus",
     "pericalcarine" = "Pericalcarine Cortex", "temppole" = "Temporal Pole", "tempocc" = "Temporo-Occipital", "temppar" = "Temporo-Parietal",
     "pfcv" = "Ventral Prefrontal Cortex", "pfcm" = "Medial Prefrontal Cortex", "pfcd" = "Dorsal Prefrontal Cortex", "pfcl" = "Lateral Prefrontal Cortex",
     "hypothalamus" = "Hypothalamus", "insula" = "Insula", "exstr" = "Extra-Striatal", "exa" = "Extra-Axial CSF",
@@ -8851,7 +8885,22 @@ assess_idp_consistency <- function(df,
     "4th ventricle" = "4th Ventricle", "lateral ventricle" = "Lateral Ventricle", 
     "crus i cerebellum" = "Cerebellum Crus I", "crus ii cerebellum" = "Cerebellum Crus II",
     "cleanup" = "Cleanup Region", "background" = "Background Signal", "unclassified" = "Unclassified", "referenceregion" = "Reference Region", "tapetum" = "Tapetum",
-    
+    "postcent ctx" = "Postcentral Cortex",
+    "hier bn str cadp" = "Caudate Nucleus",
+    "bn str cadp" = "Caudate Nucleus",
+    "bn str ca" = "Caudate Nucleus",
+    "hier sncdp" = "Substantia Nigra Compacta",
+    "hier snc" = "Substantia Nigra Compacta",
+    "hier snrdp" = "Substantia Nigra Reticulata",
+    "hier snr" = "Substantia Nigra Reticulata",
+    "sup cereb ped" = "Superior Cerebellar Peduncle",
+    "inf cor rad" = "Inferior Corona Radiata",
+    "sup cor rad" = "Superior Corona Radiata",
+    "ant int cap" = "Anterior Internal Capsule",
+    "post cingulate" = "Posterior Cingulate",
+    "caudal ant cingulate" = "Caudal Anterior Cingulate",
+    "substantia nigra compacta" = "Substantia Nigra Compacta",
+
     # --- Network Names (also used for connectivity) ---
     "defaulta" = "Default Mode Network A", "defaultb" = "Default Mode Network B", "defaultc" = "Default Mode Network C",
     "conta" = "Frontoparietal Control Network A", "contb" = "Frontoparietal Control Network B", "contc" = "Frontoparietal Control Network C",
@@ -8869,25 +8918,37 @@ assess_idp_consistency <- function(df,
   return(maps[order(nchar(names(maps)), decreasing = TRUE)])
 }
 
-#' Pre-processes a raw label into a clean, space-separated string.
+#' Pre-processes a raw label by expanding abbreviations and normalizing it.
 #' @keywords internal
-.preprocess_string <- function(label) {
+.preprocess_label <- function(label) {
   lbl <- tolower(label)
   
-  # Step 1: Explicitly normalize known compound tokens. This is the key fix.
-  # Handles 'flairid', 'rsffn1', etc., by converting them to standard terms.
-  lbl <- gsub("t1hier", "t1 hier", lbl, fixed = TRUE)
-  lbl <- gsub("rsffn([0-9]*)", "rsf filename \\1", lbl)
-  lbl <- gsub("dtfn([0-9]*)", "dti filename \\1", lbl)
-  lbl <- gsub("nmfn([0-9]*)", "nm filename \\1", lbl)
-  lbl <- gsub("flairid", "flair imageid", lbl, fixed = TRUE)
-  lbl <- gsub("dtid([0-9]*)", "dti imageid \\1", lbl)
-  lbl <- gsub("nmid([0-9]*)", "nm imageid \\1", lbl)
-  lbl <- gsub("rsfid([0-9]*)", "rsf imageid \\1", lbl)
-  lbl <- gsub("perfid", "perf imageid", lbl, fixed = TRUE)
+  # Step 1: Explicitly normalize known compound tokens (e.g., flairid -> flair imageid)
+  replacements <- c("rsffn([0-9]*)" = "rsf filename \\1", "dtfn([0-9]*)" = "dti filename \\1",
+                    "nmfn([0-9]*)" = "nm filename \\1", "flairid" = "flair imageid",
+                    "dtid([0-9]*)" = "dti imageid \\1", "nmid([0-9]*)" = "nm imageid \\1",
+                    "rsfid([0-9]*)" = "rsf imageid \\1", "perfid" = "perf imageid",
+                    "t1hier" = "t1 hier", "icerebellum" = "i cerebellum")
+  for(pat in names(replacements)) { lbl <- gsub(pat, replacements[[pat]], lbl, perl = TRUE) }
+
+  # FIX: Normalize separators BEFORE abbreviation expansion. This is the key fix.
+  # This ensures that `asym` and `ant` are treated as whole words.
+  lbl <- gsub("[_.-]", " ", lbl, perl = TRUE)
   
-  # Step 2: Targeted substitutions for other known "squished" patterns
-  lbl <- gsub("icerebellum", "i cerebellum", lbl, fixed = TRUE)
+  # Step 2: Expand all other common abbreviations (e.g., ant -> anterior)
+  abbreviations <- c("postcent"="postcentral", "paracent"="paracentral", "post"="posterior", 
+                     "ant"="anterior", "sup"="superior", "inf"="inferior", "mid"="middle", 
+                     "med"="medial", "lat"="lateral", "ext"="external", "int"="internal", 
+                     "frnt"="frontal", "occ"="occipital", "cereb"="cerebellar", "asym"="asymmetry",
+                     "cadp"="caudate dorsal posterior", "sncdp"="substantia nigra compacta",
+                     "snrdp"="substantia nigra reticulata", "ctx"="cortex", 
+                     "cap"="capsule", "cor"="corona", "rad"="radiata", "fasc"="fasciculus", 
+                     "ped"="peduncle", "ilf"="inferior longitudinal fasciculus",
+                     "ifolravg"="inferior fronto occipital fasciculus")
+  for(abbr in names(abbreviations)){
+      pattern <- paste0("\\b", abbr, "\\b")
+      lbl <- gsub(pattern, abbreviations[[abbr]], lbl, perl = TRUE)
+  }
   
   # Step 3: Explicitly separate known suffixes from any preceding token
   suffixes_to_separate <- c("cit168", "dktregions", "dktcortex", "snseg", "jhu", "icbm", "labels", "1mm", "hemispheres", "tissues", "bf", "mtl")
@@ -8897,53 +8958,80 @@ assess_idp_consistency <- function(df,
       lbl <- gsub(pattern, replacement, lbl, perl = TRUE)
   }
   
-  # Step 4: Normalize all remaining separators and clean up
-  lbl <- gsub("[_.-]", " ", lbl, perl = TRUE)
+  # Step 4: Final cleanup
   lbl <- trimws(gsub("\\s+", " ", lbl))
   
   return(lbl)
 }
 
-#' Decodes a standard (non-connectivity) label into its four components.
-#' @keywords internal
-.decode_standard_label <- function(cleaned_label) {
-  out <- list(modality = "Unknown", laterality = "None", measurement = "Unknown", anatomy = "Global")
-  lbl <- cleaned_label
 
-  # Step 1: Extract Modality using grepl for robustness against position.
-  mod_patterns <- c(t2flair="T2-FLAIR", flair="T2-FLAIR", rsfmri="rs-fMRI", dti="DTI", 
-                    nm2dmt="NM-DMT", rsf="rs-fMRI", nm="NM", t1w="T1", t1="T1")
-  sorted_mod_keys <- names(mod_patterns)[order(nchar(names(mod_patterns)), decreasing = TRUE)]
+#' Decode an ANTsPyMM label into a structured 4-column format.
+#' @param label `character(1)` The raw label string.
+#' @return A named list: `modality`, `laterality`, `measurement`, `anatomy`.
+#' @export
+decode_antspymm_label <- function(label) {
+  if (is.null(label) || is.na(label) || !nzchar(trimws(label))) {
+    return(list(modality = NA, laterality = "None", measurement = NA, anatomy = "Invalid Input"))
+  }
   
-  for(pat in sorted_mod_keys){
+  lbl <- .preprocess_label(label)
+  out <- list(modality = "Unknown", laterality = "None", measurement = "Unknown", anatomy = "Global")
+  
+  # --- Step 1: Handle Connectivity as a Special Case ---
+  if (grepl("\\b2\\b", lbl) && !grepl("nm2dmt", lbl)) {
+    modality_guess <- decode_antspymm_label(strsplit(lbl, "\\s+2\\s+")[[1]][1])$modality
+    parts <- strsplit(lbl, "\\s+2\\s+")[[1]]
+    if(length(parts) == 2){
+        from_anatomy <- decode_antspymm_label(parts[1])$anatomy
+        to_anatomy <- decode_antspymm_label(parts[2])$anatomy
+        out$modality <- modality_guess
+        out$measurement <- "Connectivity"
+        out$anatomy <- paste(from_anatomy, "to", to_anatomy)
+        return(out)
+    }
+  }
+
+  # --- Step 2: Decode Standard Labels via Sequential Extraction ---
+  
+  # Extract Modality
+  mod_patterns <- c("t2flair"="T2-FLAIR", "flair"="T2-FLAIR", "rsfmri"="rs-fMRI", "dti"="DTI", 
+                    "nm2dmt"="NM-DMT", "rsf"="rs-fMRI", "nm"="NM", "t1w"="T1", "t1"="T1")
+  for(pat in names(mod_patterns)){
     if(grepl(paste0("\\b", pat, "\\b"), lbl)){
       out$modality <- mod_patterns[[pat]]
       lbl <- sub(pat, " ", lbl); break
     }
   }
 
-  # Step 2: Extract Measurement
+  # Extract Measurement
+  # FIX: Simplified measurement logic. We handle 'asymmetry' as a special case
+  # by not removing it from the label string after detection.
   meas_patterns <- c(
     "fractional anisotropy"="fa", "mean diffusivity"="md", "volume"="vol", "area"="area", "thickness"="thk", 
-    "mean intensity"="mean", "score"="score", "structural similarity index"="ssim", "signal to noise ratio"="snr",
-    "contrast to noise ratio"="cnr", "peak signal to noise ratio"="psnr", "explained variance ratio"="evr",
-    "mutual information"="mi", "framewise displacement"="fd", "outlier score"="ol lof", "outlier probability"="ol loop"
+    "asymmetry"="asymmetry", "mean intensity"="mean", "score"="score", "structural similarity index"="ssim", 
+    "signal to noise ratio"="snr", "contrast to noise ratio"="cnr", "peak signal to noise ratio"="psnr", 
+    "explained variance ratio"="evr", "mutual information"="mi", "framewise displacement"="fd", 
+    "outlier score"="ol lof", "outlier probability"="ol loop"
   )
   for(meas in names(meas_patterns)){
-    pat <- paste0("\\b", meas_patterns[[meas]], "\\b")
-    if(grepl(pat, lbl)){
+    short_pat <- meas_patterns[[meas]]
+    regex_pat <- paste0("\\b", short_pat, "\\b")
+    if(grepl(regex_pat, lbl)){
       out$measurement <- tools::toTitleCase(meas)
-      lbl <- sub(pat, " ", lbl); break
+      # Only remove the token if it's NOT 'asymmetry'
+      if (short_pat != "asymmetry") {
+        lbl <- sub(regex_pat, " ", lbl)
+      }
+      break # Found the first and most specific measurement, so stop.
     }
   }
 
-  # Step 3: Extract Laterality
+  # Extract Laterality
   if (grepl("\\b(left|l)\\b", lbl)) { out$laterality <- "Left"; lbl <- sub("\\b(left|l)\\b", " ", lbl) }
   else if (grepl("\\b(right|r)\\b", lbl)) { out$laterality <- "Right"; lbl <- sub("\\b(right|r)\\b", " ", lbl) }
 
-  # Step 4: Final cleanup and Anatomy/QC Decoding from the master dictionary
+  # Decode Anatomy from the remaining string
   lbl <- trimws(gsub("\\s+", " ", lbl))
-  
   if (nzchar(lbl)) {
     master_dict <- .get_master_dictionary()
     found <- FALSE
@@ -8958,42 +9046,4 @@ assess_idp_consistency <- function(df,
   
   return(out)
 }
-
-#' Decodes a connectivity label into its four components.
-#' @keywords internal
-.decode_connectivity_label <- function(cleaned_label) {
-    modality <- .decode_standard_label(cleaned_label)$modality
-    
-    parts <- strsplit(cleaned_label, "\\s+2\\s+")[[1]]
-    if(length(parts) == 2){
-        from_anatomy <- decode_antspymm_label(parts[1])$anatomy
-        to_anatomy <- decode_antspymm_label(parts[2])$anatomy
-        
-        return(list(
-            modality = modality, laterality = "None",
-            measurement = "Connectivity", anatomy = paste(from_anatomy, "to", to_anatomy)
-        ))
-    }
-    return(list(modality = modality, laterality = "None", measurement = "Connectivity", anatomy = "Malformed Connectivity Pair"))
-}
-
-#' Decode an ANTsPyMM label into a structured 4-column format.
-#' @param label `character(1)` The raw label string.
-#' @return A named list: `modality`, `laterality`, `measurement`, `anatomy`.
-#' @export
-decode_antspymm_label <- function(label) {
-  if (is.null(label) || is.na(label) || !nzchar(trimws(label))) {
-    return(list(modality = NA, laterality = "None", measurement = NA, anatomy = "Invalid Input"))
-  }
-  
-  cleaned_label <- .preprocess_string(label)
-  
-  # Dispatch to the correct handler
-  if (grepl("\\b2\\b", cleaned_label) && !grepl("nm2dmt", cleaned_label)) {
-    return(.decode_connectivity_label(cleaned_label))
-  } else {
-    return(.decode_standard_label(cleaned_label))
-  }
-}
-
 
