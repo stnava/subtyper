@@ -8835,12 +8835,23 @@ assess_idp_consistency <- function(df,
     "fornix cres stria terminalis" = "Fornix cres/Stria Terminalis",
     "pontine crossing tract a part of mcp" = "Pontine Crossing Tract",
     "cingulum cingulate gyrus" = "Cingulum Cingulate Gyrus", "cingulum hippocampus" = "Cingulum Hippocampus",
-    
+    "viiia cerebellum" = "Cerebellum Lobule VIIIA",
     # --- Anatomy (from most to least specific) ---
     # FIX: Keys updated to their fully expanded, canonical form.
+    "mtgvtrpbp" = "Parabrachial Pigmented Nucleus",
+    "mtgvtrvta" = "Ventral Tegmental Area",
+    "nbm lravg anterior" = "Nucleus Basalis of Meynert Anterior",
+    "nbm lravg middle" = "Nucleus Basalis of Meynert Middle",
+    "nbm lravg posterior" = "Nucleus Basalis of Meynert Posterior",
     "nbm asymmetry anterior" = "Nucleus Basalis of Meynert Anterior",
     "nbm asymmetry middle" = "Nucleus Basalis of Meynert Middle",
     "nbm asymmetry posterior" = "Nucleus Basalis of Meynert Posterior",
+    "nbm asymmetry ant" = "Nucleus Basalis of Meynert Anterior",
+    "nbm asymmetry mid" = "Nucleus Basalis of Meynert Middle",
+    "nbm asymmetry pos" = "Nucleus Basalis of Meynert Posterior",
+    "nbm lravg ant" = "Nucleus Basalis of Meynert Anterior",
+    "nbm lravg mid" = "Nucleus Basalis of Meynert Middle",
+    "nbm lravg pos" = "Nucleus Basalis of Meynert Posterior",
     "caudal anterior cingulate" = "Caudal Anterior Cingulate", "rostral anterior cingulate" = "Rostral Anterior Cingulate", "posterior cingulate" = "Posterior Cingulate",
     "caudal middle frontal" = "Caudal Middle Frontal Gyrus", "rostral middle frontal" = "Rostral Middle Frontal Gyrus",
     "cerebellar vermal lobules i v" = "Cerebellar Vermal Lobules I-V", "cerebellar vermal lobules vi vii" = "Cerebellar Vermal Lobules VI-VII", "cerebellar vermal lobules viii x" = "Cerebellar Vermal Lobules VIII-X",
@@ -8856,13 +8867,25 @@ assess_idp_consistency <- function(df,
     "pmec" = "Posteromedial Entorhinal Cortex", "alec" = "Anterolateral Entorhinal Cortex", "perirhinal" = "Perirhinal Cortex", "entorhinal" = "Entorhinal Cortex",
     "ch13" = "Basal Forebrain Ch13", "ch4" = "Basal Forebrain Ch4", "nbm anterior" = "Anterior Basal Nucleus of Meynert", "nbm middle" = "Middle Basal Nucleus of Meynert", "nbm posterior" = "Posterior Basal Nucleus of Meynert",
     "nbm ant" = "Anterior Basal Nucleus of Meynert", "nbm mid" = "Middle Basal Nucleus of Meynert", "nbm pos" = "Posterior Basal Nucleus of Meynert",
-    "gp gpe" = "Globus Pallidus External", "gp gpi" = "Globus Pallidus Internal", "gp vep" = "Ventral Pallidum",
-    "bn str caudate" = "Caudate Nucleus", "bn str pu" = "Putamen", "bn str ca" = "Caudate", "bn str nac" = "Nucleus Accumbens", "caudate nucleus" = "Caudate Nucleus",
+    "gp gpe" = "Globus Pallidus External", "gp gpi" = "Globus Pallidus Internal", "gp vep" = "Ventral Pallidum", "bngpvep" = "Ventral Pallidum",
+    "bnstrpu" = "Putamen",
+    "striate" = "Striate",
+    "bnstrnac" = "Nucleus Accumbens",
+    "bnstrca" = "Caudate Nucleus",
+    "bngpgpi" = "Globus Pallidus Internal",
+    "bngpgpe" = "Globus Pallidus External",
+    "mtgsnsnr" = "Substantia Nigra Reticulata",
+    "mtgsnsnc" = "Substantia Nigra Compacta",
+    "bn str caudate" = "Caudate Nucleus", "bn str pu" = "Putamen", "bn str ca" = "Caudate Nucleus", "bn str nac" = "Nucleus Accumbens", "caudate nucleus" = "Caudate Nucleus",
     "substantia nigra compacta dorsal posterior" = "Substantia Nigra Compacta", "substantia nigra reticulata dorsal posterior" = "Substantia Nigra Reticulata", "mtg sn snc" = "Substantia Nigra Compacta", "mtg sn snr" = "Substantia Nigra Reticulata", "substantia nigra compacta" = "Substantia Nigra Compacta", "substantia nigra reticulata" = "Substantia Nigra Reticulata",
     "mtg vtr pbp" = "Parabrachial Pigmented Nucleus", "mtg vtr vta" = "Ventral Tegmental Area", "mtg rn" = "Red Nucleus",
+    "mtgrn" = "Red Nucleus",
     "die hth mn" = "Diencephalon / Hypothalamus Mammillary Nucleus", "die hth" = "Diencephalon / Hypothalamus", "die sth" = "Subthalamic Nucleus",
+    "thmethhn" = "Thalamus Habenular Nucleus",
     "thm eth hn" = "Thalamus Habenular Nucleus", "thalamus proper" = "Thalamus",
     "ventral dc" = "Ventral Diencephalon",
+    "diesth" = "Diencephalon / Subthalamic Nucleus",
+    "diehth" = "Hypothalamus",
     "fornix column and body" = "Fornix",
     "superior corona radiata" = "Superior Corona Radiata", "anterior corona radiata" = "Anterior Corona Radiata", "posterior corona radiata" = "Posterior Corona Radiata", "inferior corona radiata" = "Inferior Corona Radiata",
     "anterior internal capsule" = "Anterior Internal Capsule", "posterior internal capsule" = "Posterior Internal Capsule", "retrolenticular part of internal capsule" = "Retrolenticular Part of Internal Capsule", "rent internal capsule" = "Retrolenticular Part of Internal Capsule",
@@ -8870,10 +8893,11 @@ assess_idp_consistency <- function(df,
     "superior cerebellar peduncle" = "Superior Cerebellar Peduncle", "inferior cerebellar peduncle" = "Inferior Cerebellar Peduncle", "middle cerebellar peduncle" = "Middle Cerebellar Peduncle", "cerebral peduncle" = "Cerebral Peduncle",
     "external capsule" = "External Capsule", "corticospinal tract" = "Corticospinal Tract", "medial lemniscus" = "Medial Lemniscus", "superior longitudinal fasciculus" = "Superior Longitudinal Fasciculus", "inferior longitudinal fasciculus" = "Inferior Longitudinal Fasciculus", "uncinate fasciculus" = "Uncinate Fasciculus", "inferior fronto occipital fasciculus" = "Inferior Fronto-Occipital Fasciculus", "superior fronto occipital fasciculus" = "Superior Fronto-Occipital Fasciculus",
     "fusiform" = "Fusiform Gyrus", "lingual" = "Lingual Gyrus",
-    "hippocampus" = "Hippocampus", "amygdala" = "Amygdala", "caudate" = "Caudate", "putamen" = "Putamen", "pallidium" = "Pallidum", "pallidum" = "Pallidum",
+    "hippocampus" = "Hippocampus", "amygdala" = "Amygdala", "caudate" = "Caudate Nucleus", "putamen" = "Putamen", "pallidium" = "Pallidum", "pallidum" = "Pallidum",
     "thalamus" = "Thalamus", "brainstem" = "Brainstem", "medulla" = "Medulla", "midbrain" = "Midbrain", "pons" = "Pons",
     "precuneus" = "Precuneus", "cuneus" = "Cuneus", "paracentral cortex" = "Paracentral Cortex",
     "paracentral" = "Paracentral Cortex",
+    "diehthmn" = "Diencephalon / Hypothalamus Mammillary Nucleus",
     "bn str pudp" = 'Putamen',
     "bn str pu" = 'Putamen',
     "mtg rndp" = "Red Nucleus",
@@ -8910,6 +8934,11 @@ assess_idp_consistency <- function(df,
     "sup cor rad" = "Superior Corona Radiata",
     "ant int cap" = "Anterior Internal Capsule",
     "post cingulate" = "Posterior Cingulate",
+    " ins "="Insula",
+    "ins lravg"="Insula",
+    "ins asym"="Insula",
+    "posterior limb" = "Posterior Limb of Internal Capsule",
+    "anterior limb" = "Anterior Limb of Internal Capsule",
     "caudal ant cingulate" = "Caudal Anterior Cingulate",
     "substantia nigra compacta" = "Substantia Nigra Compacta",
 
@@ -8934,19 +8963,44 @@ assess_idp_consistency <- function(df,
 #' @keywords internal
 .preprocess_label <- function(label) {
   lbl <- tolower(label)
-  
+  lbl = gsub("t1hier_thklravg","t1_",lbl, perl = TRUE)
+  lbl = gsub("t1hier_vollravg","t1_",lbl, perl = TRUE)
+  lbl = gsub("t1hier_thkasym","t1_",lbl, perl = TRUE)
+  lbl = gsub("t1hier_volasym","t1_",lbl, perl = TRUE)
+#  print(lbl)
   # Step 1: Explicitly normalize known compound tokens (e.g., flairid -> flair imageid)
   replacements <- c("rsffn([0-9]*)" = "rsf filename \\1", "dtfn([0-9]*)" = "dti filename \\1",
                     "nmfn([0-9]*)" = "nm filename \\1", "flairid" = "flair imageid",
                     "dtid([0-9]*)" = "dti imageid \\1", "nmid([0-9]*)" = "nm imageid \\1",
                     "rsfid([0-9]*)" = "rsf imageid \\1", "perfid" = "perf imageid",
-                    "t1hier" = "t1 hier", "icerebellum" = "i cerebellum")
+                    "t1hier" = "t1 hier", "icerebellum" = "i cerebellum", 
+                    "(alff)([0-9.]+)" = "\\1 \\2")
   for(pat in names(replacements)) { lbl <- gsub(pat, replacements[[pat]], lbl, perl = TRUE) }
 
   # FIX: Normalize separators BEFORE abbreviation expansion. This is the key fix.
   # This ensures that `asym` and `ant` are treated as whole words.
   lbl <- gsub("[_.-]", " ", lbl, perl = TRUE)
   
+  # This robustly handles cases like 'viiiacerebellum' -> 'viiia cerebellum'
+  if ( grepl("cerebellum",lbl) ) {
+    lbl=gsub("vol","",lbl)
+    lbl=gsub("thk","",lbl)
+    lbl=gsub("area","",lbl)
+    lbl=gsub("hier","",lbl)
+    lbl=gsub("lravg","",lbl)
+    lbl=gsub("asym","",lbl)
+    roman_prefixes <- c("i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x", 
+                        "iia", "iib", "iiia", "iiib", "iva", "ivb", "va", "vb", 
+                        "via", "vib", "viia", "viib", "viiia", "viiib")
+    # Sort by length to match longest first (e.g., 'viii' before 'vii')
+    roman_prefixes <- roman_prefixes[order(nchar(roman_prefixes), decreasing = TRUE)]
+    for (prefix in roman_prefixes) {
+        pattern <- paste0("\\b(", prefix, ")([a-z]+)")
+        replacement <- "\\1 \\2"
+        lbl <- gsub(pattern, replacement, lbl, perl=TRUE)
+    }
+  }
+
   # Step 2: Expand all other common abbreviations (e.g., ant -> anterior)
   abbreviations <- c("postcent"="postcentral", "paracent"="paracentral", "post"="posterior", 
                      "ant"="anterior", "sup"="superior", "inf"="inferior", "mid"="middle", 
@@ -8956,6 +9010,7 @@ assess_idp_consistency <- function(df,
                      "snrdp"="substantia nigra reticulata", "ctx"="cortex", 
                      "cap"="capsule", "cor"="corona", "rad"="radiata", "fasc"="fasciculus", 
                      "ped"="peduncle", "ilf"="inferior longitudinal fasciculus",
+                     "ins"="insula",
                      "ifolravg"="inferior fronto occipital fasciculus")
   for(abbr in names(abbreviations)){
       pattern <- paste0("\\b", abbr, "\\b")
@@ -8963,7 +9018,7 @@ assess_idp_consistency <- function(df,
   }
   
   # Step 3: Explicitly separate known suffixes from any preceding token
-  suffixes_to_separate <- c("cit168", "dktregions", "dktcortex", "snseg", "jhu", "icbm", "labels", "1mm", "hemispheres", "tissues", "bf", "mtl")
+  suffixes_to_separate <- c("cit168", "dktregions", "dktcortex", "snseg", "jhu", "icbm", "labels", "1mm", "hemispheres", "tissues", "bf", "mtl", "left", "right", "lravg", "asym", "hier")
   for (suffix in suffixes_to_separate) {
       pattern <- paste0("([a-z0-9])(", suffix, ")")
       replacement <- paste0("\\1 \\2")
@@ -8972,6 +9027,7 @@ assess_idp_consistency <- function(df,
   
   # Step 4: Final cleanup
   lbl <- trimws(gsub("\\s+", " ", lbl))
+
   
   return(lbl)
 }
@@ -8981,7 +9037,7 @@ assess_idp_consistency <- function(df,
 #' @param label `character(1)` The raw label string.
 #' @return A named list: `modality`, `laterality`, `measurement`, `anatomy`.
 #' @export
-decode_antspymm_label <- function(label) {
+decode_antspymm_idp <- function(label) {
   if (is.null(label) || is.na(label) || !nzchar(trimws(label))) {
     return(list(modality = NA, laterality = "None", measurement = NA, anatomy = "Invalid Input"))
   }
@@ -8991,11 +9047,11 @@ decode_antspymm_label <- function(label) {
   
   # --- Step 1: Handle Connectivity as a Special Case ---
   if (grepl("\\b2\\b", lbl) && !grepl("nm2dmt", lbl)) {
-    modality_guess <- decode_antspymm_label(strsplit(lbl, "\\s+2\\s+")[[1]][1])$modality
+    modality_guess <- decode_antspymm_idp(strsplit(lbl, "\\s+2\\s+")[[1]][1])$modality
     parts <- strsplit(lbl, "\\s+2\\s+")[[1]]
     if(length(parts) == 2){
-        from_anatomy <- decode_antspymm_label(parts[1])$anatomy
-        to_anatomy <- decode_antspymm_label(parts[2])$anatomy
+        from_anatomy <- decode_antspymm_idp(parts[1])$anatomy
+        to_anatomy <- decode_antspymm_idp(parts[2])$anatomy
         out$modality <- modality_guess
         out$measurement <- "Connectivity"
         out$anatomy <- paste(from_anatomy, "to", to_anatomy)
@@ -9015,19 +9071,39 @@ decode_antspymm_label <- function(label) {
     }
   }
 
-  # Extract Measurement
-  # FIX: Simplified measurement logic. We handle 'asymmetry' as a special case
-  # by not removing it from the label string after detection.
+## FIX ## -- New Step: Extract Context/Pipeline and remove it from the label ---
+  context_patterns <- c(
+    "Functional Connectivity Pipeline 134" = "fcnxpro134",
+    "Functional Connectivity Pipeline 122" = "fcnxpro122",
+    "Functional Connectivity Pipeline 129" = "fcnxpro129"
+  )
+  for (con in names(context_patterns)) {
+    pat <- paste0("\\b", context_patterns[[con]], "\\b")
+    if (grepl(pat, lbl)) {
+      out$context <- con
+      lbl <- sub(pat, " ", lbl)
+      break
+    }
+  }
+
+
   meas_patterns <- c(
+    "percent absolute fluctuation" = "peraf",
+    "fractional amplitude of low frequency fluctuations" = "falff",
+    "amplitude of low frequency fluctuations" = "alff",
     "fractional anisotropy"="fa", "mean diffusivity"="md", "volume"="vol", "area"="area", "thickness"="thk", 
     "asymmetry"="asymmetry", "mean intensity"="mean", "score"="score", "structural similarity index"="ssim", 
     "signal to noise ratio"="snr", "contrast to noise ratio"="cnr", "peak signal to noise ratio"="psnr", 
     "explained variance ratio"="evr", "mutual information"="mi", "framewise displacement"="fd", 
     "outlier score"="ol lof", "outlier probability"="ol loop"
   )
+
   for(meas in names(meas_patterns)){
     short_pat <- meas_patterns[[meas]]
-    regex_pat <- paste0("\\b", short_pat, "\\b")
+    
+    # allow optional "point" + up to 4 digits after the token
+    regex_pat <- paste0("\\b", short_pat, "(?:point\\d{1,4})?\\b")
+    
     if(grepl(regex_pat, lbl)){
       out$measurement <- tools::toTitleCase(meas)
       # Only remove the token if it's NOT 'asymmetry'
