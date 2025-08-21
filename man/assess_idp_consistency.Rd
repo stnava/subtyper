@@ -8,6 +8,21 @@ assess_idp_consistency(
   df,
   Perf.Dom,
   idp_cols,
+  prompt =
+    paste0("You are an expert neuroscientist and a highly concise AI assistant. Your task is to evaluate the neuroscientific ",
+    "support for the relationship between given Imaging-Derived Phenotypes (IDPs) and a cognitive performance domain. In your reasoning, first identify the measurement being used; then ensure that you understand the nature of the IDPs.  Include that knowledge in your reasoning but respond as I dictate below.",
+    "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
+    
+    
+    "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
+    "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
+    "I want you to think of your rating as a sum of evidence across all IDPs.",
+    "Direct associations between one or more IDPs and a performance domain should contribute to a high rating.",
+    
+    
+    "Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.",
+    "The absence of both direct and indirect associations between an IDP and a performance domain should contribute to a low rating.",
+    "Adopt a skeptical and critical interpretation and default to a low rating especially if you are unsure about the scientific support for the relationship.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains.  ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus; parahippocampal cortex is part of the medial temporal lobe, located just adjacent to the hippocampus; pericalcarine is part of the primary visual cortex (V1) located along the calcarine sulcus in the occipital lobe;"),
   backend = c("groq", "openrouter"),
   api_key_env = NULL,
   model = NULL,
@@ -28,6 +43,8 @@ assess_idp_consistency(
 
 \item{idp_cols}{Character vector of column names containing IDPs (e.g., \code{c("IDP.1","IDP.2")}).}
 
+\item{prompt}{the default prompt see \code{generate_idp_interpretation_prompt}}
+
 \item{backend}{Character string specifying which API backend to use: \code{"groq"} or \code{"openrouter"}.}
 
 \item{api_key_env}{Character string, name of the environment variable storing the API key for the chosen backend.}
@@ -47,8 +64,6 @@ assess_idp_consistency(
 \item{parallel}{Logical, if \code{TRUE} uses \code{furrr} for parallel API calls.}
 
 \item{.options_furrr}{List, optional arguments passed to \code{furrr::future_map} (e.g., \code{future::plan()}).}
-
-\item{prompt}{the default prompt}
 }
 \value{
 A data frame with the original data plus:

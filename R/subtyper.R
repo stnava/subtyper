@@ -8467,6 +8467,122 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
 
 
 
+#' Generate a Prompt for Interpreting Brain–Behavior Associations
+#'
+#' This function constructs a standardized prompt for guiding large language models
+#' in the interpretation of statistical associations between imaging-derived
+#' phenotypes (IDPs) and human performance measures. The generated prompt enforces
+#' strict JSON-only output with exactly two keys: \code{"consistency"} and
+#' \code{"justification"}.
+#'
+#' @param response_length Character. Desired length of the justification. One of:
+#'   \code{"short"} (2–3 sentences),
+#'   \code{"medium"} (3–6 sentences),
+#'   \code{"long"} (5–8 sentences).
+#' @param tone Character. Desired interpretive stance. One of:
+#'   \code{"neutral"} (balanced, scholarly tone),
+#'   \code{"skeptical"} (cautious, default low rating if uncertain),
+#'   \code{"critical"} (strict, default low rating unless robust evidence).
+#' @param n_examples Integer. Number of exemplar cases to include (0–5).
+#'
+#' @return A character string containing the full prompt.
+#'
+#' @examples
+#' # Generate a medium-length, skeptical prompt with 2 exemplars
+#' cat(generate_idp_interpretation_prompt(
+#'   response_length = "medium",
+#'   tone = "skeptical",
+#'   n_examples = 2
+#' ))
+#'
+#' # Generate a long, critical prompt without exemplars
+#' cat(generate_idp_interpretation_prompt(
+#'   response_length = "long",
+#'   tone = "critical",
+#'   n_examples = 0
+#' ))
+#'
+#' @export
+generate_idp_interpretation_prompt <- function(
+  response_length = c("short", "medium", "long"),
+  tone = c("neutral", "skeptical", "critical"),
+  n_examples = 3
+) {
+  # Argument matching
+  response_length <- match.arg(response_length)
+  tone <- match.arg(tone)
+  
+  if (!is.numeric(n_examples) || length(n_examples) != 1 || n_examples < 0) {
+    stop("`n_examples` must be a non-negative integer.")
+  }
+  if (n_examples > 5) {
+    warning("`n_examples` capped at 5.")
+    n_examples <- 5
+  }
+  
+  # Length guidance
+  length_text <- switch(response_length,
+    "short"  = "2–3 sentences",
+    "medium" = "3–6 sentences",
+    "long"   = "5–8 sentences"
+  )
+  
+  # Tone guidance
+  tone_text <- switch(tone,
+    "neutral"   = "Adopt a balanced and scholarly tone, weighing evidence without unnecessary bias.",
+    "skeptical" = "Adopt a cautious and skeptical stance, emphasizing limitations in the literature and defaulting to a low rating when evidence is weak.",
+    "critical"  = "Adopt a strongly critical and conservative stance, defaulting to a low rating unless there is robust and direct neuroscientific evidence."
+  )
+  
+  # Base prompt
+  prompt <- paste0(
+    "You are an expert cognitive neuroscientist. Interpret the statistical association ",
+    "between imaging-derived brain phenotypes (e.g., regional volumes, connectivity metrics, ",
+    "cortical measures, white matter tracts, resting-state networks) and human performance ",
+    "measures (e.g., cognitive domains, behavioral traits, clinical outcomes).  Performance domain scores may be provided as a single measure or as multiple measures separated by a comma.  Pay attention to each domain in the list and interpret them collectively.\n\n",
+    
+    "Respond ONLY in a JSON object with exactly two keys: 'consistency' and 'justification'.\n\n",
+    
+    "Rules for assigning 'consistency':\n",
+    "- Direct associations between one or more IDPs and a performance domain should contribute to a high rating.\n",
+    "- Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.\n",
+    "- The absence of both direct and indirect associations should contribute to a low rating.\n",
+    "- ", tone_text, "\n\n",
+    
+    "Formatting requirements:\n",
+    "- 'consistency' must be one of: low, medium, or high (always lowercase).\n",
+    "- 'justification' must be ", length_text, ", written in an academic cognitive neuroscience style.\n",
+    "- No other keys or free text outside the JSON object are allowed.\n",
+    "- If multiple regions or networks are provided, synthesize them into a coherent account of how they might jointly contribute to the behavioral domain.\n\n",
+    "Use precise, scholarly language and avoid speculation beyond established neuroscientific knowledge.\n"
+  )
+  
+  # Example library
+  examples <- list(
+    "Example 1 – Hippocampus ↔ Episodic Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"The hippocampus is a core structure for episodic memory encoding and retrieval, with extensive evidence from lesion studies, functional neuroimaging, and electrophysiology. Volumetric reductions in the hippocampus are consistently linked to memory impairments in aging and Alzheimer’s disease. Thus, the observed hippocampal association with episodic memory is well-supported.\"\n}",
+    
+    "Example 2 – Dorsolateral Prefrontal Cortex (dlPFC) ↔ Working Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"The dlPFC has long been implicated in working memory through primate neurophysiology and human neuroimaging. This region supports information maintenance and manipulation, and its consistent recruitment across executive tasks provides strong support for its role in working memory performance.\"\n}",
+    
+    "Example 3 – Cerebellum ↔ Language Tasks\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"While the cerebellum is classically linked to motor control, posterior cerebellar regions have been implicated in higher-order functions, including aspects of language. Evidence for cerebellar contributions to linguistic prediction is emerging but remains less consistent than findings in classical cortical language areas.\"\n}",
+    
+    "Example 4 – Pericalcarine Cortex ↔ Verbal Fluency\n{\n  \"consistency\": \"low\",\n  \"justification\": \"The pericalcarine cortex corresponds to primary visual cortex, which is specialized for early-stage visual processing. There is little evidence to support a direct role in verbal fluency, making this association weak and likely spurious.\"\n}",
+    
+    "Example 5 – Multiple Regions: Superior Frontal Cortex + Inferior Parietal Cortex + Corpus Callosum + Uncinate Fasciculus + Default Mode ↔ Working Memory\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"Working memory relies on a distributed frontoparietal network. The superior frontal and inferior parietal cortices support attentional control, the corpus callosum supports interhemispheric coordination, and the uncinate fasciculus connects frontal and temporal regions. Coupled with default mode–dorsal attention connectivity, these systems provide a plausible basis for working memory performance, though the evidence is not definitive.\"\n}"
+  )
+  
+  # Add exemplars
+  if (n_examples > 0) {
+    prompt <- paste0(
+      prompt,
+      "\n---\n\n### Exemplar Cases\n\n",
+      paste(examples[1:n_examples], collapse = "\n\n")
+    )
+  }
+  
+  return(prompt)
+}
+
+
 #' Assess neuroscientific consistency between IDPs and performance domains (Optimized)
 #'
 #' This function queries a large language model via either the Groq API or OpenRouter API
@@ -8478,10 +8594,10 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
 #' @param df A data frame containing at least the performance domain column and one or more IDP columns.
 #' @param Perf.Dom Character string, name of the column in \code{df} containing the performance domain.
 #' @param idp_cols Character vector of column names containing IDPs (e.g., \code{c("IDP.1","IDP.2")}).
+#' @param prompt the default prompt see \code{generate_idp_interpretation_prompt}
 #' @param backend Character string specifying which API backend to use: \code{"groq"} or \code{"openrouter"}.
 #' @param api_key_env Character string, name of the environment variable storing the API key for the chosen backend.
 #' @param model Character string, model name for the chosen backend. Defaults to \code{"llama3-70b-8192"} for Groq and \code{"openai/gpt-4o-mini"} for OpenRouter.
-#' @param prompt the default prompt
 #' @param max_retries Integer, maximum number of retries in case of rate limiting.
 #' @param retry_delay_base Numeric, base delay in seconds for exponential backoff (e.g., 1 for 1, 2, 4, 8s).
 #' @param temperature Numeric, sampling temperature for the LLM. 0 for deterministic, higher for more creative. (0-1)
@@ -8546,6 +8662,19 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
 assess_idp_consistency <- function(df,
                                              Perf.Dom,
                                              idp_cols,
+                                             prompt = paste0(
+    "You are an expert neuroscientist and a highly concise AI assistant. Your task is to evaluate the neuroscientific ",
+    "support for the relationship between given Imaging-Derived Phenotypes (IDPs) and a cognitive performance domain. In your reasoning, first identify the measurement being used; then ensure that you understand the nature of the IDPs.  Include that knowledge in your reasoning but respond as I dictate below.",
+    "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
+    "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
+    "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
+    "I want you to think of your rating as a sum of evidence across all IDPs.",
+    "Direct associations between one or more IDPs and a performance domain should contribute to a high rating.",
+    "Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.",
+    "The absence of both direct and indirect associations between an IDP and a performance domain should contribute to a low rating.",
+    "Adopt a skeptical and critical interpretation and default to a low rating especially if you are unsure about the scientific support for the relationship.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains.  ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus; parahippocampal cortex is part of the medial temporal lobe, located just adjacent to the hippocampus; pericalcarine is part of the primary visual cortex (V1) located along the calcarine sulcus in the occipital lobe;"
+  ),
+
                                              backend = c("groq", "openrouter"),
                                              api_key_env = NULL,
                                              model = NULL,
@@ -8606,19 +8735,7 @@ assess_idp_consistency <- function(df,
 
   # --- 1. Prompt Engineering (Refined) ---
   # The system prompt sets the persona and instructions for the LLM.
-  system_prompt <- paste0(
-    "You are an expert neuroscientist and a highly concise AI assistant. Your task is to evaluate the neuroscientific ",
-    "support for the relationship between given Imaging-Derived Phenotypes (IDPs) and a cognitive performance domain. In your reasoning, first identify the measurement being used; then ensure that you understand the nature of the IDPs.  Include that knowledge in your reasoning but respond as I dictate below.",
-    "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
-    "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
-    "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
-    "I want you to think of your rating as a sum of evidence across all IDPs.",
-    "Direct associations between one or more IDPs and a performance domain should contribute to a high rating.",
-    "Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.",
-    "The absence of both direct and indirect associations between an IDP and a performance domain should contribute to a low rating.",
-    "Adopt a skeptical and critical interpretation and default to a low rating especially if you are unsure about the scientific support for the relationship.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains.  ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus; parahippocampal cortex is part of the medial temporal lobe, located just adjacent to the hippocampus; pericalcarine is part of the primary visual cortex (V1) located along the calcarine sulcus in the occipital lobe;"
-  )
-
+  system_prompt <- prompt
   # Define the user prompt template
   user_prompt_template <- paste0(
     "Domain: {domain}\n",
