@@ -6,13 +6,13 @@
 \usage{
 generate_idp_interpretation_prompt(
   response_length = c("short", "medium", "long"),
-  tone = c("neutral", "skeptical", "critical"),
+  tone = c("critical", "skeptical", "neutral"),
   n_examples = 3
 )
 
 generate_idp_interpretation_prompt(
   response_length = c("short", "medium", "long"),
-  tone = c("neutral", "skeptical", "critical"),
+  tone = c("critical", "skeptical", "neutral"),
   n_examples = 3
 )
 }
