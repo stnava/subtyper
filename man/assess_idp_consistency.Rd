@@ -8,21 +8,7 @@ assess_idp_consistency(
   df,
   Perf.Dom,
   idp_cols,
-  prompt =
-    paste0("You are an expert neuroscientist and a highly concise AI assistant. Your task is to evaluate the neuroscientific ",
-    "support for the relationship between given Imaging-Derived Phenotypes (IDPs) and a cognitive performance domain. In your reasoning, first identify the measurement being used; then ensure that you understand the nature of the IDPs.  Include that knowledge in your reasoning but respond as I dictate below.",
-    "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
-    
-    
-    "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
-    "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
-    "I want you to think of your rating as a sum of evidence across all IDPs.",
-    "Direct associations between one or more IDPs and a performance domain should contribute to a high rating.",
-    
-    
-    "Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.",
-    "The absence of both direct and indirect associations between an IDP and a performance domain should contribute to a low rating.",
-    "Adopt a skeptical and critical interpretation and default to a low rating especially if you are unsure about the scientific support for the relationship.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains.  ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus; parahippocampal cortex is part of the medial temporal lobe, located just adjacent to the hippocampus; pericalcarine is part of the primary visual cortex (V1) located along the calcarine sulcus in the occipital lobe;"),
+  prompt = generate_idp_interpretation_prompt(),
   backend = c("groq", "openrouter"),
   api_key_env = NULL,
   model = NULL,
@@ -30,7 +16,25 @@ assess_idp_consistency(
   retry_delay_base = 2,
   temperature = 0.1,
   user_input_prompt =
-    "Assess the neuroscientific consistency and provide a score (low, medium, high) and justification. ",
+    "Assess the neuroscientific consistency and provide JSON with consistency, justification, and plausibility.",
+  verbose = TRUE,
+  parallel = FALSE,
+  .options_furrr = furrr::furrr_options()
+)
+
+assess_idp_consistency(
+  df,
+  Perf.Dom,
+  idp_cols,
+  prompt = generate_idp_interpretation_prompt(),
+  backend = c("groq", "openrouter"),
+  api_key_env = NULL,
+  model = NULL,
+  max_retries = 5,
+  retry_delay_base = 2,
+  temperature = 0.1,
+  user_input_prompt =
+    "Assess the neuroscientific consistency and provide JSON with consistency, justification, and plausibility.",
   verbose = TRUE,
   parallel = FALSE,
   .options_furrr = furrr::furrr_options()
@@ -41,35 +45,42 @@ assess_idp_consistency(
 
 \item{Perf.Dom}{Character string, name of the column in \code{df} containing the performance domain.}
 
-\item{idp_cols}{Character vector of column names containing IDPs (e.g., \code{c("IDP.1","IDP.2")}).}
+\item{idp_cols}{Character vector of column names containing IDPs.}
 
-\item{prompt}{the default prompt see \code{generate_idp_interpretation_prompt}}
+\item{prompt}{Default LLM prompt, see \code{generate_idp_interpretation_prompt}.}
 
-\item{backend}{Character string specifying which API backend to use: \code{"groq"} or \code{"openrouter"}.}
+\item{backend}{API backend: \code{"groq"} or \code{"openrouter"}.}
 
-\item{api_key_env}{Character string, name of the environment variable storing the API key for the chosen backend.}
+\item{api_key_env}{Env var storing the API key. Defaults to "GROQ_API_KEY" or "OPENROUTER_API_KEY".}
 
-\item{model}{Character string, model name for the chosen backend. Defaults to \code{"llama3-70b-8192"} for Groq and \code{"openai/gpt-4o-mini"} for OpenRouter.}
+\item{model}{Model name. Defaults: \code{"llama3-70b-8192"} (Groq) or \code{"openai/gpt-4o-mini"} (OpenRouter).}
 
 \item{max_retries}{Integer, maximum number of retries in case of rate limiting.}
 
-\item{retry_delay_base}{Numeric, base delay in seconds for exponential backoff (e.g., 1 for 1, 2, 4, 8s).}
+\item{retry_delay_base}{Numeric, base delay in seconds for exponential backoff.}
 
-\item{temperature}{Numeric, sampling temperature for the LLM. 0 for deterministic, higher for more creative. (0-1)}
+\item{temperature}{Numeric, sampling temperature (0–1).}
 
-\item{user_input_prompt}{refined with this user input.}
+\item{user_input_prompt}{Extra text appended to user prompt.}
 
-\item{verbose}{Logical, if \code{TRUE} prints progress and debugging information.}
+\item{verbose}{Logical, print debug info.}
 
-\item{parallel}{Logical, if \code{TRUE} uses \code{furrr} for parallel API calls.}
+\item{parallel}{Logical, if \code{TRUE} use \code{furrr::future_map} for parallel calls.}
 
-\item{.options_furrr}{List, optional arguments passed to \code{furrr::future_map} (e.g., \code{future::plan()}).}
+\item{.options_furrr}{List, options passed to \code{furrr::future_map}.}
 }
 \value{
 A data frame with the original data plus:
 \itemize{
 \item \code{consistency} - numeric confidence score (0-100).
 \item \code{justification} - short justification from the model.
+}
+
+A data frame with the original data plus:
+\itemize{
+\item \code{consistency} - low/medium/high label.
+\item \code{justification} - model’s neuroscientific justification.
+\item \code{plausibility} - numeric \link{0–1} plausibility score.
 }
 }
 \description{
@@ -78,6 +89,15 @@ to assess the neuroscientific support for the relationship between imaging-deriv
 phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
 and provides an overall confidence score and justification.
 Reproducibility note. This analysis queries hosted large language models (LLMs) via third-party APIs (Groq/OpenRouter, etc). Because these services may update model weights, decoding settings, and infrastructure without version pinning, outputs can vary across runs even with identical inputs and low temperature settings. Additional non-determinism may arise from rate-limit retries, parallel request timing, and sensitivity to prompt phrasing/ordering. To enhance transparency, we record the full prompt, model identifier, provider, call date, and raw responses. For strict reproducibility (bit-wise repeatability), we provide a separate implementation that targets open-weight models served locally with fixed decoding parameters and request-level seeding; we also cache responses keyed by inputs and parameters.
+
+This function queries a large language model via either the Groq API or OpenRouter API
+to assess the neuroscientific support for the relationship between imaging-derived
+phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
+and provides an overall confidence rating, justification, and plausibility score.
+}
+\details{
+Reproducibility note: Because hosted LLMs can change over time, responses may vary across runs
+even with identical inputs. See source code for caching and reproducibility considerations.
 }
 \examples{
 \dontrun{

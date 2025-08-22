@@ -9,21 +9,25 @@ generate_idp_interpretation_prompt(
   tone = c("neutral", "skeptical", "critical"),
   n_examples = 3
 )
+
+generate_idp_interpretation_prompt(
+  response_length = c("short", "medium", "long"),
+  tone = c("neutral", "skeptical", "critical"),
+  n_examples = 3
+)
 }
 \arguments{
-\item{response_length}{Character. Desired length of the justification. One of:
-\code{"short"} (2–3 sentences),
-\code{"medium"} (3–6 sentences),
-\code{"long"} (5–8 sentences).}
+\item{response_length}{Character. Desired length of justification.
+One of: "short" (2–3 sentences), "medium" (3–6), "long" (5–8).}
 
-\item{tone}{Character. Desired interpretive stance. One of:
-\code{"neutral"} (balanced, scholarly tone),
-\code{"skeptical"} (cautious, default low rating if uncertain),
-\code{"critical"} (strict, default low rating unless robust evidence).}
+\item{tone}{Character. Interpretive stance. One of:
+"neutral", "skeptical", "critical".}
 
 \item{n_examples}{Integer. Number of exemplar cases to include (0–5).}
 }
 \value{
+A character string containing the full prompt.
+
 A character string containing the full prompt.
 }
 \description{
@@ -32,6 +36,19 @@ in the interpretation of statistical associations between imaging-derived
 phenotypes (IDPs) and human performance measures. The generated prompt enforces
 strict JSON-only output with exactly two keys: \code{"consistency"} and
 \code{"justification"}.
+
+Constructs a standardized prompt for guiding large language models
+in interpreting statistical associations between imaging-derived
+phenotypes (IDPs) and human performance measures.
+}
+\details{
+The model is required to return a strict JSON object with exactly
+three keys:
+\itemize{
+\item "consistency"   : low / medium / high
+\item "justification" : academic explanation
+\item "plausibility"  : continuous numeric score between zero and one \link{0.0–1.0}
+}
 }
 \examples{
 # Generate a medium-length, skeptical prompt with 2 exemplars
