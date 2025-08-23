@@ -8469,122 +8469,6 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
 
 #' Generate a Prompt for Interpreting Brain–Behavior Associations
 #'
-#' This function constructs a standardized prompt for guiding large language models
-#' in the interpretation of statistical associations between imaging-derived
-#' phenotypes (IDPs) and human performance measures. The generated prompt enforces
-#' strict JSON-only output with exactly two keys: \code{"consistency"} and
-#' \code{"justification"}.
-#'
-#' @param response_length Character. Desired length of the justification. One of:
-#'   \code{"short"} (2–3 sentences),
-#'   \code{"medium"} (3–6 sentences),
-#'   \code{"long"} (5–8 sentences).
-#' @param tone Character. Desired interpretive stance. One of:
-#'   \code{"neutral"} (balanced, scholarly tone),
-#'   \code{"skeptical"} (cautious, default low rating if uncertain),
-#'   \code{"critical"} (strict, default low rating unless robust evidence).
-#' @param n_examples Integer. Number of exemplar cases to include (0–5).
-#'
-#' @return A character string containing the full prompt.
-#'
-#' @examples
-#' # Generate a medium-length, skeptical prompt with 2 exemplars
-#' cat(generate_idp_interpretation_prompt(
-#'   response_length = "medium",
-#'   tone = "skeptical",
-#'   n_examples = 2
-#' ))
-#'
-#' # Generate a long, critical prompt without exemplars
-#' cat(generate_idp_interpretation_prompt(
-#'   response_length = "long",
-#'   tone = "critical",
-#'   n_examples = 0
-#' ))
-#'
-#' @export
-generate_idp_interpretation_prompt <- function(
-  response_length = c("short", "medium", "long"),
-  tone = c("critical", "skeptical", "neutral"),
-  n_examples = 3
-) {
-  # Argument matching
-  response_length <- match.arg(response_length)
-  tone <- match.arg(tone)
-  
-  if (!is.numeric(n_examples) || length(n_examples) != 1 || n_examples < 0) {
-    stop("`n_examples` must be a non-negative integer.")
-  }
-  if (n_examples > 5) {
-    warning("`n_examples` capped at 5.")
-    n_examples <- 5
-  }
-  
-  # Length guidance
-  length_text <- switch(response_length,
-    "short"  = "2–3 sentences",
-    "medium" = "3–6 sentences",
-    "long"   = "5–8 sentences"
-  )
-  
-  # Tone guidance
-  tone_text <- switch(tone,
-    "neutral"   = "Adopt a balanced and scholarly tone, weighing evidence without unnecessary bias.",
-    "skeptical" = "Adopt a cautious and skeptical stance, emphasizing limitations in the literature and defaulting to a low rating when evidence is weak.",
-    "critical"  = "Adopt a strongly critical and conservative stance, defaulting to a low rating unless there is robust and direct neuroscientific evidence."
-  )
-  
-  # Base prompt
-  prompt <- paste0(
-    "You are an expert cognitive neuroscientist. Interpret the statistical association ",
-    "between imaging-derived brain phenotypes (e.g., regional volumes, connectivity metrics, ",
-    "cortical measures, white matter tracts, resting-state networks) and human performance ",
-    "measures (e.g., cognitive domains, behavioral traits, clinical outcomes).  Performance domain scores may be provided as a single measure or as multiple measures separated by a comma.  Pay attention to each domain in the list and interpret them collectively.\n\n",
-    
-    "Respond ONLY in a JSON object with exactly two keys: 'consistency' and 'justification'.\n\n",
-    
-    "Rules for assigning 'consistency':\n",
-    "- Direct associations between one or more IDPs and a performance domain should contribute to a high rating.\n",
-    "- Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.\n",
-    "- The absence of both direct and indirect associations should contribute to a low rating.\n",
-    "- ", tone_text, "\n\n",
-    
-    "Formatting requirements:\n",
-    "- 'consistency' must be one of: low, medium, or high (always lowercase).\n",
-    "- 'justification' must be ", length_text, ", written in an academic cognitive neuroscience style.\n",
-    "- No other keys or free text outside the JSON object are allowed.\n",
-    "- If multiple regions or networks are provided, synthesize them into a coherent account of how they might jointly contribute to the behavioral domain.\n\n",
-    "Use precise, scholarly language and avoid speculation beyond established neuroscientific knowledge.\n"
-  )
-  
-  # Example library
-  examples <- list(
-    "Example 1 – Hippocampus ↔ Episodic Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"The hippocampus is a core structure for episodic memory encoding and retrieval, with extensive evidence from lesion studies, functional neuroimaging, and electrophysiology. Volumetric reductions in the hippocampus are consistently linked to memory impairments in aging and Alzheimer’s disease. Thus, the observed hippocampal association with episodic memory is well-supported.\"\n}",
-    
-    "Example 2 – Dorsolateral Prefrontal Cortex (dlPFC) ↔ Working Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"The dlPFC has long been implicated in working memory through primate neurophysiology and human neuroimaging. This region supports information maintenance and manipulation, and its consistent recruitment across executive tasks provides strong support for its role in working memory performance.\"\n}",
-    
-    "Example 3 – Cerebellum ↔ Language Tasks\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"While the cerebellum is classically linked to motor control, posterior cerebellar regions have been implicated in higher-order functions, including aspects of language. Evidence for cerebellar contributions to linguistic prediction is emerging but remains less consistent than findings in classical cortical language areas.\"\n}",
-    
-    "Example 4 – Pericalcarine Cortex ↔ Verbal Fluency\n{\n  \"consistency\": \"low\",\n  \"justification\": \"The pericalcarine cortex corresponds to primary visual cortex, which is specialized for early-stage visual processing. There is little evidence to support a direct role in verbal fluency, making this association weak and likely spurious.\"\n}",
-    
-    "Example 5 – Multiple Regions: Superior Frontal Cortex + Inferior Parietal Cortex + Corpus Callosum + Uncinate Fasciculus + Default Mode ↔ Working Memory\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"Working memory relies on a distributed frontoparietal network. The superior frontal and inferior parietal cortices support attentional control, the corpus callosum supports interhemispheric coordination, and the uncinate fasciculus connects frontal and temporal regions. Coupled with default mode–dorsal attention connectivity, these systems provide a plausible basis for working memory performance, though the evidence is not definitive.\"\n}"
-  )
-  
-  # Add exemplars
-  if (n_examples > 0) {
-    prompt <- paste0(
-      prompt,
-      "\n---\n\n### Exemplar Cases\n\n",
-      paste(examples[1:n_examples], collapse = "\n\n")
-    )
-  }
-  
-  return(prompt)
-}
-
-
-#' Generate a Prompt for Interpreting Brain–Behavior Associations
-#'
 #' Constructs a standardized prompt for guiding large language models
 #' in interpreting statistical associations between imaging-derived
 #' phenotypes (IDPs) and human performance measures.
@@ -8638,10 +8522,19 @@ generate_idp_interpretation_prompt <- function(
   # Base prompt
   prompt <- paste0(
     "You are an expert cognitive neuroscientist. Interpret the statistical association ",
-    "between imaging-derived brain phenotypes (IDPs) and human performance measures 
-    (e.g., cognitive domains, behavioral traits, clinical outcomes). Clinical.Global.Cognition includes scores such as ADAS-COG, MMSE and CDR sum of boxes.",
+    "between imaging-derived brain phenotypes (IDPs) and human performance measures ",
+    "(e.g., cognitive domains, behavioral traits, clinical outcomes). ",
+    "Clinical.Global.Cognition includes scores such as ADAS-COG, MMSE and CDR sum of boxes. ",
     "Performance domain scores may appear singly or as comma-separated lists. ",
-    "Consider all listed domains jointly.  Consider all listed IDPs jointly as a network.  If multiple regions and networks are provided, synthesize them into a coherent account of how they might jointly contribute to the behavioral domain.\n\n",
+    "Consider all listed domains jointly. Consider all listed IDPs jointly as a network. ",
+    "If multiple regions and networks are provided, synthesize them into a coherent account ",
+    "of how they might jointly contribute to the behavioral domain.\n\n",
+    
+    "Compare the proposed IDP–behavior link against canonical neuroscience mappings. ",
+    "If the link is absent from or inconsistent with canonical mappings, assign 'low' unless extremely strong evidence exists. ",
+    "Unless there is well-established, convergent evidence across human neuroimaging, lesion, or neurostimulation studies, assign 'low'. ",
+    "Assign 'medium' only if there is at least moderate empirical consensus or indirect but reproducible circuit-level involvement. ",
+    "Assign 'high' only if there is broad, replicated support across multiple modalities and clinical/experimental settings.\n\n",
     
     "Respond ONLY in a JSON object with exactly three keys:\n",
     "- 'consistency'   : one of 'low', 'medium', or 'high'\n",
@@ -8650,16 +8543,19 @@ generate_idp_interpretation_prompt <- function(
     "the biological plausibility of the association\n\n",
     
     "Rules for assigning 'consistency':\n",
-    "- Direct associations → high\n",
-    "- Indirect associations → medium\n",
-    "- No known association → low\n",
+    "- Default = 'low' unless robust replicated evidence exists\n",
+    "- Direct canonical associations → high\n",
+    "- Indirect but supported associations → medium\n",
+    "- No known or conflicting association → low\n",
+    "- Prioritize evidence hierarchy: lesion > stimulation > longitudinal imaging > cross-sectional correlation\n",
     "- ", tone_text, "\n\n",
     
     "Formatting requirements:\n",
     "- Return ONLY a JSON object with the three keys\n",
     "- No text outside the JSON object\n",
     "- Multiple regions/networks must be synthesized into a coherent joint explanation\n",
-    "- Use precise, scholarly language and avoid speculation beyond established knowledge\n"
+    "- Every justification must explicitly name at least one established role of each region/network\n",
+    "- Use precise, scholarly language and avoid vague speculation\n"
   )
   
   # Example library
@@ -8673,7 +8569,7 @@ generate_idp_interpretation_prompt <- function(
     # Medium, single region
     "Example 3 – Cerebellum ↔ Language Tasks\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"The posterior cerebellum shows emerging links to linguistic prediction and language processing. However, evidence remains less robust compared to classical cortical regions, warranting a moderate confidence rating.\",\n  \"plausibility\": 0.55\n}",
     
-    # Medium, multiple regions (already in your set, retained)
+    # Medium, multiple regions
     "Example 4 – Superior Frontal Cortex + Corpus Callosum + Default Mode ↔ Working Memory\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"These regions plausibly contribute to working memory through attentional control, interhemispheric integration, and default mode–attention interactions. The evidence is supportive but heterogeneous, suggesting a moderate plausibility.\",\n  \"plausibility\": 0.60\n}",
     
     # Low, single region
@@ -8693,331 +8589,6 @@ generate_idp_interpretation_prompt <- function(
   }
   
   return(prompt)
-}
-
-#' Assess neuroscientific consistency between IDPs and performance domains (Optimized)
-#'
-#' This function queries a large language model via either the Groq API or OpenRouter API
-#' to assess the neuroscientific support for the relationship between imaging-derived
-#' phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
-#' and provides an overall confidence score and justification.
-#' Reproducibility note. This analysis queries hosted large language models (LLMs) via third-party APIs (Groq/OpenRouter, etc). Because these services may update model weights, decoding settings, and infrastructure without version pinning, outputs can vary across runs even with identical inputs and low temperature settings. Additional non-determinism may arise from rate-limit retries, parallel request timing, and sensitivity to prompt phrasing/ordering. To enhance transparency, we record the full prompt, model identifier, provider, call date, and raw responses. For strict reproducibility (bit-wise repeatability), we provide a separate implementation that targets open-weight models served locally with fixed decoding parameters and request-level seeding; we also cache responses keyed by inputs and parameters.
-#'
-#' @param df A data frame containing at least the performance domain column and one or more IDP columns.
-#' @param Perf.Dom Character string, name of the column in \code{df} containing the performance domain.
-#' @param idp_cols Character vector of column names containing IDPs (e.g., \code{c("IDP.1","IDP.2")}).
-#' @param prompt the default prompt see \code{generate_idp_interpretation_prompt}
-#' @param backend Character string specifying which API backend to use: \code{"groq"} or \code{"openrouter"}.
-#' @param api_key_env Character string, name of the environment variable storing the API key for the chosen backend.
-#' @param model Character string, model name for the chosen backend. Defaults to \code{"llama3-70b-8192"} for Groq and \code{"openai/gpt-4o-mini"} for OpenRouter.
-#' @param max_retries Integer, maximum number of retries in case of rate limiting.
-#' @param retry_delay_base Numeric, base delay in seconds for exponential backoff (e.g., 1 for 1, 2, 4, 8s).
-#' @param temperature Numeric, sampling temperature for the LLM. 0 for deterministic, higher for more creative. (0-1)
-#' @param user_input_prompt refined with this user input.
-#' @param verbose Logical, if \code{TRUE} prints progress and debugging information.
-#' @param parallel Logical, if \code{TRUE} uses `furrr` for parallel API calls.
-#' @param .options_furrr List, optional arguments passed to `furrr::future_map` (e.g., `future::plan()`).
-#'
-#' @return A data frame with the original data plus:
-#' \itemize{
-#'   \item \code{consistency} - numeric confidence score (0-100).
-#'   \item \code{justification} - short justification from the model.
-#' }
-#'
-#' @examples
-#' \dontrun{
-#' # Before running, set your API key:
-#' # Sys.setenv(GROQ_API_KEY = "YOUR_GROQ_API_KEY")
-#' # Sys.setenv(OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY")
-#'
-#' # Set up a plan for parallel processing (e.g., multicore)
-#' # This line should be run once in your R session before calling the function with parallel = TRUE
-#' future::plan(future::multisession, workers = 2) # Use 2 cores for parallel processing
-#'
-#' df <- data.frame(
-#'   PC_Name = c("PC-6", "PC-10", "PC-3"),
-#'   Perf.Dom = c("working.memory", "recall.total", "attention.sustained"),
-#'   IDP.1 = c("t1.vol.sup.frontal.ctx", "t1.vol.inf.parietal.ctx", "dt.fa.corpus.callosum"),
-#'   IDP.2 = c("t1.vol.occipital.ctx", "t1.vol.hippocampus", "rsf.connect.dlpfc"),
-#'   stringsAsFactors = FALSE
-#' )
-#'
-#' # Example usage (assuming GROQ_API_KEY is set)
-#' results_groq <- assess_idp_consistency_optimized(
-#'   df,
-#'   Perf.Dom = "Perf.Dom",
-#'   idp_cols = c("IDP.1", "IDP.2"),
-#'   backend = "groq",
-#'   api_key_env = "GROQ_API_KEY",
-#'   parallel = TRUE # Use parallel processing
-#' )
-#' print(results_groq)
-#'
-#' # OpenRouter example (assuming OPENROUTER_API_KEY is set)
-#' # results_openrouter <- assess_idp_consistency_optimized(
-#' #   df,
-#' #   Perf.Dom = "Perf.Dom",
-#' #   idp_cols = c("IDP.1", "IDP.2"),
-#' #   backend = "openrouter",
-#' #   api_key_env = "OPENROUTER_API_KEY",
-#' #   model = "openai/gpt-4o-mini",
-#' #   parallel = TRUE
-#' # )
-#' # print(results_openrouter)
-#'
-#' # Clean up the future plan if no longer needed
-#' future::plan(future::sequential)
-#' }
-#'
-#' @import httr jsonlite dplyr stringr purrr furrr future glue
-#' @export
-assess_idp_consistency <- function(df,
-                                             Perf.Dom,
-                                             idp_cols,
-                                             prompt = paste0(
-    "You are an expert neuroscientist and a highly concise AI assistant. Your task is to evaluate the neuroscientific ",
-    "support for the relationship between given Imaging-Derived Phenotypes (IDPs) and a cognitive performance domain. In your reasoning, first identify the measurement being used; then ensure that you understand the nature of the IDPs.  Include that knowledge in your reasoning but respond as I dictate below.",
-    "Your evaluation should be based on established neuroscientific literature and common knowledge. ",
-    "Respond ONLY in a JSON object with two keys: 'consistency' (low, medium or high where high means very confident in the association and low means that there is little support in the literature for the association) ",
-    "and 'justification' (a short, impactful summary of the neuroscientific reasoning, no more than 200 characters. ",
-    "I want you to think of your rating as a sum of evidence across all IDPs.",
-    "Direct associations between one or more IDPs and a performance domain should contribute to a high rating.",
-    "Indirect associations between one or more IDPs and a performance domain should contribute to a medium rating.",
-    "The absence of both direct and indirect associations between an IDP and a performance domain should contribute to a low rating.",
-    "Adopt a skeptical and critical interpretation and default to a low rating especially if you are unsure about the scientific support for the relationship.  Focus on key concepts in cognitive and network neuroscience; do not use full sentences, and do not repeat the exact IDP names or the names of the performance domains.  ECog.Study.Partner.Total = this is a measurement of a partner's rating of a patient's cognitive performance; bn.str.cadp = striatum / caudate nucleus; bn.str.pu = striatum / putamen;  exa refers to extended amygdala; vta Ventral Tegmental Area; pbp = parabrachial Pigmented Nucleus; rn = red nucleus; vep = ventral pallidus; parahippocampal cortex is part of the medial temporal lobe, located just adjacent to the hippocampus; pericalcarine is part of the primary visual cortex (V1) located along the calcarine sulcus in the occipital lobe;"
-  ),
-
-                                             backend = c("groq", "openrouter"),
-                                             api_key_env = NULL,
-                                             model = NULL,
-                                             max_retries = 5,
-                                             retry_delay_base = 2,
-                                             temperature = 0.1, # Slightly more robust than 0
-                                             user_input_prompt =     "Assess the neuroscientific consistency and provide a score (low, medium, high) and justification. ",
-                                             verbose = TRUE,
-                                             parallel = FALSE,
-                                             .options_furrr = furrr::furrr_options()) {
-
-  # --- 0. Setup and Safety Checks ---
-  backend <- match.arg(backend)
-
-  # Check package availability (only if function is used as standalone script,
-  # for package, rely on DESCRIPTION Imports)
-  if (!requireNamespace("httr", quietly = TRUE)) stop("Please install the 'httr' package.")
-  if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Please install the 'jsonlite' package.")
-  if (!requireNamespace("stringr", quietly = TRUE)) stop("Please install the 'stringr' package.")
-  if (!requireNamespace("purrr", quietly = TRUE)) stop("Please install the 'purrr' package.")
-  if (!requireNamespace("glue", quietly = TRUE)) stop("Please install the 'glue' package.") # Explicit check for glue
-  if (parallel) {
-    if (!requireNamespace("furrr", quietly = TRUE)) stop("Please install the 'furrr' package for parallel processing.")
-    if (!requireNamespace("future", quietly = TRUE)) stop("Please install the 'future' package for parallel processing with furrr.")
-  }
-
-  if (!Perf.Dom %in% names(df)) stop(paste0("Column '", Perf.Dom, "' not found in data frame."))
-  if (!all(idp_cols %in% names(df))) {
-    missing_cols <- setdiff(idp_cols, names(df))
-    stop(paste0("One or more IDP columns not found in data frame: ", paste(missing_cols, collapse = ", ")))
-  }
-
-  if (is.null(api_key_env)) {
-    api_key_env <- switch(
-      backend,
-      groq = "GROQ_API_KEY",
-      openrouter = "OPENROUTER_API_KEY"
-    )
-  }
-  api_key <- Sys.getenv(api_key_env)
-  if (api_key == "") {
-    stop(paste0("API key not found in environment variable: '", api_key_env, "'. Please set it, e.g., Sys.setenv(", api_key_env, "='YOUR_API_KEY')."))
-  }
-
-  if (is.null(model)) {
-    model <- switch(
-      backend,
-      groq = "llama3-70b-8192",
-      openrouter = "openai/gpt-4o-mini"
-    )
-  }
-
-  api_url <- switch(
-    backend,
-    groq = "https://api.groq.com/openai/v1/chat/completions",
-    openrouter = "https://openrouter.ai/api/v1/chat/completions"
-  )
-
-  # --- 1. Prompt Engineering (Refined) ---
-  # The system prompt sets the persona and instructions for the LLM.
-  system_prompt <- prompt
-  # Define the user prompt template
-  user_prompt_template <- paste0(
-    "Domain: {domain}\n",
-    "IDPs: {idps_string}\n",
-    user_input_prompt
-  )
-
-  # --- 2. Unified and Robust Parsing of LLM Response ---
-  parse_llm_response <- function(response_content) {
-    # Attempt to clean potential markdown fences
-    clean_content <- stringr::str_remove_all(response_content, "^```json\\n?|```$|^```\\n?|```$")
-    clean_content <- trimws(clean_content) # Remove leading/trailing whitespace
-
-    # Attempt to parse as JSON
-    parsed <- tryCatch(
-      jsonlite::fromJSON(clean_content, simplifyVector = FALSE),
-      error = function(e) {
-        if (verbose) message("JSON parsing failed: ", e$message, "\nContent received: '", clean_content, "'")
-        NULL
-      }
-    )
-
-    # Validate parsed structure and values
-    if (is.null(parsed) ||
-        !all(c("consistency", "justification") %in% names(parsed)) ) {
-
-      # Fallback if parsing fails or structure is incorrect
-      return(list(consistency = NA, justification = response_content))
-    }
-
-
-    return(list(
-      consistency = parsed$consistency,
-      justification = parsed$justification
-    ))
-  }
-
-  # --- 3. Internal function to query API with Enhanced Retries ---
-  query_api_robust <- function(domain, idps) {
-    idps_string <- paste(idps, collapse = ", ")
-    Sys.sleep(0.5)
-    # Use glue directly with local variables
-    user_prompt <- glue::glue(user_prompt_template)
-
-    messages <- list(
-      list(role = "system", content = system_prompt),
-      list(role = "user", content = user_prompt)
-    )
-
-    retries_attempted <- 0
-    while (retries_attempted <= max_retries) {
-      if (verbose) {
-        message(paste0("Attempt ", retries_attempted + 1, " for Domain: '", domain, "' | IDPs: '", idps_string, "'"))
-      }
-
-      api_response <- purrr::safely(httr::POST)(
-        url = api_url,
-        httr::add_headers(
-          Authorization = paste("Bearer", api_key),
-          `Content-Type` = "application/json"
-        ),
-        body = jsonlite::toJSON(list(
-          model = model,
-          messages = messages,
-          temperature = temperature
-        ), auto_unbox = TRUE)
-      )
-
-      # Check for HTTP request errors (e.g., network issues)
-      if (!is.null(api_response$error)) {
-        if (verbose) message("HTTP POST error: ", api_response$error$message)
-        retries_attempted <- retries_attempted + 1
-        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1)) # Exponential backoff + jitter
-        next
-      }
-
-      # Check HTTP status code
-      res_status <- httr::status_code(api_response$result)
-      if (res_status >= 400) { # Bad request, authentication, rate limits, server errors
-        content_text <- httr::content(api_response$result, as = "text", encoding = "UTF-8")
-        if (verbose) message("API returned status ", res_status, ": ", content_text)
-
-        # Handle specific retryable errors (e.g., 429 Too Many Requests, 5xx Server Errors)
-        if (res_status %in% c(429, 500, 502, 503, 504)) {
-          retries_attempted <- retries_attempted + 1
-          Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
-          next
-        } else {
-          # Non-retryable client error (e.g., 400 Bad Request, 401 Unauthorized)
-          return(list(consistency = NA, justification = paste("API Error (", res_status, "): ", content_text)))
-        }
-      }
-
-      # Parse content and extract LLM's message
-      # Using purrr::safely here to catch jsonlite::fromJSON errors for the API response itself
-      raw_content_text <- httr::content(api_response$result, as = "text", encoding = "UTF-8")
-      content_json_safely <- purrr::safely(jsonlite::fromJSON)(raw_content_text, simplifyVector = FALSE)
-
-      if (!is.null(content_json_safely$error)) {
-        if (verbose) message("Error parsing API response JSON: ", content_json_safely$error$message, "\nRaw content: '", raw_content_text, "'")
-        retries_attempted <- retries_attempted + 1
-        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
-        next
-      }
-
-      content_json <- content_json_safely$result
-
-      if (is.null(content_json) || !is.null(content_json$error) || is.null(content_json$choices) || length(content_json$choices) == 0) {
-        if (verbose) {
-          error_msg <- if (!is.null(content_json$error)) content_json$error$message else "No choices returned by LLM."
-          message("Malformed or empty LLM response structure: ", error_msg, "\nRaw content: '", raw_content_text, "'")
-        }
-        retries_attempted <- retries_attempted + 1
-        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
-        next
-      }
-
-      model_content <- content_json$choices[[1]]$message$content
-      if (is.null(model_content)) {
-        if (verbose) message("Model content is NULL in LLM response.")
-        retries_attempted <- retries_attempted + 1
-        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
-        next
-      }
-
-      # Attempt to parse the actual LLM output (JSON)
-      parsed_output <- parse_llm_response(model_content)
-
-      # If parsed_output contains valid numbers, we're good
-      if (!is.na(parsed_output$consistency)) {
-        return(parsed_output)
-      } else {
-        # If parsing failed but content was received, try again after a delay
-        if (verbose) message("LLM output parsing failed, content received was: '", model_content, "'")
-        retries_attempted <- retries_attempted + 1
-        Sys.sleep(retry_delay_base * (2 ^ retries_attempted) + runif(1, 0, 1))
-        next
-      }
-    }
-
-    if (verbose) message("Max retries reached for '", domain, "' with IDPs '", idps_string, "'. Returning NA.")
-    return(list(consistency = NA, justification = "Max retries reached or unparseable response."))
-  }
-
-  # --- 4. Apply to each row (serial or parallel) ---
-  if (verbose && parallel) {
-    message("Parallel processing enabled. Ensure a `future` plan is set (e.g., `future::plan(future::multisession)`).")
-  }
-
-  # Conditionally use furrr::future_map or purrr::map
-  if (parallel) {
-    results_list <- furrr::future_map(seq_len(nrow(df)), function(i) {
-      domain <- df[[Perf.Dom]][i]
-      idps <- unlist(df[i, idp_cols], use.names = FALSE)
-      query_api_robust(domain, idps)
-    }, .options = .options_furrr) # Pass .options when parallel
-  } else {
-    results_list <- purrr::map(seq_len(nrow(df)), function(i) {
-      domain <- df[[Perf.Dom]][i]
-      idps <- unlist(df[i, idp_cols], use.names = FALSE)
-      query_api_robust(domain, idps)
-    }) # Do NOT pass .options when not parallel
-  }
-
-  # --- 5. Bind results cleanly ---
-  # Use dplyr::bind_rows for robustness with potentially mixed NA types
-  results_df <- dplyr::bind_rows(results_list)
-  df_out <- dplyr::bind_cols(df, results_df)
-
-  return(df_out)
 }
 
 
