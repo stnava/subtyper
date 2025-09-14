@@ -21,24 +21,6 @@ assess_idp_consistency(
   parallel = FALSE,
   .options_furrr = furrr::furrr_options()
 )
-
-assess_idp_consistency(
-  df,
-  Perf.Dom,
-  idp_cols,
-  prompt = generate_idp_interpretation_prompt(),
-  backend = c("groq", "openrouter"),
-  api_key_env = NULL,
-  model = NULL,
-  max_retries = 5,
-  retry_delay_base = 2,
-  temperature = 0.1,
-  user_input_prompt =
-    "Assess the neuroscientific consistency and provide JSON with consistency, justification, and plausibility.",
-  verbose = TRUE,
-  parallel = FALSE,
-  .options_furrr = furrr::furrr_options()
-)
 }
 \arguments{
 \item{df}{A data frame containing at least the performance domain column and one or more IDP columns.}
@@ -72,12 +54,6 @@ assess_idp_consistency(
 \value{
 A data frame with the original data plus:
 \itemize{
-\item \code{consistency} - numeric confidence score (0-100).
-\item \code{justification} - short justification from the model.
-}
-
-A data frame with the original data plus:
-\itemize{
 \item \code{consistency} - low/medium/high label.
 \item \code{justification} - model’s neuroscientific justification.
 \item \code{plausibility} - numeric \link{0–1} plausibility score.
@@ -87,61 +63,9 @@ A data frame with the original data plus:
 This function queries a large language model via either the Groq API or OpenRouter API
 to assess the neuroscientific support for the relationship between imaging-derived
 phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
-and provides an overall confidence score and justification.
-Reproducibility note. This analysis queries hosted large language models (LLMs) via third-party APIs (Groq/OpenRouter, etc). Because these services may update model weights, decoding settings, and infrastructure without version pinning, outputs can vary across runs even with identical inputs and low temperature settings. Additional non-determinism may arise from rate-limit retries, parallel request timing, and sensitivity to prompt phrasing/ordering. To enhance transparency, we record the full prompt, model identifier, provider, call date, and raw responses. For strict reproducibility (bit-wise repeatability), we provide a separate implementation that targets open-weight models served locally with fixed decoding parameters and request-level seeding; we also cache responses keyed by inputs and parameters.
-
-This function queries a large language model via either the Groq API or OpenRouter API
-to assess the neuroscientific support for the relationship between imaging-derived
-phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
 and provides an overall confidence rating, justification, and plausibility score.
 }
 \details{
 Reproducibility note: Because hosted LLMs can change over time, responses may vary across runs
 even with identical inputs. See source code for caching and reproducibility considerations.
-}
-\examples{
-\dontrun{
-# Before running, set your API key:
-# Sys.setenv(GROQ_API_KEY = "YOUR_GROQ_API_KEY")
-# Sys.setenv(OPENROUTER_API_KEY = "YOUR_OPENROUTER_API_KEY")
-
-# Set up a plan for parallel processing (e.g., multicore)
-# This line should be run once in your R session before calling the function with parallel = TRUE
-future::plan(future::multisession, workers = 2) # Use 2 cores for parallel processing
-
-df <- data.frame(
-  PC_Name = c("PC-6", "PC-10", "PC-3"),
-  Perf.Dom = c("working.memory", "recall.total", "attention.sustained"),
-  IDP.1 = c("t1.vol.sup.frontal.ctx", "t1.vol.inf.parietal.ctx", "dt.fa.corpus.callosum"),
-  IDP.2 = c("t1.vol.occipital.ctx", "t1.vol.hippocampus", "rsf.connect.dlpfc"),
-  stringsAsFactors = FALSE
-)
-
-# Example usage (assuming GROQ_API_KEY is set)
-results_groq <- assess_idp_consistency_optimized(
-  df,
-  Perf.Dom = "Perf.Dom",
-  idp_cols = c("IDP.1", "IDP.2"),
-  backend = "groq",
-  api_key_env = "GROQ_API_KEY",
-  parallel = TRUE # Use parallel processing
-)
-print(results_groq)
-
-# OpenRouter example (assuming OPENROUTER_API_KEY is set)
-# results_openrouter <- assess_idp_consistency_optimized(
-#   df,
-#   Perf.Dom = "Perf.Dom",
-#   idp_cols = c("IDP.1", "IDP.2"),
-#   backend = "openrouter",
-#   api_key_env = "OPENROUTER_API_KEY",
-#   model = "openai/gpt-4o-mini",
-#   parallel = TRUE
-# )
-# print(results_openrouter)
-
-# Clean up the future plan if no longer needed
-future::plan(future::sequential)
-}
-
 }

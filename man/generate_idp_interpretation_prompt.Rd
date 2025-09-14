@@ -9,12 +9,6 @@ generate_idp_interpretation_prompt(
   tone = c("critical", "skeptical", "neutral"),
   n_examples = 3
 )
-
-generate_idp_interpretation_prompt(
-  response_length = c("short", "medium", "long"),
-  tone = c("critical", "skeptical", "neutral"),
-  n_examples = 3
-)
 }
 \arguments{
 \item{response_length}{Character. Desired length of justification.
@@ -27,16 +21,8 @@ One of: "short" (2–3 sentences), "medium" (3–6), "long" (5–8).}
 }
 \value{
 A character string containing the full prompt.
-
-A character string containing the full prompt.
 }
 \description{
-This function constructs a standardized prompt for guiding large language models
-in the interpretation of statistical associations between imaging-derived
-phenotypes (IDPs) and human performance measures. The generated prompt enforces
-strict JSON-only output with exactly two keys: \code{"consistency"} and
-\code{"justification"}.
-
 Constructs a standardized prompt for guiding large language models
 in interpreting statistical associations between imaging-derived
 phenotypes (IDPs) and human performance measures.
@@ -49,20 +35,4 @@ three keys:
 \item "justification" : academic explanation
 \item "plausibility"  : continuous numeric score between zero and one \link{0.0–1.0}
 }
-}
-\examples{
-# Generate a medium-length, skeptical prompt with 2 exemplars
-cat(generate_idp_interpretation_prompt(
-  response_length = "medium",
-  tone = "skeptical",
-  n_examples = 2
-))
-
-# Generate a long, critical prompt without exemplars
-cat(generate_idp_interpretation_prompt(
-  response_length = "long",
-  tone = "critical",
-  n_examples = 0
-))
-
 }
