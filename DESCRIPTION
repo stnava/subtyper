@@ -81,6 +81,7 @@ Imports:
   grDevices,
   sva,
   tidyselect,
+  tidyr,
   VarSelLCM,
   visreg
 Suggests:
