@@ -7,22 +7,27 @@
 rank_methods_by_performance(df, id_col, weights_df, method = "rank")
 }
 \arguments{
-\item{df}{The performance data frame.}
+\item{df}{A data frame containing performance results (rows = methods, columns = metrics).}
 
-\item{id_col}{A character string specifying the unique identifier column in \code{df}.}
+\item{id_col}{A single character string naming the unique identifier column in \code{df}.}
 
-\item{weights_df}{A data frame defining the metrics, weights, and directions.}
+\item{weights_df}{A data frame with columns:
+\itemize{
+\item \code{metric_name}: column name in \code{df}
+\item \code{display_name}: pretty name for output table
+\item \code{weight}: non-negative numeric weight
+\item \code{direction}: "low" (lower is better) or "high" (higher is better)
+}}
 
-\item{method}{The normalization method to use. Must be one of \code{"rank"} (default),
-\code{"minmax"}, or \code{"zscore"}.}
+\item{method}{The normalization method: \code{"rank"} (default), \code{"minmax"}, or \code{"zscore"}.}
 }
 \value{
-A list containing two elements:
-\item{ranked_df}{A tibble with all original columns plus the new rank/score.}
-\item{gt_table}{A \code{gt} table object, formatted for presentation.}
+A list with:
+\item{ranked_df}{A tibble with scores and ranks.}
+\item{gt_table}{A \code{gt} table for presentation.}
 }
 \description{
 This function ranks methods based on a set of performance metrics, using one
 of three user-selected normalization strategies: rank averaging, min-max
-scaling, or Z-scoring. This version resolves all known syntax errors.
+scaling, or Z-scoring.
 }

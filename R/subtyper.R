@@ -8326,68 +8326,91 @@ run_multiview_analysis <- function(analysis_configurations, pc_indices, modality
   )
 }
 
-
 #' Rank Methods by Weighted Performance Using Various Normalization Strategies
 #'
 #' This function ranks methods based on a set of performance metrics, using one
 #' of three user-selected normalization strategies: rank averaging, min-max
-#' scaling, or Z-scoring. This version resolves all known syntax errors.
+#' scaling, or Z-scoring.
 #'
-#' @param df The performance data frame.
-#' @param id_col A character string specifying the unique identifier column in `df`.
-#' @param weights_df A data frame defining the metrics, weights, and directions.
-#' @param method The normalization method to use. Must be one of `"rank"` (default),
-#'   `"minmax"`, or `"zscore"`.
+#' @param df A data frame containing performance results (rows = methods, columns = metrics).
+#' @param id_col A single character string naming the unique identifier column in `df`.
+#' @param weights_df A data frame with columns:
+#'   - `metric_name`: column name in `df`
+#'   - `display_name`: pretty name for output table
+#'   - `weight`: non-negative numeric weight
+#'   - `direction`: "low" (lower is better) or "high" (higher is better)
+#' @param method The normalization method: `"rank"` (default), `"minmax"`, or `"zscore"`.
 #'
-#' @return A list containing two elements:
-#'   \item{ranked_df}{A tibble with all original columns plus the new rank/score.}
-#'   \item{gt_table}{A `gt` table object, formatted for presentation.}
-#'
+#' @return A list with:
+#'   \item{ranked_df}{A tibble with scores and ranks.}
+#'   \item{gt_table}{A `gt` table for presentation.}
 #' @export
 rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank") {
-
-  # --- 1. Input Validation and Preparation ---
+  # --- 1. Input Validation ---
   method <- match.arg(method, c("rank", "minmax", "zscore"))
-  
-  # ... (rest of validation code is correct) ...
+
   stopifnot(
-    "df must be a data frame" = is.data.frame(df),
-    "id_col must be a single character string" = is.character(id_col) && length(id_col) == 1,
-    "id_col must be a column in df" = id_col %in% colnames(df),
-    "weights_df must be a data frame" = is.data.frame(weights_df),
-    "Required columns missing in weights_df" = all(c("metric_name", "display_name", "weight", "direction") %in% colnames(weights_df)),
-    "All metric_names in weights_df must be columns in df" = all(weights_df$metric_name %in% colnames(df))
+    "`df` must be a data frame" = is.data.frame(df),
+    "`id_col` must be a single string" = is.character(id_col) && length(id_col) == 1,
+    "`id_col` not found in df" = id_col %in% names(df),
+    "`weights_df` must be a data frame" = is.data.frame(weights_df),
+    "weights_df must contain required columns" =
+      all(c("metric_name", "display_name", "weight", "direction") %in% names(weights_df))
   )
-  
-  active_metrics_df <- weights_df %>% filter(weight > 0)
-  active_metric_cols <- active_metrics_df$metric_name
-  
-  if (length(active_metric_cols) == 0) {
-    stop("No metrics with a weight > 0 were provided.", call. = FALSE)
+
+  # normalize direction column
+  weights_df <- weights_df %>%
+    mutate(direction = tolower(direction))
+  if (!all(weights_df$direction %in% c("low", "high"))) {
+    bad <- unique(weights_df$direction[!weights_df$direction %in% c("low", "high")])
+    stop("Invalid direction(s) in weights_df: ", paste(bad, collapse = ", "))
   }
 
-  # --- 2. Normalize Scores Based on Selected Method ---
+  active_metrics_df <- weights_df %>% filter(weight > 0)
+  if (nrow(active_metrics_df) == 0) {
+    stop("No metrics with weight > 0 provided.", call. = FALSE)
+  }
+  active_metric_cols <- active_metrics_df$metric_name
+  if (!all(active_metric_cols %in% names(df))) {
+    missing <- setdiff(active_metric_cols, names(df))
+    stop("Metrics not found in df: ", paste(missing, collapse = ", "))
+  }
+
+  # --- 2. Subset & Normalize ---
   scores_df <- df %>% dplyr::select(all_of(c(id_col, active_metric_cols)))
 
+  normalize_rank <- function(x, direction) {
+    if (all(is.na(x))) return(rep(NA_real_, length(x)))
+    if (direction == "low") dense_rank(x) else dense_rank(desc(x))
+  }
+
+  normalize_minmax <- function(x, direction) {
+    if (all(is.na(x)) || length(unique(na.omit(x))) == 1) return(rep(0.5, length(x)))
+    scaled <- scales::rescale(x, to = c(0, 1))
+    if (direction == "low") 1 - scaled else scaled
+  }
+
+  normalize_zscore <- function(x, direction) {
+    if (all(is.na(x)) || sd(x, na.rm = TRUE) == 0) return(rep(0, length(x)))
+    z <- as.numeric(scale(x))
+    if (direction == "low") -z else z
+  }
+
   if (method == "rank") {
-    # ... (rest of normalization logic is correct) ...
     normalized_scores <- scores_df %>%
       mutate(across(
-        .cols = all_of(active_metric_cols),
-        .fns = ~ if (weights_df$direction[weights_df$metric_name == cur_column()] == "low") dense_rank(.) else dense_rank(desc(.)),
+        all_of(active_metric_cols),
+        ~ normalize_rank(., active_metrics_df$direction[active_metrics_df$metric_name == cur_column()]),
         .names = "norm_{.col}"
       ))
     direction_is_desc <- FALSE
     score_col_name <- "Weighted_Rank_Score"
-    
+
   } else if (method == "minmax") {
     normalized_scores <- scores_df %>%
       mutate(across(
-        .cols = all_of(active_metric_cols),
-        .fns = ~ {
-          scaled_val <- scales::rescale(., to = c(0, 1))
-          if (weights_df$direction[weights_df$metric_name == cur_column()] == "low") 1 - scaled_val else scaled_val
-        },
+        all_of(active_metric_cols),
+        ~ normalize_minmax(., active_metrics_df$direction[active_metrics_df$metric_name == cur_column()]),
         .names = "norm_{.col}"
       ))
     direction_is_desc <- TRUE
@@ -8396,41 +8419,32 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
   } else if (method == "zscore") {
     normalized_scores <- scores_df %>%
       mutate(across(
-        .cols = all_of(active_metric_cols),
-        .fns = ~ {
-          z_val <- as.numeric(scale(.))
-          if (weights_df$direction[weights_df$metric_name == cur_column()] == "low") -z_val else z_val
-        },
+        all_of(active_metric_cols),
+        ~ normalize_zscore(., active_metrics_df$direction[active_metrics_df$metric_name == cur_column()]),
         .names = "norm_{.col}"
       ))
     direction_is_desc <- TRUE
     score_col_name <- "Weighted_Z_Score"
   }
 
-
-  # --- 3. Compute Weighted Score and Final Rank ---
+  # --- 3. Weighted Score & Rank ---
   norm_cols_only <- paste0("norm_", active_metric_cols)
-  norm_matrix <- as.matrix(normalized_scores[norm_cols_only])
-  
   weights_vec <- setNames(active_metrics_df$weight, active_metric_cols)
   aligned_weights <- weights_vec[active_metric_cols]
-  
-  normalized_scores$Final_Score <- (norm_matrix %*% aligned_weights) / sum(aligned_weights)
-  
-  # THE DEFINITIVE FIX: Use a two-step process to rename the dynamic column
-  # 1. Join the score back to the original data
+
+  final_scores <- rowSums(normalized_scores[norm_cols_only] * rep(aligned_weights, each = nrow(normalized_scores)), na.rm = TRUE) /
+    sum(aligned_weights)
+
   final_ranked_df <- df %>%
-    left_join(dplyr::select(normalized_scores, all_of(id_col), Final_Score), by = id_col) %>%
+    mutate(Final_Score = final_scores) %>%
     arrange(if (direction_is_desc) desc(Final_Score) else Final_Score) %>%
     mutate(Overall_Rank = row_number())
-    
-  # 2. Use `setNames` to rename the 'Final_Score' column to its dynamic name
+
   colnames(final_ranked_df)[colnames(final_ranked_df) == "Final_Score"] <- score_col_name
 
-  # --- 4. Create a Beautiful `gt` Table for Display ---
-  # ... (rest of gt logic is correct) ...
-    display_name_map <- setNames(active_metrics_df$display_name, active_metrics_df$metric_name)
-  
+  # --- 4. GT Table ---
+  display_name_map <- setNames(active_metrics_df$display_name, active_metrics_df$metric_name)
+
   display_ready_df <- final_ranked_df %>%
     dplyr::select(Overall_Rank, all_of(id_col), !!sym(score_col_name), all_of(active_metric_cols)) %>%
     rename_with(~ display_name_map[.], .cols = all_of(active_metric_cols))
@@ -8438,7 +8452,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
   gt_table <- display_ready_df %>%
     gt::gt() %>%
     tab_header(
-      title = md(paste("**Method Performance Ranking (", stringr::str_to_title(method), "Method )**")),
+      title = md(paste("**Method Performance Ranking (", stringr::str_to_title(method), " Method )**")),
       subtitle = "Methods ranked by a weighted average of normalized performance scores."
     ) %>%
     cols_label(
@@ -8448,7 +8462,6 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
     ) %>%
     fmt_number(columns = where(is.numeric), decimals = 2) %>%
     fmt_integer(columns = Overall_Rank) %>%
-    
     tab_style(
       style = list(cell_fill(color = "#f2f2f2"), cell_text(weight = "bold")),
       locations = cells_body(columns = c(Overall_Rank, !!sym(score_col_name)))
@@ -8458,11 +8471,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
       locations = cells_body(rows = Overall_Rank <= 3)
     )
 
-
-  return(list(
-    ranked_df = final_ranked_df,
-    gt_table = gt_table
-  ))
+  list(ranked_df = final_ranked_df, gt_table = gt_table)
 }
 
 
