@@ -6296,7 +6296,7 @@ rename_columns <- function(df, new_names) {
 log_parameters <- function(func, logfile, ...) {
   call <- match.call()
   call_time <- Sys.time()
-  verbose <- TRUE
+  verbose <- FALSE
   if (verbose) print(call_time)
   
   # Extract function name and arguments
