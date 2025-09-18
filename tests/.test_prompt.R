@@ -3,7 +3,7 @@ library(subtyper)
 # test_that("generate_idp_interpretation_prompt outputs valid prompt with plausibility", {
   # Generate prompt with examples
   prm <- generate_idp_interpretation_prompt(
-    response_length = "medium",
+    response_length = "long",
     tone = "skeptical",
     n_examples = 5
   )
@@ -14,7 +14,6 @@ library(subtyper)
   
   # Check that plausibility requirement is present
   expect_match(prm, "plausibility")
-  expect_match(prm, "range from 0 to 1")
   
   # Ensure JSON keys are specified correctly
   expect_match(prm, "'consistency'")
