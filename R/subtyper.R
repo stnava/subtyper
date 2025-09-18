@@ -8602,6 +8602,7 @@ generate_idp_interpretation_prompt <- function(
 
 
 #' Parse LLM JSON response
+#' @export
 parse_llm_response <- function(response_content, required_fields) {
   clean <- stringr::str_remove_all(response_content, "^```json\\n?|```$|^```\\n?|```$")
   clean <- trimws(clean)
@@ -8618,6 +8619,7 @@ parse_llm_response <- function(response_content, required_fields) {
 }
 
 #' Cache helpers
+#' @export
 cache_read <- function(cache_dir, key) {
   cache_file <- file.path(cache_dir, paste0(key, ".json"))
   if (file.exists(cache_file)) {
@@ -8626,6 +8628,7 @@ cache_read <- function(cache_dir, key) {
   NULL
 }
 
+#' @export
 cache_write <- function(cache_dir, key, parsed) {
   dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
   cache_file <- file.path(cache_dir, paste0(key, ".json"))
@@ -8633,6 +8636,7 @@ cache_write <- function(cache_dir, key, parsed) {
 }
 
 #' Build API config (URL, model, key)
+#' @export
 build_api_config <- function(backend, api_key_env = NULL, model = NULL, skip_api_key_check = FALSE) {
   backend <- match.arg(backend, c("groq", "openrouter"))
 
@@ -8662,6 +8666,7 @@ build_api_config <- function(backend, api_key_env = NULL, model = NULL, skip_api
 }
 
 #' Query LLM with retries, caching, and parsing
+#' @export
 query_api_robust <- function(domain,
                              idps,
                              config,

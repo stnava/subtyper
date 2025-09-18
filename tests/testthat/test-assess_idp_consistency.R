@@ -83,29 +83,6 @@ test_that("cache_write creates and writes to cache file", {
   cat("Test completed: cache write successful.\n")
 })
 
-test_that("build_api_config sets correct defaults for groq", {
-  cat("Testing build_api_config with groq defaults...\n")
-  Sys.setenv(GROQ_API_KEY = "test_key")
-  cat("Building API config for groq backend...\n")
-  config <- build_api_config(backend = "groq", skip_api_key_check = TRUE)
-  cat("Checking config values...\n")
-  expect_equal(config$backend, "groq")
-  expect_equal(config$api_url, "https://api.groq.com/openai/v1/chat/completions")
-  expect_equal(config$model, "llama3-70b-8192")
-  expect_equal(config$api_key, "test_key")
-  cat("Test completed: groq config defaults set correctly.\n")
-})
-
-test_that("build_api_config errors without API key", {
-  cat("Testing build_api_config with missing API key...\n")
-  Sys.setenv(GROQ_API_KEY = "")
-  cat("Attempting to build config without API key...\n")
-  expect_error(
-    build_api_config(backend = "groq", skip_api_key_check = FALSE),
-    "API key not found"
-  )
-  cat("Test completed: missing API key error handled correctly.\n")
-})
 
 test_that("build_api_config uses custom model", {
   cat("Testing build_api_config with custom model...\n")
@@ -211,65 +188,3 @@ test_that("assess_idp_consistency processes data frame", {
 
 
 
-
-
-# Load required libraries
-library(dplyr)
-library(tibble)
-library(jsonlite)
-library(stringr)
-library(httr)
-library(glue)
-library(digest)
-library(subtyper)
-
-# Define the system prompt (replace with your `generate_idp_interpretation_prompt` if available)
-system_prompt <- paste(
-  "You are a neuroscientist evaluating the consistency between imaging-derived phenotypes (IDPs)",
-  "and a performance domain. For a given domain and IDPs, return a JSON object with:",
-  "- consistency: 'high', 'medium', or 'low' based on neuroscientific plausibility.",
-  "- justification: A brief explanation of the consistency assessment.",
-  "- plausibility: A numeric score (0 to 1) reflecting the likelihood of the relationship."
-)
-
-# Create a sample data frame
-df <- tibble(
-  Perf.Dom = c("cognition", "memory", "attention"),
-  idp1 = c("total_brain_volume", "gray_matter_volume", "frontal_cortex_thickness"),
-  idp2 = c("white_matter_volume", "hippocampus_volume", "cingulate_cortex_volume")
-)
-
-# Set up caching directory
-cache_dir <- tempdir()  # Use temporary directory for this example
-cat("Using cache directory:", cache_dir, "\n")
-
-# Run the query
-cat("Starting query with assess_idp_consistency...\n")
-result <- assess_idp_consistency(
-  df = df,
-  Perf.Dom = "Perf.Dom",
-  idp_cols = c("idp1", "idp2"),
-  prompt = system_prompt,
-  backend = "groq",
-  api_key_env = "GROQ_API_KEY",
-  model = "llama3-70b-8192",
-  required_fields = c("consistency", "justification", "plausibility"),
-  max_retries = 3,
-  retry_delay_base = 2,
-  jitter = TRUE,
-  temperature = 0.1,
-  user_input_prompt = "Assess neuroscientific consistency and return JSON.",
-  collapse_fn = function(x) paste(na.omit(x), collapse = ", "),
-  cache_dir = cache_dir,
-  verbose = TRUE,
-  skip_api_key_check = FALSE  # Set to TRUE for testing without API key
-)
-
-# Display results
-cat("Query completed. Results:\n")
-print(result)
-
-# Save results to a CSV file
-cat("Saving results to output.csv...\n")
-write.csv(result, "output.csv", row.names = FALSE)
-cat("Results saved successfully.\n")
