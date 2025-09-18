@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{assess_idp_consistency}
 \alias{assess_idp_consistency}
-\title{Assess neuroscientific consistency between IDPs and performance domains (Optimized)}
+\title{Assess neuroscientific consistency between IDPs and performance domains}
 \usage{
 assess_idp_consistency(
   df,
@@ -12,60 +12,63 @@ assess_idp_consistency(
   backend = c("groq", "openrouter"),
   api_key_env = NULL,
   model = NULL,
+  required_fields = c("consistency", "justification", "plausibility"),
   max_retries = 5,
   retry_delay_base = 2,
+  jitter = TRUE,
   temperature = 0.1,
-  user_input_prompt =
-    "Assess the neuroscientific consistency and provide JSON with consistency, justification, and plausibility.",
-  verbose = TRUE,
+  user_input_prompt = "Assess neuroscientific consistency and return JSON.",
+  collapse_fn = function(x) paste(na.omit(x), collapse = ", "),
   parallel = FALSE,
-  .options_furrr = furrr::furrr_options()
+  .options_furrr = furrr::furrr_options(),
+  cache_dir = NULL,
+  verbose = TRUE,
+  skip_api_key_check = FALSE
 )
 }
 \arguments{
-\item{df}{A data frame containing at least the performance domain column and one or more IDP columns.}
+\item{df}{A data frame with at least one performance domain column and IDP columns.}
 
-\item{Perf.Dom}{Character string, name of the column in \code{df} containing the performance domain.}
+\item{Perf.Dom}{Character, name of the column containing the performance domain.}
 
 \item{idp_cols}{Character vector of column names containing IDPs.}
 
-\item{prompt}{Default LLM prompt, see \code{generate_idp_interpretation_prompt}.}
+\item{prompt}{Character, system prompt. Default: see \code{generate_idp_interpretation_prompt}.}
 
-\item{backend}{API backend: \code{"groq"} or \code{"openrouter"}.}
+\item{backend}{Character, API backend ("groq", "openrouter"). Default: "groq".}
 
-\item{api_key_env}{Env var storing the API key. Defaults to "GROQ_API_KEY" or "OPENROUTER_API_KEY".}
+\item{api_key_env}{Character, environment variable storing the API key. Default: NULL.}
 
-\item{model}{Model name. Defaults: \code{"llama3-70b-8192"} (Groq) or \code{"openai/gpt-4o-mini"} (OpenRouter).}
+\item{model}{Character, model name. Default: NULL (uses backend default).}
 
-\item{max_retries}{Integer, maximum number of retries in case of rate limiting.}
+\item{required_fields}{Character vector, fields expected in API response. Default: c("consistency", "justification", "plausibility").}
 
-\item{retry_delay_base}{Numeric, base delay in seconds for exponential backoff.}
+\item{max_retries}{Integer, maximum API retry attempts. Default: 5.}
 
-\item{temperature}{Numeric, sampling temperature (0–1).}
+\item{retry_delay_base}{Numeric, base delay (seconds) for exponential backoff. Default: 2.}
 
-\item{user_input_prompt}{Extra text appended to user prompt.}
+\item{jitter}{Logical, add jitter to retry delays. Default: TRUE.}
 
-\item{verbose}{Logical, print debug info.}
+\item{temperature}{Numeric, sampling temperature (0–1). Default: 0.1.}
 
-\item{parallel}{Logical, if \code{TRUE} use \code{furrr::future_map} for parallel calls.}
+\item{user_input_prompt}{Character, additional user prompt text. Default: "Assess neuroscientific consistency and return JSON."}
 
-\item{.options_furrr}{List, options passed to \code{furrr::future_map}.}
+\item{collapse_fn}{Function, how to collapse IDPs into a string. Default: \code{function(x) paste(na.omit(x), collapse = ", ")}.}
+
+\item{parallel}{Logical, use parallel processing with \code{furrr::future_map}. Default: FALSE.}
+
+\item{.options_furrr}{List, options for \code{furrr::future_map}. Default: \code{furrr::furrr_options()}.}
+
+\item{cache_dir}{Character, directory for caching API responses. Default: NULL.}
+
+\item{verbose}{Logical, print debug information. Default: TRUE.}
+
+\item{skip_api_key_check}{Logical, if TRUE, skip API key validation (useful for testing). Default: FALSE.}
 }
 \value{
-A data frame with the original data plus:
-\itemize{
-\item \code{consistency} - low/medium/high label.
-\item \code{justification} - model’s neuroscientific justification.
-\item \code{plausibility} - numeric \link{0–1} plausibility score.
-}
+A data frame with original data plus columns for \code{consistency}, \code{justification}, and \code{plausibility}.
 }
 \description{
-This function queries a large language model via either the Groq API or OpenRouter API
-to assess the neuroscientific support for the relationship between imaging-derived
-phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
-and provides an overall confidence rating, justification, and plausibility score.
-}
-\details{
-Reproducibility note: Because hosted LLMs can change over time, responses may vary across runs
-even with identical inputs. See source code for caching and reproducibility considerations.
+Queries a language model API to evaluate the neuroscientific relationship between
+imaging-derived phenotypes (IDPs) and a performance domain.
 }

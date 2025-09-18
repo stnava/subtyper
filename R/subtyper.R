@@ -8601,39 +8601,239 @@ generate_idp_interpretation_prompt <- function(
 }
 
 
+#' Parse LLM JSON response
+parse_llm_response <- function(response_content, required_fields) {
+  clean <- stringr::str_remove_all(response_content, "^```json\\n?|```$|^```\\n?|```$")
+  clean <- trimws(clean)
 
-#' Assess neuroscientific consistency between IDPs and performance domains (Optimized)
+  parsed <- tryCatch(jsonlite::fromJSON(clean, simplifyVector = TRUE), error = function(e) NULL)
+
+  if (is.null(parsed)) {
+    return(as.list(stats::setNames(rep(NA, length(required_fields)), required_fields)))
+  }
+
+  out <- lapply(required_fields, function(f) parsed[[f]] %||% NA)
+  names(out) <- required_fields
+  out
+}
+
+#' Cache helpers
+cache_read <- function(cache_dir, key) {
+  cache_file <- file.path(cache_dir, paste0(key, ".json"))
+  if (file.exists(cache_file)) {
+    return(jsonlite::read_json(cache_file, simplifyVector = TRUE))
+  }
+  NULL
+}
+
+cache_write <- function(cache_dir, key, parsed) {
+  dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
+  cache_file <- file.path(cache_dir, paste0(key, ".json"))
+  jsonlite::write_json(parsed, cache_file, auto_unbox = TRUE, pretty = TRUE)
+}
+
+#' Build API config (URL, model, key)
+build_api_config <- function(backend, api_key_env = NULL, model = NULL, skip_api_key_check = FALSE) {
+  backend <- match.arg(backend, c("groq", "openrouter"))
+
+  api_key_env <- api_key_env %||% switch(
+    backend,
+    groq = "GROQ_API_KEY2",
+    openrouter = "OPENROUTER_API_KEY"
+  )
+  api_key <- Sys.getenv(api_key_env)
+  if (!skip_api_key_check && api_key == "") {
+    stop("API key not found in env var ", api_key_env)
+  }
+
+  model <- model %||% switch(
+    backend,
+    groq = "llama-3.3-70b-versatile",
+    openrouter = "openai/gpt-4o-mini"
+  )
+
+  api_url <- switch(
+    backend,
+    groq = "https://api.groq.com/openai/v1/chat/completions",
+    openrouter = "https://openrouter.ai/api/v1/chat/completions"
+  )
+
+  list(backend = backend, api_key = api_key, model = model, api_url = api_url)
+}
+
+#' Query LLM with retries, caching, and parsing
+query_api_robust <- function(domain,
+                             idps,
+                             config,
+                             system_prompt,
+                             user_prompt_template,
+                             user_input_prompt,
+                             required_fields,
+                             collapse_fn,
+                             cache_dir = NULL,
+                             max_retries = 5,
+                             retry_delay_base = 2,
+                             jitter = TRUE,
+                             temperature = 0.1,
+                             verbose = TRUE) {
+  library(httr2)
+  idps_string <- collapse_fn(idps)
+  user_prompt <- glue::glue(user_prompt_template,
+                            domain = domain, idps = idps_string, extra = user_input_prompt)
+
+  # Caching
+  if (!is.null(cache_dir) & FALSE ) {
+    key <- digest::digest(user_prompt)
+    cached <- cache_read(cache_dir, key)
+    if (!is.null(cached)) {
+      if (verbose) message("Retrieved cached response for domain: ", domain, " | IDPs: ", idps_string)
+      return(cached)
+    }
+  }
+
+  messages <- list(
+    list(role = "system", content = system_prompt),
+    list(role = "user", content = user_prompt)
+  )
+
+  # Prepare request body with max_tokens
+  request_body <- list(
+    model = config$model,
+    messages = messages,
+    temperature = temperature
+#    max_tokens = 100  # Added to match simple test
+  )
+
+  # Log the JSON payload for debugging
+  if (verbose) {
+    message("Request JSON payload:\n", jsonlite::toJSON(request_body, pretty = TRUE, auto_unbox = TRUE))
+  }
+
+  retries <- 0
+  while (retries <= max_retries) {
+    if (verbose) message("Querying: ", domain, " | IDPs: ", idps_string, " | Attempt ", retries + 1, "/", max_retries + 1)
+
+    # Use req_error to handle HTTP errors explicitly
+    resp <- tryCatch(
+      request(config$api_url) %>%
+        req_headers(
+          Authorization = paste("Bearer", config$api_key),
+          `Content-Type` = "application/json"
+        ) %>%
+        req_body_json(request_body) %>%
+        req_error(function(resp) FALSE) %>%  # Prevent HTTP errors from throwing
+        req_perform(),
+      error = function(e) {
+        if (verbose) {
+          message("Network error on attempt ", retries + 1, ": ", e$message,
+                  "\nDomain: ", domain, " | IDPs: ", idps_string)
+        }
+        NULL
+      }
+    )
+
+    if (is.null(resp)) {
+      retries <- retries + 1
+      delay <- retry_delay_base * (2 ^ retries)
+      if (jitter) delay <- delay * runif(1, 0.8, 1.2)
+      if (verbose) {
+        message("Retry needed due to network error. Retrying after ", round(delay, 2), "s")
+      }
+      Sys.sleep(delay)
+      next
+    }
+
+    status <- resp_status(resp)
+    if (status >= 400) {
+      raw_content <- tryCatch(resp_body_string(resp), error = function(e) "Unable to parse response")
+      error_msg <- switch(as.character(status),
+        "400" = paste("Bad Request: Invalid request format or parameters. Server response:", raw_content),
+        "401" = "Unauthorized: Invalid or missing API key. Check GROQ_API_KEY2.",
+        "429" = "Rate Limit Exceeded: Too many requests. See https://console.groq.com/docs/rate-limits.",
+        "500" = "Server Error: Groq API internal error.",
+        paste("Unexpected HTTP error:", status, "Response:", raw_content)
+      )
+      if (verbose) {
+        message("API request failed with status ", status, ": ", error_msg,
+                "\nDomain: ", domain, " | IDPs: ", idps_string)
+      }
+      retries <- retries + 1
+      delay <- retry_delay_base * (2 ^ retries)
+      if (jitter) delay <- delay * runif(1, 0.8, 1.2)
+      if (verbose) {
+        message("Retry needed due to HTTP error. Retrying after ", round(delay, 2), "s")
+      }
+      Sys.sleep(delay)
+      next
+    }
+
+    js <- tryCatch(
+      resp_body_json(resp, simplifyVector = FALSE),
+      error = function(e) {
+        if (verbose) {
+          raw_content <- tryCatch(resp_body_string(resp), error = function(e) "Unable to parse response")
+          message("JSON parsing error on attempt ", retries + 1, ": ", e$message,
+                  "\nRaw response: ", substr(raw_content, 1, 100), "...",
+                  "\nDomain: ", domain, " | IDPs: ", idps_string)
+        }
+        NULL
+      }
+    )
+
+    if (is.null(js) || is.null(js$choices)) {
+      retries <- retries + 1
+      delay <- retry_delay_base * (2 ^ retries)
+      if (jitter) delay <- delay * runif(1, 0.8, 1.2)
+      if (verbose) {
+        message("Retry needed due to invalid or missing 'choices' in response. Retrying after ", round(delay, 2), "s")
+      }
+      Sys.sleep(delay)
+      next
+    }
+
+    model_content <- js$choices[[1]]$message$content
+    parsed <- parse_llm_response(model_content, required_fields)
+
+    if (!is.null(cache_dir) & FALSE ) {
+      cache_write(cache_dir, digest::digest(user_prompt), parsed)
+      if (verbose) message("Cached response for domain: ", domain, " | IDPs: ", idps_string)
+    }
+    return(parsed)
+  }
+
+  if (verbose) {
+    message("All retries exhausted for domain: ", domain, " | IDPs: ", idps_string,
+            "\nReturning NA for required fields due to persistent failure.")
+  }
+  setNames(as.list(rep(NA, length(required_fields))), required_fields)
+}
+
+#' Assess neuroscientific consistency between IDPs and performance domains
 #'
-#' This function queries a large language model via either the Groq API or OpenRouter API
-#' to assess the neuroscientific support for the relationship between imaging-derived
-#' phenotypes (IDPs) and a cognitive performance domain. It aggregates multiple IDPs per row
-#' and provides an overall confidence rating, justification, and plausibility score.
+#' Queries a language model API to evaluate the neuroscientific relationship between
+#' imaging-derived phenotypes (IDPs) and a performance domain.
 #'
-#' Reproducibility note: Because hosted LLMs can change over time, responses may vary across runs
-#' even with identical inputs. See source code for caching and reproducibility considerations.
-#'
-#' @param df A data frame containing at least the performance domain column and one or more IDP columns.
-#' @param Perf.Dom Character string, name of the column in \code{df} containing the performance domain.
+#' @param df A data frame with at least one performance domain column and IDP columns.
+#' @param Perf.Dom Character, name of the column containing the performance domain.
 #' @param idp_cols Character vector of column names containing IDPs.
-#' @param prompt Default LLM prompt, see \code{generate_idp_interpretation_prompt}.
-#' @param backend API backend: \code{"groq"} or \code{"openrouter"}.
-#' @param api_key_env Env var storing the API key. Defaults to "GROQ_API_KEY" or "OPENROUTER_API_KEY".
-#' @param model Model name. Defaults: \code{"llama3-70b-8192"} (Groq) or \code{"openai/gpt-4o-mini"} (OpenRouter).
-#' @param max_retries Integer, maximum number of retries in case of rate limiting.
-#' @param retry_delay_base Numeric, base delay in seconds for exponential backoff.
-#' @param temperature Numeric, sampling temperature (0–1).
-#' @param user_input_prompt Extra text appended to user prompt.
-#' @param verbose Logical, print debug info.
-#' @param parallel Logical, if \code{TRUE} use `furrr::future_map` for parallel calls.
-#' @param .options_furrr List, options passed to `furrr::future_map`.
+#' @param prompt Character, system prompt. Default: see `generate_idp_interpretation_prompt`.
+#' @param backend Character, API backend ("groq", "openrouter"). Default: "groq".
+#' @param api_key_env Character, environment variable storing the API key. Default: NULL.
+#' @param model Character, model name. Default: NULL (uses backend default).
+#' @param required_fields Character vector, fields expected in API response. Default: c("consistency", "justification", "plausibility").
+#' @param max_retries Integer, maximum API retry attempts. Default: 5.
+#' @param retry_delay_base Numeric, base delay (seconds) for exponential backoff. Default: 2.
+#' @param jitter Logical, add jitter to retry delays. Default: TRUE.
+#' @param temperature Numeric, sampling temperature (0–1). Default: 0.1.
+#' @param user_input_prompt Character, additional user prompt text. Default: "Assess neuroscientific consistency and return JSON."
+#' @param collapse_fn Function, how to collapse IDPs into a string. Default: `function(x) paste(na.omit(x), collapse = ", ")`.
+#' @param parallel Logical, use parallel processing with `furrr::future_map`. Default: FALSE.
+#' @param .options_furrr List, options for `furrr::future_map`. Default: `furrr::furrr_options()`.
+#' @param cache_dir Character, directory for caching API responses. Default: NULL.
+#' @param verbose Logical, print debug information. Default: TRUE.
+#' @param skip_api_key_check Logical, if TRUE, skip API key validation (useful for testing). Default: FALSE.
 #'
-#' @return A data frame with the original data plus:
-#' \itemize{
-#'   \item \code{consistency} - low/medium/high label.
-#'   \item \code{justification} - model’s neuroscientific justification.
-#'   \item \code{plausibility} - numeric [0–1] plausibility score.
-#' }
-#'
+#' @return A data frame with original data plus columns for `consistency`, `justification`, and `plausibility`.
 #' @export
 assess_idp_consistency <- function(df,
                                    Perf.Dom,
@@ -8642,135 +8842,49 @@ assess_idp_consistency <- function(df,
                                    backend = c("groq", "openrouter"),
                                    api_key_env = NULL,
                                    model = NULL,
+                                   required_fields = c("consistency", "justification", "plausibility"),
                                    max_retries = 5,
                                    retry_delay_base = 2,
+                                   jitter = TRUE,
                                    temperature = 0.1,
-                                   user_input_prompt = "Assess the neuroscientific consistency and provide JSON with consistency, justification, and plausibility.",
-                                   verbose = TRUE,
+                                   user_input_prompt = "Assess neuroscientific consistency and return JSON.",
+                                   collapse_fn = function(x) paste(na.omit(x), collapse = ", "),
                                    parallel = FALSE,
-                                   .options_furrr = furrr::furrr_options()) {
-
-  backend <- match.arg(backend)
-
-  # --- 0. Safety checks ---
-  if (!Perf.Dom %in% names(df)) stop("Perf.Dom column not found in df.")
-  if (!all(idp_cols %in% names(df))) {
-    stop("One or more IDP columns missing: ", paste(setdiff(idp_cols, names(df)), collapse = ", "))
-  }
-
-  if (is.null(api_key_env)) {
-    api_key_env <- switch(backend,
-                          groq = "GROQ_API_KEY",
-                          openrouter = "OPENROUTER_API_KEY")
-  }
-  api_key <- Sys.getenv(api_key_env)
-  if (api_key == "") stop("API key not found in env var ", api_key_env)
-
-  if (is.null(model)) {
-    model <- switch(backend,
-                    groq = "llama3-70b-8192",
-                    openrouter = "openai/gpt-4o-mini")
-  }
-
-  api_url <- switch(backend,
-                    groq = "https://api.groq.com/openai/v1/chat/completions",
-                    openrouter = "https://openrouter.ai/api/v1/chat/completions")
-
-  # --- 1. Prompt engineering ---
+                                   .options_furrr = furrr::furrr_options(),
+                                   cache_dir = NULL,
+                                   verbose = TRUE,
+                                   skip_api_key_check = FALSE) {
+  config <- build_api_config(backend, api_key_env, model, skip_api_key_check)
   system_prompt <- prompt
-  user_prompt_template <- paste0(
-    "Domain: {domain}\n",
-    "IDPs: {idps_string}\n",
-    user_input_prompt
-  )
+  user_prompt_template <- "Domain: {domain}\nIDPs: {idps}\n{extra}"
 
-  # --- 2. Parse LLM output ---
-  parse_llm_response <- function(response_content) {
-    clean_content <- stringr::str_remove_all(response_content, "^```json\\n?|```$|^```\\n?|```$")
-    clean_content <- trimws(clean_content)
-
-    parsed <- tryCatch(
-      jsonlite::fromJSON(clean_content, simplifyVector = TRUE),
-      error = function(e) NULL
-    )
-
-    if (is.null(parsed) ||
-        !all(c("consistency", "justification", "plausibility") %in% names(parsed))) {
-      return(list(consistency = NA, justification = response_content, plausibility = NA_real_))
-    }
-
-    return(list(
-      consistency = parsed$consistency,
-      justification = parsed$justification,
-      plausibility = suppressWarnings(as.numeric(parsed$plausibility))
-    ))
+  mapper <- function(i) {
+    query_api_robust(df[[Perf.Dom]][i],
+                     unlist(df[i, idp_cols], use.names = FALSE),
+                     config,
+                     system_prompt,
+                     user_prompt_template,
+                     user_input_prompt,
+                     required_fields,
+                     collapse_fn,
+                     cache_dir,
+                     max_retries,
+                     retry_delay_base,
+                     jitter,
+                     temperature,
+                     verbose)
   }
 
-  # --- 3. Query API w/ retries ---
-  query_api_robust <- function(domain, idps) {
-    idps_string <- paste(idps, collapse = ", ")
-    user_prompt <- glue::glue(user_prompt_template)
-
-    messages <- list(
-      list(role = "system", content = system_prompt),
-      list(role = "user", content = user_prompt)
-    )
-
-    retries_attempted <- 0
-    while (retries_attempted <= max_retries) {
-      if (verbose) message("Querying domain=", domain, " | IDPs=", idps_string)
-
-      resp <- tryCatch(
-        httr::POST(
-          url = api_url,
-          httr::add_headers(
-            Authorization = paste("Bearer", api_key),
-            `Content-Type` = "application/json"
-          ),
-          body = jsonlite::toJSON(list(
-            model = model,
-            messages = messages,
-            temperature = temperature
-          ), auto_unbox = TRUE)
-        ),
-        error = function(e) NULL
-      )
-
-      if (is.null(resp) || httr::status_code(resp) >= 400) {
-        retries_attempted <- retries_attempted + 1
-        Sys.sleep(retry_delay_base * (2 ^ retries_attempted))
-        next
-      }
-
-      raw_content <- httr::content(resp, as = "text", encoding = "UTF-8")
-      content_json <- tryCatch(jsonlite::fromJSON(raw_content, simplifyVector = FALSE), error = function(e) NULL)
-      if (is.null(content_json) || is.null(content_json$choices)) {
-        retries_attempted <- retries_attempted + 1
-        next
-      }
-
-      model_content <- content_json$choices[[1]]$message$content
-      return(parse_llm_response(model_content))
-    }
-
-    return(list(consistency = NA, justification = "Max retries reached.", plausibility = NA_real_))
-  }
-
-  # --- 4. Apply to rows ---
-  if (parallel) {
-    results_list <- furrr::future_map(seq_len(nrow(df)), function(i) {
-      query_api_robust(df[[Perf.Dom]][i], unlist(df[i, idp_cols], use.names = FALSE))
-    }, .options = .options_furrr)
+  results_list <- if (parallel) {
+    furrr::future_map(seq_len(nrow(df)), mapper, .options = .options_furrr)
   } else {
-    results_list <- purrr::map(seq_len(nrow(df)), function(i) {
-      query_api_robust(df[[Perf.Dom]][i], unlist(df[i, idp_cols], use.names = FALSE))
-    })
+    purrr::map(seq_len(nrow(df)), mapper)
   }
 
-  results_df <- dplyr::bind_rows(results_list)
-  df_out <- dplyr::bind_cols(df, results_df)
-  return(df_out)
+  dplyr::bind_cols(df, dplyr::bind_rows(results_list)) |> tibble::as_tibble()
 }
+
+
 
 # =============================================================================
 #
