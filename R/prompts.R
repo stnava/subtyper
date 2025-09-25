@@ -363,6 +363,119 @@ groq_query <- function(prompt,
 }
 
 
+# =========================================================
+# Generalized Query Function with Optional Score
+# =========================================================
+library(httr)
+library(jsonlite)
+
+#' Query an LLM and return a structured JSON or list response
+#'
+#' @param prompt Character. The user prompt to send to the LLM.
+#' @param model Character. The model to use (default = "gpt-4o-mini").
+#' @param temperature Numeric. Creativity of response (default = 0).
+#' @param max_tokens Integer. Maximum number of tokens in the response (default = NULL = model default).
+#' @param stop Optional. String or vector of stop sequences.
+#' @param top_p Numeric. Nucleus sampling probability (default = 1).
+#' @param frequency_penalty Numeric. Penalize repeated tokens (default = 0).
+#' @param presence_penalty Numeric. Penalize new topic introduction (default = 0).
+#' @param return_list Logical. If TRUE, return an R list instead of JSON (default = FALSE).
+#' @param expect_score Logical. If TRUE, instruct the LLM to return a numeric "score" along with text.
+#'
+#' @return A JSON string or R list with fields: prompt, model, response, score (optional), timestamp
+#' @export
+query_llm_json <- function(prompt,
+                           model = "gpt-4o-mini",
+                           temperature = 0,
+                           max_tokens = NULL,
+                           stop = NULL,
+                           top_p = 1,
+                           frequency_penalty = 0,
+                           presence_penalty = 0,
+                           return_list = FALSE,
+                           expect_score = FALSE) {
+  
+  library(httr)
+  library(jsonlite)
+  api_key <- Sys.getenv("OPENAI_API_KEY")
+  if (api_key == "") stop("Please set OPENAI_API_KEY in your environment.")
+  
+  url <- "https://api.openai.com/v1/chat/completions"
+  
+  # Modify prompt if expecting a score
+  if (expect_score) {
+    system_instruction <- "You are a helpful assistant. Always respond in strict JSON format with two fields: 'answer' (string) and 'score' (number between 0 and 1)."
+    messages <- list(
+      list(role = "system", content = system_instruction),
+      list(role = "user", content = prompt)
+    )
+  } else {
+    messages <- list(list(role = "user", content = prompt))
+  }
+  
+  body <- list(
+    model = model,
+    messages = messages,
+    temperature = temperature,
+    max_tokens = max_tokens,
+    stop = stop,
+    top_p = top_p,
+    frequency_penalty = frequency_penalty,
+    presence_penalty = presence_penalty
+  )
+  
+  # Drop NULLs
+  body <- body[!sapply(body, is.null)]
+  
+  res <- tryCatch({
+    POST(
+      url,
+      add_headers(Authorization = paste("Bearer", api_key)),
+      content_type_json(),
+      body = body,
+      encode = "json",
+      timeout(60)
+    )
+  }, error = function(e) {
+    stop("API request error: ", e$message)
+  })
+  
+  if (status_code(res) != 200) {
+    stop("API request failed [", status_code(res), "]: ", 
+         content(res, "text", encoding = "UTF-8"))
+  }
+  
+  content_raw <- content(res, as = "parsed", type = "application/json")
+  response_text <- content_raw$choices[[1]]$message$content
+  
+  # Try parsing as JSON if expecting a score
+  score <- NA
+  answer <- response_text
+  if (expect_score) {
+    parsed <- tryCatch(fromJSON(response_text), error = function(e) NULL)
+    if (!is.null(parsed)) {
+      if (!is.null(parsed$answer)) answer <- parsed$answer
+      if (!is.null(parsed$score)) score <- as.numeric(parsed$score)
+    }
+  }
+  
+  # Build structured response
+  response_obj <- list(
+    prompt = prompt,
+    model = model,
+    response = answer,
+    score = if (!is.na(score)) score else NULL,
+    timestamp = Sys.time()
+  )
+  
+  if (return_list) {
+    return(response_obj)
+  } else {
+    return(toJSON(response_obj, auto_unbox = TRUE, pretty = TRUE))
+  }
+}
+
+
 #' Parse plausibility JSON into a data frame
 #'
 #' This function extracts a JSON object from a raw string containing extra text
@@ -36453,4 +36566,65 @@ write.csv( rsf_df, '../multidisorder/data/interpret_idps_with_phenotype_rsf.csv'
 
 write.csv( dt_df_gpt, '../multidisorder/data/interpret_idps_with_phenotype_dt_gpt.csv', row.names=FALSE)
 
+}
+
+
+
+
+
+#' Build Prompt for Functional Network Assignment
+#'
+#' This function generates a standardized prompt to query an LLM for 
+#' functional/phenotypic network assignments of brain regions. The LLM is 
+#' instructed to return both a short-form label and a long-form explanation.
+#' You can optionally enforce JSON-like output for easier parsing.
+#'
+#' @param regions A character vector of brain region names.
+#' @param instruction_level Level of detail in instructions to the LLM.
+#'   Options are "concise" (minimal prompt) or "detailed" (more structured guidance).
+#' @param format Output format requested from the LLM.
+#'   Options are "structured" (numbered list) or "json" (strict JSON).
+#'
+#' @return A character string containing the full prompt to provide to the LLM.
+#'
+#' @examples
+#' build_idp_assignment_prompt(
+#'   regions = c("Globus Pallidus External", "Medial Orbitofrontal Cortex",
+#'               "Postcentral Cortex", "Putamen", "Fusiform Gyrus"),
+#'   instruction_level = "detailed",
+#'   format = "json"
+#' )
+build_idp_assignment_prompt <- function(regions, 
+                                    instruction_level = c("concise", "detailed"), 
+                                    format = c("structured", "json")) {
+  instruction_level <- match.arg(instruction_level)
+  format <- match.arg(format)
+
+  region_list <- paste(regions, collapse = " + ")
+
+  if (instruction_level == "concise") {
+    task_description <- sprintf(
+      "Assign the following regions to their most likely composite functional network or phenotypic association:\n\n%s",
+      region_list
+    )
+  } else {
+    task_description <- sprintf(
+      "You are an expert in cognitive and systems neuroscience. Given the following brain regions:\n\n%s\n\nDetermine the most likely composite functional network or phenotypic association.",
+      region_list
+    )
+  }
+
+  if (format == "structured") {
+    prompt <- sprintf(
+      "%s\n\nRespond in this exact structured format:\n\n1. Short-form assignment: <one or two words>\n2. Long-form explanation: <paragraph with justification>",
+      task_description
+    )
+  } else if (format == "json") {
+    prompt <- sprintf(
+      "%s\n\nReturn the result in strict JSON format, with the following keys:\n\n{\n  \"short_form\": \"<one or two words>\",\n  \"long_form\": \"<paragraph with justification>\"\n}\n",
+      task_description
+    )
+  }
+
+  return(prompt)
 }

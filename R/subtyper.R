@@ -86,6 +86,81 @@ getNamesFromDataframe <- function( x, demogIn, exclusions ) {
 }
 
 
+#' Adjust association matrix for global correlation structure
+#'
+#' This function takes a feature × domain association matrix and applies 
+#' different methods to control for global/shared correlation structure 
+#' (e.g., some features are globally correlated with all domains). 
+#' It then provides domain assignments based on the adjusted scores.
+#'
+#' @param assoc_mat A numeric matrix of size (features × domains).
+#' @param method A character string specifying adjustment method. 
+#'        Options: 
+#'        - "none" (raw associations) 
+#'        - "row_normalize" (z-score across rows) 
+#'        - "col_normalize" (z-score across columns) 
+#'        - "both_normalize" (z-score rows and columns) 
+#'        - "pc1_regress" (remove 1st principal component effect) 
+#'        - "glasso" (apply graphical lasso for partial correlations).
+#' @param lambda Numeric penalty parameter for glasso (only used if method="glasso").
+#' @param return_scores Logical; if TRUE, return the full adjusted score matrix.
+#'                      If FALSE, return only best assignments per feature.
+#'
+#' @return If return_scores=FALSE, a character vector of assigned domains 
+#'         (one per feature). If TRUE, a list with:
+#'         - adjusted_matrix: the adjusted score matrix
+#'         - assignments: best-matching domain per feature
+#'
+#' @examples
+#' set.seed(1)
+#' mat <- matrix(rnorm(50), nrow=5, ncol=10)
+#' rownames(mat) <- paste0("Feature", 1:5)
+#' colnames(mat) <- paste0("Domain", 1:10)
+#' adjust_assoc_matrix(mat, method="row_normalize")
+#'
+#' @export
+adjust_assoc_matrix <- function(assoc_mat, 
+                                method = c("none", "row_normalize", "col_normalize", 
+                                           "both_normalize", "pc1_regress", "glasso"),
+                                lambda = 0.1,
+                                return_scores = FALSE) {
+  method <- match.arg(method)
+
+  mat <- assoc_mat
+
+  if (method == "row_normalize") {
+    mat <- t(scale(t(mat)))  # z-score rows
+  } else if (method == "col_normalize") {
+    mat <- scale(mat)        # z-score cols
+  } else if (method == "both_normalize") {
+    mat <- scale(t(scale(t(mat))))  # row + col z-score
+  } else if (method == "pc1_regress") {
+    svd_res <- svd(scale(mat, center = TRUE, scale = TRUE))
+    pc1 <- svd_res$u[,1, drop=FALSE] %*% t(svd_res$v[,1, drop=FALSE]) * svd_res$d[1]
+    mat <- mat - pc1
+  } else if (method == "glasso") {
+    if (!requireNamespace("glasso", quietly = TRUE)) {
+      stop("Package 'glasso' must be installed to use method='glasso'.")
+    }
+    cov_mat <- cov(mat, use="pairwise.complete.obs")
+    glasso_fit <- glasso::glasso(cov_mat, rho=lambda)
+    mat <- glasso_fit$wi  # partial correlation precision matrix
+    rownames(mat) <- colnames(mat) <- colnames(assoc_mat)
+  }
+
+  # Assign domains based on maximum adjusted score
+  assignments <- colnames(mat)[max.col(mat, ties.method = "first")]
+
+  if (return_scores) {
+    return(list(
+      adjusted_matrix = mat,
+      assignments = assignments
+    ))
+  } else {
+    return(assignments)
+  }
+}
+
 
 #' Convert left/right variables to a measure of asymmetry
 #'
@@ -8890,6 +8965,91 @@ assess_idp_consistency <- function(df,
 }
 
 
+#' Generalized Neuroscience Prompt Evaluator
+#'
+#' Queries a language model API with structured neuroscience prompts 
+#' (e.g., IDP-domain consistency, region-network assignment) and parses 
+#' the output into a clean data frame.
+#'
+#' @param df A data frame containing input data (domains, IDPs, regions, etc.).
+#' @param text_cols Character vector, column names to collapse into the user query (e.g. IDPs, regions).
+#' @param context_col Character, optional column name providing task context (e.g., domain). Default: NULL.
+#' @param prompt Character, system prompt to set context. Default: "You are a neuroscientist. Return JSON."
+#' @param backend Character, API backend ("groq", "openrouter"). Default: "groq".
+#' @param api_key_env Character, environment variable storing the API key. Default: NULL.
+#' @param model Character, model name. Default: NULL (uses backend default).
+#' @param required_fields Character vector, keys required in parsed API response. 
+#'   Default: c("short_form", "long_form").
+#' @param user_input_prompt Character, additional user prompt text. Default: "Return structured JSON output."
+#' @param collapse_fn Function, how to collapse multiple text columns. Default: `function(x) paste(na.omit(x), collapse = ", ")`.
+#' @param max_retries Integer, maximum API retry attempts. Default: 5.
+#' @param retry_delay_base Numeric, base delay (seconds) for exponential backoff. Default: 2.
+#' @param jitter Logical, add jitter to retry delays. Default: TRUE.
+#' @param temperature Numeric, sampling temperature (0–1). Default: 0.1.
+#' @param parallel Logical, use parallel processing with `furrr::future_map`. Default: FALSE.
+#' @param .options_furrr List, options for `furrr::future_map`. Default: `furrr::furrr_options()`.
+#' @param cache_dir Character, directory for caching API responses. Default: NULL.
+#' @param verbose Logical, print debug information. Default: TRUE.
+#' @param skip_api_key_check Logical, if TRUE, skip API key validation (useful for testing). Default: FALSE.
+#'
+#' @return A tibble combining original data with parsed model outputs.
+#' @export
+assess_prompt <- function(df,
+                          text_cols,
+                          context_col = NULL,
+                          prompt = "You are a neuroscientist. Return JSON.",
+                          backend = c("groq", "openrouter"),
+                          api_key_env = NULL,
+                          model = NULL,
+                          required_fields = c("short_form", "long_form"),
+                          user_input_prompt = "Return structured JSON output.",
+                          collapse_fn = function(x) paste(na.omit(x), collapse = ", "),
+                          max_retries = 5,
+                          retry_delay_base = 2,
+                          jitter = TRUE,
+                          temperature = 0.1,
+                          parallel = FALSE,
+                          .options_furrr = furrr::furrr_options(),
+                          cache_dir = NULL,
+                          verbose = TRUE,
+                          skip_api_key_check = FALSE) {
+  backend <- match.arg(backend)
+  config <- build_api_config(backend, api_key_env, model, skip_api_key_check)
+
+  user_prompt_template <- if (!is.null(context_col)) {
+    "Context: {context}\nItems: {items}\n{extra}"
+  } else {
+    "Items: {items}\n{extra}"
+  }
+
+  mapper <- function(i) {
+    context_val <- if (!is.null(context_col)) df[[context_col]][i] else NULL
+    text_val <- collapse_fn(unlist(df[i, text_cols], use.names = FALSE))
+
+    query_api_robust(context_val,
+                     text_val,
+                     config,
+                     prompt,
+                     user_prompt_template,
+                     user_input_prompt,
+                     required_fields,
+                     collapse_fn,
+                     cache_dir,
+                     max_retries,
+                     retry_delay_base,
+                     jitter,
+                     temperature,
+                     verbose)
+  }
+
+  results_list <- if (parallel) {
+    furrr::future_map(seq_len(nrow(df)), mapper, .options = .options_furrr)
+  } else {
+    purrr::map(seq_len(nrow(df)), mapper)
+  }
+
+  dplyr::bind_cols(df, dplyr::bind_rows(results_list)) |> tibble::as_tibble()
+}
 
 # =============================================================================
 #
