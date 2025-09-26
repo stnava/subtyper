@@ -5901,6 +5901,155 @@ normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID
 }
 
 
+#' Normative Summary
+#'
+#' Generate a normative summary for a given subject, including descriptive
+#' statistics, z-scores, and reproducible histogram/bar plots.
+#'
+#' Notes on reproducibility:
+#' * Histogram ranges, binning, and scaling are computed from the **population only**
+#'   (all rows except `subjectRow`). This ensures plots remain stable even if the
+#'   chosen subject changes.
+#' * For categorical variables, NA values are dropped before building frequency
+#'   tables. The subject's category is explicitly highlighted without introducing
+#'   spurious levels (e.g., sex will always be two bars if binary in the data).
+#'
+#' @param data A data.frame containing the dataset.
+#' @param subjectRow Integer row index of the subject of interest.
+#' @param columns Character vector of column names to summarize.
+#' @param zoom Integer (optional). If provided, restricts summary to nearest `zoom` neighbors.
+#' @param idcolumn Column name containing the unique subject ID (default: "commonID").
+#' @param sexcol Column name for sex (default: "commonSex").
+#' @param agecol Column name for age (default: "commonAge").
+#' @param return_plot Logical. If TRUE, return a combined plot object as `combined_plot`.
+#' @param verbose Logical. If TRUE, print per-variable diagnostics.
+#'
+#' @return A list with elements:
+#'   * `summary` — list of per-variable summaries (means, SD, z, p-values or freq tables),
+#'   * `plots` — named list of ggplot objects (one per variable, plus "Z-Scores" if numeric present),
+#'   * `zplot` — the z-score ggplot (or NULL),
+#'   * `combined_plot` — (only returned when `return_plot = TRUE`) arranged grob of all plots.
+#' @export
+normativeSummary <- function(
+  data, subjectRow, columns, zoom = NULL,
+  idcolumn = "commonID", sexcol = "commonSex", agecol = "commonAge",
+  return_plot = FALSE, verbose = TRUE
+) {
+  if (!is.data.frame(data)) stop("'data' must be a data.frame.")
+  if (!all(columns %in% names(data))) stop("Some 'columns' are not present in data.")
+  if (subjectRow < 1 || subjectRow > nrow(data)) stop("'subjectRow' out of range.")
+
+  if (!requireNamespace("ggplot2", quietly = TRUE)) stop("ggplot2 required")
+  if (!requireNamespace("gridExtra", quietly = TRUE)) stop("gridExtra required")
+
+  if (!is.null(zoom)) {
+    dataz <- find_closest_subjects(data[subjectRow, ], data, k = zoom, sexcol, agecol)
+    data <- do.call(rbind, dataz)
+    subjectRow <- 1L
+  }
+
+  succcolor <- "deepskyblue4"
+  summaryList <- list()
+  plots <- list()
+
+  core_cols <- setdiff(columns, c(agecol, sexcol))
+  ordered_columns <- c(core_cols, intersect(c(agecol, sexcol), columns))
+
+  for (col in ordered_columns) {
+    colvec <- data[[col]]
+    subjVal <- colvec[subjectRow]
+
+    if (is.numeric(colvec)) {
+      # --- population excludes subject row ---
+      popVals <- colvec[-subjectRow]
+      popVals <- popVals[!is.na(popVals)]
+
+      meanVal <- mean(popVals, na.rm = TRUE)
+      sdVal   <- stats::sd(popVals, na.rm = TRUE)
+      zScore  <- if (!is.na(subjVal) && sdVal > 0) (subjVal - meanVal) / sdVal else NA_real_
+
+      if (verbose) message(sprintf("[%s] mean=%.4g sd=%.4g subj=%.4g z=%.4g", col, meanVal, sdVal, subjVal, zScore))
+
+      ttest_p <- NA_real_
+      if (!is.na(subjVal) && length(popVals) > 1) {
+        tt <- tryCatch(stats::t.test(popVals, alternative = "greater", mu = subjVal), error = function(e) NULL)
+        if (!is.null(tt)) ttest_p <- tt$p.value
+      }
+
+      rng <- range(popVals)
+      breaks <- pretty(rng, n = 30)
+      histdf <- data.frame(value = popVals, type = "Population")
+
+      p <- ggplot2::ggplot(histdf, ggplot2::aes(x = value)) +
+        ggplot2::geom_histogram(breaks = breaks, fill = "grey70", color = "black") +
+        { if (!is.na(subjVal)) ggplot2::geom_vline(xintercept = subjVal, color = succcolor, size = 1.2, linetype = "dashed") } +
+        ggplot2::geom_vline(xintercept = meanVal, color = "red", linetype = "solid", size = 0.6) +
+        ggplot2::labs(title = paste(col, "— subject (blue dashed) vs population"),
+                      x = col, y = "Count") +
+        ggplot2::xlim(rng) +
+        ggplot2::theme_minimal(base_size = 10)
+
+      summaryList[[col]] <- list(
+        Mean = meanVal, SD = sdVal, SubjectScore = subjVal,
+        ZScore = zScore, TTestPValue = ttest_p
+      )
+      plots[[col]] <- p
+
+    } else {
+      non_na_vals <- colvec[-subjectRow]
+      non_na_vals <- non_na_vals[!is.na(non_na_vals)]
+      pop_counts <- as.data.frame(table(non_na_vals), stringsAsFactors = FALSE)
+      colnames(pop_counts) <- c("value", "count")
+      pop_counts$value <- trimws(as.character(pop_counts$value))
+
+      subjCat <- if (!is.na(subjVal)) trimws(as.character(subjVal)) else NA_character_
+      if (!is.na(subjCat) && !(subjCat %in% pop_counts$value)) {
+        pop_counts <- rbind(pop_counts, data.frame(value = subjCat, count = 0L, stringsAsFactors = FALSE))
+      }
+      pop_counts$is_subject <- if (!is.na(subjCat)) (pop_counts$value == subjCat) else FALSE
+      pop_counts <- pop_counts[order(pop_counts$count, decreasing = TRUE), , drop = FALSE]
+
+      p <- ggplot2::ggplot(pop_counts, ggplot2::aes(x = reorder(value, -count), y = count, fill = is_subject)) +
+        ggplot2::geom_col(color = "black") +
+        ggplot2::scale_fill_manual(values = c("FALSE" = "grey70", "TRUE" = succcolor), guide = FALSE) +
+        ggplot2::labs(title = paste(col, "— categorical distribution (subject highlighted)"),
+                      x = col, y = "Count") +
+        ggplot2::theme_minimal(base_size = 10) +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, hjust = 1))
+
+      summaryList[[col]] <- list(FrequencyTable = setNames(as.integer(pop_counts$count), pop_counts$value),
+                                 SubjectCategory = subjCat)
+      plots[[col]] <- p
+    }
+  }
+
+  numeric_cols_idx <- vapply(summaryList, function(x) "ZScore" %in% names(x), logical(1))
+  zplot <- NULL
+  if (any(numeric_cols_idx)) {
+    zScores <- vapply(summaryList[numeric_cols_idx], function(x) x$ZScore, numeric(1))
+    zdf <- data.frame(Column = names(zScores), ZScore = zScores, stringsAsFactors = FALSE)
+    zplot <- ggplot2::ggplot(zdf, ggplot2::aes(x = reorder(Column, ZScore), y = ZScore, fill = ZScore)) +
+      ggplot2::geom_col() +
+      ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+      ggplot2::scale_fill_gradient2(low = succcolor, mid = "white", high = "red", midpoint = 0) +
+      ggplot2::coord_flip() +
+      ggplot2::labs(title = "Subject Z-scores vs population", x = "", y = "Z-score") +
+      ggplot2::theme_minimal(base_size = 10)
+    plots[["Z-Scores"]] <- zplot
+  }
+
+  combined_plot <- NULL
+  if (return_plot) {
+    ncol <- ceiling(sqrt(length(plots)))
+    combined_plot <- gridExtra::grid.arrange(grobs = plots, ncol = ncol,
+                                             top = paste("Normative Results:", data[subjectRow, idcolumn]))
+  }
+
+  out <- list(summary = summaryList, plots = plots, zplot = zplot)
+  if (!is.null(combined_plot)) out$combined_plot <- combined_plot
+  return(out)
+}
+
 #' Find Closest Subjects
 #'
 #' This function identifies the closest subjects in a target dataset to a reference dataset

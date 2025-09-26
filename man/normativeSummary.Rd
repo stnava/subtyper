@@ -8,7 +8,19 @@ normativeSummary(
   data,
   subjectRow,
   columns,
-  zoom,
+  zoom = NULL,
+  idcolumn = "commonID",
+  sexcol = "commonSex",
+  agecol = "commonAge",
+  return_plot = FALSE,
+  verbose = TRUE
+)
+
+normativeSummary(
+  data,
+  subjectRow,
+  columns,
+  zoom = NULL,
   idcolumn = "commonID",
   sexcol = "commonSex",
   agecol = "commonAge",
@@ -17,30 +29,52 @@ normativeSummary(
 )
 }
 \arguments{
-\item{data}{A data frame containing the dataset for analysis.}
+\item{data}{A data.frame containing the dataset.}
 
-\item{subjectRow}{The row number or identifier for the subject of interest within the dataset.}
+\item{subjectRow}{Integer row index of the subject of interest.}
 
-\item{columns}{A vector of column names in the dataset that should be summarized.}
+\item{columns}{Character vector of column names to summarize.}
 
-\item{zoom}{A parameter to specify the focus or zoom level of the summary.  zoom (integer) specifies the number of nearest neighbors to use.}
+\item{zoom}{Integer (optional). If provided, restricts summary to nearest \code{zoom} neighbors.}
 
-\item{idcolumn}{column name for the unique subject ID}
+\item{idcolumn}{Column name containing the unique subject ID (default: "commonID").}
 
-\item{sexcol}{name of the sex column}
+\item{sexcol}{Column name for sex (default: "commonSex").}
 
-\item{agecol}{name of the age column}
+\item{agecol}{Column name for age (default: "commonAge").}
 
-\item{return_plot}{A logical flag indicating whether to return the plot object}
+\item{return_plot}{Logical. If TRUE, return a combined plot object as \code{combined_plot}.}
 
-\item{verbose}{A logical flag indicating whether to print detailed output.}
+\item{verbose}{Logical. If TRUE, print per-variable diagnostics.}
 }
 \value{
 A summary object containing normative statistics for the specified columns of the subject.
+
+A list with elements:
+\itemize{
+\item \code{summary} — list of per-variable summaries (means, SD, z, p-values or freq tables),
+\item \code{plots} — named list of ggplot objects (one per variable, plus "Z-Scores" if numeric present),
+\item \code{zplot} — the z-score ggplot (or NULL),
+\item \code{combined_plot} — (only returned when \code{return_plot = TRUE}) arranged grob of all plots.
+}
 }
 \description{
 This function provides a normative summary for a given subject within a dataset. It can be configured
 to focus on specific columns and can be zoomed into particular data points.
+
+Generate a normative summary for a given subject, including descriptive
+statistics, z-scores, and reproducible histogram/bar plots.
+}
+\details{
+Notes on reproducibility:
+\itemize{
+\item Histogram ranges, binning, and scaling are computed from the \strong{population only}
+(all rows except \code{subjectRow}). This ensures plots remain stable even if the
+chosen subject changes.
+\item For categorical variables, NA values are dropped before building frequency
+tables. The subject's category is explicitly highlighted without introducing
+spurious levels (e.g., sex will always be two bars if binary in the data).
+}
 }
 \examples{
 # normativeSummary(myData, 1, c("Column1", "Column2"), zoom = 1, verbose = TRUE)
