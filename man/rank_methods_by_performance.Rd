@@ -4,7 +4,13 @@
 \alias{rank_methods_by_performance}
 \title{Rank Methods by Weighted Performance Using Various Normalization Strategies}
 \usage{
-rank_methods_by_performance(df, id_col, weights_df, method = "rank")
+rank_methods_by_performance(
+  df,
+  id_col,
+  weights_df,
+  method = "rank",
+  head_value = 20
+)
 }
 \arguments{
 \item{df}{A data frame containing performance results (rows = methods, columns = metrics).}
@@ -20,6 +26,8 @@ rank_methods_by_performance(df, id_col, weights_df, method = "rank")
 }}
 
 \item{method}{The normalization method: \code{"rank"} (default), \code{"minmax"}, or \code{"zscore"}.}
+
+\item{head_value}{Optional number of top entries to show (default 20).}
 }
 \value{
 A list with:

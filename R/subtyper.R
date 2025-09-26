@@ -8415,12 +8415,13 @@ run_multiview_analysis <- function(analysis_configurations, pc_indices, modality
 #'   - `weight`: non-negative numeric weight
 #'   - `direction`: "low" (lower is better) or "high" (higher is better)
 #' @param method The normalization method: `"rank"` (default), `"minmax"`, or `"zscore"`.
+#' @param head_value Optional number of top entries to show (default 20).
 #'
 #' @return A list with:
 #'   \item{ranked_df}{A tibble with scores and ranks.}
 #'   \item{gt_table}{A `gt` table for presentation.}
 #' @export
-rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank") {
+rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank", head_value=20 ) {
   # --- 1. Input Validation ---
   method <- match.arg(method, c("rank", "minmax", "zscore"))
 
@@ -8520,7 +8521,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank")
   # --- 4. GT Table ---
   display_name_map <- setNames(active_metrics_df$display_name, active_metrics_df$metric_name)
 
-  display_ready_df <- final_ranked_df %>%
+  display_ready_df <- head( final_ranked_df, head_value ) %>%
     dplyr::select(Overall_Rank, all_of(id_col), !!sym(score_col_name), all_of(active_metric_cols)) %>%
     rename_with(~ display_name_map[.], .cols = all_of(active_metric_cols))
 
