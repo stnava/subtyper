@@ -15,18 +15,6 @@ normativeSummary(
   return_plot = FALSE,
   verbose = TRUE
 )
-
-normativeSummary(
-  data,
-  subjectRow,
-  columns,
-  zoom = NULL,
-  idcolumn = "commonID",
-  sexcol = "commonSex",
-  agecol = "commonAge",
-  return_plot = FALSE,
-  verbose = TRUE
-)
 }
 \arguments{
 \item{data}{A data.frame containing the dataset.}
@@ -48,8 +36,6 @@ normativeSummary(
 \item{verbose}{Logical. If TRUE, print per-variable diagnostics.}
 }
 \value{
-A summary object containing normative statistics for the specified columns of the subject.
-
 A list with elements:
 \itemize{
 \item \code{summary} — list of per-variable summaries (means, SD, z, p-values or freq tables),
@@ -59,9 +45,6 @@ A list with elements:
 }
 }
 \description{
-This function provides a normative summary for a given subject within a dataset. It can be configured
-to focus on specific columns and can be zoomed into particular data points.
-
 Generate a normative summary for a given subject, including descriptive
 statistics, z-scores, and reproducible histogram/bar plots.
 }
@@ -75,7 +58,4 @@ chosen subject changes.
 tables. The subject's category is explicitly highlighted without introducing
 spurious levels (e.g., sex will always be two bars if binary in the data).
 }
-}
-\examples{
-# normativeSummary(myData, 1, c("Column1", "Column2"), zoom = 1, verbose = TRUE)
 }

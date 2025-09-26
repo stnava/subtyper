@@ -5771,134 +5771,6 @@ convert_to_random_effects <- function(variables) {
 }
 
 
-#' Normative Summary
-#'
-#' This function provides a normative summary for a given subject within a dataset. It can be configured
-#' to focus on specific columns and can be zoomed into particular data points.
-#'
-#' @param data A data frame containing the dataset for analysis.
-#' @param subjectRow The row number or identifier for the subject of interest within the dataset.
-#' @param columns A vector of column names in the dataset that should be summarized.
-#' @param zoom A parameter to specify the focus or zoom level of the summary.  zoom (integer) specifies the number of nearest neighbors to use.
-#' @param idcolumn column name for the unique subject ID
-#' @param sexcol name of the sex column
-#' @param agecol name of the age column
-#' @param return_plot A logical flag indicating whether to return the plot object
-#' @param verbose A logical flag indicating whether to print detailed output.
-#'
-#' @return A summary object containing normative statistics for the specified columns of the subject.
-#' @export
-#'
-#' @examples
-#' # normativeSummary(myData, 1, c("Column1", "Column2"), zoom = 1, verbose = TRUE)
-normativeSummary <- function(data, subjectRow, columns, zoom, idcolumn='commonID', sexcol='commonSex', agecol='commonAge', return_plot=FALSE, verbose=TRUE) {
-  if(!is.data.frame(data)) stop("The 'data' input must be a data frame.")
-  if(!all(columns %in% names(data))) stop("All specified columns must exist in the data frame.")
-  if(subjectRow > nrow(data) || subjectRow < 1) stop("Subject row is out of bounds.")
-  
-  if ( ! missing( zoom ) ) {
-    dataz=find_closest_subjects( data[subjectRow,], data, k=zoom, sexcol, agecol )
-    data = do.call(rbind, dataz)
-    subjectRow=1
-  }
-  succcolor='deepskyblue4'#  'dodgerblue1'
-  summaryList <- list()
-  histList = list()
-  
-  for (col in columns) {
-    columnData <- data[[col]]
-#    if ( subtyper::fs(antspymm_vartype(col) %in% c("T1","T2Flair","DTI")) & 'brainVolume' %in% colnames(data)) {
-#      columnData=columnData/data$brainVolume
-#      if ( verbose ) {
-#        print(paste("normalize",col,'by BV'))
-#      }
-#    }
-    isNumeric <- is.numeric(columnData)
-    if (isNumeric) {
-      # Process numeric data
-      meanVal <- mean(columnData, na.rm = TRUE)
-      sdVal <- (stats::sd(columnData, na.rm = TRUE))
-      subjectScore <- columnData[subjectRow]
-      zScore <- (subjectScore - meanVal) / sdVal
-      if ( verbose ) {
-        print( paste( col, meanVal, sdVal, subjectScore, zScore ) )
-      }
-      if ( !is.na( subjectScore) ) {
-        tTestResult <- t.test(columnData, alternative = "greater", mu = subjectScore)
-      } else tTestResult=list(estimate=NA,p.value=NA,statistic=NA)
-
-      ttl=paste( col,'sub. (blue) vs pop.')
-      histdf=data.frame( vid=rep("pop",length(columnData)), value=columnData )
-      if ( max( histdf$value,na.rm=T ) < 1 ) {
-        scl=100/(range( histdf$value,na.rm=T )[2]-range( histdf$value,na.rm=T  )[1])
-        histdf$value=histdf$value * scl
-        ttl=paste(ttl,"\n : vals scaled by",insight::format_value(scl))
-      }
-      histdf[subjectRow,'vid']='subject'
-
-      histList[[col]]=gghistogram(histdf, x = 'value',  
-        add.params=list(size=1.25,linetype = "dashed"),
-        add = "mean", add_density = FALSE, title=ttl, fill='vid', legend='none')
-
-      summaryList[[col]] <- list(
-        Mean = meanVal,
-        SD = sdVal,
-        SubjectScore = subjectScore,
-        ZScore = zScore,
-        TTestPValue = tTestResult$p.value
-      )
-    } else {
-      # Process categorical data
-      freqTable <- table(columnData)
-      subjectCategory <- as.character(columnData[subjectRow])
-      
-      summaryList[[col]] <- list(
-        FrequencyTable = freqTable,
-        SubjectCategory = subjectCategory
-      )
-    }
-  }
-  
-  # Assuming 'summaryList' contains the processed data
-  for (col in columns) {
-    if (!is.numeric(data[[col]])) {
-      # Assume 'summaryList' is available from the earlier processing
-      freqTable <- summaryList[[col]]$FrequencyTable
-      subjectCategory <- summaryList[[col]]$SubjectCategory
-      histList[[col]]=plotCategoricalData( summaryList, col)
-    }
-  }
-
-  # Print summary
-
-  # Visualization: For simplicity, focusing on numeric columns for z-score plot
-  numericColumns <- sapply(summaryList, function(x) "ZScore" %in% names(x))
-  if (any(numericColumns)) {
-    zScores <- sapply(summaryList[numericColumns], function(x) x$ZScore)
-    names(zScores) <- names(summaryList)[numericColumns]
-    zScoreDataFrame <- data.frame(Column = names(zScores), ZScore = zScores)
-    zScoreDataFrame$Column = (zScoreDataFrame$Column )
-    if ( verbose )
-      print( zScoreDataFrame )
-    histList[[paste0(col,".z")]]=ggplot(zScoreDataFrame, aes(x = Column, y = ZScore, fill = ZScore)) +
-      geom_bar(stat = "identity") +
-      geom_hline(yintercept = 0, linetype = "dashed") +
-      scale_fill_gradient2(low = succcolor, high = "red", mid = "white", midpoint = 0) +
-      theme_minimal() +
-      labs(title = "Z-Scores vs. pop.",
-           y = "Z-Score",
-           x = "") +
-      coord_flip() + theme(legend.key.width = unit(0.005, "npc"))
-  } else {
-    cat("No numeric data for z-score plot.\n")
-  }
-
-  if ( return_plot ) return(
-    grid.arrange(grobs=histList,ncol=round(sqrt(length(histList))),top=paste("Normative Results:",data[subjectRow,idcolumn])) )
-
-  grid.arrange(grobs=histList,ncol=round(sqrt(length(histList))),top=paste("Normative Results:",data[subjectRow,idcolumn]))
-  return(summaryList)
-}
 
 
 #' Normative Summary
@@ -6049,6 +5921,145 @@ normativeSummary <- function(
   if (!is.null(combined_plot)) out$combined_plot <- combined_plot
   return(out)
 }
+
+
+#' Longitudinal Normative Summary
+#'
+#' Provides a normative summary for one or more subjects across multiple timepoints.
+#' Generates numeric histograms with subject lines colored by time, categorical barplots
+#' with subject highlight, and a combined Z-score barplot distinguishing timepoints.
+#' Histogram bounds exclude the subject(s) so that the display is reproducible if
+#' only one row changes.
+#'
+#' @param data Data frame containing all subjects and measures.
+#' @param subject_idx Vector of row indices of the subjects of interest.
+#' @param columns Vector of column names to summarize.
+#' @param idcolumn Name of subject ID column (default = "commonID").
+#' @param timecol Name of time variable (default = "yearsbl").
+#' @param sexcol Name of sex column (default = "commonSex").
+#' @param agecol Name of age column (default = "commonAge").
+#' @param return_plot Logical, whether to return the combined grid plot.
+#' @param verbose Logical, whether to print debugging info.
+#'
+#' @return A list with:
+#'   \item{summary}{List of numeric and categorical summaries, including Z-scores.}
+#'   \item{plots}{List of individual ggplot objects per column.}
+#'   \item{zplot}{Z-score barplot across numeric columns and timepoints.}
+#'   \item{grid}{Combined `gridExtra::arrangeGrob` object for all plots.}
+#'
+#' @export
+longitudinalNormativeSummary <- function(data, subject_idx, columns,
+                                         idcolumn='commonID',
+                                         timecol='yearsbl',
+                                         sexcol='commonSex',
+                                         agecol='commonAge',
+                                         return_plot=FALSE,
+                                         verbose=FALSE) {
+  library(ggplot2)
+  library(gridExtra)
+  library(dplyr)
+  library(forcats)
+
+  plot_list <- list()
+  summary_list <- list()
+
+  # Ensure age and sex are last
+  columns <- c(setdiff(columns, c(agecol, sexcol)), agecol, sexcol)
+
+  for (col in columns) {
+    col_data <- data[[col]]
+    subj_vals <- col_data[subject_idx]
+    subj_times <- data[[timecol]][subject_idx]
+
+    # Population excludes subject(s)
+    pop_data <- col_data[-subject_idx]
+
+    if (is.numeric(col_data)) {
+      # Numeric column
+      pop_mean <- mean(pop_data, na.rm = TRUE)
+      pop_sd <- sd(pop_data, na.rm = TRUE)
+      z_scores <- (subj_vals - pop_mean) / pop_sd
+
+      summary_list[[col]] <- list(
+        Mean = pop_mean,
+        SD = pop_sd,
+        SubjectScores = subj_vals,
+        ZScores = z_scores,
+        Timepoints = subj_times
+      )
+
+      # Histogram with subject lines colored by time
+      hist_df <- data.frame(value = pop_data)
+      vlines_df <- data.frame(xintercept = subj_vals, Time = factor(subj_times))
+      hist_plot <- ggplot(hist_df, aes(x = value)) +
+        geom_histogram(aes(y = ..density..), fill = "grey80", bins = 30, color = "black") +
+        geom_density(color = "black", size = 0.6) +
+        geom_vline(data = vlines_df,
+                   aes(xintercept = xintercept, color = Time),
+                   linetype = "dashed", size = 1.2) +
+        scale_color_brewer(palette = "Dark2") +
+        labs(title = paste0(col, " (numeric)"), x = col, y = "Density") +
+        theme_minimal()
+      plot_list[[col]] <- hist_plot
+
+    } else {
+      # Categorical column
+      pop_data <- droplevels(factor(pop_data))
+      subj_vals <- factor(subj_vals, levels = levels(pop_data))
+      freq_tbl <- table(pop_data)
+      summary_list[[col]] <- list(
+        FrequencyTable = freq_tbl,
+        SubjectCategories = subj_vals,
+        Timepoints = subj_times
+      )
+      cat_df <- as.data.frame(freq_tbl)
+      names(cat_df) <- c("Category", "Count")
+      cat_df$Highlight <- ifelse(cat_df$Category %in% subj_vals, "Subject", "Population")
+      cat_plot <- ggplot(cat_df, aes(x = fct_reorder(Category, Count), y = Count, fill = Highlight)) +
+        geom_bar(stat = "identity", color = "black") +
+        scale_fill_manual(values = c("Population" = "grey80", "Subject" = "deepskyblue4")) +
+        labs(title = paste0(col, " (categorical)"), x = col, y = "Count") +
+        theme_minimal() +
+        coord_flip()
+      plot_list[[col]] <- cat_plot
+    }
+  }
+
+  # Z-score plot across numeric columns and timepoints
+  numeric_cols <- columns[sapply(data[columns], is.numeric)]
+  if (length(numeric_cols) > 0) {
+    z_df <- do.call(rbind, lapply(numeric_cols, function(col) {
+      data.frame(
+        Column = col,
+        ZScore = summary_list[[col]]$ZScores,
+        Time = factor(summary_list[[col]]$Timepoints),
+        Subject = data[[idcolumn]][subject_idx]
+      )
+    }))
+
+    z_plot <- ggplot(z_df, aes(x = Column, y = ZScore, fill = Time)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      geom_hline(yintercept = 0, linetype = "dashed") +
+      labs(title = "Z-scores by Column and Time", x = "", y = "Z-Score") +
+      theme_minimal() +
+      coord_flip() +
+      scale_fill_brewer(palette = "Dark2")
+  } else {
+    z_plot <- NULL
+  }
+
+  # Combine all plots into a single grid
+  all_plots <- c(plot_list, list(z_plot))
+  ncolg <- ceiling(sqrt(length(all_plots)))
+  grid_obj <- do.call(gridExtra::arrangeGrob, c(all_plots, ncol = ncolg))
+
+  if (return_plot) {
+    grid::grid.draw(grid_obj)
+  }
+
+  return(list(summary = summary_list, plots = plot_list, zplot = z_plot, grid = grid_obj))
+}
+
 
 #' Find Closest Subjects
 #'
