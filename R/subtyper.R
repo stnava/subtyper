@@ -5962,7 +5962,7 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
 
   plot_list <- list()
   summary_list <- list()
-
+  partyid=data[subject_idx[1],idcolumn]
   # Ensure age and sex are last
   columns <- c(setdiff(columns, c(agecol, sexcol)), agecol, sexcol)
 
@@ -5998,7 +5998,7 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
                    aes(xintercept = xintercept, color = Time),
                    linetype = "dashed", size = 1.2) +
         scale_color_brewer(palette = "Dark2") +
-        labs(title = paste0(col, " (numeric)"), x = col, y = "Density") +
+        labs(title = paste0(col, ""), x = col, y = "Density") +
         theme_minimal()
       plot_list[[col]] <- hist_plot
 
@@ -6018,7 +6018,7 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
       cat_plot <- ggplot(cat_df, aes(x = fct_reorder(Category, Count), y = Count, fill = Highlight)) +
         geom_bar(stat = "identity", color = "black") +
         scale_fill_manual(values = c("Population" = "grey80", "Subject" = "deepskyblue4")) +
-        labs(title = paste0(col, " (categorical)"), x = col, y = "Count") +
+        labs(title = paste0(col, ""), x = col, y = "Count") +
         theme_minimal() +
         coord_flip()
       plot_list[[col]] <- cat_plot
@@ -6040,10 +6040,10 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
     z_plot <- ggplot(z_df, aes(x = Column, y = ZScore, fill = Time)) +
       geom_bar(stat = "identity", position = "dodge") +
       geom_hline(yintercept = 0, linetype = "dashed") +
-      labs(title = "Z-scores by Column and Time", x = "", y = "Z-Score") +
+      labs(title = paste( partyid,": Z-scores"), x = "", y = "Z-Score") +
       theme_minimal() +
       coord_flip() +
-      scale_fill_brewer(palette = "Dark2")
+      scale_fill_brewer(palette = "Dark2") + theme(legend.position = "none")
   } else {
     z_plot <- NULL
   }
