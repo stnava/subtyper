@@ -9,7 +9,7 @@ Description: We ingest dataframes describing populations that are followed
     frame detailing results.  Inference or prediction of subtypes in new data
     is facilitated by a single function call. The package provides intuitive
     visualization that show how subtyped data varies by group over time.
-Version: 1.0.0
+Version: 1.1.0
 Author: c( person(c("Brian", "B."), "Avants", role=c("aut", "cre"), email="stnava@gmail.com") )
 Maintainer: Brian Avants <stnava@debian.org>
 URL: https://github.com/stnava/subtyper

@@ -9562,3 +9562,164 @@ decode_antspymm_idp <- function(label) {
   return(out)
 }
 
+
+
+#' Create and Display a Styled Glossary Table
+#'
+#' This function creates a glossary with terms and definitions, rendering them as a formatted gt table with customizable styling, optimized for both HTML and PDF output, with text wrapping for definitions and visible borders between cells.
+#'
+#' @param terms A named list where names are terms and values are definitions.
+#' @param table_title Title for the glossary table (default: "Glossary of Terms").
+#' @param term_color Color for glossary terms in the table (default: "purple").
+#' @param term_decoration Text decoration for terms (default: "underline"). Supports "underline", "overline", "line-through" (requires LaTeX package `ulem` for line-through).
+#' @param def_bg Background color for definitions (default: "gray").
+#' @param def_color Text color for definitions (default: "white").
+#' @param font_size Font size for the table (default: "12pt").
+#' @param table_width Width of the table (default: "100%").
+#' @param max_height Maximum height of the table (default: "400px").
+#' @param border_color Color of cell borders (default: "black").
+#' @param border_style Style of cell borders (default: "solid"). Supports "solid", "dashed", "dotted".
+#' @param border_weight Weight of cell borders (default: "2pt" for better visibility).
+#'
+#' @return A gt table object displaying the glossary.
+#' @examples
+#' terms <- list(
+#'   "SiMLr" = "A dimensionality reduction technique for integrating multi-modal data...",
+#'   "M3RI" = "Combining different MRI modalities, such as structural MRI..."
+#' )
+#' create_glossary_table(terms)
+#'
+create_glossary_table <- function(terms,
+                                 table_title = "Glossary of Terms",
+                                 term_color = "purple",
+                                 term_decoration = "underline",
+                                 def_bg = "gray",
+                                 def_color = "white",
+                                 font_size = "12pt",
+                                 table_width = "100%",
+                                 max_height = "400px",
+                                 border_color = "black",
+                                 border_style = "solid",
+                                 border_weight = "2pt") {
+  # Initialize glossary data frame
+  glossary_df <- data.frame(
+    Term = names(terms),
+    Definition = unlist(terms),
+    stringsAsFactors = FALSE
+  )
+  
+  # Apply text decoration using LaTeX markup
+  if (!is.null(term_decoration) && term_decoration != "") {
+    if (term_decoration == "underline") {
+      glossary_df$Term <- paste0("\\underline{", glossary_df$Term, "}")
+    } else if (term_decoration == "overline") {
+      glossary_df$Term <- paste0("\\overline{", glossary_df$Term, "}")
+    } else if (term_decoration == "line-through") {
+      glossary_df$Term <- paste0("\\sout{", glossary_df$Term, "}")
+    }
+  }
+  
+  # Define border sides
+  mysides <- c("top", "bottom", "left", "right")
+  
+  # Create gt table
+  glossary_table <- glossary_df %>%
+    gt() %>%
+    tab_header(
+      title = table_title,
+      subtitle = "Key terms and their definitions"
+    ) %>%
+    cols_label(
+      Term = "Term",
+      Definition = "Definition"
+    ) %>%
+    fmt_markdown(columns = c(Term, Definition)) %>%  # Enable LaTeX rendering for both columns
+    tab_style(
+      style = list(
+        cell_text(
+          color = term_color,
+          weight = "bold",
+          size = font_size
+        ),
+        cell_borders(
+          sides = mysides,
+          color = border_color,
+          style = border_style,
+          weight = border_weight
+        )
+      ),
+      locations = cells_body(columns = Term)
+    ) %>%
+    tab_style(
+      style = list(
+        cell_fill(color = def_bg),
+        cell_text(color = def_color, size = font_size),
+        cell_borders(
+          sides = mysides,
+          color = border_color,
+          style = border_style,
+          weight = border_weight
+        )
+      ),
+      locations = cells_body(columns = Definition)
+    ) %>%
+    cols_width(
+      Term ~ pct(30),  # Term column takes 30% of table width
+      Definition ~ pct(70)  # Definition column uses specified width for wrapping
+    ) %>%
+    tab_style(
+      style = list(
+        cell_text(
+          align = "left",
+          v_align = "top",
+          style = "normal"
+        )
+      ),
+      locations = cells_body(columns = Definition)
+    ) %>%
+    tab_options(
+      table.width = table_width,
+      table.font.size = font_size,
+      table.background.color = "white",
+      container.height = max_height,
+      table.border.top.color = border_color,
+      table.border.top.style = border_style,
+      table.border.top.width = border_weight,
+      table.border.bottom.color = border_color,
+      table.border.bottom.style = border_style,
+      table.border.bottom.width = border_weight,
+      table.border.left.color = border_color,
+      table.border.left.style = border_style,
+      table.border.left.width = border_weight,
+      table.border.right.color = border_color,
+      table.border.right.style = border_style,
+      table.border.right.width = border_weight,
+      column_labels.background.color = "gray",
+      column_labels.font.weight = "bold",
+      table.align = "center"
+    ) %>%
+    tab_style(
+      style = cell_text(align = "left"),
+      locations = cells_body(columns = Term)
+    ) %>%
+    tab_style(
+      style = cell_text(size = "14pt", weight = "bold"),
+      locations = cells_title(groups = "title")
+    ) %>%
+    tab_style(
+      style = cell_text(size = "10pt", style = "italic"),
+      locations = cells_title(groups = "subtitle")
+    ) %>%
+    tab_style(
+      style = cell_borders(
+        sides = mysides,
+        color = border_color,
+        style = border_style,
+        weight = border_weight
+      ),
+      locations = cells_column_labels(columns = everything())
+    )
+  
+  # Return the table
+  return(glossary_table)
+}
