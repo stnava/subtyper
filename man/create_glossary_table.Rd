@@ -50,11 +50,3 @@ A gt table object displaying the glossary.
 \description{
 This function creates a glossary with terms and definitions, rendering them as a formatted gt table with customizable styling, optimized for both HTML and PDF output, with text wrapping for definitions and visible borders between cells.
 }
-\examples{
-terms <- list(
-  "SiMLr" = "A dimensionality reduction technique for integrating multi-modal data...",
-  "M3RI" = "Combining different MRI modalities, such as structural MRI..."
-)
-create_glossary_table(terms)
-
-}

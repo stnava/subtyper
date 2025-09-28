@@ -9582,13 +9582,7 @@ decode_antspymm_idp <- function(label) {
 #' @param border_weight Weight of cell borders (default: "2pt" for better visibility).
 #'
 #' @return A gt table object displaying the glossary.
-#' @examples
-#' terms <- list(
-#'   "SiMLr" = "A dimensionality reduction technique for integrating multi-modal data...",
-#'   "M3RI" = "Combining different MRI modalities, such as structural MRI..."
-#' )
-#' create_glossary_table(terms)
-#'
+#' @export
 create_glossary_table <- function(terms,
                                  table_title = "Glossary of Terms",
                                  term_color = "purple",
