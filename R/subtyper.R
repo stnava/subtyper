@@ -5938,6 +5938,7 @@ normativeSummary <- function(
 #' @param timecol Name of time variable (default = "yearsbl").
 #' @param sexcol Name of sex column (default = "commonSex").
 #' @param agecol Name of age column (default = "commonAge").
+#' @param zlim Numeric vector of length 2 for y-limits on Z-score plot (default = c(-2, 2)). If NULL, no limits set.
 #' @param return_plot Logical, whether to return the combined grid plot.
 #' @param verbose Logical, whether to print debugging info.
 #'
@@ -5953,6 +5954,7 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
                                          timecol='yearsbl',
                                          sexcol='commonSex',
                                          agecol='commonAge',
+                                         zlim = c(-2, 2),
                                          return_plot=FALSE,
                                          verbose=FALSE) {
   library(ggplot2)
@@ -6042,8 +6044,13 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
       geom_hline(yintercept = 0, linetype = "dashed") +
       labs(title = paste( partyid,": Z-scores"), x = "", y = "Z-Score") +
       theme_minimal() +
-      coord_flip() +
+      coord_flip() + 
       scale_fill_brewer(palette = "Dark2") + theme(legend.position = "none")
+
+    if (!is.null(zlim)) {
+      z_plot <- z_plot + ylim(zlim)
+    }
+
   } else {
     z_plot <- NULL
   }
@@ -6059,7 +6066,6 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
 
   return(list(summary = summary_list, plots = plot_list, zplot = z_plot, grid = grid_obj))
 }
-
 
 #' Find Closest Subjects
 #'

@@ -12,6 +12,7 @@ longitudinalNormativeSummary(
   timecol = "yearsbl",
   sexcol = "commonSex",
   agecol = "commonAge",
+  zlim = c(-2, 2),
   return_plot = FALSE,
   verbose = FALSE
 )
@@ -30,6 +31,8 @@ longitudinalNormativeSummary(
 \item{sexcol}{Name of sex column (default = "commonSex").}
 
 \item{agecol}{Name of age column (default = "commonAge").}
+
+\item{zlim}{Numeric vector of length 2 for y-limits on Z-score plot (default = c(-2, 2)). If NULL, no limits set.}
 
 \item{return_plot}{Logical, whether to return the combined grid plot.}
 
