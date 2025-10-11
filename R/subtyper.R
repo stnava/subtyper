@@ -9624,7 +9624,7 @@ create_glossary_table <- function(terms,
   
   # Create gt table
   glossary_table <- glossary_df %>%
-    gt() %>%
+    gt::gt() %>%
     tab_header(
       title = table_title,
       subtitle = "Key terms and their definitions"
