@@ -33,6 +33,6 @@ three keys:
 \itemize{
 \item "consistency"   : low / medium / high
 \item "justification" : academic explanation
-\item "plausibility"  : continuous numeric score between zero and one \link{0.0–1.0}
+\item "plausibility"  : continuous numeric score between zero and one
 }
 }

@@ -3544,106 +3544,7 @@ augment_with_custom_color <- function(df, column_name, color_palette, color_pale
 }
 
 
-#' prplot
-#' 
-#' Partial residual regression plot using ggpubr for display 
-#' and visreg for partial residual calculation 
-#'
-#' @param mdl input fitted model
-#' @param xvariable a model term
-#' @param byvariable a model term interacting with the xvariable
-#' @param titlestring string for title
-#' @param ystring string for title
-#' @param addpoints continuous value greater than zero
-#' @param palette string
-#' @param colorvar string
-#' @param extradata dataframe with additional information to be rendered
-#' @return the quantile transformed vector
-#' @export
-prplot <- function(
-  mdl, xvariable, byvariable, titlestring = '', ystring = '', 
-  addpoints = 0, palette = 'npg', colorvar = '', extradata = NULL
-) {
-  addthepoints <- FALSE
-  colorvarnotempty <- TRUE
-  if (colorvar == '') {
-    colorvarnotempty <- FALSE
-    colorvar <- 'black'
-  }
-  if (!is.null(extradata)) {
-    extradata <- extradata[names(predict(mdl)), ]
-  }
-  if (addpoints > 0) addthepoints <- TRUE
-  
-  if (!missing(byvariable)) {
-    vv <- visreg::visreg(mdl, xvariable, by = byvariable, plot = FALSE)
-    
-    # Ensure all levels of byvariable are preserved
-    vv$res[, byvariable] <- factor(vv$res[, byvariable], levels = levels(model.frame(mdl)[, byvariable]))
-    
-    # Handle colorvar levels in the data
-    if (colorvar %in% names(model.frame(mdl))) {
-      vv$res[, colorvar] <- model.frame(mdl)[names(predict(mdl)), colorvar]
-    } else if (!is.null(extradata)) {
-      if (colorvar %in% colnames(extradata)) {
-        vv$res[, colorvar] <- factor(extradata[, colorvar], levels = levels(model.frame(mdl)[, colorvar]))
-      }
-    }
-    
-    if (is.factor(vv$res[, xvariable]) | is.character(vv$res[, xvariable])) {
-      return(
-        ggdotplot(
-          vv$res, x = xvariable, y = 'visregRes', size = addpoints, palette = palette,
-          conf.int = TRUE, point = addthepoints, facet.by = byvariable, cor.coef = TRUE
-        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring)
-      )
-    } else {
-      myaddparams <- list(color = "blue", fill = "cyan")
-      mypp <- predict(mdl)
-      mylims <- range(mypp) * c(1.3, 1.0)
-      return(
-        ggscatter(
-          vv$res, x = xvariable, y = 'visregRes', size = addpoints, palette = palette,
-          point = addthepoints, add = 'reg.line', conf.int = TRUE, color = colorvar, facet.by = byvariable,
-          add.params = myaddparams, cor.coef = TRUE
-        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring) +
-          theme(legend.position = "top", legend.title = element_blank())
-      )
-    }
-  }
-  
-  if (missing(byvariable)) {
-    vv <- visreg::visreg(mdl, xvariable, plot = FALSE)
-    
-    # Ensure colorvar levels are handled correctly
-    if (colorvar %in% names(model.frame(mdl))) {
-      vv$res[, colorvar] <- model.frame(mdl)[names(predict(mdl)), colorvar]
-    } else if (!is.null(extradata)) {
-      if (colorvar %in% colnames(extradata)) {
-        vv$res[, colorvar] <- factor(extradata[, colorvar], levels = levels(model.frame(mdl)[, colorvar]))
-      }
-    }
-    
-    if (is.factor(vv$res[, xvariable]) | is.character(vv$res[, xvariable])) {
-      return(
-        ggboxplot(
-          vv$res, x = xvariable, y = 'visregRes', size = addpoints, palette = palette,
-          conf.int = TRUE, point = addthepoints, add.params = list(color = "blue", fill = "cyan"),
-          fill = colorvar, cor.coef = TRUE
-        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring)
-      )
-    } else {
-      return(
-        ggscatter(
-          vv$res, x = xvariable, y = 'visregRes', size = addpoints, point = addthepoints,
-          add = 'reg.line', conf.int = TRUE, color = colorvar, add.params = list(color = "blue", fill = "cyan"),
-          palette = palette, cor.coef = TRUE
-        ) + theme(text = element_text(size = 12)) + ylab(ystring) + ggtitle(titlestring) +
-          theme(legend.position = "top", legend.title = element_blank())
-      )
-    }
-  }
-}
+
 
 #' balanced sampling of a variable
 #' 
@@ -6423,7 +6324,7 @@ create_table1 <- function(data,
 
   # --- 2. Core Summary using gtsummary ---
   summary_tbl <- gtsummary::tbl_summary(
-    data, by = tidyselect::all_of(by_var), include = tidyselect::all_of(vars),
+    data, by = by_var, include = vars,
     statistic = statistic, digits = digits, missing_text = missing_text, type = type
   )
 
@@ -8728,7 +8629,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank",
 #' three keys:
 #' - "consistency"   : low / medium / high
 #' - "justification" : academic explanation
-#' - "plausibility"  : continuous numeric score between zero and one [0.0–1.0]
+#' - "plausibility"  : continuous numeric score between zero and one
 #'
 #' @param response_length Character. Desired length of justification.
 #'   One of: "short" (2–3 sentences), "medium" (3–6), "long" (5–8).
