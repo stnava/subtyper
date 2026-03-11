@@ -18,18 +18,10 @@
 #' print(seedValue)
 #' @export
 setSeedBasedOnTime <- function() {
-  op <- options(digits.secs = 8)
-  # Get the current time
-  currentTime <- Sys.time()
-  
-  # Convert the current time to a numeric value
-  # numericTime <- as.numeric(currentTime, units = "secs")
-  numericTime = as.integer(substr(as.character(Sys.time()),22,200))
-  # Use the numeric time as the seed
-  set.seed(numericTime)
-  
-  # Optionally, return the seed value used
-  return(numericTime)
+  current_time <- as.numeric(Sys.time())
+  seed <- as.integer((current_time %% 1) * 1e8) + as.integer(current_time)
+  set.seed(seed)
+  return(seed)
 }
 
 #' Grep entries with a vector search parameters
@@ -44,7 +36,7 @@ setSeedBasedOnTime <- function() {
 multigrep <- function( x, desc, intersect=FALSE ) {
   roisel = c()
   for ( xx in x ) {
-    if (length(roisel)==0 | !intersect ) {
+    if (length(roisel) == 0 || !intersect) {
       roisel = c( roisel, grep(xx, desc) )
     } else {
       roisel = intersect( roisel, grep(xx, desc) )
@@ -139,13 +131,7 @@ adjust_assoc_matrix <- function(assoc_mat,
     pc1 <- svd_res$u[,1, drop=FALSE] %*% t(svd_res$v[,1, drop=FALSE]) * svd_res$d[1]
     mat <- mat - pc1
   } else if (method == "glasso") {
-    if (!requireNamespace("glasso", quietly = TRUE)) {
-      stop("Package 'glasso' must be installed to use method='glasso'.")
-    }
-    cov_mat <- cov(mat, use="pairwise.complete.obs")
-    glasso_fit <- glasso::glasso(cov_mat, rho=lambda)
-    mat <- glasso_fit$wi  # partial correlation precision matrix
-    rownames(mat) <- colnames(mat) <- colnames(assoc_mat)
+    stop("method='glasso' is not currently supported here because it changes the matrix semantics from feature × domain to domain × domain. Use a normalization/regression method instead.")
   }
 
   # Assign domains based on maximum adjusted score
@@ -177,8 +163,6 @@ adjust_assoc_matrix <- function(assoc_mat,
 #' @export
 mapAsymVar <-function( mydataframe, leftvar, leftname='left', rightname='right', replacer='Asym' ) {
 
-  library(stringr)
-  library(purrr)
   replace_values <- function(input_string) {
     # Function to modify a number based on the specified rules
     modify_value <- function(number) {
@@ -5881,7 +5865,11 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
       # Numeric column
       pop_mean <- mean(pop_data, na.rm = TRUE)
       pop_sd <- sd(pop_data, na.rm = TRUE)
-      z_scores <- (subj_vals - pop_mean) / pop_sd
+      if (is.na(pop_sd) || pop_sd == 0) {
+        z_scores <- rep(NA_real_, length(subj_vals))
+      } else {
+        z_scores <- (subj_vals - pop_mean) / pop_sd
+      }
 
       summary_list[[col]] <- list(
         Mean = pop_mean,
@@ -5907,8 +5895,11 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
 
     } else {
       # Categorical column
-      pop_data <- droplevels(factor(pop_data))
-      subj_vals <- factor(subj_vals, levels = levels(pop_data))
+      pop_levels <- levels(factor(pop_data))
+      subj_levels <- unique(as.character(subj_vals))
+      all_levels <- unique(c(pop_levels, subj_levels))
+      pop_data <- factor(pop_data, levels = all_levels)
+      subj_vals <- factor(subj_vals, levels = all_levels)
       freq_tbl <- table(pop_data)
       summary_list[[col]] <- list(
         FrequencyTable = freq_tbl,
@@ -5940,16 +5931,57 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
       )
     }))
 
-    z_plot <- ggplot(z_df, aes(x = Column, y = ZScore, fill = Time)) +
+    z_df$ZScoreDisplay <- z_df$ZScore
+    z_df$ZScoreClipped <- FALSE
+    if (!is.null(zlim)) {
+      z_df$ZScoreClipped <- !is.na(z_df$ZScore) & (z_df$ZScore < zlim[1] | z_df$ZScore > zlim[2])
+      z_df$ZScoreDisplay <- ifelse(
+        is.na(z_df$ZScore),
+        NA_real_,
+        pmax(pmin(z_df$ZScore, zlim[2]), zlim[1])
+      )
+    }
+
+    z_df$ZScoreLabel <- NA_character_
+    if (!is.null(zlim)) {
+      z_df$ZScoreLabel <- ifelse(
+        z_df$ZScoreClipped,
+        ifelse(z_df$ZScore > zlim[2],
+          paste0("> ", format(round(zlim[2], 2), trim = TRUE, nsmall = 0)),
+          paste0("< ", format(round(zlim[1], 2), trim = TRUE, nsmall = 0))
+        ),
+        NA_character_
+      )
+    }
+
+    z_plot <- ggplot(z_df, aes(x = Column, y = ZScoreDisplay, fill = Time)) +
       geom_bar(stat = "identity", position = "dodge") +
       geom_hline(yintercept = 0, linetype = "dashed") +
+      geom_text(
+        data = z_df[!is.na(z_df$ZScoreLabel), , drop = FALSE],
+        aes(
+          x = Column,
+          y = ZScoreDisplay,
+          label = ZScoreLabel,
+          group = Time
+        ),
+        position = position_dodge(width = 0.9),
+        hjust = ifelse(
+          z_df[!is.na(z_df$ZScoreLabel), "ZScore"] >= 0,
+          -0.15,
+          1.15
+        ),
+        size = 3,
+        inherit.aes = FALSE
+      ) +
       labs(title = paste( partyid,": Z-scores"), x = "", y = "Z-Score") +
       theme_minimal() +
-      coord_flip() + 
-      scale_fill_brewer(palette = "Dark2") + theme(legend.position = "none")
+      coord_flip(clip = "off") + 
+      scale_fill_brewer(palette = "Dark2") +
+      theme(legend.position = "none")
 
     if (!is.null(zlim)) {
-      z_plot <- z_plot + ylim(zlim)
+      z_plot <- z_plot + scale_y_continuous(limits = zlim)
     }
 
   } else {
@@ -5957,7 +5989,7 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
   }
 
   # Combine all plots into a single grid
-  all_plots <- c(plot_list, list(z_plot))
+  all_plots <- if (is.null(z_plot)) plot_list else c(plot_list, list(z_plot))
   ncolg <- ceiling(sqrt(length(all_plots)))
   grid_obj <- do.call(gridExtra::arrangeGrob, c(all_plots, ncol = ncolg))
 
