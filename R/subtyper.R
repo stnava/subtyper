@@ -5,6 +5,25 @@
     invisible()
 }
 
+# Internal helper functions
+.my_mode <- function(x) {
+  if (length(x) == 0 || all(is.na(x))) return(NA)
+  x_no_na <- x[!is.na(x)]
+  if (length(x_no_na) == 0) return(NA)
+  # Coerce to character to handle factors / logicals consistently
+  ux <- unique(as.character(x_no_na))
+  tab <- tabulate(match(as.character(x_no_na), ux))
+  mode_val <- ux[which.max(tab)]
+  return(mode_val)
+}
+
+.most_freq <- function(x, na.rm = TRUE) {
+  if (is.numeric(x)) {
+    return(mean(x, na.rm = na.rm))
+  }
+  .my_mode(x)
+}
+
 
 #' Set Seed Based on Current Time
 #'
@@ -1676,26 +1695,6 @@ fillBaselineColumn <- function(
   # This is a common utility function in some R packages, often defined as `which(x)`.
   get_indices_for_which <- function(x) which(x)
 
-  myMode <- function(x) {
-    if (length(x) == 0 || all(is.na(x))) return(NA)
-    x_no_na <- x[!is.na(x)]
-    if (length(x_no_na) == 0) return(NA)
-    
-    # Coerce to character to handle factors / logicals consistently
-    ux <- unique(as.character(x_no_na))
-    tab <- tabulate(match(as.character(x_no_na), ux))
-    mode_val <- ux[which.max(tab)]
-    return(mode_val)
-  }
-  
-  # mostfreq handles both numeric (mean) and non-numeric (mode)
-  mostfreq <- function(x, na.rm = TRUE) {
-    if (is.numeric(x)) {
-      return(mean(x, na.rm = na.rm))
-    }
-    return(myMode(x))
-  }
-
   # --- Input Validation ---
   if (!(subjectID %in% names(mxdfin)))
     stop(paste("subjectID column '", subjectID, "' not found in data frame's columns.", sep=""))
@@ -1763,11 +1762,11 @@ fillBaselineColumn <- function(
       # Corrected aggregate usage:
       # x: only the data columns to aggregate
       # by: a list containing the grouping variable (e.g., subjectID)
-      # FUN: the function to apply (mostfreq)
+      # FUN: the function to apply (.most_freq)
       bldf2_agg_data <- aggregate(
         x = bldf_raw[sel2, columnName, drop = FALSE],
         by = list(grp_id = multisubs),
-        FUN = mostfreq,
+        FUN = .most_freq,
         na.rm = TRUE
       )
       
@@ -1893,8 +1892,8 @@ fillBaselineColumn <- function(
             # Use mean for numeric baseline values
             baseval <- mean(lomxdfin[selbase, columnNameLoc], na.rm = TRUE)
           } else {
-            # Use mostfreq (myMode) for non-numeric baseline values
-            baseval <- mostfreq(lomxdfin[selbase, columnNameLoc], na.rm = TRUE)
+            # Use .most_freq (myMode) for non-numeric baseline values
+            baseval <- .most_freq(lomxdfin[selbase, columnNameLoc], na.rm = TRUE)
           }
         }
         mxdfin[losel, newcolnameLoc] <- baseval
@@ -4770,160 +4769,131 @@ merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf
 #' # visglm(data, fit, c("x1", "x2"), "y", "control", 
 #' #   "Visualization for Control Group")
 #' #
-#' @importFrom ggplot2 ggplot geom_line geom_point
-#' @importFrom ciTools add_ci
-#' @import ciTools
+#' @importFrom ggplot2 ggplot aes geom_line geom_point geom_ribbon labs theme_minimal .data
+#' @importFrom stats predict formula family model.frame median cov
 #' @export
-visglm <- function(demogmdl, qmdl, x, y, group=NULL, titlestring='',  varstoadd=NULL, groupvar = 'group', predictorsigns=NULL, jdf_simulation=FALSE, xrange=NULL, verbose = FALSE) {  
-  .env <- environment() ## identify the environment of cv.step
-  if ( is.null( varstoadd ) ) {
-    varstoadd=all.vars( formula( qmdl ) )
-  }
-  simulateJointDistribution <- function(exampleData, nSimulations, distribution='unf') {
-    # Step 1: Compute covariance matrix and perform Cholesky decomposition
-    covMatrix <- cov(data.matrix(exampleData))
-    cholMatrix <- chol(covMatrix)
-    
-    # Step 2: Simulate standard normally distributed data
-    n <- nrow(exampleData)  # Original number of observations
-    p <- ncol(exampleData)  # Original number of variables
-    if ( distribution=='normal' ) {
-      simDataStdNormal <- matrix(rnorm(nSimulations * p), nrow = nSimulations, ncol = p)
-    } else {
-      simDataStdNormal <- scale(matrix( 1:(nSimulations * p), nrow = nSimulations, ncol = p),T,T)
-    #  simDataStdNormal[ simDataStdNormal > 1.5]=1.5
-    #  simDataStdNormal[ simDataStdNormal < -1.5]=-1.5
-    }
-    # Step 3: Apply the Cholesky matrix to simulated data to preserve correlation
-    simDataCorrelated <- simDataStdNormal %*% cholMatrix
-    
-    # Step 4: Adjust the means of the simulated data
-    meanVector <- colMeans(exampleData)  # Mean of each variable in the original data
-    simDataAdjusted <- sweep(simDataCorrelated, 2, meanVector, '+')
-    
-    # Step 5: Convert to a data frame and assign column names
-    simDataFrame <- as.data.frame(simDataAdjusted)
-    names(simDataFrame) <- names(exampleData)
-    
-    return(simDataFrame)
+visglm <- function(
+  demogmdl, 
+  qmdl, 
+  x, 
+  y, 
+  group = NULL, 
+  titlestring = '',  
+  varstoadd = NULL, 
+  groupvar = 'group', 
+  predictorsigns = NULL, 
+  jdf_simulation = FALSE, 
+  xrange = NULL, 
+  verbose = FALSE
+) {
+
+  if (verbose) message("visglm: start")
+
+  if (!(groupvar %in% colnames(demogmdl))) {
+    stop(paste("The group variable", groupvar, "does not exist in the dataset."))
   }
 
-  verbfn <- function( x, verbose=FALSE ) {
-    if ( verbose ) print(paste("visglm:", x)); 
-  }
-  verbfn('start',verbose)
-  myMode <- function(x) {
-    ux <- unique(x)
-    ux[which.max(tabulate(match(x, ux)))]
-    }
-  mostfreq <- function( x, na.rm=TRUE ) {
-    if ( is.numeric( x ) ) return( mean(x,na.rm=na.rm ) )
-    return( myMode( x ) )
-  }
-
-  # Check if groupvar exists in data
-  if ( !(groupvar %in% colnames(demogmdl) )) {
-    errmsg = paste("The group variable", groupvar, "does not exist in the dataset.")
-    stop(errmsg)
-  }
-  verbfn('check group',verbose)
   if (is.null(predictorsigns)) {
-    predictorsigns = rep(1,length(x))
-    names(predictorsigns)=x
-    }
-  verbfn('predictorsigns',verbose)
-  xrowname=paste(x,collapse='+')
-  verbfn('xrowname',verbose)
-  tt=x[1]
-  n2sim = 500
-  timeaxis0 = seq( min(demogmdl[,tt],na.rm=T), max(demogmdl[,tt],na.rm=T),length.out=n2sim)
-  if ( predictorsigns[x[1]] < 0 ) timeaxis0=rev(timeaxis0)
-  verbfn('confint',verbose)
-  myconf = confint(qmdl)
-  verbfn('confint done',verbose)
-  mycolor='magenta'
-  mylev=group
-  verbfn('group',verbose)
-  mycolor='blue'
-  if ( !is.null(group) ) {
-    if ( group != 'control' ) mycolor='blue'
-    if ( group=='all') {
-      psel=rep(TRUE,nrow(demogmdl))
-      mylev=group
-    } else psel = demogmdl[,groupvar] == group
-  } else psel = !is.na( demogmdl[,y] )
-  atpreds = list( )
-  verbfn('all.vars',verbose)
-  if ( missing( varstoadd) ) {
-    varstoadd = all.vars(qmdl$formula)[-1]
+    predictorsigns <- rep(1, length(x))
+    names(predictorsigns) <- x
   }
-  verbfn('varstoadd',verbose)
-  if ( jdf_simulation ) {
-    simmed = simulateJointDistribution( data.matrix(demogmdl[,x]), n2sim )
-    colnames(simmed)=x
-    }
-  if ( is.null( xrange )) {
-    loqhiq=range(demogmdl[,x],na.rm=T)
-  } else loqhiq = xrange
-  for ( zz in  varstoadd ) {
-    n = length( atpreds ) + 1
-    if ( verbose ) print( paste( n,"of", length(varstoadd),zz))
-    if ( zz %in% x ) {
-        timeaxis = seq( loqhiq[1], loqhiq[2],length.out=length(timeaxis0))
-        if ( predictorsigns[zz] < 0 ) timeaxis=rev(timeaxis)
-        atpreds[[ n ]] = timeaxis
-        if ( jdf_simulation )
-          atpreds[[ n ]] = as.numeric(simmed[,zz])
-    } else if ( is.numeric( demogmdl[psel,zz] )) {
-        atpreds[[ n ]] = rep( mean(demogmdl[psel,zz],na.rm=T), length(timeaxis0))
+
+  primary_x <- x[1]
+  n_sim <- 500
+
+  # Determine group selection for observations and background covariates
+  if (!is.null(group)) {
+    if (group == 'all') {
+      psel <- rep(TRUE, nrow(demogmdl))
     } else {
-        mostfreqvar = mostfreq( demogmdl[psel,zz] )
-        atpreds[[ n ]] = rep( mostfreqvar, length(timeaxis0))
+      psel <- as.character(demogmdl[[groupvar]]) == as.character(group)
     }
-    names(atpreds)[[n]] = zz
+  } else {
+    psel <- !is.na(demogmdl[[y]])
+  }
+  plot_obs <- demogmdl[psel, , drop = FALSE]
+
+  # Variables to include in prediction grid
+  if (is.null(varstoadd)) {
+    varstoadd <- all.vars(formula(qmdl))
+    varstoadd <- varstoadd[varstoadd != y]
+  }
+
+  # Handle range for primary predictor
+  if (is.null(xrange)) {
+    xrange_val <- range(demogmdl[[primary_x]], na.rm = TRUE)
+  } else {
+    xrange_val <- xrange
   }
   
-  verbfn('x1',verbose)
-  verbfn('Ypred',verbose)
-  Y <- predict( qmdl, atpreds, type='response', se.fit=TRUE, env=.env )
-  
-  verbfn('add_ci',verbose)
-  demogmdl$imaging_protocol=mostfreq(demogmdl$imaging_protocol)
-  demogmdl$commonID=mostfreq(demogmdl$commonID)
-  dat1 <- add_ci(demogmdl, qmdl, names = c("lpb", "upb"), alpha = 0.05, nsims = 25, allow.new.levels = TRUE)
-  verbfn('Yci',verbose)
-  ydelta = Y$fit - Y$se.fit
-  Y$ciminus = Y$fit-1.96*Y$se.fit
-  Y$ciplus = Y$fit+1.96*Y$se.fit
-  verbfn('ciplus',verbose)
-  myyvars = c(demogmdl[psel,y],Y$ciminus, Y$ciplus)
-  myyvars = demogmdl[,y]
-  verbfn('myyvars',verbose)
-  rangerx = range(demogmdl[psel,x],na.rm=T)
-  scl = c(0.98,1.02)
-  rangerx = rangerx * scl
-  rangery = range(myyvars,na.rm=T) * scl
-  verbfn('ranger',verbose)
-  plot(timeaxis0, Y$fit, xlab = xrowname, ylab = y, type='l',
-    xlim=loqhiq,
-    ylim=rangery, main=paste(group, " ", titlestring))
-  verbfn('plotting',verbose)
-  lines(timeaxis0, Y$fit, lwd = 2, col = mycolor)
-  lines(timeaxis0, Y$ciplus, lwd = 2, col = "red", lty=2)
-  lines(timeaxis0, Y$ciminus, lwd = 2, col = "red", lty=2)
-  verbfn('plot',verbose)
-#  myco=(coefficents(summary(qmdl)))
-#  corows=rownames(myco)
-#  bestx=which.min( myco[ ])
-  if ( length( x ) > 1 ) {
-    xpoints = rowMeans( demogmdl[psel,x], na.rm=T )
-  } else xpoints = demogmdl[psel,x]
-  points( xpoints, demogmdl[psel,y], col=mycolor )
-  if ( !is.null( group ) )
-  if ( group == 'all' ) {
-    notexp=demogmdl[,groupvar]!=group
-    points( (demogmdl[notexp,x]), demogmdl[notexp,y], col='magenta' )
+  # Prepare prediction data
+  if (jdf_simulation && length(x) > 1) {
+    if (verbose) message("visglm: simulating joint distribution")
+    example_data <- data.matrix(demogmdl[, x, drop = FALSE])
+    mu <- colMeans(example_data, na.rm = TRUE)
+    sigma <- stats::cov(example_data, use = "pairwise.complete.obs")
+    
+    # Simulate using MASS::mvrnorm if available
+    if (requireNamespace("MASS", quietly = TRUE)) {
+      sim_data <- MASS::mvrnorm(n_sim, mu = mu, Sigma = sigma, empirical = TRUE)
+      sim_df <- as.data.frame(sim_data)
+    } else {
+      if (verbose) message("visglm: MASS package not found; using basic simulation for joint distribution.")
+      # Fallback to Cholesky
+      chol_matrix <- chol(sigma)
+      sim_std <- matrix(stats::rnorm(n_sim * length(x)), nrow = n_sim, ncol = length(x))
+      sim_df <- as.data.frame(sweep(sim_std %*% chol_matrix, 2, mu, '+'))
+    }
+    colnames(sim_df) <- x
+    sim_df <- sim_df[order(sim_df[[primary_x]]), ]
   }
+
+  newdata <- data.frame(matrix(nrow = n_sim, ncol = 0))
+  for (var in varstoadd) {
+    if (var == primary_x) {
+      newdata[[var]] <- seq(xrange_val[1], xrange_val[2], length.out = n_sim)
+      if (predictorsigns[var] < 0) newdata[[var]] <- rev(newdata[[var]])
+    } else if (var %in% x && jdf_simulation) {
+      newdata[[var]] <- sim_df[[var]]
+    } else if (var %in% x) {
+      # If not simulating joint, hold other predictors at their overall mean
+      newdata[[var]] <- .most_freq(demogmdl[[var]], na.rm = TRUE)
+    } else {
+      # Other covariates held at group-specific mean/mode
+      newdata[[var]] <- .most_freq(plot_obs[[var]], na.rm = TRUE)
+    }
+  }
+
+  if (verbose) message("visglm: generating predictions")
+  # Predictions and CIs on the link scale for better coverage
+  pred <- stats::predict(qmdl, newdata = newdata, type = 'link', se.fit = TRUE)
+  link_inv <- stats::family(qmdl)$linkinv
+  
+  newdata$fit <- link_inv(pred$fit)
+  newdata$lwr <- link_inv(pred$fit - 1.96 * pred$se.fit)
+  newdata$upr <- link_inv(pred$fit + 1.96 * pred$se.fit)
+
+  # Plotting
+  my_color <- if (!is.null(group) && as.character(group) == "control") "magenta" else "blue"
+  
+  if (verbose) message("visglm: building plot")
+  p <- ggplot2::ggplot(newdata, ggplot2::aes(x = .data[[primary_x]], y = .data$fit)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$lwr, ymax = .data$upr), alpha = 0.2, fill = my_color) +
+    ggplot2::geom_line(color = my_color, linewidth = 1) +
+    ggplot2::geom_point(data = plot_obs, ggplot2::aes(x = .data[[primary_x]], y = .data[[y]]), color = my_color, alpha = 0.5) +
+    ggplot2::labs(
+      title = titlestring,
+      subtitle = paste("Group:", ifelse(is.null(group), "All", group)),
+      x = primary_x,
+      y = y
+    ) +
+    ggplot2::theme_minimal()
+
+  if (jdf_simulation) {
+    p <- p + ggplot2::labs(caption = "Note: Simulated joint distribution used for predictors.")
+  }
+
+  return(p)
 }
 
 
