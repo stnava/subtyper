@@ -4,11 +4,12 @@
 #' using raw ggplot2.
 #'
 #' For numeric predictors, the plotted y-values are:
-#'   residuals(mdl) + term_contribution(xvariable)
-#' where term_contribution is taken from predict(type = "terms").
+#'   residuals(mdl) + sum(term_contributions_involving_xvariable)
+#' where term_contributions are taken from predict(type = "terms").
 #'
 #' For simple linear-model main effects, this is the standard
-#' component-plus-residual construction.
+#' component-plus-residual construction. This version supports interaction terms
+#' by summing all terms involving the focal predictor.
 #'
 #' @param mdl fitted model object supporting model.frame(), residuals(),
 #'   predict(type = "terms"), coef(), vcov().
@@ -257,36 +258,36 @@ prplot <- function(
   }
 
   term_names <- colnames(pred_terms)
-  term_name <- .prplot_find_term_column(term_names, xvariable)
-  if (is.null(term_name)) {
+  term_names_to_use <- .prplot_find_term_columns(term_names, xvariable)
+  
+  if (length(term_names_to_use) == 0) {
     stop(
       paste0(
-        "Could not identify a unique simple fitted term for '",
+        "Could not identify any fitted terms involving '",
         xvariable,
-        "'. This plot currently supports simple main-effect terms."
+        "'. Ensure the variable name matches the term name in the model."
       ),
       call. = FALSE
     )
   }
 
-  fit <- pred_terms[, term_name]
-  list(term_name = term_name, fit = as.numeric(fit))
+  fit <- if (length(term_names_to_use) == 1) {
+    pred_terms[, term_names_to_use]
+  } else {
+    rowSums(pred_terms[, term_names_to_use, drop = FALSE])
+  }
+  
+  list(term_names = term_names_to_use, fit = as.numeric(fit))
 }
 
-.prplot_find_term_column <- function(term_names, xvariable) {
-  if (is.null(term_names)) return(NULL)
+.prplot_find_term_columns <- function(term_names, xvariable) {
+  if (is.null(term_names)) return(character(0))
 
-  exact_hit <- which(term_names == xvariable)
-  if (length(exact_hit) == 1L) {
-    return(term_names[exact_hit])
-  }
-
-  prefix_hits <- grep(paste0("^", xvariable), term_names)
-  if (length(prefix_hits) == 1L) {
-    return(term_names[prefix_hits])
-  }
-
-  NULL
+  # An interaction term name in R usually combines variables with ':' 
+  # e.g., "x1:x2". We check if xvariable is one of the components.
+  matches <- sapply(strsplit(term_names, ":"), function(parts) xvariable %in% trimws(parts))
+  
+  term_names[matches]
 }
 
 .prplot_restore_factor_levels <- function(out_data, source_data, variable) {
@@ -332,12 +333,17 @@ prplot <- function(
   }
 
   rn <- rownames(cf)
+  # Priority 1: Exact match (main effect)
   idx <- which(rn == xvariable)
+  
+  # Priority 2: Simple interaction or prefix match if only one exists
   if (length(idx) != 1L) {
     prefix_idx <- grep(paste0("^", xvariable), rn)
     if (length(prefix_idx) == 1L) {
       idx <- prefix_idx
     } else {
+      # If multiple coefficients (e.g. interaction with factor), 
+      # we return NULL for simplicity rather than picking one arbitrarily.
       return(NULL)
     }
   }
@@ -436,7 +442,7 @@ prplot <- function(
   )
 }
 
-.prplot_model_line_data <- function(mdl, plot_data, xvariable) {
+.prplot_model_line_data <- function(mdl, plot_data, xvariable, byvariable = NULL) {
   x <- plot_data[[xvariable]]
   if (!is.numeric(x)) return(NULL)
 
@@ -444,52 +450,86 @@ prplot <- function(
   term_info <- .prplot_extract_training_term(mdl, model_data, xvariable)
   xgrid <- seq(min(x, na.rm = TRUE), max(x, na.rm = TRUE), length.out = 200)
 
-  newdata <- model_data[rep(1L, length(xgrid)), , drop = FALSE]
-  for (nm in names(newdata)) {
-    if (identical(nm, xvariable)) {
-      newdata[[nm]] <- xgrid
+  # If byvariable is provided, we create a grid for each level to show group-specific slopes.
+  if (!is.null(byvariable) && byvariable %in% names(model_data)) {
+    target_col <- model_data[[byvariable]]
+    lvls <- if (is.factor(target_col)) {
+      levels(target_col)
     } else {
-      col <- model_data[[nm]]
-      if (is.numeric(col)) {
-        newdata[[nm]] <- rep(stats::median(col, na.rm = TRUE), length(xgrid))
-      } else if (is.factor(col)) {
-        ref <- levels(col)[1]
-        newdata[[nm]] <- factor(rep(ref, length(xgrid)), levels = levels(col))
-      } else if (is.character(col)) {
-        tab <- sort(table(col), decreasing = TRUE)
-        ref <- names(tab)[1]
-        newdata[[nm]] <- rep(ref, length(xgrid))
-      } else if (is.logical(col)) {
-        tab <- sort(table(col), decreasing = TRUE)
-        ref <- as.logical(names(tab)[1])
-        newdata[[nm]] <- rep(ref, length(xgrid))
-      } else {
-        newdata[[nm]] <- rep(col[1], length(xgrid))
-      }
+      unique(target_col)
     }
+  } else {
+    lvls <- list(NULL)
   }
 
-  pred <- tryCatch(
-    stats::predict(mdl, newdata = newdata, type = "terms", se.fit = TRUE),
-    error = function(e) NULL
-  )
-  if (is.null(pred) || is.null(pred$fit)) return(NULL)
+  all_lines <- lapply(lvls, function(lvl) {
+    newdata <- model_data[rep(1L, length(xgrid)), , drop = FALSE]
+    for (nm in names(newdata)) {
+      if (identical(nm, xvariable)) {
+        newdata[[nm]] <- xgrid
+      } else if (!is.null(lvl) && identical(nm, byvariable)) {
+        newdata[[nm]] <- lvl
+      } else {
+        col <- model_data[[nm]]
+        if (is.numeric(col)) {
+          newdata[[nm]] <- rep(stats::median(col, na.rm = TRUE), length(xgrid))
+        } else if (is.factor(col)) {
+          ref <- levels(col)[1]
+          newdata[[nm]] <- factor(rep(ref, length(xgrid)), levels = levels(col))
+        } else {
+          tab <- sort(table(col), decreasing = TRUE)
+          ref <- names(tab)[1]
+          if (is.logical(col)) ref <- as.logical(ref)
+          newdata[[nm]] <- rep(ref, length(xgrid))
+        }
+      }
+    }
 
-  term_name <- term_info$term_name
-  term_cols <- colnames(pred$fit)
-  if (is.null(term_cols) || !term_name %in% term_cols) return(NULL)
+    pred <- tryCatch(
+      stats::predict(mdl, newdata = newdata, type = "terms", se.fit = TRUE),
+      error = function(e) NULL
+    )
+    if (is.null(pred) || is.null(pred$fit)) return(NULL)
 
-  fit <- as.numeric(pred$fit[, term_name])
-  se_fit <- if (!is.null(pred$se.fit)) as.numeric(pred$se.fit[, term_name]) else rep(NA_real_, length(fit))
-  crit <- stats::qnorm(0.975)
+    term_names <- term_info$term_names
+    fit_cols <- colnames(pred$fit)
+    
+    # Check that terms are present in prediction
+    available_terms <- term_names[term_names %in% fit_cols]
+    if (length(available_terms) == 0) return(NULL)
+    
+    fit <- if (length(available_terms) == 1) {
+      as.numeric(pred$fit[, available_terms])
+    } else {
+      as.numeric(rowSums(pred$fit[, available_terms, drop = FALSE]))
+    }
+    
+    # For multiple terms (interactions), we omit the SE ribbon for simplicity
+    # and to avoid complex covariance calculations between terms.
+    se_fit <- if (length(available_terms) == 1 && !is.null(pred$se.fit)) {
+      as.numeric(pred$se.fit[, available_terms])
+    } else {
+      rep(NA_real_, length(fit))
+    }
 
-  data.frame(
-    x = xgrid,
-    fit = fit,
-    lwr = fit - crit * se_fit,
-    upr = fit + crit * se_fit,
-    stringsAsFactors = FALSE
-  )
+    df <- data.frame(
+      x = xgrid,
+      fit = fit,
+      se = se_fit,
+      stringsAsFactors = FALSE
+    )
+    if (!is.null(lvl)) {
+      df[[byvariable]] <- lvl
+    }
+    df
+  })
+
+  line_df <- do.call(rbind, all_lines)
+  if (is.null(line_df)) return(NULL)
+  
+  line_df$lwr <- line_df$fit - stats::qnorm(0.975) * line_df$se
+  line_df$upr <- line_df$fit + stats::qnorm(0.975) * line_df$se
+  line_df
 }
 
 .prplot_build_discrete_plot <- function(
@@ -504,12 +544,12 @@ prplot <- function(
   annotation_x,
   annotation_y
 ) {
-  aes_base <- ggplot2::aes_string(x = xvariable, y = "partial_residual")
-  p <- ggplot2::ggplot(plot_data, aes_base)
+  # Use mapping for modern ggplot compatibility
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[xvariable]], y = .data$partial_residual))
 
   if (!is.null(colorvar)) {
     p <- p + ggplot2::geom_boxplot(
-      ggplot2::aes_string(color = colorvar),
+      ggplot2::aes(color = .data[[colorvar]]),
       outlier.shape = NA,
       alpha = 0.4
     )
@@ -520,7 +560,7 @@ prplot <- function(
   if (addpoints > 0) {
     if (!is.null(colorvar)) {
       p <- p + ggplot2::geom_jitter(
-        ggplot2::aes_string(color = colorvar),
+        ggplot2::aes(color = .data[[colorvar]]),
         width = 0.15,
         height = 0,
         size = addpoints,
@@ -561,12 +601,12 @@ prplot <- function(
   annotation_x,
   annotation_y
 ) {
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes_string(x = xvariable, y = "partial_residual"))
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[xvariable]], y = .data$partial_residual))
 
   if (addpoints > 0) {
     if (!is.null(colorvar)) {
       p <- p + ggplot2::geom_point(
-        ggplot2::aes_string(color = colorvar),
+        ggplot2::aes(color = .data[[colorvar]]),
         size = addpoints,
         alpha = 0.8
       )
@@ -576,7 +616,7 @@ prplot <- function(
   }
 
   if (fit_line == "model") {
-    line_data <- .prplot_model_line_data(mdl, plot_data, xvariable)
+    line_data <- .prplot_model_line_data(mdl, plot_data, xvariable, byvariable)
     if (!is.null(line_data)) {
       p <- p +
         ggplot2::geom_ribbon(
@@ -597,7 +637,7 @@ prplot <- function(
     p <- p + ggplot2::geom_smooth(method = "lm", se = TRUE, formula = y ~ x)
   } else if (fit_line == "group_lm" && !is.null(colorvar)) {
     p <- p + ggplot2::geom_smooth(
-      ggplot2::aes_string(color = colorvar),
+      ggplot2::aes(color = .data[[colorvar]]),
       method = "lm",
       se = TRUE,
       formula = y ~ x
@@ -614,3 +654,13 @@ prplot <- function(
     ggplot2::labs(title = titlestring, x = xvariable, y = ystring) +
     .prplot_common_theme()
 }
+
+# WHAT COULD GO WRONG:
+# 1. Multi-way interactions: Summing terms involving xvariable handles higher-order 
+#    interactions, but the plot only facets by one 'byvariable'.
+# 2. Standard Errors for interactions: Ribbons for 'fit_line = "model"' are omitted 
+#    when multiple terms are summed to avoid complex covariance calculations.
+# 3. Predictor names: The function expects xvariable to match term names exactly. 
+#    Wrapped variables (e.g., poly(x, 2)) should be passed using the full term name.
+# 4. Model support: Works only with models that return a term matrix for 
+#    predict(type = "terms").

@@ -63,9 +63,10 @@ using raw ggplot2.
 }
 \details{
 For numeric predictors, the plotted y-values are:
-residuals(mdl) + term_contribution(xvariable)
-where term_contribution is taken from predict(type = "terms").
+residuals(mdl) + sum(term_contributions_involving_xvariable)
+where term_contributions are taken from predict(type = "terms").
 
 For simple linear-model main effects, this is the standard
-component-plus-residual construction.
+component-plus-residual construction. This version supports interaction terms
+by summing all terms involving the focal predictor.
 }
