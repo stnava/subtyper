@@ -17,52 +17,20 @@ This package expects population-level data frames with longitudinal data.
 
 ## Installing
 
-The pre-release version of the package can be pulled from GitHub using the [devtools](https://github.com/r-lib/devtools) package:
+The pre-release version of the package can be pulled from GitHub using [pak](https://pak.r-lib.org/) (recommended) or [remotes](https://remotes.r-lib.org/):
 
 ```r
-    # install.packages("devtools")
-    devtools::install_github("stnava/subtyper", build_vignettes=TRUE)
+    # Using pak (handles all dependencies automatically)
+    pak::pkg_install("stnava/subtyper")
+
+    # Or using remotes
     remotes::install_github("stnava/subtyper", build_vignettes=TRUE)
 ```
 
-or the smaller `remotes` package:
+**Note on Archived Dependencies:** This package depends on `imbalance` and `DDoutlier`, which have been archived on CRAN. They are automatically installed from their GitHub mirrors when using `pak` or `remotes` because they are listed in the `Remotes:` field of the `DESCRIPTION` file.
 
-```r
-    remotes::install_github("stnava/subtyper", build_vignettes=TRUE)
-```
+See the file `.circleci/config.yml` for hints about system-level dependencies.
 
-See the file `.circleci/config.yml` for hints about installing the many dependencies.  A few other hints below that you may encounter depending on your system, version of R, etc.
-
-```r
-if (!requireNamespace("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-if (!requireNamespace("Biobase", quietly = TRUE))
-  BiocManager::install("Biobase")
-BiocManager::install("globaltest")
-BiocManager::install("sva")
-install.packages("NMF")
-```
-
-```r
-sudo apt install libgmp-dev
-# then install ClusterR
-```
-
-`pgenlibr`
-
-```
-# brew install libsm
-gh repo clone chrchang/plink-ng
-cd plink-ng/2.0/pgenlibr/
-# edit src/Makevars to include  -I/System/Volumes/Data/Users/stnava/code/extern/plink-ng/2.0/simde
-R CMD INSTALL . # FIXME not on arm64 yet
-```
-
-```R
-remotes::install_github('jhmadsen/DDoutlier') # was booted off CRAN
-install.packages( 
-c("ggplot2", "caret", "ClusterR", "coca", "dCUR", "dplyr", "effectsize", "Evacluster", "flexclust", "fpc", "gaston", "ggpubr", "ggthemes", "ggstatsplot", "ggbeeswarm", "globaltest", "gridExtra", "imbalance", "mlr3", "mlr3cluster", "mlr3pipelines", "wesanderson", "Hmisc", "plyr", "data.table", "mclust", "NMF", "pheatmap", "gprofiler2", "magrittr",  "fastICA", "pgenlibr", "VarSelLCM", "visreg"))
-```
 
 ## OSX specific notes: Running R in a Clean Environment
 

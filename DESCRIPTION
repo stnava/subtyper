@@ -90,6 +90,9 @@ Suggests:
     testthat,
     spelling,
     rmarkdown
+Remotes: 
+    ncordon/imbalance,
+    jhmadsen/DDoutlier
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 VignetteBuilder: knitr
