@@ -38,10 +38,10 @@ normativeSummary(
 \value{
 A list with elements:
 \itemize{
-\item \code{summary} — list of per-variable summaries (means, SD, z, p-values or freq tables),
-\item \code{plots} — named list of ggplot objects (one per variable, plus "Z-Scores" if numeric present),
-\item \code{zplot} — the z-score ggplot (or NULL),
-\item \code{combined_plot} — (only returned when \code{return_plot = TRUE}) arranged grob of all plots.
+\item \code{summary} -- list of per-variable summaries (means, SD, z, p-values or freq tables),
+\item \code{plots} -- named list of ggplot objects (one per variable, plus "Z-Scores" if numeric present),
+\item \code{zplot} -- the z-score ggplot (or NULL),
+\item \code{combined_plot} -- (only returned when \code{return_plot = TRUE}) arranged grob of all plots.
 }
 }
 \description{

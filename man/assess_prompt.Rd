@@ -54,7 +54,7 @@ Default: c("short_form", "long_form").}
 
 \item{jitter}{Logical, add jitter to retry delays. Default: TRUE.}
 
-\item{temperature}{Numeric, sampling temperature (0–1). Default: 0.1.}
+\item{temperature}{Numeric, sampling temperature (0-1). Default: 0.1.}
 
 \item{parallel}{Logical, use parallel processing with \code{furrr::future_map}. Default: FALSE.}
 

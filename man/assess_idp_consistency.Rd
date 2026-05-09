@@ -49,7 +49,7 @@ assess_idp_consistency(
 
 \item{jitter}{Logical, add jitter to retry delays. Default: TRUE.}
 
-\item{temperature}{Numeric, sampling temperature (0–1). Default: 0.1.}
+\item{temperature}{Numeric, sampling temperature (0-1). Default: 0.1.}
 
 \item{user_input_prompt}{Character, additional user prompt text. Default: "Assess neuroscientific consistency and return JSON."}
 

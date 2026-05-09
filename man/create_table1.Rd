@@ -55,22 +55,3 @@ This function leverages \code{gtsummary} and \code{gt} to generate a publication
 summary table. It is designed to be robust, highly customizable, and easy
 to integrate into R Markdown workflows for both HTML and PDF output.
 }
-\examples{
-if (require(gtsummary) && require(gt) && require(dplyr)) {
-  # Example 1: Standard usage
-  create_table1(
-    data = gtsummary::trial,
-    by_var = "trt",
-    vars = c("age", "grade")
-  )
-
-  # Example 2: Using the font_size argument for a more compact table
-  create_table1(
-    data = gtsummary::trial,
-    by_var = "trt",
-    vars = c("age", "grade", "response", "marker"),
-    title = "Patient Demographics",
-    font_size = 9 # Set font size to 9pt
-  )
-}
-}

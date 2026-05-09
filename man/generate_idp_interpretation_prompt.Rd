@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtyper.R
 \name{generate_idp_interpretation_prompt}
 \alias{generate_idp_interpretation_prompt}
-\title{Generate a Prompt for Interpreting Brain–Behavior Associations}
+\title{Generate a Prompt for Interpreting Brain-Behavior Associations}
 \usage{
 generate_idp_interpretation_prompt(
   response_length = c("short", "medium", "long"),
@@ -12,12 +12,12 @@ generate_idp_interpretation_prompt(
 }
 \arguments{
 \item{response_length}{Character. Desired length of justification.
-One of: "short" (2–3 sentences), "medium" (3–6), "long" (5–8).}
+One of: "short" (2-3 sentences), "medium" (3-6), "long" (5-8).}
 
 \item{tone}{Character. Interpretive stance. One of:
 "neutral", "skeptical", "critical".}
 
-\item{n_examples}{Integer. Number of exemplar cases to include (0–5).}
+\item{n_examples}{Integer. Number of exemplar cases to include (0-5).}
 }
 \value{
 A character string containing the full prompt.

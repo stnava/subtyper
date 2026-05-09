@@ -179,12 +179,12 @@ json_to_wide_df <- function(json_string) {
   }
 }
 
-#' Generate a Prompt for IDP–Outcome Plausibility Scoring
+#' Generate a Prompt for IDP-Outcome Plausibility Scoring
 #'
 #' This function creates a structured prompt that instructs a large language model (LLM)
-#' to produce a table of plausibility scores (0–1) relating imaging-derived phenotypes (IDPs)
+#' to produce a table of plausibility scores (0-1) relating imaging-derived phenotypes (IDPs)
 #' to behavioral or cognitive outcomes. The scoring framework is based on expert 
-#' neuroscience principles: structure–function specificity, network-level alignment,
+#' neuroscience principles: structure-function specificity, network-level alignment,
 #' disease alignment, reproducibility, and measurement fidelity.
 #'
 #' The function supports either (1) returning only the prompt text (default),
@@ -196,10 +196,10 @@ json_to_wide_df <- function(json_string) {
 #'   cingulate, basal ganglia, basal forebrain, and brainstem nuclei.
 #' @param outcomes A character vector of behavioral or cognitive outcomes.
 #'   Defaults to neuropsychological, global cognition, daily functioning,
-#'   and Parkinson’s measures commonly used in ADNI and related studies.
+#'   and Parkinson's measures commonly used in ADNI and related studies.
 #' @param domains A character vector of functional domains used internally
 #'   in the protocol (episodic memory, working memory, executive control, etc.).
-#'   Defaults to the protocol’s 10+ canonical domains.
+#'   Defaults to the protocol's 10+ canonical domains.
 #' @param call_llm Logical; if \code{TRUE}, the function will attempt to send
 #'   the generated prompt to an LLM endpoint. Requires \code{llm_fun}.
 #'   Default is \code{FALSE}.
@@ -254,34 +254,34 @@ idp_outcome_priors_prompt <- function(
   # Full protocol text with evidence pillars and computation
   protocol <- paste(
     "You are an expert neuroscientist and brain mapper.\n",
-    "For each Imaging Derived Phenotype (IDP) × outcome pair, assign a plausibility score ",
-    "on a 0–1 scale, where:\n",
+    "For each Imaging Derived Phenotype (IDP) x outcome pair, assign a plausibility score ",
+    "on a 0-1 scale, where:\n",
     " - 0 = no or contradictory support\n",
     " - 0.5 = mixed evidence (equal support and null findings)\n",
     " - 1 = very strong convergent support.\n",
     "Intermediate values (e.g., 0.25, 0.7, 0.85) reflect gradient strength of evidence.\n\n",
     "Scoring must follow these five evidence pillars:\n",
-    "1. Anatomy→Function specificity (CA1/EC ↔ episodic/delayed recall; IFG/temporal ↔ language/reading; ",
-    "dlPFC/ACC/striatal ↔ executive/working memory/speed; occipital/parietal ↔ visuospatial; ",
-    "SNc/basal ganglia/brainstem ↔ UPDRS/PIGD/REM).\n",
+    "1. Anatomy->Function specificity (CA1/EC <-> episodic/delayed recall; IFG/temporal <-> language/reading; ",
+    "dlPFC/ACC/striatal <-> executive/working memory/speed; occipital/parietal <-> visuospatial; ",
+    "SNc/basal ganglia/brainstem <-> UPDRS/PIGD/REM).\n",
     "2. Systems coherence (network-level alignment, e.g., DMN for global cognition & episodic retrieval; ",
     "salience/control for executive).\n",
-    "3. Disease alignment (e.g., AD metrics—MMSE, MoCA, CDRSB, ADAS—map strongly to medial temporal, ",
-    "posterior cingulate, precuneus, and NBM; PD metrics—UPDRS/PIGD/REM—map to SNc, putamen, globus pallidus, ",
+    "3. Disease alignment (e.g., AD metrics--MMSE, MoCA, CDRSB, ADAS--map strongly to medial temporal, ",
+    "posterior cingulate, precuneus, and NBM; PD metrics--UPDRS/PIGD/REM--map to SNc, putamen, globus pallidus, ",
     "and brainstem).\n",
     "4. Reproducibility & effect sizes (stronger priors if replicated in meta-analyses or large cohorts).\n",
     "5. Measurement fidelity (higher if IDP is robustly segmented with T1 MRI volumetry or validated protocols).\n\n",
     "Computation principle:\n",
-    "- Each outcome is decomposed into domain weights (e.g., recall.delayed → episodic 0.95; ",
-    "mPACCtrailsB → processing speed 0.5 + executive 0.35; UPDRS → motor-parkinsonian 0.95; ",
-    "REM → REM-sleep circuitry 0.95).\n",
+    "- Each outcome is decomposed into domain weights (e.g., recall.delayed -> episodic 0.95; ",
+    "mPACCtrailsB -> processing speed 0.5 + executive 0.35; UPDRS -> motor-parkinsonian 0.95; ",
+    "REM -> REM-sleep circuitry 0.95).\n",
     "- Each IDP carries domain strengths (e.g., CA1: episodic 0.95, global 0.65; ",
     "SNc: motor 0.95, REM 0.5; NBM: global 0.85).\n",
-    "- Final score = Σ(domain_weight_outcome × domain_strength_IDP), capped between 0 and 1, ",
+    "- Final score = Sigma(domain_weight_outcome x domain_strength_IDP), capped between 0 and 1, ",
     "with a small baseline for brain-wide correlations in large cohorts.\n\n",
     "Return output as a complete numeric table with rows = IDPs and columns = outcomes.\n",
     "Every single outcome and every single IDP should be represented.\n",
-    "Each cell must contain only the plausibility score (0–1).\n",
+    "Each cell must contain only the plausibility score (0-1).\n",
     "No cell should be left blank.  The minimal value should be very small but not zero.",
 #    "These scores should be considered as Bayesian priors and you should compute them as such.\n",
     "Return the **complete** table (every IDP, every outcome) in an easy to parse format using JSON.\n\n",
@@ -633,7 +633,7 @@ query_llm_for_domain_data <- function(
     All scores must be between 0 and 1. If there's no known strong connection, score it as 0. Return output as a JSON object with keys as the domain names.
     Domains: {paste(domains, collapse = ', ')}.
     Pillars for scoring:
-    1. Anatomy→Function specificity
+    1. Anatomy->Function specificity
     2. Systems coherence
     3. Disease alignment
     4. Reproducibility & effect sizes
@@ -862,7 +862,7 @@ generate_plausibility_table <- function(
       current_idp_strengths <- as.numeric(idp_domain_strengths[idp_name, ])
       current_outcome_weights <- as.numeric(outcome_domain_weights[outcome_name, ])
 
-      # Compute sum product: Σ(domain_weight_outcome × domain_strength_IDP)
+      # Compute sum product: Sigma(domain_weight_outcome x domain_strength_IDP)
       score <- sum(current_idp_strengths * current_outcome_weights)
 
       # Cap between 0 and 1
@@ -1058,17 +1058,17 @@ generate_plausibility_table_direct <- function(
       - Intermediate values (e.g., 0.25, 0.7, 0.85) reflect gradient strength of evidence.
 
       **Scoring must follow these five evidence pillars:**
-      1.  **Anatomy→Function specificity:** (e.g., CA1/EC ↔ episodic/delayed recall; IFG/temporal ↔ language/reading; dlPFC/ACC/striatal ↔ executive/working memory/speed; occipital/parietal ↔ visuospatial; SNc/basal ganglia/brainstem ↔ UPDRS/PIGD/REM).
+      1.  **Anatomy->Function specificity:** (e.g., CA1/EC <-> episodic/delayed recall; IFG/temporal <-> language/reading; dlPFC/ACC/striatal <-> executive/working memory/speed; occipital/parietal <-> visuospatial; SNc/basal ganglia/brainstem <-> UPDRS/PIGD/REM).
       2.  **Systems coherence:** (network-level alignment, e.g., DMN for global cognition & episodic retrieval; salience/control for executive).
-      3.  **Disease alignment:** (e.g., AD metrics—MMSE, MoCA, CDRSB, ADAS—map strongly to medial temporal, posterior cingulate, precuneus, and NBM; PD metrics—UPDRS/PIGD/REM—map to SNc, putamen, globus pallidus, and brainstem).
+      3.  **Disease alignment:** (e.g., AD metrics--MMSE, MoCA, CDRSB, ADAS--map strongly to medial temporal, posterior cingulate, precuneus, and NBM; PD metrics--UPDRS/PIGD/REM--map to SNc, putamen, globus pallidus, and brainstem).
       4.  **Reproducibility & effect sizes:** (stronger priors if replicated in meta-analyses or large cohorts).
       5.  **Measurement fidelity:** (higher if IDP is robustly segmented with T1 MRI volumetry or validated protocols).
 
       **Computation principle (INTERNAL SIMULATION by you, the LLM):**
-      - For each Outcome, internally decompose it into domain weights (e.g., recall.delayed → episodic 0.95; mPACCtrailsB → processing speed 0.5 + executive 0.35; UPDRS → motor-parkinsonian 0.95; REM → REM-sleep circuitry 0.95).
+      - For each Outcome, internally decompose it into domain weights (e.g., recall.delayed -> episodic 0.95; mPACCtrailsB -> processing speed 0.5 + executive 0.35; UPDRS -> motor-parkinsonian 0.95; REM -> REM-sleep circuitry 0.95).
       - For each IDP, internally assign domain strengths (e.g., CA1: episodic 0.95, global 0.65; SNc: motor 0.95, REM 0.5; NBM: global 0.85).
       - Then, compute the final score for each IDP-Outcome pair as:
-        Score = Σ(outcome_domain_weight × idp_domain_strength across all relevant domains).
+        Score = Sigma(outcome_domain_weight x idp_domain_strength across all relevant domains).
       - The final computed score should be capped between 0 and 1.
       - Ensure the minimal value is {min_plausibility_score} if the computed score would be 0.
 

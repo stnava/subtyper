@@ -56,7 +56,6 @@ result <- analyze_longitudinal_change(
 
 # Display the generated plots side-by-side
 if (!is.null(result)) {
-  library(gridExtra)
   grid.arrange(result$spaghetti_plot, result$population_plot, ncol = 2)
 }
 }

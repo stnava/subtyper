@@ -99,12 +99,12 @@ getNamesFromDataframe <- function( x, demogIn, exclusions ) {
 
 #' Adjust association matrix for global correlation structure
 #'
-#' This function takes a feature × domain association matrix and applies 
+#' This function takes a feature x domain association matrix and applies 
 #' different methods to control for global/shared correlation structure 
 #' (e.g., some features are globally correlated with all domains). 
 #' It then provides domain assignments based on the adjusted scores.
 #'
-#' @param assoc_mat A numeric matrix of size (features × domains).
+#' @param assoc_mat A numeric matrix of size (features x domains).
 #' @param method A character string specifying adjustment method. 
 #'        Options: 
 #'        - "none" (raw associations) 
@@ -150,7 +150,7 @@ adjust_assoc_matrix <- function(assoc_mat,
     pc1 <- svd_res$u[,1, drop=FALSE] %*% t(svd_res$v[,1, drop=FALSE]) * svd_res$d[1]
     mat <- mat - pc1
   } else if (method == "glasso") {
-    stop("method='glasso' is not currently supported here because it changes the matrix semantics from feature × domain to domain × domain. Use a normalization/regression method instead.")
+    stop("method='glasso' is not currently supported here because it changes the matrix semantics from feature x domain to domain x domain. Use a normalization/regression method instead.")
   }
 
   # Assign domains based on maximum adjusted score
@@ -4507,8 +4507,6 @@ merge_ADNI_antspymm_by_closest_date <- function(dfA, dfB, patientidcol='subjectI
 #' }
 merge_ppmi_imaging_clinical_demographic_data <- function(demog, ppmidemog0, pymf, pymversion, saa, verbose=TRUE ) {
   # Load required libraries
-  library(dplyr)
-  library(forcats)
   if ( missing( saa ) ) {
     saa = ppmidemog0[,c("PATNO","EVENT_ID","CSFSAA")]
   }
@@ -5404,7 +5402,6 @@ lmer_anv_p_and_d_old <- function(data, outcome, predictor, fixed_effects, random
 #'
 #' # Display the generated plots side-by-side
 #' if (!is.null(result)) {
-#'   library(gridExtra)
 #'   grid.arrange(result$spaghetti_plot, result$population_plot, ncol = 2)
 #' }
 #' }
@@ -5652,10 +5649,10 @@ convert_to_random_effects <- function(variables) {
 #' @param verbose Logical. If TRUE, print per-variable diagnostics.
 #'
 #' @return A list with elements:
-#'   * `summary` — list of per-variable summaries (means, SD, z, p-values or freq tables),
-#'   * `plots` — named list of ggplot objects (one per variable, plus "Z-Scores" if numeric present),
-#'   * `zplot` — the z-score ggplot (or NULL),
-#'   * `combined_plot` — (only returned when `return_plot = TRUE`) arranged grob of all plots.
+#'   * `summary` -- list of per-variable summaries (means, SD, z, p-values or freq tables),
+#'   * `plots` -- named list of ggplot objects (one per variable, plus "Z-Scores" if numeric present),
+#'   * `zplot` -- the z-score ggplot (or NULL),
+#'   * `combined_plot` -- (only returned when `return_plot = TRUE`) arranged grob of all plots.
 #' @export
 normativeSummary <- function(
   data, subjectRow, columns, zoom = NULL,
@@ -5711,7 +5708,7 @@ normativeSummary <- function(
         ggplot2::geom_histogram(breaks = breaks, fill = "grey70", color = "black") +
         { if (!is.na(subjVal)) ggplot2::geom_vline(xintercept = subjVal, color = succcolor, size = 1.2, linetype = "dashed") } +
         ggplot2::geom_vline(xintercept = meanVal, color = "red", linetype = "solid", size = 0.6) +
-        ggplot2::labs(title = paste(col, "— subject (blue dashed) vs population"),
+        ggplot2::labs(title = paste(col, "-- subject (blue dashed) vs population"),
                       x = col, y = "Count") +
         ggplot2::xlim(rng) +
         ggplot2::theme_minimal(base_size = 10)
@@ -5739,7 +5736,7 @@ normativeSummary <- function(
       p <- ggplot2::ggplot(pop_counts, ggplot2::aes(x = reorder(value, -count), y = count, fill = is_subject)) +
         ggplot2::geom_col(color = "black") +
         ggplot2::scale_fill_manual(values = c("FALSE" = "grey70", "TRUE" = succcolor), guide = FALSE) +
-        ggplot2::labs(title = paste(col, "— categorical distribution (subject highlighted)"),
+        ggplot2::labs(title = paste(col, "-- categorical distribution (subject highlighted)"),
                       x = col, y = "Count") +
         ggplot2::theme_minimal(base_size = 10) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 25, hjust = 1))
@@ -5812,10 +5809,6 @@ longitudinalNormativeSummary <- function(data, subject_idx, columns,
                                          zlim = c(-2, 2),
                                          return_plot=FALSE,
                                          verbose=FALSE) {
-  library(ggplot2)
-  library(gridExtra)
-  library(dplyr)
-  library(forcats)
 
   plot_list <- list()
   summary_list <- list()
@@ -6283,7 +6276,6 @@ select_important_variables <- function(data, cols, threshold = 0.5, epsilon = 1e
 #' @export
 #'
 #' @examples
-#' if (require(gtsummary) && require(gt) && require(dplyr)) {
 #'   # Example 1: Standard usage
 #'   create_table1(
 #'     data = gtsummary::trial,
@@ -7293,23 +7285,21 @@ table_1_presentation <- function(df, caption = "", label = "", format = "latex",
     stop("Required libraries not installed or loaded. Please install and load 'knitr' and 'kableExtra'.")
   }
   # Load necessary libraries
-  library(knitr)
-  library(kableExtra)
   
   # Format the table
   if (format == "latex") {
     df %>%
-      kable(format = "latex", booktabs = TRUE, 
+      knitr::kable(format = "latex", booktabs = TRUE, 
             caption = caption, label = label) %>%
-      kable_styling(latex_options = c("striped", "hold_position")) %>%
-      column_spec(1, width = "3cm") %>%
-      row_spec(0, bold = TRUE, font_size = 12) %>%
-      row_spec(1, italic = TRUE, font_size = 10)
+      kableExtra::kable_styling(latex_options = c("striped", "hold_position")) %>%
+      kableExtra::column_spec(1, width = "3cm") %>%
+      kableExtra::row_spec(0, bold = TRUE, font_size = 12) %>%
+      kableExtra::row_spec(1, italic = TRUE, font_size = 10)
   } else if (format == "html") {
     df %>%
-      kable(format = "html", caption = caption) %>%
-      kable_styling(bootstrap_options = c("striped", "hover"), html_font = html_font ) %>%
-      row_spec(0, bold = TRUE)
+      knitr::kable(format = "html", caption = caption) %>%
+      kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), html_font = html_font ) %>%
+      kableExtra::row_spec(0, bold = TRUE)
   }
 }
 
@@ -7607,7 +7597,6 @@ collect_and_zip_images <- function(subjectIDdate_list, root_path, modality, exte
 kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = TRUE, landscape = TRUE, 
                         table_size = "medium", digits = 3, latex_options = c("striped"), format='latex') {
   
-  library(kableExtra)
   
   # Define the table size based on input
   size_map <- list(small = "\\small", medium = "\\normalsize", large = "\\large")
@@ -7618,23 +7607,23 @@ kable_table <- function(data, caption, scl = 0.75, row.names = FALSE, striped = 
   
 
   # Create the basic LaTeX table
-  table <- kable(data, format = format, caption = caption, booktabs = TRUE,
+  table <- knitr::kable(data, format = format, caption = caption, booktabs = TRUE,
                  row.names = row.names, digits = digits, scale_down=scl ) %>%
 #    add_header_above(c(table_size_tag)) %>%
-    kable_styling(latex_options = latex_options, full_width = FALSE) %>%
-      column_spec(1, bold = TRUE)
+    kableExtra::kable_styling(latex_options = latex_options, full_width = FALSE) %>%
+      kableExtra::column_spec(1, bold = TRUE)
   
   # Apply striped styling if requested
   if (striped) {
     table <- table %>%
-      kable_styling(latex_options = c("striped"), stripe_color = "gray!22")
+      kableExtra::kable_styling(latex_options = c("striped"), stripe_color = "gray!22")
   }
   
   
   # Rotate to landscape if requested
   if (landscape) {
     table <- table %>%
-      landscape()
+      kableExtra::landscape()
   }
   
   return(table)
@@ -8621,7 +8610,7 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank",
 
 
 
-#' Generate a Prompt for Interpreting Brain–Behavior Associations
+#' Generate a Prompt for Interpreting Brain-Behavior Associations
 #'
 #' Constructs a standardized prompt for guiding large language models
 #' in interpreting statistical associations between imaging-derived
@@ -8634,10 +8623,10 @@ rank_methods_by_performance <- function(df, id_col, weights_df, method = "rank",
 #' - "plausibility"  : continuous numeric score between zero and one
 #'
 #' @param response_length Character. Desired length of justification.
-#'   One of: "short" (2–3 sentences), "medium" (3–6), "long" (5–8).
+#'   One of: "short" (2-3 sentences), "medium" (3-6), "long" (5-8).
 #' @param tone Character. Interpretive stance. One of:
 #'   "neutral", "skeptical", "critical".
-#' @param n_examples Integer. Number of exemplar cases to include (0–5).
+#' @param n_examples Integer. Number of exemplar cases to include (0-5).
 #'
 #' @return A character string containing the full prompt.
 #'
@@ -8661,9 +8650,9 @@ generate_idp_interpretation_prompt <- function(
   
   # Length guidance
   length_text <- switch(response_length,
-    "short"  = "2–3 sentences",
-    "medium" = "3–6 sentences",
-    "long"   = "5–8 sentences"
+    "short"  = "2-3 sentences",
+    "medium" = "3-6 sentences",
+    "long"   = "5-8 sentences"
   )
   
   # Tone guidance
@@ -8684,7 +8673,7 @@ generate_idp_interpretation_prompt <- function(
     "If multiple regions and networks are provided, synthesize them into a coherent account ",
     "of how they might jointly contribute to the behavioral domain.\n\n",
     
-    "Compare the proposed IDP–behavior link against canonical neuroscience mappings. ",
+    "Compare the proposed IDP-behavior link against canonical neuroscience mappings. ",
     "If the link is absent from or inconsistent with canonical mappings, assign 'low' unless extremely strong evidence exists. ",
     "Unless there is well-established, convergent evidence across human neuroimaging, lesion, or neurostimulation studies, assign 'low'. ",
     "Assign 'medium' only if there is at least moderate empirical consensus or indirect but reproducible circuit-level involvement. ",
@@ -8698,9 +8687,9 @@ generate_idp_interpretation_prompt <- function(
     
     "Rules for assigning 'consistency':\n",
     "- Default = 'low' unless robust replicated evidence exists\n",
-    "- Direct canonical associations → high\n",
-    "- Indirect but supported associations → medium\n",
-    "- No known or conflicting association → low\n",
+    "- Direct canonical associations -> high\n",
+    "- Indirect but supported associations -> medium\n",
+    "- No known or conflicting association -> low\n",
     "- Prioritize evidence hierarchy: lesion > stimulation > longitudinal imaging > cross-sectional correlation\n",
     "- ", tone_text, "\n\n",
     
@@ -8715,22 +8704,22 @@ generate_idp_interpretation_prompt <- function(
   # Example library
   examples <- list(
     # High, single region
-    "Example 1 – Hippocampus ↔ Episodic Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"The hippocampus is essential for episodic memory, supported by lesion, neuroimaging, and electrophysiology studies. Its volumetric reductions reliably predict memory decline in aging and Alzheimer’s disease.\",\n  \"plausibility\": 0.95\n}",
+    "Example 1 - Hippocampus <-> Episodic Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"The hippocampus is essential for episodic memory, supported by lesion, neuroimaging, and electrophysiology studies. Its volumetric reductions reliably predict memory decline in aging and Alzheimer's disease.\",\n  \"plausibility\": 0.95\n}",
     
     # High, multiple regions
-    "Example 2 – dlPFC + Inferior Parietal Cortex + Superior Longitudinal Fasciculus ↔ Working Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"Working memory depends on a distributed frontoparietal network. The dorsolateral prefrontal cortex supports manipulation, inferior parietal cortex aids attentional control, and the superior longitudinal fasciculus integrates these nodes structurally. Converging evidence from imaging and neurostimulation supports this strong relationship.\",\n  \"plausibility\": 0.90\n}",
+    "Example 2 - dlPFC + Inferior Parietal Cortex + Superior Longitudinal Fasciculus <-> Working Memory\n{\n  \"consistency\": \"high\",\n  \"justification\": \"Working memory depends on a distributed frontoparietal network. The dorsolateral prefrontal cortex supports manipulation, inferior parietal cortex aids attentional control, and the superior longitudinal fasciculus integrates these nodes structurally. Converging evidence from imaging and neurostimulation supports this strong relationship.\",\n  \"plausibility\": 0.90\n}",
     
     # Medium, single region
-    "Example 3 – Cerebellum ↔ Language Tasks\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"The posterior cerebellum shows emerging links to linguistic prediction and language processing. However, evidence remains less robust compared to classical cortical regions, warranting a moderate confidence rating.\",\n  \"plausibility\": 0.55\n}",
+    "Example 3 - Cerebellum <-> Language Tasks\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"The posterior cerebellum shows emerging links to linguistic prediction and language processing. However, evidence remains less robust compared to classical cortical regions, warranting a moderate confidence rating.\",\n  \"plausibility\": 0.55\n}",
     
     # Medium, multiple regions
-    "Example 4 – Superior Frontal Cortex + Corpus Callosum + Default Mode ↔ Working Memory\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"These regions plausibly contribute to working memory through attentional control, interhemispheric integration, and default mode–attention interactions. The evidence is supportive but heterogeneous, suggesting a moderate plausibility.\",\n  \"plausibility\": 0.60\n}",
+    "Example 4 - Superior Frontal Cortex + Corpus Callosum + Default Mode <-> Working Memory\n{\n  \"consistency\": \"medium\",\n  \"justification\": \"These regions plausibly contribute to working memory through attentional control, interhemispheric integration, and default mode-attention interactions. The evidence is supportive but heterogeneous, suggesting a moderate plausibility.\",\n  \"plausibility\": 0.60\n}",
     
     # Low, single region
-    "Example 5 – Pericalcarine Cortex ↔ Verbal Fluency\n{\n  \"consistency\": \"low\",\n  \"justification\": \"The pericalcarine cortex is primary visual cortex, specialized for sensory processing. There is no convincing evidence for involvement in verbal fluency, making the proposed link unlikely.\",\n  \"plausibility\": 0.10\n}",
+    "Example 5 - Pericalcarine Cortex <-> Verbal Fluency\n{\n  \"consistency\": \"low\",\n  \"justification\": \"The pericalcarine cortex is primary visual cortex, specialized for sensory processing. There is no convincing evidence for involvement in verbal fluency, making the proposed link unlikely.\",\n  \"plausibility\": 0.10\n}",
     
     # Low, multiple regions
-    "Example 6 – Amygdala + Primary Motor Cortex + Pericalcarine Cortex ↔ Mathematical Reasoning\n{\n  \"consistency\": \"low\",\n  \"justification\": \"Although these regions serve critical roles in emotion, movement, and vision respectively, none are known to contribute directly or indirectly to mathematical reasoning. The association lacks neuroscientific support and is likely spurious.\",\n  \"plausibility\": 0.05\n}"
+    "Example 6 - Amygdala + Primary Motor Cortex + Pericalcarine Cortex <-> Mathematical Reasoning\n{\n  \"consistency\": \"low\",\n  \"justification\": \"Although these regions serve critical roles in emotion, movement, and vision respectively, none are known to contribute directly or indirectly to mathematical reasoning. The association lacks neuroscientific support and is likely spurious.\",\n  \"plausibility\": 0.05\n}"
   )
   
   # Add exemplars
@@ -8773,6 +8762,13 @@ cache_read <- function(cache_dir, key) {
   NULL
 }
 
+#' Cache Write Helper
+#'
+#' Writes an object as a JSON file to the specified cache directory.
+#'
+#' @param cache_dir The directory to use for caching.
+#' @param key The cache key, which will form the filename.
+#' @param parsed The object to be serialized to JSON and cached.
 #' @export
 cache_write <- function(cache_dir, key, parsed) {
   dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
@@ -8826,7 +8822,6 @@ query_api_robust <- function(domain,
                              jitter = TRUE,
                              temperature = 0.1,
                              verbose = TRUE) {
-  library(httr2)
   idps_string <- collapse_fn(idps)
   user_prompt <- glue::glue(user_prompt_template,
                             domain = domain, idps = idps_string, extra = user_input_prompt)
@@ -8974,7 +8969,7 @@ query_api_robust <- function(domain,
 #' @param max_retries Integer, maximum API retry attempts. Default: 5.
 #' @param retry_delay_base Numeric, base delay (seconds) for exponential backoff. Default: 2.
 #' @param jitter Logical, add jitter to retry delays. Default: TRUE.
-#' @param temperature Numeric, sampling temperature (0–1). Default: 0.1.
+#' @param temperature Numeric, sampling temperature (0-1). Default: 0.1.
 #' @param user_input_prompt Character, additional user prompt text. Default: "Assess neuroscientific consistency and return JSON."
 #' @param collapse_fn Function, how to collapse IDPs into a string. Default: `function(x) paste(na.omit(x), collapse = ", ")`.
 #' @param parallel Logical, use parallel processing with `furrr::future_map`. Default: FALSE.
@@ -9055,7 +9050,7 @@ assess_idp_consistency <- function(df,
 #' @param max_retries Integer, maximum API retry attempts. Default: 5.
 #' @param retry_delay_base Numeric, base delay (seconds) for exponential backoff. Default: 2.
 #' @param jitter Logical, add jitter to retry delays. Default: TRUE.
-#' @param temperature Numeric, sampling temperature (0–1). Default: 0.1.
+#' @param temperature Numeric, sampling temperature (0-1). Default: 0.1.
 #' @param parallel Logical, use parallel processing with `furrr::future_map`. Default: FALSE.
 #' @param .options_furrr List, options for `furrr::future_map`. Default: `furrr::furrr_options()`.
 #' @param cache_dir Character, directory for caching API responses. Default: NULL.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/prompts.R
 \name{idp_outcome_priors_prompt}
 \alias{idp_outcome_priors_prompt}
-\title{Generate a Prompt for IDP–Outcome Plausibility Scoring}
+\title{Generate a Prompt for IDP-Outcome Plausibility Scoring}
 \usage{
 idp_outcome_priors_prompt(
   idps = c("CA1", "Dentate Gyrus/CA3", "Anterolateral Entorhinal Cortex",
@@ -47,11 +47,11 @@ cingulate, basal ganglia, basal forebrain, and brainstem nuclei.}
 
 \item{outcomes}{A character vector of behavioral or cognitive outcomes.
 Defaults to neuropsychological, global cognition, daily functioning,
-and Parkinson’s measures commonly used in ADNI and related studies.}
+and Parkinson's measures commonly used in ADNI and related studies.}
 
 \item{domains}{A character vector of functional domains used internally
 in the protocol (episodic memory, working memory, executive control, etc.).
-Defaults to the protocol’s 10+ canonical domains.}
+Defaults to the protocol's 10+ canonical domains.}
 
 \item{call_llm}{Logical; if \code{TRUE}, the function will attempt to send
 the generated prompt to an LLM endpoint. Requires \code{llm_fun}.
@@ -67,9 +67,9 @@ If \code{call_llm = TRUE}, the output of the provided \code{llm_fun}.
 }
 \description{
 This function creates a structured prompt that instructs a large language model (LLM)
-to produce a table of plausibility scores (0–1) relating imaging-derived phenotypes (IDPs)
+to produce a table of plausibility scores (0-1) relating imaging-derived phenotypes (IDPs)
 to behavioral or cognitive outcomes. The scoring framework is based on expert
-neuroscience principles: structure–function specificity, network-level alignment,
+neuroscience principles: structure-function specificity, network-level alignment,
 disease alignment, reproducibility, and measurement fidelity.
 }
 \details{

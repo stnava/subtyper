@@ -13,7 +13,7 @@ adjust_assoc_matrix(
 )
 }
 \arguments{
-\item{assoc_mat}{A numeric matrix of size (features × domains).}
+\item{assoc_mat}{A numeric matrix of size (features x domains).}
 
 \item{method}{A character string specifying adjustment method.
 Options:
@@ -36,7 +36,7 @@ If return_scores=FALSE, a character vector of assigned domains
 - assignments: best-matching domain per feature
 }
 \description{
-This function takes a feature × domain association matrix and applies
+This function takes a feature x domain association matrix and applies
 different methods to control for global/shared correlation structure
 (e.g., some features are globally correlated with all domains).
 It then provides domain assignments based on the adjusted scores.
