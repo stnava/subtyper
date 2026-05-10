@@ -6,6 +6,12 @@ steps: &steps
 #    - restore_cache:
 #        keys:
 #          - cache-{{ .Environment.CIRCLE_JOB }}
+    - run:
+        name: Configure R to use C++14
+        command: |
+          mkdir -p ~/.R
+          echo "CXX14FLAGS=-O3 -fPIC" >> ~/.R/Makevars
+          echo "CXX14=g++" >> ~/.R/Makevars
     - checkout
 #    - run:
 #        name: Install package dependencies env
