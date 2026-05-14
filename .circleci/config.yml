@@ -19,8 +19,8 @@ steps: &steps
           echo "CXX14FLAGS=-O3 -fPIC" >> ~/.R/Makevars
     - checkout
     - run:
-        name: extralearners
-        command: R -e "install.packages('clue')"
+        name: manual installs
+        command: R -e "install.packages(c('clue', 'FRESA.CAD', 'cardx', 'DEoptimR', 'statsExpressions', 'checkmate'))"
     - run:
         name: Install dependencies
         command: |
