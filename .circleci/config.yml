@@ -10,8 +10,13 @@ steps: &steps
         name: Configure R to use C++14
         command: |
           mkdir -p ~/.R
-          echo "CXX14FLAGS=-O3 -fPIC" >> ~/.R/Makevars
+          # Force C++14 even when C++11 is requested (required for modern RcppArmadillo)
+          echo "CXX11=g++" >> ~/.R/Makevars
+          echo "CXX11STD=-std=gnu++14" >> ~/.R/Makevars
+          echo "CXX11FLAGS=-O3 -fPIC" >> ~/.R/Makevars
           echo "CXX14=g++" >> ~/.R/Makevars
+          echo "CXX14STD=-std=gnu++14" >> ~/.R/Makevars
+          echo "CXX14FLAGS=-O3 -fPIC" >> ~/.R/Makevars
     - checkout
 #    - run:
 #        name: Install package dependencies env
