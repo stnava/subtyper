@@ -20,7 +20,7 @@ steps: &steps
     - checkout
     - run:
         name: manual installs
-        command: R -e "install.packages(c('clue', 'FRESA.CAD', 'cardx', 'DEoptimR', 'statsExpressions', 'checkmate'))"
+        command: R -e "install.packages(c('clue', 'FRESA.CAD', 'cardx', 'DEoptimR', 'statsExpressions', 'checkmate', 'spelling'))"
     - run:
         name: Install dependencies
         command: |
