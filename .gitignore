@@ -1,4 +1,5 @@
 *.pyc
+vignettes/subtyper_cache/
 *.Rcheck/
 *.orig
 vignettes/figure/*
