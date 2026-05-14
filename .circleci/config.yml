@@ -18,12 +18,9 @@ steps: &steps
           echo "CXX14STD=-std=gnu++14" >> ~/.R/Makevars
           echo "CXX14FLAGS=-O3 -fPIC" >> ~/.R/Makevars
     - checkout
-#    - run:
-#        name: Install package dependencies env
-#        command: sudo apt-get update && sudo apt install jags && sudo apt-get install -y r-cran-rgl
-#    - run:
-#        name: extralearners
-#        command: R -e "remotes::install_github('mlr-org/mlr3extralearners')"
+    - run:
+        name: extralearners
+        command: R -e "install.packages('clue')"
     - run:
         name: Install dependencies
         command: |
